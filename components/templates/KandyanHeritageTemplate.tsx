@@ -181,89 +181,6 @@ function Countdown({ targetDate }: { targetDate: string }) {
 }
 
 // ── Floating lotus petals ambient ──
-// ── Animated Kandyan Dancer Silhouette ──
-// A simplified, stylised silhouette of a traditional Kandyan (Ves) dancer
-// with a drummer beside them, both gently animated to suggest movement —
-// limbs swaying, the drummer's arm striking the gata bera in rhythm.
-function KandyanDancer() {
-  return (
-    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 18, height: 130, margin: "0 auto" }}>
-      {/* Drummer with gata bera */}
-      <svg width="58" height="110" viewBox="0 0 58 110" style={{ opacity: 0.85 }}>
-        {/* Body */}
-        <ellipse cx="22" cy="20" rx="7" ry="8" fill={GOLD_LIGHT} />
-        <path d="M14 30 Q14 50 18 70 L26 70 Q30 50 30 30 Z" fill={GOLD} />
-        {/* Drum (gata bera) */}
-        <motion.g
-          animate={{ rotate: [-3, 3, -3] }}
-          transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
-          style={{ transformOrigin: "30px 55px" }}>
-          <ellipse cx="38" cy="55" rx="14" ry="9" fill="none" stroke={GOLD} strokeWidth="2" />
-          <ellipse cx="38" cy="55" rx="14" ry="9" fill={`${GOLD}33`} />
-        </motion.g>
-        {/* Striking arm */}
-        <motion.path
-          d="M22 36 Q30 42 38 48"
-          stroke={GOLD_LIGHT} strokeWidth="3.5" strokeLinecap="round" fill="none"
-          animate={{ d: ["M22 36 Q30 42 38 48", "M22 36 Q34 38 42 44", "M22 36 Q30 42 38 48"] }}
-          transition={{ repeat: Infinity, duration: 0.7, ease: "easeInOut" }}
-        />
-        {/* Legs */}
-        <path d="M18 70 L15 95 M26 70 L29 95" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
-      </svg>
-
-      {/* Main Ves dancer */}
-      <svg width="80" height="130" viewBox="0 0 80 130" style={{ opacity: 0.9 }}>
-        {/* Headdress (ves thattuwa) */}
-        <motion.g
-          animate={{ rotate: [-2, 2, -2] }}
-          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-          style={{ transformOrigin: "40px 14px" }}>
-          <path d="M28 14 L40 0 L52 14 Z" fill={GOLD_LIGHT} />
-          <circle cx="40" cy="2" r="3" fill={GOLD_LIGHT} />
-          <ellipse cx="40" cy="16" rx="14" ry="5" fill={GOLD} />
-        </motion.g>
-        {/* Head */}
-        <ellipse cx="40" cy="22" rx="7" ry="8" fill={GOLD_LIGHT} />
-        {/* Torso with ornate chest piece */}
-        <path d="M30 32 Q40 28 50 32 L52 56 Q40 62 28 56 Z" fill={GOLD} />
-        <circle cx="40" cy="42" r="5" fill="none" stroke={GOLD_LIGHT} strokeWidth="1.5" />
-
-        {/* Left arm — sweeping gesture */}
-        <motion.path
-          stroke={GOLD_LIGHT} strokeWidth="4" strokeLinecap="round" fill="none"
-          animate={{ d: ["M30 36 Q14 30 6 18", "M30 36 Q16 44 8 56", "M30 36 Q14 30 6 18"] }}
-          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
-        />
-        {/* Right arm — sweeping gesture, opposite phase */}
-        <motion.path
-          stroke={GOLD_LIGHT} strokeWidth="4" strokeLinecap="round" fill="none"
-          animate={{ d: ["M50 36 Q66 44 74 56", "M50 36 Q64 30 72 18", "M50 36 Q66 44 74 56"] }}
-          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
-        />
-
-        {/* Skirt (diya reddha style flare) */}
-        <motion.path
-          fill={`${GOLD}55`}
-          animate={{ d: [
-            "M28 56 Q40 64 52 56 L60 100 Q40 112 20 100 Z",
-            "M28 56 Q40 64 52 56 L66 98 Q40 114 14 98 Z",
-            "M28 56 Q40 64 52 56 L60 100 Q40 112 20 100 Z",
-          ] }}
-          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
-        />
-
-        {/* Legs */}
-        <path d="M34 98 L30 124 M46 98 L50 124" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
-
-        {/* Anklets (silanbu) sparkle hint */}
-        <circle cx="30" cy="124" r="2" fill={GOLD_LIGHT} />
-        <circle cx="50" cy="124" r="2" fill={GOLD_LIGHT} />
-      </svg>
-    </div>
-  )
-}
-
 function LotusPetals({ count = 10 }: { count?: number }) {
   const petals = ['🪷', '✿']
   const [items, setItems] = useState<{ id: number; left: number; emoji: string; duration: number; delay: number; size: number }[]>([])
@@ -628,16 +545,6 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
                 </div>
               </div>
             </div>
-
-            {/* Kandyan Dancer — a living cultural welcome right after the doors open */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }}
-              style={{ background: RED_DARK, padding: "20px 0 8px", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: GOLD, marginBottom: 8, fontWeight: 600 }}>
-                A Traditional Welcome
-              </div>
-              <KandyanDancer />
-            </motion.div>
 
             {/* Lotus strip divider */}
             <div style={{ background: CREAM, padding: "14px 0", textAlign: "center" }}>
