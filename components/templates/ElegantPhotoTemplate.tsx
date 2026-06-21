@@ -84,7 +84,7 @@ function MusicPlayerUI({ title, artist, audioRef }: { title: string; artist: str
     if (audio.paused) { audio.play().catch(() => {}) } else { audio.pause() }
   }
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#faf6f4", borderRadius: 14, padding: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#faf6f4", borderRadius: 16, padding: 16 }}>
       <div style={{ width: 48, height: 48, borderRadius: playing ? "50%" : 10, background: "linear-gradient(135deg,#c9a06e,#8a6a3e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: "#2d2424" }}>{title}</div>
@@ -203,7 +203,7 @@ function SeatFinder({ seats }: { seats: Record<string, string> }) {
   )
 }
 
-const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 18, padding: "1.8rem", boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }
+const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }
 const sectionEyebrow: React.CSSProperties = { fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: "#c9a06e", textAlign: "center", marginBottom: 6, fontWeight: 600 }
 const sectionTitle: React.CSSProperties = { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#2d2424", textAlign: "center", marginBottom: 20 }
 
@@ -259,7 +259,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
         input::placeholder { color: #a89888; }
       `}</style>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", background: "#faf6f4", boxShadow: "0 0 80px rgba(0,0,0,0.08)", position: "relative" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", background: "#faf6f4", boxShadow: "0 0 100px rgba(0,0,0,0.12)", position: "relative", borderRadius: 0, overflow: "hidden" }}>
 
         {!opened && (
           <div style={{ position: "relative", minHeight: 600, height: "100vh", maxHeight: 760, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -267,9 +267,10 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
               onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(20,15,12,0.25) 0%, rgba(20,15,12,0.2) 40%, rgba(20,15,12,0.8) 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,8,6,0.45) 0%, rgba(10,8,6,0.35) 35%, rgba(10,8,6,0.92) 100%)" }} />
 
             <FallingPetals count={6} />
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.35) 100%)", pointerEvents: "none" }} />
 
             <motion.div initial={{ opacity: 0, y: 24, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 1, ease: "easeOut" }}
               style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 1.5rem", width: "100%" }}>
@@ -278,7 +279,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
                 Together with their families
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.7 }}
-                style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 4px 30px rgba(0,0,0,0.4)" }}>
+                style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 2px 4px rgba(0,0,0,0.5), 0 8px 40px rgba(0,0,0,0.5)" }}>
                 {W.bride}
               </motion.div>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
@@ -286,7 +287,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
                 &amp;
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7 }}
-                style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 4px 30px rgba(0,0,0,0.4)" }}>
+                style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 2px 4px rgba(0,0,0,0.5), 0 8px 40px rgba(0,0,0,0.5)" }}>
                 {W.groom}
               </motion.div>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}
@@ -332,7 +333,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
               <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(20,15,12,0.1) 0%, rgba(250,246,244,1) 100%)" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,8,6,0.3) 0%, rgba(10,8,6,0.15) 45%, rgba(250,246,244,1) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center", zIndex: 4 }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.6rem" }}>Together with their families</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2rem,7vw,3rem)", color: "#fff", fontStyle: "italic", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}>
@@ -359,7 +360,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             )}
 
             {/* Wedding details strip (dark) */}
-            <div style={{ background: "#2d2424", margin: "0 16px 16px", borderRadius: 18, overflow: "hidden" }}>
+            <div style={{ background: "#2d2424", margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(255,255,255,0.06)" }}>
                 {[
                   { icon: "📅", label: "Date", val: W.dateDisplay, gold: true },
@@ -380,7 +381,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             </div>
 
             {/* Countdown */}
-            <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 18, boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }}>
+            <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#2d2424", marginBottom: 16 }}>Counting down to our big day</div>
               <Countdown targetDate={W.date} />
             </div>
@@ -391,7 +392,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
                 <div style={sectionEyebrow}>Find Us</div>
                 <div style={sectionTitle}>The Venue</div>
                 <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-                  <div style={{ background: "#faf6f4", borderRadius: 14, padding: 24, textAlign: "center" }}>
+                  <div style={{ background: "#faf6f4", borderRadius: 16, padding: 24, textAlign: "center" }}>
                     <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#2d2424", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#2d2424", marginBottom: 4 }}>{W.venue}</div>
                     <div style={{ fontSize: 11, color: "#a89888", marginBottom: 14 }}>{W.venueAddress}</div>
@@ -417,7 +418,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp" style={{ margin: "0 16px 16px", borderRadius: 18, overflow: "hidden" }}>
+            <div id="rsvp" style={{ margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
               <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} />
             </div>
 
@@ -444,7 +445,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
                 <div style={sectionTitle}>Moments Together</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 14, overflow: "hidden", background: "#e8ddd4", aspectRatio: i === 0 ? "1/2" : "1/1" }}>
+                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: "#e8ddd4", aspectRatio: i === 0 ? "1/2" : "1/1" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
                     </div>
