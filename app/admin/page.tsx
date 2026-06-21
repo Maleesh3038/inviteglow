@@ -27,7 +27,12 @@ const emptyForm = {
   song_artist: '',
   song_url: '',
   gallery: [] as string[],
-  timeline: '',
+  timeline: [
+    { id: 1, enabled: true, time: '9:55 AM', event: 'Poruwa Ceremony' },
+    { id: 2, enabled: false, time: '12:00 PM', event: 'Lunch' },
+    { id: 3, enabled: false, time: '1:00 PM', event: 'Dancing Floor Starts' },
+    { id: 4, enabled: false, time: '3:30 PM', event: 'Going Away' },
+  ] as { id: number; enabled: boolean; time: string; event: string }[],
   seats: '',
   pin: '',
   ask_drinking: false,
@@ -153,6 +158,84 @@ function GalleryUploader({ value, onChange }: { value: string[]; onChange: (urls
   )
 }
 
+// ── Timeline picker: toggle standard events on/off, edit times, add custom events ──
+type TimelineItem = { id: number; enabled: boolean; time: string; event: string }
+
+function TimelinePicker({ value, onChange }: { value: TimelineItem[]; onChange: (items: TimelineItem[]) => void }) {
+  const toggle = (id: number) => {
+    onChange(value.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))
+  }
+  const updateField = (id: number, field: 'time' | 'event', val: string) => {
+    onChange(value.map(t => t.id === id ? { ...t, [field]: val } : t))
+  }
+  const removeItem = (id: number) => {
+    onChange(value.filter(t => t.id !== id))
+  }
+  const addCustom = () => {
+    const newId = Math.max(0, ...value.map(t => t.id)) + 1
+    onChange([...value, { id: newId, enabled: true, time: '', event: '' }])
+  }
+
+  return (
+    <div style={fieldWrap}>
+      <label style={labelStyle}>Wedding Timeline</label>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>
+        Tick the events that apply to this wedding, adjust the time, or add your own custom event.
+      </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {value.map(item => (
+          <div key={item.id} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+            background: item.enabled ? '#fdf2f8' : '#f8fafc', borderRadius: 10,
+            border: `1px solid ${item.enabled ? '#fbcfe8' : '#e2e8f0'}`,
+          }}>
+            <input
+              type="checkbox"
+              checked={item.enabled}
+              onChange={() => toggle(item.id)}
+              style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#c4607a', flexShrink: 0 }}
+            />
+            <input
+              value={item.time}
+              onChange={e => updateField(item.id, 'time', e.target.value)}
+              placeholder="9:55 AM"
+              disabled={!item.enabled}
+              style={{
+                width: 90, padding: '8px 10px', borderRadius: 8, border: '1px solid #e2e8f0',
+                fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif",
+                background: item.enabled ? '#fff' : '#f1f5f9', color: item.enabled ? '#0f172a' : '#94a3b8',
+                flexShrink: 0,
+              }}
+            />
+            <input
+              value={item.event}
+              onChange={e => updateField(item.id, 'event', e.target.value)}
+              placeholder="Event name"
+              disabled={!item.enabled}
+              style={{
+                flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid #e2e8f0',
+                fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif",
+                background: item.enabled ? '#fff' : '#f1f5f9', color: item.enabled ? '#0f172a' : '#94a3b8',
+              }}
+            />
+            <button type="button" onClick={() => removeItem(item.id)}
+              style={{
+                width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: '#fee2e2', color: '#dc2626', fontSize: 12, flexShrink: 0,
+              }}>✕</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={addCustom} style={{
+        marginTop: 10, padding: '8px 16px', borderRadius: 8, border: '1px solid #e2e8f0',
+        background: '#fff', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500,
+      }}>
+        + Add Custom Event
+      </button>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [couples, setCouples] = useState<Couple[]>([])
   const [loading, setLoading] = useState(true)
@@ -192,7 +275,23 @@ export default function AdminPage() {
       song_artist: c.song_artist || '',
       song_url: c.song_url || '',
       gallery: c.gallery || [],
-      timeline: (c.timeline || []).map(t => `${t.time} | ${t.event}`).join('\n'),
+      timeline: (() => {
+        const defaults = [
+          { label: 'Poruwa Ceremony', time: '9:55 AM' },
+          { label: 'Lunch', time: '12:00 PM' },
+          { label: 'Dancing Floor Starts', time: '1:00 PM' },
+          { label: 'Going Away', time: '3:30 PM' },
+        ]
+        const existing = c.timeline || []
+        const merged = defaults.map((d, i) => {
+          const found = existing.find(e => e.event === d.label)
+          return { id: i + 1, enabled: !!found, time: found ? found.time : d.time, event: d.label }
+        })
+        // Include any custom events the couple added beyond the defaults
+        const customEvents = existing.filter(e => !defaults.some(d => d.label === e.event))
+        const customMapped = customEvents.map((e, i) => ({ id: 100 + i, enabled: true, time: e.time, event: e.event }))
+        return [...merged, ...customMapped]
+      })(),
       seats: Object.entries(c.seats || {}).map(([k, v]) => `${k} | ${v}`).join('\n'),
       pin: c.pin || generatePin(),
       ask_drinking: c.ask_drinking || false,
@@ -208,10 +307,9 @@ export default function AdminPage() {
     setSaving(true)
     setMessage('')
 
-    const timelineArr = form.timeline.split('\n').map(line => {
-      const [time, event] = line.split('|').map(s => s.trim())
-      return time && event ? { time, event } : null
-    }).filter(Boolean)
+    const timelineArr = form.timeline
+      .filter(t => t.enabled && t.time.trim() && t.event.trim())
+      .map(t => ({ time: t.time.trim(), event: t.event.trim() }))
     const seatsObj: Record<string, string> = {}
     form.seats.split('\n').forEach(line => {
       const [name, table] = line.split('|').map(s => s.trim())
@@ -416,12 +514,10 @@ export default function AdminPage() {
               onChange={urls => setForm({ ...form, gallery: urls })}
             />
 
-            <div style={fieldWrap}>
-              <label style={labelStyle}>Wedding Timeline (one per line: Time | Event)</label>
-              <textarea style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }}
-                placeholder={"9:55 AM | Poruwa Ceremony\n12:00 PM | Lunch\n1:00 PM | Dancing Floor Starts"}
-                value={form.timeline} onChange={e => setForm({ ...form, timeline: e.target.value })} />
-            </div>
+            <TimelinePicker
+              value={form.timeline}
+              onChange={items => setForm({ ...form, timeline: items })}
+            />
 
             <div style={fieldWrap}>
               <label style={labelStyle}>Guest Seat Assignments (one per line: Name | Table)</label>
