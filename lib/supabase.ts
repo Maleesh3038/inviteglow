@@ -6,6 +6,13 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // ── Types ──
+export type CoupleColors = {
+  primary?: string
+  primaryLight?: string
+  dark?: string
+  cream?: string
+}
+
 export type Couple = {
   id: string
   slug: string
@@ -27,6 +34,7 @@ export type Couple = {
   seats: Record<string, string>
   pin: string
   ask_drinking: boolean
+  custom_colors: CoupleColors
   created_at: string
 }
 
