@@ -248,6 +248,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+        @keyframes pulse-ring { 0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.15);} 50%{box-shadow:0 0 0 10px rgba(255,255,255,0);} }
         @keyframes petal-fall {
           0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
           10% { opacity: 0.5; }
@@ -261,44 +262,63 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
       <div style={{ maxWidth: 480, margin: "0 auto", background: "#faf6f4", boxShadow: "0 0 80px rgba(0,0,0,0.08)", position: "relative" }}>
 
         {!opened && (
-          <div style={{ position: "relative", height: 600, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "relative", minHeight: 600, height: "100vh", maxHeight: 760, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
               onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(20,15,12,0.15) 0%, rgba(20,15,12,0.1) 40%, rgba(20,15,12,0.78) 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(20,15,12,0.25) 0%, rgba(20,15,12,0.2) 40%, rgba(20,15,12,0.8) 100%)" }} />
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-              style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 1.5rem" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: "0.8rem" }}>Together with their families</div>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 4px 30px rgba(0,0,0,0.3)" }}>
+            <FallingPetals count={6} />
+
+            <motion.div initial={{ opacity: 0, y: 24, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 1, ease: "easeOut" }}
+              style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 1.5rem", width: "100%" }}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+                style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: "0.8rem" }}>
+                Together with their families
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.7 }}
+                style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 4px 30px rgba(0,0,0,0.4)" }}>
                 {W.bride}
-              </div>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.6rem", color: "#f0d4a8", margin: "2px 0", fontStyle: "italic" }}>&amp;</div>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 4px 30px rgba(0,0,0,0.3)" }}>
+              </motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.6rem", color: "#f0d4a8", margin: "2px 0", fontStyle: "italic" }}>
+                &amp;
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7 }}
+                style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2.6rem,9vw,4rem)", color: "#fff", fontStyle: "italic", lineHeight: 1.05, textShadow: "0 4px 30px rgba(0,0,0,0.4)" }}>
                 {W.groom}
-              </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 8 }}>
+              </motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}
+                style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 10, letterSpacing: "0.03em" }}>
                 {W.dateDisplay} · {W.venue}
-              </div>
+              </motion.div>
 
               <motion.button
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95 }}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
                 onClick={handleEnter}
                 style={{
-                  marginTop: 28, padding: "13px 32px", borderRadius: 100, border: "1px solid rgba(255,255,255,0.4)",
-                  background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", color: "#fff",
+                  marginTop: 30, padding: "14px 34px", borderRadius: 100, border: "1px solid rgba(255,255,255,0.45)",
+                  background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", color: "#fff",
                   fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", cursor: "pointer",
                   fontFamily: "'Inter',sans-serif", fontWeight: 500,
+                  animation: "pulse-ring 2.5s ease infinite",
                 }}>
                 Open Invitation →
               </motion.button>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 10, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}
+                style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", marginTop: 12, letterSpacing: "0.05em" }}>
+                🎵 Tap to begin — with music
+              </motion.div>
             </motion.div>
 
-            <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, zIndex: 4 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
+              style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, zIndex: 4 }}>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>Scroll</div>
-            </div>
+              <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}
+                style={{ width: 1, height: 18, background: "linear-gradient(to bottom, rgba(255,255,255,0.5), transparent)" }} />
+            </motion.div>
           </div>
         )}
 
