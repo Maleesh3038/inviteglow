@@ -608,7 +608,7 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
                   <div key={d.label} style={{ textAlign: "center" }}>
                     <div style={{
                       width: 56, height: 56, borderRadius: "50%", margin: "0 auto 8px",
-                      background: `radial-gradient(circle at 35% 35%, ${GOLD_LIGHT}, ${GOLD})`,
+                      background: `radial-gradient(circle at 35% 35%, ${GOLD_LIGHT}, ${PRIMARY_LIGHT})`,
                       display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
                       boxShadow: "0 4px 14px rgba(212,168,67,0.3)",
                     }}>{d.icon}</div>
@@ -629,7 +629,7 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
               <MandalaSection eyebrow="Find Us" title="The Venue" id="location" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
                 <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
                   <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }} style={{ background: "#fff", borderRadius: 18, padding: 22, textAlign: "center", border: `1px solid ${PRIMARY_LIGHT}33`, boxShadow: "0 6px 20px rgba(74,16,16,0.08)" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD_LIGHT},${PRIMARY_LIGHT})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#3a1010", marginBottom: 4 }}>{W.venue}</div>
                     <div style={{ fontSize: 11, color: "#9a7050", marginBottom: 14 }}>{W.venueAddress}</div>
                     <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700 }}>Tap to View on Maps →</div>
