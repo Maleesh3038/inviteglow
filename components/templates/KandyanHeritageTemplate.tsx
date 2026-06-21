@@ -8,11 +8,12 @@ const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
-const RED = "#7a1f1f"
-const RED_DARK = "#4a1010"
-const GOLD = "#d4a843"
-const GOLD_LIGHT = "#f0d488"
-const CREAM = "#fdf6e8"
+const RED = "#9a4220"
+const RED_DARK = "#4a1f0f"
+const GOLD = "#d4923f"
+const GOLD_LIGHT = "#f0c878"
+const CREAM = "#fbf0dc"
+const TEXTURE_BG = "/images/temple-texture.png"
 
 // ── Decorative corner ornament (used throughout for the temple-art feel) ──
 function CornerOrnament({ flip }: { flip?: boolean }) {
@@ -75,7 +76,11 @@ function TempleDoors({
         transition={{ duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
         style={{
           position: "absolute", top: 0, left: 0, width: "50%", height: "100%",
-          background: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 60%, #2a0a0a 100%)`,
+          backgroundColor: RED,
+          backgroundImage: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 60%, #2a0a0a 100%), url(${TEXTURE_BG})`,
+          backgroundSize: "cover, 220px 220px",
+          backgroundBlendMode: "normal, multiply",
+          backgroundRepeat: "no-repeat, repeat",
           transformOrigin: "left center", transformStyle: "preserve-3d",
           zIndex: 5, borderRight: `2px solid ${GOLD}`,
           boxShadow: "8px 0 30px rgba(0,0,0,0.5)",
@@ -90,7 +95,11 @@ function TempleDoors({
         transition={{ duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
         style={{
           position: "absolute", top: 0, right: 0, width: "50%", height: "100%",
-          background: `linear-gradient(225deg, ${RED} 0%, ${RED_DARK} 60%, #2a0a0a 100%)`,
+          backgroundColor: RED,
+          backgroundImage: `linear-gradient(225deg, ${RED} 0%, ${RED_DARK} 60%, #2a0a0a 100%), url(${TEXTURE_BG})`,
+          backgroundSize: "cover, 220px 220px",
+          backgroundBlendMode: "normal, multiply",
+          backgroundRepeat: "no-repeat, repeat",
           transformOrigin: "right center", transformStyle: "preserve-3d",
           zIndex: 5, borderLeft: `2px solid ${GOLD}`,
           boxShadow: "-8px 0 30px rgba(0,0,0,0.5)",
@@ -426,7 +435,11 @@ function MandalaSection({
 
       {/* Arch-top frame */}
       <div style={{
-        background: dark ? RED_DARK : CREAM,
+        backgroundColor: dark ? RED_DARK : CREAM,
+        backgroundImage: `url(${TEXTURE_BG})`,
+        backgroundSize: "260px 260px",
+        backgroundBlendMode: dark ? "multiply" : "soft-light",
+        backgroundRepeat: "repeat",
         borderRadius: 26,
         border: `1px solid ${GOLD}44`,
         padding: "1.8rem 1.4rem",
@@ -494,7 +507,14 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
   }
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: RED_DARK }}>
+    <div style={{
+      fontFamily: "'Inter',sans-serif", minHeight: "100vh",
+      backgroundColor: RED_DARK,
+      backgroundImage: `url(${TEXTURE_BG})`,
+      backgroundSize: "320px 320px",
+      backgroundBlendMode: "multiply",
+      backgroundRepeat: "repeat",
+    }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
@@ -659,7 +679,14 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
             </MandalaSection>
 
             {/* Footer */}
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: RED_DARK }}>
+            <div style={{
+              padding: "2rem 1.5rem", textAlign: "center",
+              backgroundColor: RED_DARK,
+              backgroundImage: `url(${TEXTURE_BG})`,
+              backgroundSize: "320px 320px",
+              backgroundBlendMode: "multiply",
+              backgroundRepeat: "repeat",
+            }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: GOLD_LIGHT, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: `${GOLD}66` }}>inviteglow.com · Digital Wedding Invitations</div>
             </div>
