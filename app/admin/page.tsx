@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase, Couple } from '@/lib/supabase'
 
 const TEMPLATES = [
-  { id: 'floral-romance', name: 'Floral Romance' },
-  { id: 'cinematic-gold', name: 'Cinematic Gold' },
-  { id: 'kandyan-heritage', name: 'Kandyan Heritage' },
-  { id: 'garden-minimal', name: 'Garden Minimal' },
+  { id: 'floral-romance', name: 'Floral Romance (Pink)' },
+  { id: 'elegant-photo', name: 'Elegant Photo Hero' },
+  { id: 'cinematic-gold', name: 'Cinematic Gold (Coming Soon)' },
+  { id: 'kandyan-heritage', name: 'Kandyan Heritage (Coming Soon)' },
 ]
 
 const BUCKET = 'wedding-photos'
