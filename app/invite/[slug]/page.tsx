@@ -5,6 +5,7 @@ import { supabase, Couple } from '@/lib/supabase'
 import FloralRomanceTemplate from '@/components/templates/FloralRomanceTemplate'
 import ElegantPhotoTemplate from '@/components/templates/ElegantPhotoTemplate'
 import CinematicGoldTemplate from '@/components/templates/CinematicGoldTemplate'
+import KandyanHeritageTemplate from '@/components/templates/KandyanHeritageTemplate'
 
 export default function InvitePage() {
   const params = useParams()
@@ -48,8 +49,7 @@ export default function InvitePage() {
     case 'cinematic-gold':
       return <CinematicGoldTemplate couple={couple} />
     case 'kandyan-heritage':
-      // Not built yet — falls back to floral for now
-      return <FloralRomanceTemplate couple={couple} />
+      return <KandyanHeritageTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
