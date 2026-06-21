@@ -85,7 +85,7 @@ function MusicPlayerUI({ title, artist, audioRef }: { title: string; artist: str
   }
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#faf6f4", borderRadius: 14, padding: 16 }}>
-      <div style={{ width: 48, height: 48, borderRadius: 10, background: "linear-gradient(135deg,#c9a06e,#8a6a3e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none", borderRadius: playing ? "50%" : 10 }}>🎵</div>
+      <div style={{ width: 48, height: 48, borderRadius: playing ? "50%" : 10, background: "linear-gradient(135deg,#c9a06e,#8a6a3e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: "#2d2424" }}>{title}</div>
         <div style={{ fontSize: 11, color: "#a89888", marginTop: 2 }}>{artist}</div>
