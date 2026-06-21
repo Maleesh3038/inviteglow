@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
@@ -368,6 +368,64 @@ function SeatFinder({ seats }: { seats: Record<string, string> }) {
   )
 }
 
+// ── Timeline Node: a single stop on the connected vertical golden spine ──
+// Alternates content slightly left/right of the centre line, each anchored
+// by a small glowing node where it touches the spine. Side is derived from
+// a stable per-instance id (via useId) rather than a module-level counter,
+// so it works correctly across multiple mounts/StrictMode re-renders.
+function TimelineNode({
+  icon, children, id, noPadding, isLast,
+}: { icon: string; children: React.ReactNode; id?: string; noPadding?: boolean; isLast?: boolean }) {
+  const reactId = useId()
+  // Derive a stable 0/1 from the id's char codes so alternating sides stay consistent
+  const hash = reactId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+  const isRight = hash % 2 === 0
+
+  return (
+    <motion.div
+      id={id}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.5 }}
+      style={{ position: "relative", marginBottom: isLast ? 0 : 28, paddingBottom: isLast ? 32 : 0 }}
+    >
+      {/* Node marker on the central spine */}
+      <div style={{
+        position: "absolute", left: "50%", top: 4, transform: "translate(-50%,-50%)",
+        width: 34, height: 34, borderRadius: "50%",
+        background: "radial-gradient(circle at 35% 35%, #f0d488, #9a6a1e)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 14, zIndex: 2, boxShadow: "0 0 0 5px #1a1208, 0 0 16px rgba(232,196,104,0.4)",
+      }}>
+        {icon}
+      </div>
+
+      {/* Short connector from spine to card */}
+      <div style={{
+        position: "absolute", top: 4, height: 1,
+        left: isRight ? "50%" : undefined, right: isRight ? undefined : "50%",
+        width: 18, background: "rgba(232,196,104,0.3)",
+      }} />
+
+      {/* Content card, offset to alternating side, indented to clear the spine + connector */}
+      <div style={{
+        marginTop: 26,
+        paddingLeft: isRight ? 34 : 16,
+        paddingRight: isRight ? 16 : 34,
+      }}>
+        <div style={{
+          background: "#1a1208", borderRadius: 20, border: "1px solid rgba(232,196,104,0.12)",
+          padding: noPadding ? 0 : "1.6rem 1.4rem", overflow: noPadding ? "hidden" : "visible",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
+        }}>
+          {children}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 const sectionCard: React.CSSProperties = { background: "#1a1208", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", border: "1px solid rgba(232,196,104,0.1)" }
 const sectionEyebrow: React.CSSProperties = { fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: "#e8c468", textAlign: "center", marginBottom: 6, fontWeight: 600 }
 const sectionTitle: React.CSSProperties = { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#fff", textAlign: "center", marginBottom: 20 }
@@ -465,19 +523,19 @@ export default function CinematicGoldTemplate({ couple }: { couple: Couple }) {
           </div>
         )}
 
-        {/* ── FULL INVITATION ── */}
+        {/* ── FULL INVITATION — Connected Vertical Timeline Architecture ── */}
         {opened && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} style={{ position: "relative" }}>
             <GoldParticles count={12} />
 
             {/* Hero */}
-            <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
+            <div style={{ position: "relative", height: 380, overflow: "hidden" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(13,9,5,0.2) 0%, rgba(13,9,5,1) 100%)" }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center", zIndex: 4 }}>
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 28px", textAlign: "center", zIndex: 4 }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", marginBottom: "0.6rem" }}>Together with their families</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontStyle: "italic", fontSize: "clamp(2rem,7vw,3rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
                   {W.bride}<span style={{ color: "#e8c468" }}> &amp; </span>{W.groom}
@@ -489,128 +547,143 @@ export default function CinematicGoldTemplate({ couple }: { couple: Couple }) {
               </div>
             </div>
 
-            {/* Formal invite */}
-            {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>With Love</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 2 }}>
-                  {W.brideFamilyName && <><strong style={{ color: "#fff" }}>{W.brideFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <>&amp;<br /></>}
-                  {W.groomFamilyName && <><strong style={{ color: "#fff" }}>{W.groomFamilyName}</strong><br /></>}
-                  request the honour of your presence<br />to celebrate the marriage of their loving children
-                </div>
-              </motion.div>
-            )}
+            {/* ── The connected golden spine begins here ── */}
+            <div style={{ position: "relative", padding: "32px 0 0" }}>
+              {/* Continuous vertical line running through all nodes */}
+              <div style={{
+                position: "absolute", top: 0, bottom: 0, left: "50%", width: 1,
+                background: "linear-gradient(to bottom, transparent, rgba(232,196,104,0.35) 4%, rgba(232,196,104,0.35) 96%, transparent)",
+                zIndex: 0,
+              }} />
 
-            {/* Wedding details strip */}
-            <div style={{ margin: "0 16px 16px", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(232,196,104,0.1)" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(232,196,104,0.08)" }}>
-                {[
-                  { icon: "📅", label: "Date", val: W.dateDisplay, gold: true },
-                  { icon: "⏰", label: "Time", val: `${W.timeDisplay} Onwards` },
-                  { icon: "📍", label: "Venue", val: W.venue },
-                  { icon: "👗", label: "Dress", val: "Formal Attire" },
-                ].map(d => (
-                  <div key={d.label} style={{ background: "#1a1208", padding: 20, textAlign: "center" }}>
-                    <div style={{ fontSize: 16, marginBottom: 6 }}>{d.icon}</div>
-                    <div style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{d.label}</div>
-                    <div style={{
-                      fontSize: d.gold ? 15 : 13, color: d.gold ? "#e8c468" : "#fff", fontWeight: 500, marginTop: 4,
-                      fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal",
-                    }}>{d.val}</div>
+              {/* Node: Formal invite */}
+              {(W.brideFamilyName || W.groomFamilyName) && (
+                <TimelineNode icon="💍">
+                  <div style={sectionEyebrow}>With Love</div>
+                  <div style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 2 }}>
+                    {W.brideFamilyName && <><strong style={{ color: "#fff" }}>{W.brideFamilyName}</strong><br /></>}
+                    {W.brideFamilyName && W.groomFamilyName && <>&amp;<br /></>}
+                    {W.groomFamilyName && <><strong style={{ color: "#fff" }}>{W.groomFamilyName}</strong><br /></>}
+                    request the honour of your presence<br />to celebrate the marriage of their loving children
                   </div>
-                ))}
-              </div>
-            </div>
+                </TimelineNode>
+              )}
 
-            {/* Countdown */}
-            <div style={{ background: "#1a1208", padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, border: "1px solid rgba(232,196,104,0.1)" }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: 16 }}>Counting down to our big day</div>
-              <Countdown targetDate={W.date} />
-            </div>
-
-            {/* Location */}
-            {couple.maps_url && (
-              <motion.div style={sectionCard} id="location" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>Find Us</div>
-                <div style={sectionTitle}>The Venue</div>
-                <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-                  <div style={{ background: "#241a0c", borderRadius: 16, padding: 24, textAlign: "center" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#e8c468,#9a6a1e)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 4 }}>{W.venue}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>{W.venueAddress}</div>
-                    <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#e8c468", fontWeight: 600 }}>Tap to View on Maps →</div>
-                  </div>
-                </a>
-              </motion.div>
-            )}
-
-            {/* Timeline */}
-            {W.timeline.length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>The Celebration</div>
-                <div style={sectionTitle}>Wedding Day Schedule</div>
-                {W.timeline.map((t, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: i < W.timeline.length - 1 ? "1px solid rgba(232,196,104,0.08)" : "none" }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem", color: "#e8c468", minWidth: 70 }}>{t.time}</div>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#e8c468", flexShrink: 0 }} />
-                    <div style={{ fontSize: 13, color: "#fff", fontWeight: 500, flex: 1 }}>{t.event}</div>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-
-            {/* RSVP */}
-            <div id="rsvp" style={{ margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
-              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} />
-            </div>
-
-            {/* Seat finder */}
-            {Object.keys(W.seats).length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>Be Our Guest</div>
-                <div style={sectionTitle}>Find Your Table</div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
-                <SeatFinder seats={W.seats} />
-              </motion.div>
-            )}
-
-            {/* Music */}
-            <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={sectionEyebrow}>Our Song</div>
-              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} />
-            </motion.div>
-
-            {/* Gallery */}
-            {W.gallery.length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>Our Story</div>
-                <div style={sectionTitle}>Moments Together</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: "#241a0c", aspectRatio: i === 0 ? "1/2" : "1/1" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+              {/* Node: Wedding details */}
+              <TimelineNode icon="📋">
+                <div style={sectionEyebrow}>Save the Date</div>
+                <div style={sectionTitle}>Wedding Details</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(232,196,104,0.08)", borderRadius: 14, overflow: "hidden" }}>
+                  {[
+                    { icon: "📅", label: "Date", val: W.dateDisplay, gold: true },
+                    { icon: "⏰", label: "Time", val: `${W.timeDisplay} Onwards` },
+                    { icon: "📍", label: "Venue", val: W.venue },
+                    { icon: "👗", label: "Dress", val: "Formal Attire" },
+                  ].map(d => (
+                    <div key={d.label} style={{ background: "#241a0c", padding: 16, textAlign: "center" }}>
+                      <div style={{ fontSize: 15, marginBottom: 5 }}>{d.icon}</div>
+                      <div style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{d.label}</div>
+                      <div style={{
+                        fontSize: d.gold ? 14 : 12, color: d.gold ? "#e8c468" : "#fff", fontWeight: 500, marginTop: 3,
+                        fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal",
+                      }}>{d.val}</div>
                     </div>
                   ))}
                 </div>
-              </motion.div>
-            )}
+              </TimelineNode>
 
-            {/* Thank You Note */}
-            <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={sectionEyebrow}>A Special Note</div>
-              <div style={sectionTitle}>To Our Lovely Guests</div>
-              <div style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 2 }}>
-                With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
-                <br /><br />
-                Thank you for your love, your blessings, and for being part of our journey.
-              </div>
-              <div style={{ textAlign: "center", marginTop: 16 }}>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>With all our love,</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#e8c468", marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
-              </div>
-            </motion.div>
+              {/* Node: Countdown */}
+              <TimelineNode icon="⏳">
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: 16, textAlign: "center" }}>Counting down to our big day</div>
+                <Countdown targetDate={W.date} />
+              </TimelineNode>
+
+              {/* Node: Location */}
+              {couple.maps_url && (
+                <TimelineNode icon="📍" id="location">
+                  <div style={sectionEyebrow}>Find Us</div>
+                  <div style={sectionTitle}>The Venue</div>
+                  <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ background: "#241a0c", borderRadius: 16, padding: 22, textAlign: "center" }}>
+                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#e8c468,#9a6a1e)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 16 }}>🗺️</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 4 }}>{W.venue}</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>{W.venueAddress}</div>
+                      <div style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: "#e8c468", fontWeight: 600 }}>Tap to View on Maps →</div>
+                    </div>
+                  </a>
+                </TimelineNode>
+              )}
+
+              {/* Node: Day schedule (the timeline events themselves become sub-nodes on the spine) */}
+              {W.timeline.length > 0 && (
+                <TimelineNode icon="🗓️">
+                  <div style={sectionEyebrow}>The Celebration</div>
+                  <div style={sectionTitle}>Wedding Day Schedule</div>
+                  <div style={{ position: "relative" }}>
+                    <div style={{ position: "absolute", left: 5, top: 6, bottom: 6, width: 1, background: "rgba(232,196,104,0.2)" }} />
+                    {W.timeline.map((t, i) => (
+                      <div key={i} style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 16, padding: "10px 0 10px 22px" }}>
+                        <div style={{ position: "absolute", left: 1, top: 16, width: 9, height: 9, borderRadius: "50%", background: "#e8c468", border: "2px solid #1a1208" }} />
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", color: "#e8c468", minWidth: 64 }}>{t.time}</div>
+                        <div style={{ fontSize: 13, color: "#fff", fontWeight: 500, flex: 1 }}>{t.event}</div>
+                      </div>
+                    ))}
+                  </div>
+                </TimelineNode>
+              )}
+
+              {/* Node: RSVP */}
+              <TimelineNode icon="✉️" id="rsvp" noPadding>
+                <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} />
+              </TimelineNode>
+
+              {/* Node: Seat finder */}
+              {Object.keys(W.seats).length > 0 && (
+                <TimelineNode icon="🪑">
+                  <div style={sectionEyebrow}>Be Our Guest</div>
+                  <div style={sectionTitle}>Find Your Table</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
+                  <SeatFinder seats={W.seats} />
+                </TimelineNode>
+              )}
+
+              {/* Node: Music */}
+              <TimelineNode icon="🎵">
+                <div style={sectionEyebrow}>Our Song</div>
+                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} />
+              </TimelineNode>
+
+              {/* Node: Gallery */}
+              {W.gallery.length > 0 && (
+                <TimelineNode icon="📷">
+                  <div style={sectionEyebrow}>Our Story</div>
+                  <div style={sectionTitle}>Moments Together</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {W.gallery.map((src, i) => (
+                      <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: "#241a0c", aspectRatio: i === 0 ? "1/2" : "1/1" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+                      </div>
+                    ))}
+                  </div>
+                </TimelineNode>
+              )}
+
+              {/* Node: Thank you (final node on the spine) */}
+              <TimelineNode icon="🤍" isLast>
+                <div style={sectionEyebrow}>A Special Note</div>
+                <div style={sectionTitle}>To Our Lovely Guests</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 2 }}>
+                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
+                  <br /><br />
+                  Thank you for your love, your blessings, and for being part of our journey.
+                </div>
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#e8c468", marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                </div>
+              </TimelineNode>
+            </div>
 
             {/* Footer */}
             <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#0d0905" }}>
