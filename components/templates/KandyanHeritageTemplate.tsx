@@ -257,7 +257,7 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
   const handleDecline = () => { if (name.trim()) save("no", null, 1) }
   const handleCountNext = () => { if (askDrinking) setStep("drinking"); else save("yes", null, guestCount) }
 
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${GOLD}33`, background: "#2a0d0d", color: "#fff", fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 12, border: `1px solid ${GOLD}33`, background: "#2a0d0d", color: "#fff", fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
 
   return (
     <div style={{ padding: "0.4rem" }}>
@@ -268,10 +268,10 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
         <>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button onClick={handleAccept} style={{ padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, color: RED_DARK, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Accept</button>
-            <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handleAccept} style={{ padding: 13, borderRadius: 12, background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, color: RED_DARK, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, boxShadow: "0 4px 14px rgba(212,168,67,0.35)" }}>✓ Accept</motion.button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 12, background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>
               {saving ? "..." : "✗ Decline"}
-            </button>
+            </motion.button>
           </div>
         </>
       )}
@@ -284,9 +284,9 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
             <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.8rem", color: "#fff", minWidth: 40, textAlign: "center" }}>{guestCount}</div>
             <button onClick={() => setGuestCount(c => Math.min(20, c + 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${GOLD}22`, color: GOLD_LIGHT, border: "none", cursor: "pointer", fontSize: 16 }}>+</button>
           </div>
-          <button onClick={handleCountNext} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, color: RED_DARK, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleCountNext} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 12, background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, color: RED_DARK, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1, boxShadow: "0 4px 14px rgba(212,168,67,0.35)" }}>
             {saving ? "..." : "Continue →"}
-          </button>
+          </motion.button>
         </motion.div>
       )}
 
@@ -294,8 +294,8 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 14, textAlign: "center" }}>Will you be having alcohol?</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${GOLD}1a`, color: GOLD_LIGHT, border: `1px solid ${GOLD}55`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</button>
-            <button onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${GOLD}1a`, color: GOLD_LIGHT, border: `1px solid ${GOLD}55`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 12, background: `${GOLD}1a`, color: GOLD_LIGHT, border: `1px solid ${GOLD}55`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</motion.button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 12, background: `${GOLD}1a`, color: GOLD_LIGHT, border: `1px solid ${GOLD}55`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</motion.button>
           </div>
         </motion.div>
       )}
@@ -331,8 +331,8 @@ function SeatFinder({ seats }: { seats: Record<string, string> }) {
     <div>
       <div style={{ display: "flex", gap: 10 }}>
         <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()}
-          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${GOLD}33`, background: "#2a0d0d", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
-        <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, color: RED_DARK, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>Search</button>
+          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 12, border: `1px solid ${GOLD}33`, background: "#2a0d0d", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
+        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={search} style={{ padding: "13px 20px", borderRadius: 12, background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, color: RED_DARK, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, boxShadow: "0 4px 14px rgba(212,168,67,0.3)" }}>Search</motion.button>
       </div>
       {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("You") ? GOLD_LIGHT : "rgba(255,255,255,0.5)", fontWeight: res.startsWith("You") ? 600 : 400 }}>{res}</div>}
     </div>
@@ -352,7 +352,7 @@ function MandalaSection({
       {/* Arch-top frame */}
       <div style={{
         background: dark ? RED_DARK : CREAM,
-        borderRadius: "28px 28px 16px 16px",
+        borderRadius: 26,
         border: `1px solid ${GOLD}44`,
         padding: "1.8rem 1.4rem",
         position: "relative",
@@ -433,7 +433,7 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
         input::placeholder { color: rgba(212,168,67,0.35); }
       `}</style>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 100px rgba(0,0,0,0.5)", position: "relative", overflow: "hidden" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 100px rgba(0,0,0,0.55)", position: "relative", overflow: "hidden", borderRadius: 0 }}>
 
         {/* ── TEMPLE DOORS COVER ── */}
         {!opened && (
@@ -520,12 +520,12 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
             {couple.maps_url && (
               <MandalaSection eyebrow="Find Us" title="The Venue" id="location">
                 <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-                  <div style={{ background: "#fff", borderRadius: 16, padding: 22, textAlign: "center", border: `1px solid ${GOLD}33` }}>
+                  <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }} style={{ background: "#fff", borderRadius: 18, padding: 22, textAlign: "center", border: `1px solid ${GOLD}33`, boxShadow: "0 6px 20px rgba(74,16,16,0.08)" }}>
                     <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD_LIGHT},${GOLD})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#3a1010", marginBottom: 4 }}>{W.venue}</div>
                     <div style={{ fontSize: 11, color: "#9a7050", marginBottom: 14 }}>{W.venueAddress}</div>
                     <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: RED, fontWeight: 700 }}>Tap to View on Maps →</div>
-                  </div>
+                  </motion.div>
                 </a>
               </MandalaSection>
             )}
@@ -568,7 +568,7 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
               <MandalaSection eyebrow="Our Story" title="Moments Together">
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 14, overflow: "hidden", background: `${GOLD}22`, aspectRatio: i === 0 ? "1/2" : "1/1", border: `1px solid ${GOLD}33` }}>
+                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 18, overflow: "hidden", background: `${GOLD}22`, aspectRatio: i === 0 ? "1/2" : "1/1", border: `1px solid ${GOLD}33`, boxShadow: "0 4px 16px rgba(74,16,16,0.15)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
                     </div>
