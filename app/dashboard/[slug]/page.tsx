@@ -115,6 +115,7 @@ export default function CoupleDashboard() {
   const declined = rsvps.filter(r => r.response === 'no')
   const drinkingYes = accepted.filter(r => r.drinking === 'yes').length
   const drinkingNo = accepted.filter(r => r.drinking === 'no').length
+  const totalGuests = accepted.reduce((sum, r) => sum + (r.guest_count || 1), 0)
 
   const filteredRsvps = rsvps.filter(r =>
     r.guest_name.toLowerCase().includes(search.toLowerCase())
@@ -137,19 +138,21 @@ export default function CoupleDashboard() {
         </div>
 
         {/* Stats cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)" }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#3d1a2a" }}>{rsvps.length}</div>
-            <div style={{ fontSize: 11, color: "#9a7080", marginTop: 4 }}>Total Responses</div>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 12 }}>
           <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)" }}>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#16a34a" }}>{accepted.length}</div>
-            <div style={{ fontSize: 11, color: "#9a7080", marginTop: 4 }}>✓ Accepted</div>
+            <div style={{ fontSize: 11, color: "#9a7080", marginTop: 4 }}>✓ RSVPs Accepted</div>
           </div>
           <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)" }}>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#dc2626" }}>{declined.length}</div>
             <div style={{ fontSize: 11, color: "#9a7080", marginTop: 4 }}>✗ Declined</div>
           </div>
+        </div>
+
+        {/* Total guests highlight */}
+        <div style={{ background: "linear-gradient(135deg,#c4607a,#e08090)", borderRadius: 16, padding: "20px 16px", textAlign: "center", marginBottom: 16, boxShadow: "0 4px 20px rgba(196,96,122,0.25)" }}>
+          <div style={{ fontSize: 32, fontWeight: 800, color: "#fff" }}>{totalGuests}</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4, fontWeight: 500 }}>Total Guests Attending (including families)</div>
         </div>
 
         {/* Liquor count cards */}
@@ -208,7 +211,17 @@ export default function CoupleDashboard() {
                   boxShadow: "0 2px 10px rgba(200,120,140,0.06)",
                 }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#3d1a2a" }}>{r.guest_name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#3d1a2a" }}>{r.guest_name}</div>
+                    {r.response === 'yes' && r.guest_count > 1 && (
+                      <div style={{
+                        padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                        background: "#f3e8ff", color: "#7c3aed",
+                      }}>
+                        👥 {r.guest_count}
+                      </div>
+                    )}
+                  </div>
                   <div style={{ fontSize: 11, color: "#c4a0b0", marginTop: 2 }}>
                     {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
                     {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}

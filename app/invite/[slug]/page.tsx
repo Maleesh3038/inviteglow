@@ -126,17 +126,19 @@ function MusicPlayerUI({
 // ── RSVP ──
 function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolean }) {
   const [name, setName] = useState("")
-  const [step, setStep] = useState<"form" | "drinking" | "done">("form")
+  const [guestCount, setGuestCount] = useState(1)
+  const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes")
   const [saving, setSaving] = useState(false)
 
-  const save = async (response: "yes" | "no", drinking: "yes" | "no" | null) => {
+  const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
     setSaving(true)
     const { error } = await supabase.from('rsvps').insert([{
       couple_id: coupleId,
       guest_name: name.trim(),
       response,
       drinking,
+      guest_count: count,
     }])
     setSaving(false)
     if (!error) {
@@ -147,16 +149,20 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
 
   const handleAccept = () => {
     if (!name.trim()) return
-    if (askDrinking) {
-      setStep("drinking")
-    } else {
-      save("yes", null)
-    }
+    setStep("count")
   }
 
   const handleDecline = () => {
     if (!name.trim()) return
-    save("no", null)
+    save("no", null, 1)
+  }
+
+  const handleCountNext = () => {
+    if (askDrinking) {
+      setStep("drinking")
+    } else {
+      save("yes", null, guestCount)
+    }
   }
 
   return (
@@ -181,17 +187,45 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
           </>
         )}
 
-        {step === "drinking" && (
+        {step === "count" && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ fontSize: 14, color: "#3d1a2a", fontWeight: 600, marginBottom: 4 }}>Wonderful, {name}! 🎉</div>
-            <div style={{ fontSize: 12, color: "#9a7080", marginBottom: 16 }}>One quick question before you're confirmed</div>
+            <div style={{ fontSize: 12, color: "#9a7080", marginBottom: 16 }}>How many people will be coming, including yourself?</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 18 }}>
+              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))}
+                style={{ width: 38, height: 38, borderRadius: "50%", background: "#fde8ed", color: "#c4607a", border: "none", cursor: "pointer", fontSize: 18, fontWeight: 600 }}>
+                −
+              </button>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: "#3d1a2a", fontWeight: 600, minWidth: 50, textAlign: "center" }}>
+                {guestCount}
+              </div>
+              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))}
+                style={{ width: 38, height: 38, borderRadius: "50%", background: "#fde8ed", color: "#c4607a", border: "none", cursor: "pointer", fontSize: 18, fontWeight: 600 }}>
+                +
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: "#c4a0b0", marginBottom: 16 }}>
+              {guestCount === 1 ? "Just yourself" : `Yourself + ${guestCount - 1} ${guestCount - 1 === 1 ? "guest" : "guests"}`}
+            </div>
+            <button onClick={handleCountNext} disabled={saving} style={{
+              width: "100%", padding: 13, borderRadius: 10, background: "linear-gradient(135deg,#c4607a,#e08090)",
+              color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1,
+            }}>
+              {saving ? "..." : "Continue →"}
+            </button>
+          </motion.div>
+        )}
+
+        {step === "drinking" && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div style={{ fontSize: 12, color: "#9a7080", marginBottom: 16 }}>One last quick question before you're confirmed</div>
             <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "#c4a0b0", marginBottom: 10, textAlign: "left" }}>Will you be having alcohol?</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => save("yes", "yes")} disabled={saving}
+              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving}
                 style={{ padding: 13, borderRadius: 10, background: "#fde8ed", color: "#c4607a", border: "1.5px solid #f0c0cc", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1 }}>
                 🍷 Yes, please
               </button>
-              <button onClick={() => save("yes", "no")} disabled={saving}
+              <button onClick={() => save("yes", "no", guestCount)} disabled={saving}
                 style={{ padding: 13, borderRadius: 10, background: "#fde8ed", color: "#c4607a", border: "1.5px solid #f0c0cc", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1 }}>
                 🥤 No, thanks
               </button>
@@ -206,7 +240,9 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
               {finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}
             </div>
             <div style={{ fontSize: 12, color: "#9a7080" }}>
-              {finalResponse === "yes" ? "We can't wait to celebrate with you!" : "Thank you for letting us know."}
+              {finalResponse === "yes"
+                ? (guestCount > 1 ? `We've noted your party of ${guestCount} — we can't wait to celebrate with you all!` : "We can't wait to celebrate with you!")
+                : "Thank you for letting us know."}
             </div>
           </motion.div>
         )}
