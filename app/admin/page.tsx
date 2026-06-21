@@ -5,7 +5,7 @@ import { supabase, Couple } from '@/lib/supabase'
 const TEMPLATES = [
   { id: 'floral-romance', name: 'Floral Romance (Pink)' },
   { id: 'elegant-photo', name: 'Elegant Photo Hero' },
-  { id: 'cinematic-gold', name: 'Cinematic Gold (Coming Soon)' },
+  { id: 'cinematic-gold', name: 'Cinematic Gold (Scratch to Reveal)' },
   { id: 'kandyan-heritage', name: 'Kandyan Heritage (Coming Soon)' },
 ]
 
