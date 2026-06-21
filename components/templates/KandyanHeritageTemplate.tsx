@@ -181,6 +181,89 @@ function Countdown({ targetDate }: { targetDate: string }) {
 }
 
 // ── Floating lotus petals ambient ──
+// ── Animated Kandyan Dancer Silhouette ──
+// A simplified, stylised silhouette of a traditional Kandyan (Ves) dancer
+// with a drummer beside them, both gently animated to suggest movement —
+// limbs swaying, the drummer's arm striking the gata bera in rhythm.
+function KandyanDancer() {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 18, height: 130, margin: "0 auto" }}>
+      {/* Drummer with gata bera */}
+      <svg width="58" height="110" viewBox="0 0 58 110" style={{ opacity: 0.85 }}>
+        {/* Body */}
+        <ellipse cx="22" cy="20" rx="7" ry="8" fill={GOLD_LIGHT} />
+        <path d="M14 30 Q14 50 18 70 L26 70 Q30 50 30 30 Z" fill={GOLD} />
+        {/* Drum (gata bera) */}
+        <motion.g
+          animate={{ rotate: [-3, 3, -3] }}
+          transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+          style={{ transformOrigin: "30px 55px" }}>
+          <ellipse cx="38" cy="55" rx="14" ry="9" fill="none" stroke={GOLD} strokeWidth="2" />
+          <ellipse cx="38" cy="55" rx="14" ry="9" fill={`${GOLD}33`} />
+        </motion.g>
+        {/* Striking arm */}
+        <motion.path
+          d="M22 36 Q30 42 38 48"
+          stroke={GOLD_LIGHT} strokeWidth="3.5" strokeLinecap="round" fill="none"
+          animate={{ d: ["M22 36 Q30 42 38 48", "M22 36 Q34 38 42 44", "M22 36 Q30 42 38 48"] }}
+          transition={{ repeat: Infinity, duration: 0.7, ease: "easeInOut" }}
+        />
+        {/* Legs */}
+        <path d="M18 70 L15 95 M26 70 L29 95" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
+      </svg>
+
+      {/* Main Ves dancer */}
+      <svg width="80" height="130" viewBox="0 0 80 130" style={{ opacity: 0.9 }}>
+        {/* Headdress (ves thattuwa) */}
+        <motion.g
+          animate={{ rotate: [-2, 2, -2] }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+          style={{ transformOrigin: "40px 14px" }}>
+          <path d="M28 14 L40 0 L52 14 Z" fill={GOLD_LIGHT} />
+          <circle cx="40" cy="2" r="3" fill={GOLD_LIGHT} />
+          <ellipse cx="40" cy="16" rx="14" ry="5" fill={GOLD} />
+        </motion.g>
+        {/* Head */}
+        <ellipse cx="40" cy="22" rx="7" ry="8" fill={GOLD_LIGHT} />
+        {/* Torso with ornate chest piece */}
+        <path d="M30 32 Q40 28 50 32 L52 56 Q40 62 28 56 Z" fill={GOLD} />
+        <circle cx="40" cy="42" r="5" fill="none" stroke={GOLD_LIGHT} strokeWidth="1.5" />
+
+        {/* Left arm — sweeping gesture */}
+        <motion.path
+          stroke={GOLD_LIGHT} strokeWidth="4" strokeLinecap="round" fill="none"
+          animate={{ d: ["M30 36 Q14 30 6 18", "M30 36 Q16 44 8 56", "M30 36 Q14 30 6 18"] }}
+          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+        />
+        {/* Right arm — sweeping gesture, opposite phase */}
+        <motion.path
+          stroke={GOLD_LIGHT} strokeWidth="4" strokeLinecap="round" fill="none"
+          animate={{ d: ["M50 36 Q66 44 74 56", "M50 36 Q64 30 72 18", "M50 36 Q66 44 74 56"] }}
+          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+        />
+
+        {/* Skirt (diya reddha style flare) */}
+        <motion.path
+          fill={`${GOLD}55`}
+          animate={{ d: [
+            "M28 56 Q40 64 52 56 L60 100 Q40 112 20 100 Z",
+            "M28 56 Q40 64 52 56 L66 98 Q40 114 14 98 Z",
+            "M28 56 Q40 64 52 56 L60 100 Q40 112 20 100 Z",
+          ] }}
+          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+        />
+
+        {/* Legs */}
+        <path d="M34 98 L30 124 M46 98 L50 124" stroke={GOLD} strokeWidth="3" strokeLinecap="round" />
+
+        {/* Anklets (silanbu) sparkle hint */}
+        <circle cx="30" cy="124" r="2" fill={GOLD_LIGHT} />
+        <circle cx="50" cy="124" r="2" fill={GOLD_LIGHT} />
+      </svg>
+    </div>
+  )
+}
+
 function LotusPetals({ count = 10 }: { count?: number }) {
   const petals = ['🪷', '✿']
   const [items, setItems] = useState<{ id: number; left: number; emoji: string; duration: number; delay: number; size: number }[]>([])
@@ -318,6 +401,81 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
 }
 
 // ── Seat Finder ──
+// ── Photo Book — click arrows to "turn pages" through the gallery ──
+function PhotoBook({ photos }: { photos: string[] }) {
+  const [index, setIndex] = useState(0)
+  const [direction, setDirection] = useState<1 | -1>(1)
+
+  const goNext = () => { setDirection(1); setIndex(i => (i + 1) % photos.length) }
+  const goPrev = () => { setDirection(-1); setIndex(i => (i - 1 + photos.length) % photos.length) }
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{
+        position: "relative", width: "100%", aspectRatio: "4/5", borderRadius: 18, overflow: "hidden",
+        background: RED_DARK, boxShadow: "0 12px 36px rgba(74,16,16,0.3), inset 0 0 0 1px rgba(212,168,67,0.25)",
+        perspective: 1200,
+      }}>
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <motion.div
+            key={index}
+            custom={direction}
+            initial={{ rotateY: direction === 1 ? 90 : -90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            exit={{ rotateY: direction === 1 ? -90 : 90, opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photos[index]} alt={`Memory ${index + 1}`}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={e => (e.currentTarget.style.display = "none")} />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Page-edge shadow lines for a "book" feel */}
+        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 8px 0 16px -8px rgba(0,0,0,0.35), inset -8px 0 16px -8px rgba(0,0,0,0.35)", pointerEvents: "none" }} />
+
+        {/* Nav arrows */}
+        <button onClick={goPrev} aria-label="Previous photo" style={{
+          position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+          width: 38, height: 38, borderRadius: "50%", border: "none", cursor: "pointer",
+          background: "rgba(0,0,0,0.4)", color: GOLD_LIGHT, fontSize: 16, backdropFilter: "blur(4px)",
+        }}>‹</button>
+        <button onClick={goNext} aria-label="Next photo" style={{
+          position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+          width: 38, height: 38, borderRadius: "50%", border: "none", cursor: "pointer",
+          background: "rgba(0,0,0,0.4)", color: GOLD_LIGHT, fontSize: 16, backdropFilter: "blur(4px)",
+        }}>›</button>
+
+        {/* Page counter */}
+        <div style={{
+          position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
+          fontSize: 10, letterSpacing: "0.15em", color: GOLD_LIGHT, background: "rgba(0,0,0,0.4)",
+          padding: "4px 12px", borderRadius: 100, backdropFilter: "blur(4px)",
+        }}>
+          {index + 1} / {photos.length}
+        </div>
+      </div>
+
+      {/* Thumbnail dots */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 14 }}>
+        {photos.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => { setDirection(i > index ? 1 : -1); setIndex(i) }}
+            aria-label={`Go to photo ${i + 1}`}
+            style={{
+              width: i === index ? 18 : 6, height: 6, borderRadius: 100, border: "none", cursor: "pointer",
+              background: i === index ? GOLD : `${GOLD}44`, transition: "all 0.3s",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function SeatFinder({ seats }: { seats: Record<string, string> }) {
   const [q, setQ] = useState("")
   const [res, setRes] = useState("")
@@ -471,6 +629,16 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
               </div>
             </div>
 
+            {/* Kandyan Dancer — a living cultural welcome right after the doors open */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }}
+              style={{ background: RED_DARK, padding: "20px 0 8px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: GOLD, marginBottom: 8, fontWeight: 600 }}>
+                A Traditional Welcome
+              </div>
+              <KandyanDancer />
+            </motion.div>
+
             {/* Lotus strip divider */}
             <div style={{ background: CREAM, padding: "14px 0", textAlign: "center" }}>
               <LotusDivider />
@@ -563,17 +731,10 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
               <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} />
             </MandalaSection>
 
-            {/* Gallery */}
+            {/* Gallery — photo book viewer */}
             {W.gallery.length > 0 && (
               <MandalaSection eyebrow="Our Story" title="Moments Together">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 18, overflow: "hidden", background: `${GOLD}22`, aspectRatio: i === 0 ? "1/2" : "1/1", border: `1px solid ${GOLD}33`, boxShadow: "0 4px 16px rgba(74,16,16,0.15)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
-                    </div>
-                  ))}
-                </div>
+                <PhotoBook photos={W.gallery} />
               </MandalaSection>
             )}
 
