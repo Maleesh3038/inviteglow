@@ -8,8 +8,17 @@ const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
+// ── Default palette for this template — overridden by couple.custom_colors ──
+const DEFAULT_PALETTE = {
+  primary: "#c9a06e",
+  primaryLight: "#e8d5a0",
+  dark: "#2d2424",
+  cream: "#faf6f4",
+  muted: "#a89888",
+}
+
 // ── Countdown — circular style ──
-function Countdown({ targetDate }: { targetDate: string }) {
+function Countdown({ targetDate, primary, primaryLight, dark, muted }: { targetDate: string; primary: string; primaryLight: string; dark: string; muted: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
     const tick = () => {
@@ -31,10 +40,10 @@ function Countdown({ targetDate }: { targetDate: string }) {
     <div style={{ display: "flex", justifyContent: "center", gap: 14, maxWidth: 380, margin: "0 auto" }}>
       {[["Days", t.d], ["Hours", t.h], ["Mins", t.m], ["Secs", t.s]].map(([l, v]) => (
         <div key={l} style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fff", border: "1.5px solid #e8d4c0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px", boxShadow: "0 4px 16px rgba(201,160,110,0.1)" }}>
-            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.3rem", fontWeight: 500, color: "#2d2424" }}>{v}</span>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fff", border: `1.5px solid ${primaryLight}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px", boxShadow: `0 4px 16px ${primary}1a` }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.3rem", fontWeight: 500, color: dark }}>{v}</span>
           </div>
-          <span style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: "#a89888" }}>{l}</span>
+          <span style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: muted }}>{l}</span>
         </div>
       ))}
     </div>
@@ -63,7 +72,7 @@ function FallingPetals({ count = 10 }: { count?: number }) {
 }
 
 // ── Music Player ──
-function MusicPlayerUI({ title, artist, audioRef }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null> }) {
+function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string }) {
   const [playing, setPlaying] = useState(false)
   const [prog, setProg] = useState(0)
   useEffect(() => {
@@ -85,15 +94,15 @@ function MusicPlayerUI({ title, artist, audioRef }: { title: string; artist: str
   }
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#faf6f4", borderRadius: 16, padding: 16 }}>
-      <div style={{ width: 48, height: 48, borderRadius: playing ? "50%" : 10, background: "linear-gradient(135deg,#c9a06e,#8a6a3e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
+      <div style={{ width: 48, height: 48, borderRadius: playing ? "50%" : 10, background: `linear-gradient(135deg,${primary},${dark})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#2d2424" }}>{title}</div>
-        <div style={{ fontSize: 11, color: "#a89888", marginTop: 2 }}>{artist}</div>
-        <div style={{ height: 3, background: "rgba(201,160,110,0.15)", borderRadius: 100, marginTop: 8 }}>
-          <div style={{ height: "100%", width: `${prog}%`, background: "linear-gradient(to right,#c9a06e,#e8d5a0)", borderRadius: 100, transition: "width 0.3s" }} />
+        <div style={{ fontSize: 14, fontWeight: 600, color: dark }}>{title}</div>
+        <div style={{ fontSize: 11, color: muted, marginTop: 2 }}>{artist}</div>
+        <div style={{ height: 3, background: `${primary}26`, borderRadius: 100, marginTop: 8 }}>
+          <div style={{ height: "100%", width: `${prog}%`, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100, transition: "width 0.3s" }} />
         </div>
       </div>
-      <button onClick={toggle} style={{ width: 40, height: 40, borderRadius: "50%", background: "#2d2424", border: "none", color: "#fff", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>
+      <button onClick={toggle} style={{ width: 40, height: 40, borderRadius: "50%", background: dark, border: "none", color: "#fff", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>
         {playing ? "⏸" : "▶"}
       </button>
     </div>
@@ -101,7 +110,7 @@ function MusicPlayerUI({ title, artist, audioRef }: { title: string; artist: str
 }
 
 // ── RSVP — name → guest count → drinking (optional) → done ──
-function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolean }) {
+function RSVP({ coupleId, askDrinking, primary }: { coupleId: string; askDrinking: boolean; primary: string }) {
   const [name, setName] = useState("")
   const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
@@ -122,7 +131,7 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
 
   return (
     <div style={{ background: "#2d2424", padding: "40px 1.5rem", textAlign: "center" }}>
-      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c9a06e", marginBottom: 8, fontWeight: 600 }}>Be Our Guest</div>
+      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 8, fontWeight: 600 }}>Be Our Guest</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: "#fff", marginBottom: 8 }}>Will You Join Us?</div>
       <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>It only takes a few seconds to RSVP</div>
       <div style={{ background: "#3a302f", borderRadius: 16, padding: 24, maxWidth: 380, margin: "0 auto" }}>
@@ -131,7 +140,7 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
           <>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={handleAccept} style={{ padding: 13, borderRadius: 10, background: "#c9a06e", color: "#2d2424", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Accept</button>
+              <button onClick={handleAccept} style={{ padding: 13, borderRadius: 10, background: primary, color: "#2d2424", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Accept</button>
               <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>
                 {saving ? "..." : "✗ Decline"}
               </button>
@@ -143,11 +152,11 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ fontSize: 13, color: "#fff", fontWeight: 600, marginBottom: 16 }}>How many people, including you?</div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }}>
-              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", color: "#c9a06e", border: "none", cursor: "pointer", fontSize: 16 }}>−</button>
+              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>−</button>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.8rem", color: "#fff", minWidth: 40 }}>{guestCount}</div>
-              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", color: "#c9a06e", border: "none", cursor: "pointer", fontSize: 16 }}>+</button>
+              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>+</button>
             </div>
-            <button onClick={handleCountNext} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: "#c9a06e", color: "#2d2424", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
+            <button onClick={handleCountNext} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: primary, color: "#2d2424", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
               {saving ? "..." : "Continue →"}
             </button>
           </motion.div>
@@ -157,8 +166,8 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 14 }}>Will you be having alcohol?</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "rgba(201,160,110,0.15)", color: "#c9a06e", border: "1px solid rgba(201,160,110,0.3)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</button>
-              <button onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "rgba(201,160,110,0.15)", color: "#c9a06e", border: "1px solid rgba(201,160,110,0.3)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</button>
+              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}26`, color: primary, border: `1px solid ${primary}4d`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</button>
+              <button onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}26`, color: primary, border: `1px solid ${primary}4d`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</button>
             </div>
           </motion.div>
         )}
@@ -166,7 +175,7 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
         {step === "done" && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🎉" : "💙"}</div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: "#c9a06e", marginBottom: 4 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>
               {finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
@@ -182,7 +191,7 @@ function RSVP({ coupleId, askDrinking }: { coupleId: string; askDrinking: boolea
 }
 
 // ── Seat Finder ──
-function SeatFinder({ seats }: { seats: Record<string, string> }) {
+function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<string, string>; primary: string; dark: string; cream: string; muted: string }) {
   const [q, setQ] = useState("")
   const [res, setRes] = useState("")
   const search = () => {
@@ -195,21 +204,28 @@ function SeatFinder({ seats }: { seats: Record<string, string> }) {
     <div>
       <div style={{ display: "flex", gap: 10 }}>
         <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()}
-          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: "1px solid #e8e0d8", background: "#faf6f4", color: "#2d2424", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
-        <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: "#2d2424", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Search</button>
+          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
+        <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: dark, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Search</button>
       </div>
-      {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("You") ? "#c9a06e" : "#a89888", fontWeight: res.startsWith("You") ? 600 : 400 }}>{res}</div>}
+      {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("You") ? primary : muted, fontWeight: res.startsWith("You") ? 600 : 400 }}>{res}</div>}
     </div>
   )
 }
 
-const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }
-const sectionEyebrow: React.CSSProperties = { fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: "#c9a06e", textAlign: "center", marginBottom: 6, fontWeight: 600 }
-const sectionTitle: React.CSSProperties = { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#2d2424", textAlign: "center", marginBottom: 20 }
+const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 24px rgba(0,0,0,0.05)" }
+const sectionEyebrowStyle = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
+const sectionTitleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
 export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useState<{ current: HTMLAudioElement | null }>({ current: null })[0]
+
+  // ── Resolve this couple's colors: their custom_colors override the default palette ──
+  const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
+  const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
+  const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
+  const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
+  const MUTED = DEFAULT_PALETTE.muted
 
   useEffect(() => {
     const songUrl = couple.song_url || DEFAULT_SONG_URL
@@ -260,7 +276,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
         input::placeholder { color: #a89888; }
       `}</style>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", background: "#faf6f4", boxShadow: "0 0 100px rgba(0,0,0,0.12)", position: "relative", borderRadius: 0, overflow: "hidden" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 100px rgba(0,0,0,0.12)", position: "relative", borderRadius: 0, overflow: "hidden" }}>
 
         {!opened && (
           <div style={{ position: "relative", minHeight: 600, height: "100vh", maxHeight: 760, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse 80% 60% at 30% 20%, #2a1810 0%, #14100e 45%, #0a0807 100%)" }}>
@@ -377,8 +393,8 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
                   {W.bride}<span style={{ color: "#f0d4a8" }}> &amp; </span>{W.groom}
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                  <a href="#rsvp" style={{ background: "#2d2424", color: "#fff", borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.1em", textDecoration: "none", fontWeight: 500 }}>RSVP</a>
-                  <a href="#location" style={{ background: "rgba(255,255,255,0.9)", color: "#2d2424", borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.1em", textDecoration: "none", fontWeight: 500 }}>Location</a>
+                  <a href="#rsvp" style={{ background: DARK, color: "#fff", borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.1em", textDecoration: "none", fontWeight: 500 }}>RSVP</a>
+                  <a href="#location" style={{ background: "rgba(255,255,255,0.9)", color: DARK, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.1em", textDecoration: "none", fontWeight: 500 }}>Location</a>
                 </div>
               </div>
             </div>
@@ -386,11 +402,11 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             {/* Formal invite */}
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>With Love</div>
+                <div style={sectionEyebrowStyle(PRIMARY)}>With Love</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: "#6a5a4a", lineHeight: 2 }}>
-                  {W.brideFamilyName && <><strong style={{ color: "#2d2424" }}>{W.brideFamilyName}</strong><br /></>}
+                  {W.brideFamilyName && <><strong style={{ color: DARK }}>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>&amp;<br /></>}
-                  {W.groomFamilyName && <><strong style={{ color: "#2d2424" }}>{W.groomFamilyName}</strong><br /></>}
+                  {W.groomFamilyName && <><strong style={{ color: DARK }}>{W.groomFamilyName}</strong><br /></>}
                   request the honour of your presence<br />to celebrate the marriage of their loving children
                 </div>
               </motion.div>
@@ -419,21 +435,21 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#2d2424", marginBottom: 16 }}>Counting down to our big day</div>
-              <Countdown targetDate={W.date} />
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: DARK, marginBottom: 16 }}>Counting down to our big day</div>
+              <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
             </div>
 
             {/* Location */}
             {couple.maps_url && (
               <motion.div style={sectionCard} id="location" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>Find Us</div>
-                <div style={sectionTitle}>The Venue</div>
+                <div style={sectionEyebrowStyle(PRIMARY)}>Find Us</div>
+                <div style={sectionTitleStyle(DARK)}>The Venue</div>
                 <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-                  <div style={{ background: "#faf6f4", borderRadius: 16, padding: 24, textAlign: "center" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#2d2424", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#2d2424", marginBottom: 4 }}>{W.venue}</div>
-                    <div style={{ fontSize: 11, color: "#a89888", marginBottom: 14 }}>{W.venueAddress}</div>
-                    <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#c9a06e", fontWeight: 600 }}>Tap to View on Maps →</div>
+                  <div style={{ background: CREAM, borderRadius: 16, padding: 24, textAlign: "center" }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: DARK, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: DARK, marginBottom: 4 }}>{W.venue}</div>
+                    <div style={{ fontSize: 11, color: MUTED, marginBottom: 14 }}>{W.venueAddress}</div>
+                    <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, fontWeight: 600 }}>Tap to View on Maps →</div>
                   </div>
                 </a>
               </motion.div>
@@ -442,13 +458,13 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             {/* Timeline */}
             {W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>The Celebration</div>
-                <div style={sectionTitle}>Wedding Day Schedule</div>
+                <div style={sectionEyebrowStyle(PRIMARY)}>The Celebration</div>
+                <div style={sectionTitleStyle(DARK)}>Wedding Day Schedule</div>
                 {W.timeline.map((t, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: i < W.timeline.length - 1 ? "1px solid #f3e9e3" : "none" }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem", color: "#c9a06e", minWidth: 70 }}>{t.time}</div>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2d2424", flexShrink: 0 }} />
-                    <div style={{ fontSize: 13, color: "#2d2424", fontWeight: 500, flex: 1 }}>{t.event}</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem", color: PRIMARY, minWidth: 70 }}>{t.time}</div>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: DARK, flexShrink: 0 }} />
+                    <div style={{ fontSize: 13, color: DARK, fontWeight: 500, flex: 1 }}>{t.event}</div>
                   </div>
                 ))}
               </motion.div>
@@ -456,30 +472,30 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
 
             {/* RSVP */}
             <div id="rsvp" style={{ margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
-              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} />
+              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} />
             </div>
 
             {/* Seat finder */}
             {Object.keys(W.seats).length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>Be Our Guest</div>
-                <div style={sectionTitle}>Find Your Table</div>
-                <div style={{ fontSize: 13, color: "#a89888", marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
-                <SeatFinder seats={W.seats} />
+                <div style={sectionEyebrowStyle(PRIMARY)}>Be Our Guest</div>
+                <div style={sectionTitleStyle(DARK)}>Find Your Table</div>
+                <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
+                <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
 
             {/* Music */}
             <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={sectionEyebrow}>Our Song</div>
-              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} />
+              <div style={sectionEyebrowStyle(PRIMARY)}>Our Song</div>
+              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
             </motion.div>
 
             {/* Gallery */}
             {W.gallery.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow}>Our Story</div>
-                <div style={sectionTitle}>Moments Together</div>
+                <div style={sectionEyebrowStyle(PRIMARY)}>Our Story</div>
+                <div style={sectionTitleStyle(DARK)}>Moments Together</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {W.gallery.map((src, i) => (
                     <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: "#e8ddd4", aspectRatio: i === 0 ? "1/2" : "1/1" }}>
@@ -493,22 +509,22 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
 
             {/* Thank You Note */}
             <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={sectionEyebrow}>A Special Note</div>
-              <div style={sectionTitle}>To Our Lovely Guests</div>
+              <div style={sectionEyebrowStyle(PRIMARY)}>A Special Note</div>
+              <div style={sectionTitleStyle(DARK)}>To Our Lovely Guests</div>
               <div style={{ textAlign: "center", fontSize: 13, color: "#6a5a4a", lineHeight: 2 }}>
                 With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
                 <br /><br />
                 Thank you for your love, your blessings, and for being part of our journey.
               </div>
               <div style={{ textAlign: "center", marginTop: 16 }}>
-                <div style={{ fontSize: 11, color: "#a89888" }}>With all our love,</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#c9a06e", marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                <div style={{ fontSize: 11, color: MUTED }}>With all our love,</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
               </div>
             </motion.div>
 
             {/* Footer */}
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#faf6f4" }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: "#c9a06e", marginBottom: 4 }}>InviteGlow</div>
+            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: CREAM }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c4b5a8" }}>inviteglow.com · Digital Wedding Invitations</div>
             </div>
           </motion.div>
