@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const templates = [
   {
@@ -117,6 +117,7 @@ const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }
 
 export default function MarketingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", background: "#fffaf9", color: "#2d1515", overflowX: "hidden" }}>
@@ -356,7 +357,7 @@ export default function MarketingPage() {
                     </div>
                   ))}
                 </div>
-                <a href={`https://wa.me/94763038555?text=Hi InviteGlow! I'm interested in the ${p.name} package for my wedding.`} target="_blank" rel="noopener noreferrer"
+                <a href={`https://wa.me/94770024484?text=Hi InviteGlow! I'm interested in the ${p.name} package for my wedding.`} target="_blank" rel="noopener noreferrer"
                   style={{
                     display: "block", textAlign: "center", padding: "14px", borderRadius: 12,
                     fontSize: 14, fontWeight: 600, textDecoration: "none", transition: "all 0.2s",
@@ -377,7 +378,7 @@ export default function MarketingPage() {
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ maxWidth: 600, margin: "0 auto" }}>
           <h2 style={{ fontSize: "clamp(1.8rem,4vw,2.8rem)", fontWeight: 800, color: "#fff", marginBottom: 16, letterSpacing: "-0.03em" }}>Ready to Create Your Perfect Invitation?</h2>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, marginBottom: 32, lineHeight: 1.8 }}>Start your invitation in minutes. No credit card required to get started.</p>
-          <a href={`https://wa.me/94763038555?text=Hi InviteGlow! I want to create a digital wedding invitation.`} target="_blank" rel="noopener noreferrer"
+          <a href={`https://wa.me/94770024484?text=Hi InviteGlow! I want to create a digital wedding invitation.`} target="_blank" rel="noopener noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "16px 36px", borderRadius: 100, fontSize: 15, fontWeight: 600, color: "#fff", textDecoration: "none", background: "#25d366", boxShadow: "0 8px 24px rgba(37,211,102,0.4)" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
             Start Creating Now
@@ -389,21 +390,65 @@ export default function MarketingPage() {
       <footer style={{ background: "#1a0808", padding: "48px 24px 32px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 32, justifyContent: "space-between", marginBottom: 40 }}>
-            <div style={{ maxWidth: 260 }}>
+            <div style={{ maxWidth: 280 }}>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: "#f9d0dc", marginBottom: 12 }}>InviteGlow</div>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.8 }}>Trusted digital invitations for weddings, birthdays, and celebrations across Sri Lanka. Beautiful, fast, and eco-friendly.</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.8, marginBottom: 20 }}>Trusted digital invitations for weddings, birthdays, and celebrations across Sri Lanka. Beautiful, fast, and eco-friendly.</p>
+
+              {/* Social icons */}
+              <div style={{ display: "flex", gap: 10 }}>
+                {[
+                  {
+                    name: "TikTok", url: "https://www.tiktok.com/@invitvei1w8?_r=1&_t=ZS-97Pna3Wpoqi",
+                    svg: <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.49 1.52V7.47s-1.99.1-3.43-1.65z"/>,
+                  },
+                  {
+                    name: "Facebook", url: "https://www.facebook.com/share/1BRY9WDrey/?mibextid=wwXIfr",
+                    svg: <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.87h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94z"/>,
+                  },
+                  {
+                    name: "Instagram", url: "https://www.instagram.com/invite__glow?igsh=ZjB1bGFqbHJ3NjR1&utm_source=qr",
+                    svg: <path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.15-3.23 1.66-4.77 4.92-4.92 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07c-4.35.2-6.78 2.62-6.98 6.98C.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zm0 10.16A4 4 0 1 1 16 12a4 4 0 0 1-4 4zm6.41-10.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/>,
+                  },
+                  {
+                    name: "WhatsApp", url: "https://wa.me/94770024484",
+                    svg: <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/>,
+                  },
+                  {
+                    name: "Email", url: "mailto:inviteglow.info@gmail.com",
+                    svg: <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>,
+                  },
+                ].map(s => (
+                  <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.name}
+                    style={{
+                      width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "rgba(255,255,255,0.06)", transition: "background 0.2s",
+                    }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(249,208,220,0.18)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.6)">{s.svg}</svg>
+                  </a>
+                ))}
+              </div>
             </div>
+
             {[
-              { title: "Product", links: ["Features", "Themes", "Pricing", "How it Works"] },
-              { title: "Support", links: ["WhatsApp Us", "FAQ", "Contact"] },
+              { title: "Product", links: [{ label: "Features", href: "#features" }, { label: "Themes", href: "#themes" }, { label: "Pricing", href: "#pricing" }, { label: "How it Works", href: "#" }] },
+              {
+                title: "Support", links: [
+                  { label: "WhatsApp Us", href: "https://wa.me/94770024484?text=Hi InviteGlow! I have a question." },
+                  { label: "Email Us", href: "mailto:inviteglow.info@gmail.com" },
+                  { label: "Contact", href: "#contact" },
+                ]
+              },
             ].map(col => (
               <div key={col.title}>
                 <div style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 16, fontWeight: 600 }}>{col.title}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {col.links.map(l => (
-                    <a key={l} href="#" style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", textDecoration: "none" }}
+                    <a key={l.label} href={l.href} target={l.href.startsWith("http") || l.href.startsWith("mailto") ? "_blank" : undefined} rel="noopener noreferrer"
+                      style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", textDecoration: "none" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#f9d0dc"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)"}>{l}</a>
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)"}>{l.label}</a>
                   ))}
                 </div>
               </div>
@@ -416,14 +461,72 @@ export default function MarketingPage() {
         </div>
       </footer>
 
-      {/* WhatsApp floating button */}
-      <motion.a href="https://wa.me/94763038555?text=Hi InviteGlow! I'm interested in creating a digital wedding invitation." target="_blank" rel="noopener noreferrer"
-        initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2 }}
-        whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
-        style={{ position: "fixed", bottom: 24, right: 24, zIndex: 999, display: "flex", alignItems: "center", gap: 10, background: "#25d366", color: "#fff", padding: "12px 20px", borderRadius: 100, textDecoration: "none", fontWeight: 600, fontSize: 14, boxShadow: "0 8px 32px rgba(37,211,102,0.4)", fontFamily: "'Inter',sans-serif" }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-        Chat with us
-      </motion.a>
+      {/* WhatsApp quick-chat widget */}
+      <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 999, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
+        <AnimatePresence>
+          {chatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                width: 290, background: "#fff", borderRadius: 18, overflow: "hidden",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.25)", fontFamily: "'Inter',sans-serif",
+              }}>
+              {/* Header */}
+              <div style={{ background: "#25d366", padding: "16px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>💬</div>
+                <div>
+                  <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>InviteGlow</div>
+                  <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 11 }}>Typically replies within minutes</div>
+                </div>
+                <button onClick={() => setChatOpen(false)} aria-label="Close chat"
+                  style={{ marginLeft: "auto", background: "transparent", border: "none", color: "rgba(255,255,255,0.8)", fontSize: 18, cursor: "pointer", lineHeight: 1 }}>
+                  ✕
+                </button>
+              </div>
+
+              {/* Quick replies */}
+              <div style={{ padding: "16px 16px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Hi there! 👋 What can we help you with?</div>
+                {[
+                  { label: "💰 Pricing & Packages", text: "Hi InviteGlow! I'd like to know more about your pricing and packages." },
+                  { label: "🎨 Choose a Template", text: "Hi InviteGlow! I'd like help choosing a wedding invitation template." },
+                  { label: "📝 Start My Order", text: "Hi InviteGlow! I'm ready to start creating my digital wedding invitation." },
+                  { label: "🛟 General Support", text: "Hi InviteGlow! I have a question about my invitation." },
+                ].map(opt => (
+                  <a key={opt.label} href={`https://wa.me/94770024484?text=${encodeURIComponent(opt.text)}`} target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: "block", padding: "11px 14px", borderRadius: 10, border: "1px solid #e2e8f0",
+                      fontSize: 13, color: "#1e293b", textDecoration: "none", fontWeight: 500, transition: "all 0.15s",
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#f0fdf4"; (e.currentTarget as HTMLElement).style.borderColor = "#25d366" }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.borderColor = "#e2e8f0" }}>
+                    {opt.label}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Toggle bubble */}
+        <motion.button
+          onClick={() => setChatOpen(!chatOpen)}
+          initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2 }}
+          whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
+          style={{
+            display: "flex", alignItems: "center", gap: 10, background: "#25d366", color: "#fff",
+            padding: "12px 20px", borderRadius: 100, border: "none", cursor: "pointer",
+            fontWeight: 600, fontSize: 14, boxShadow: "0 8px 32px rgba(37,211,102,0.4)", fontFamily: "'Inter',sans-serif",
+          }}>
+          {chatOpen ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+          )}
+          {chatOpen ? "Close" : "Chat with us"}
+        </motion.button>
+      </div>
 
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
