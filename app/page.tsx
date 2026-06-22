@@ -46,7 +46,7 @@ const templates = [
     bg: "linear-gradient(135deg,#f4ece0,#e8d5b8)",
     emoji: "🤍",
     color: "#a8895a",
-    photo: "/images/hero-elegant.jpg",
+    photo: "/images/hero-elegant.png",
     demoUrl: "https://www.inviteglow.com/invite/sheneli-kevin",
   },
 ]
