@@ -52,7 +52,14 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [venue, setVenue] = useState(couple.venue || '')
   const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
   const [mapsUrl, setMapsUrl] = useState(couple.maps_url || '')
-  const [showSeating, setShowSeating] = useState(couple.show_seating || false)
+
+  // Seat rows: editable list derived from couple.seats (name -> table).
+  // show_seating itself is admin-controlled only — the couple can rearrange
+  // names/tables here, but whether the finder is visible on the public
+  // invitation is set in the admin panel, not here.
+  const [seatRows, setSeatRows] = useState<{ id: number; name: string; table: string }[]>(
+    Object.entries(couple.seats || {}).map(([name, table], i) => ({ id: i, name, table }))
+  )
 
   const templateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
   const [colors, setColors] = useState<Required<CoupleColors>>({
@@ -67,8 +74,6 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [message, setMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const hasSeats = Object.keys(couple.seats || {}).length > 0
-
   const handlePhotoUpload = async (file: File) => {
     setUploading(true)
     const url = await uploadToStorage(file, 'couple')
@@ -76,9 +81,28 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
     if (url) setPhoto(url)
   }
 
+  const updateSeatRow = (id: number, field: 'name' | 'table', value: string) => {
+    setSeatRows(rows => rows.map(r => r.id === id ? { ...r, [field]: value } : r))
+  }
+  const addSeatRow = () => {
+    const newId = seatRows.length ? Math.max(...seatRows.map(r => r.id)) + 1 : 0
+    setSeatRows(rows => [...rows, { id: newId, name: '', table: '' }])
+  }
+  const removeSeatRow = (id: number) => {
+    setSeatRows(rows => rows.filter(r => r.id !== id))
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setMessage('')
+
+    const seatsObj: Record<string, string> = {}
+    seatRows.forEach(r => {
+      const name = r.name.trim()
+      const table = r.table.trim()
+      if (name && table) seatsObj[name.toLowerCase()] = table
+    })
+
     const { error } = await supabase.from('couples').update({
       couple_photo: photo || null,
       wedding_date: weddingDate,
@@ -86,7 +110,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       venue_address: venueAddress || null,
       maps_url: mapsUrl || null,
       custom_colors: colors,
-      show_seating: showSeating,
+      seats: seatsObj,
     }).eq('id', couple.id)
 
     setSaving(false)
@@ -145,31 +169,53 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         <input style={inputStyle} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/?q=..." />
       </div>
 
-      {/* Seat finder on/off — couple's own copy of the admin toggle */}
-      <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>🪑 Show Seat Finder on Invitation</div>
-          <div style={{ fontSize: 11, color: '#4338ca' }}>
-            {hasSeats
-              ? 'Guests will be able to search their name on your invitation to find their table.'
-              : 'No seat assignments have been added yet — ask InviteGlow to add them, then turn this on.'}
+      {/* Seating — admin turns the public seat finder on/off; here the couple
+          can rearrange or correct names/tables once it's on */}
+      {couple.show_seating && (
+        <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>🪑 Manage Seating</div>
+          <div style={{ fontSize: 11, color: '#4338ca', marginBottom: 14 }}>
+            Guests can search their name on your invitation to find their table. Add, edit, or remove names below.
           </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowSeating(!showSeating)}
-          disabled={!hasSeats}
-          style={{
-            width: 48, height: 28, borderRadius: 100, border: 'none', cursor: hasSeats ? 'pointer' : 'not-allowed', flexShrink: 0,
-            background: showSeating && hasSeats ? '#4f46e5' : '#e2e8f0', position: 'relative', transition: 'background 0.2s',
-            opacity: hasSeats ? 1 : 0.6,
+
+          <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+            {seatRows.map(row => (
+              <div key={row.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  value={row.name}
+                  onChange={e => updateSeatRow(row.id, 'name', e.target.value)}
+                  placeholder="Guest name"
+                  style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }}
+                />
+                <input
+                  value={row.table}
+                  onChange={e => updateSeatRow(row.id, 'table', e.target.value)}
+                  placeholder="Table 3"
+                  style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSeatRow(row.id)}
+                  aria-label="Remove guest"
+                  style={{
+                    width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                    background: '#fee2e2', color: '#dc2626', fontSize: 13, flexShrink: 0,
+                  }}>✕</button>
+              </div>
+            ))}
+            {seatRows.length === 0 && (
+              <div style={{ fontSize: 12, color: '#6b6098', fontStyle: 'italic' }}>No guests added yet.</div>
+            )}
+          </div>
+
+          <button type="button" onClick={addSeatRow} style={{
+            padding: '8px 16px', borderRadius: 8, border: '1px solid #c7d2fe',
+            background: '#fff', cursor: 'pointer', fontSize: 13, color: '#4338ca', fontWeight: 500,
           }}>
-          <div style={{
-            width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3,
-            left: showSeating && hasSeats ? 23 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-          }} />
-        </button>
-      </div>
+            + Add Guest
+          </button>
+        </div>
+      )}
 
       {/* Color customisation */}
       <div style={{ background: '#fdf8ec', borderRadius: 12, padding: 16, marginTop: 8 }}>
