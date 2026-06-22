@@ -11,6 +11,7 @@ const templates = [
     bg: "linear-gradient(135deg,#fde8e8,#f9d0dc)",
     emoji: "🌸",
     color: "#c4607a",
+    photo: "/images/hero-floral.png",
     demoUrl: "https://www.inviteglow.com/invite/kavindi-malina",
   },
   {
@@ -22,6 +23,7 @@ const templates = [
     emoji: "✨",
     color: "#c9a96e",
     dark: true,
+    photo: "/images/hero-cinematic.png",
     demoUrl: "https://www.inviteglow.com/invite/imesha-pasan",
   },
   {
@@ -33,6 +35,7 @@ const templates = [
     emoji: "🪷",
     color: "#e8a060",
     dark: true,
+    photo: "/images/hero-kandyan.png",
     demoUrl: "https://www.inviteglow.com/invite/irudaka-sachini",
   },
   {
@@ -43,6 +46,7 @@ const templates = [
     bg: "linear-gradient(135deg,#f0f7f0,#e0f0e0)",
     emoji: "🌿",
     color: "#4a8a5a",
+    photo: "/images/hero-elegant.jpg",
     demoUrl: "https://www.inviteglow.com/invite/sheneli-kevin",
   },
 ]
@@ -243,13 +247,18 @@ export default function MarketingPage() {
                 whileHover={{ y: -6, boxShadow: "0 20px 50px rgba(196,96,122,0.15)" }}
                 onClick={() => window.open(t.demoUrl, '_blank')}
                 style={{ background: "#fff", borderRadius: 20, overflow: "hidden", border: "1px solid #f0ddd8", boxShadow: "0 4px 20px rgba(196,96,122,0.07)", cursor: "pointer", transition: "all 0.3s" }}>
-                <div style={{ height: 160, background: t.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                <div style={{ height: 160, position: "relative", overflow: "hidden" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={t.photo} alt={t.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.65) 100%)" }} />
                   {t.tag && (
-                    <div style={{ position: "absolute", top: 12, right: 12, background: t.color, color: "#fff", borderRadius: 100, padding: "3px 10px", fontSize: 10, fontWeight: 600 }}>{t.tag}</div>
+                    <div style={{ position: "absolute", top: 12, right: 12, background: t.color, color: "#fff", borderRadius: 100, padding: "3px 10px", fontSize: 10, fontWeight: 600, zIndex: 2 }}>{t.tag}</div>
                   )}
-                  <div style={{ fontSize: 40, marginBottom: 8 }}>{t.emoji}</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.4rem", color: t.dark ? "#fff" : "#3d1a2a" }}>Live Demo</div>
-                  <div style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: t.dark ? "rgba(255,255,255,0.5)" : "rgba(45,21,21,0.4)", marginTop: 4 }}>Tap to Open ↗</div>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 16px", zIndex: 2, textAlign: "center" }}>
+                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.3rem", color: "#fff" }}>Live Demo</div>
+                    <div style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginTop: 2 }}>Tap to Open ↗</div>
+                  </div>
                 </div>
                 <div style={{ padding: "16px 20px 20px" }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: "#2d1515", marginBottom: 6 }}>{t.name}</h3>
