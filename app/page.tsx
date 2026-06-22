@@ -11,6 +11,7 @@ const templates = [
     bg: "linear-gradient(135deg,#fde8e8,#f9d0dc)",
     emoji: "🌸",
     color: "#c4607a",
+    demoUrl: "https://www.inviteglow.com/invite/kavindi-malina",
   },
   {
     id: 2,
@@ -21,6 +22,7 @@ const templates = [
     emoji: "✨",
     color: "#c9a96e",
     dark: true,
+    demoUrl: "https://www.inviteglow.com/invite/imesha-pasan",
   },
   {
     id: 3,
@@ -31,6 +33,7 @@ const templates = [
     emoji: "🪷",
     color: "#e8a060",
     dark: true,
+    demoUrl: "https://www.inviteglow.com/invite/irudaka-sachini",
   },
   {
     id: 4,
@@ -40,6 +43,7 @@ const templates = [
     bg: "linear-gradient(135deg,#f0f7f0,#e0f0e0)",
     emoji: "🌿",
     color: "#4a8a5a",
+    demoUrl: "https://www.inviteglow.com/invite/sheneli-kevin",
   },
 ]
 
@@ -237,21 +241,24 @@ export default function MarketingPage() {
             {templates.map((t, i) => (
               <motion.div key={t.id} variants={fadeUp} initial="hidden" whileInView="visible" transition={{ delay: i * 0.1 }} viewport={{ once: true }}
                 whileHover={{ y: -6, boxShadow: "0 20px 50px rgba(196,96,122,0.15)" }}
+                onClick={() => window.open(t.demoUrl, '_blank')}
                 style={{ background: "#fff", borderRadius: 20, overflow: "hidden", border: "1px solid #f0ddd8", boxShadow: "0 4px 20px rgba(196,96,122,0.07)", cursor: "pointer", transition: "all 0.3s" }}>
                 <div style={{ height: 160, background: t.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
                   {t.tag && (
                     <div style={{ position: "absolute", top: 12, right: 12, background: t.color, color: "#fff", borderRadius: 100, padding: "3px 10px", fontSize: 10, fontWeight: 600 }}>{t.tag}</div>
                   )}
                   <div style={{ fontSize: 40, marginBottom: 8 }}>{t.emoji}</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.4rem", color: t.dark ? "#fff" : "#3d1a2a" }}>Preview</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.4rem", color: t.dark ? "#fff" : "#3d1a2a" }}>Live Demo</div>
+                  <div style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: t.dark ? "rgba(255,255,255,0.5)" : "rgba(45,21,21,0.4)", marginTop: 4 }}>Tap to Open ↗</div>
                 </div>
                 <div style={{ padding: "16px 20px 20px" }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: "#2d1515", marginBottom: 6 }}>{t.name}</h3>
                   <p style={{ fontSize: 13, color: "#9a7080", lineHeight: 1.6, marginBottom: 14 }}>{t.desc}</p>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: t.color }}>
-                    Preview Theme
+                  <a href={t.demoUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: t.color, textDecoration: "none" }}>
+                    View Live Demo
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                  </div>
+                  </a>
                 </div>
               </motion.div>
             ))}
