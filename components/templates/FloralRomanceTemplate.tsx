@@ -532,7 +532,7 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {Object.keys(W.seats).length > 0 && (
+            {couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={cardStyle()} id="seat" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Be Our Guest</div>
                 <div style={titleStyle(DARK)}>Find Your Table</div>

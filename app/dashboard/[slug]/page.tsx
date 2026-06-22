@@ -25,6 +25,16 @@ async function uploadToStorage(file: File, folder: string): Promise<string | nul
   return data.publicUrl
 }
 
+// Look up a guest's table by fuzzy-matching their RSVP name against the
+// couple's seats map (same matching style as the public SeatFinder widgets:
+// substring match either direction, case-insensitive).
+function findSeatForGuest(guestName: string, seats: Record<string, string>): string | null {
+  const query = guestName.trim().toLowerCase()
+  if (!query) return null
+  const found = Object.keys(seats || {}).find(k => query.includes(k) || k.includes(query))
+  return found ? seats[found] : null
+}
+
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '11px 14px', borderRadius: 10,
   border: '1px solid #e2d8c8', fontSize: 14, outline: 'none',
@@ -42,6 +52,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [venue, setVenue] = useState(couple.venue || '')
   const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
   const [mapsUrl, setMapsUrl] = useState(couple.maps_url || '')
+  const [showSeating, setShowSeating] = useState(couple.show_seating || false)
 
   const templateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
   const [colors, setColors] = useState<Required<CoupleColors>>({
@@ -55,6 +66,8 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const hasSeats = Object.keys(couple.seats || {}).length > 0
 
   const handlePhotoUpload = async (file: File) => {
     setUploading(true)
@@ -73,6 +86,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       venue_address: venueAddress || null,
       maps_url: mapsUrl || null,
       custom_colors: colors,
+      show_seating: showSeating,
     }).eq('id', couple.id)
 
     setSaving(false)
@@ -129,6 +143,32 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       <div style={fieldWrap}>
         <label style={labelStyle}>Google Maps URL</label>
         <input style={inputStyle} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/?q=..." />
+      </div>
+
+      {/* Seat finder on/off — couple's own copy of the admin toggle */}
+      <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>🪑 Show Seat Finder on Invitation</div>
+          <div style={{ fontSize: 11, color: '#4338ca' }}>
+            {hasSeats
+              ? 'Guests will be able to search their name on your invitation to find their table.'
+              : 'No seat assignments have been added yet — ask InviteGlow to add them, then turn this on.'}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowSeating(!showSeating)}
+          disabled={!hasSeats}
+          style={{
+            width: 48, height: 28, borderRadius: 100, border: 'none', cursor: hasSeats ? 'pointer' : 'not-allowed', flexShrink: 0,
+            background: showSeating && hasSeats ? '#4f46e5' : '#e2e8f0', position: 'relative', transition: 'background 0.2s',
+            opacity: hasSeats ? 1 : 0.6,
+          }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3,
+            left: showSeating && hasSeats ? 23 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          }} />
+        </button>
       </div>
 
       {/* Color customisation */}
@@ -409,47 +449,55 @@ export default function CoupleDashboard() {
           </div>
         ) : (
           <div style={{ display: "grid", gap: 10 }}>
-            {filteredRsvps.map((r, i) => (
-              <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                style={{
-                  background: "#fff", borderRadius: 12, padding: "14px 18px",
-                  display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10,
-                  boxShadow: "0 2px 10px rgba(200,120,140,0.06)",
-                }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#3d1a2a" }}>{r.guest_name}</div>
-                    {r.response === 'yes' && r.guest_count > 1 && (
-                      <div style={{ padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
-                        👥 {r.guest_count}
+            {filteredRsvps.map((r, i) => {
+              const seatTable = r.response === 'yes' ? findSeatForGuest(r.guest_name, couple.seats) : null
+              return (
+                <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                  style={{
+                    background: "#fff", borderRadius: 12, padding: "14px 18px",
+                    display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10,
+                    boxShadow: "0 2px 10px rgba(200,120,140,0.06)",
+                  }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#3d1a2a" }}>{r.guest_name}</div>
+                      {r.response === 'yes' && r.guest_count > 1 && (
+                        <div style={{ padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
+                          👥 {r.guest_count}
+                        </div>
+                      )}
+                      {seatTable && (
+                        <div style={{ padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#eef2ff", color: "#4f46e5" }}>
+                          🪑 {seatTable}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#c4a0b0", marginTop: 2 }}>
+                      {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
+                      {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {r.response === 'yes' && r.drinking && (
+                      <div style={{
+                        padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                        background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
+                        color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
+                      }}>
+                        {r.drinking === 'yes' ? '🍷 Drinks' : '🥤 No Drinks'}
                       </div>
                     )}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#c4a0b0", marginTop: 2 }}>
-                    {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
-                    {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {r.response === 'yes' && r.drinking && (
                     <div style={{
-                      padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                      background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
-                      color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
+                      padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
+                      background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
+                      color: r.response === 'yes' ? '#16a34a' : '#dc2626',
                     }}>
-                      {r.drinking === 'yes' ? '🍷 Drinks' : '🥤 No Drinks'}
+                      {r.response === 'yes' ? '✓ Attending' : '✗ Not Attending'}
                     </div>
-                  )}
-                  <div style={{
-                    padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
-                    background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
-                    color: r.response === 'yes' ? '#16a34a' : '#dc2626',
-                  }}>
-                    {r.response === 'yes' ? '✓ Attending' : '✗ Not Attending'}
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </div>
         )}
 

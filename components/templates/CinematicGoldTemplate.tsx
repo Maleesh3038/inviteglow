@@ -670,7 +670,7 @@ export default function CinematicGoldTemplate({ couple }: { couple: Couple }) {
               </TimelineNode>
 
               {/* Node: Seat finder */}
-              {Object.keys(W.seats).length > 0 && (
+              {couple.show_seating && Object.keys(W.seats).length > 0 && (
                 <TimelineNode icon="🪑" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK}>
                   <div style={sectionEyebrowStyle(PRIMARY)}>Be Our Guest</div>
                   <div style={sectionTitleStyle()}>Find Your Table</div>

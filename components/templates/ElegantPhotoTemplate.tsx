@@ -476,7 +476,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             </div>
 
             {/* Seat finder */}
-            {Object.keys(W.seats).length > 0 && (
+            {couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrowStyle(PRIMARY)}>Be Our Guest</div>
                 <div style={sectionTitleStyle(DARK)}>Find Your Table</div>

@@ -34,6 +34,7 @@ export type Couple = {
   seats: Record<string, string>
   pin: string
   ask_drinking: boolean
+  show_seating: boolean
   custom_colors: CoupleColors
   created_at: string
 }

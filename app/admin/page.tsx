@@ -36,6 +36,7 @@ const emptyForm = {
   seats: '',
   pin: '',
   ask_drinking: false,
+  show_seating: false,
 }
 
 const inputStyle: React.CSSProperties = {
@@ -295,6 +296,7 @@ export default function AdminPage() {
       seats: Object.entries(c.seats || {}).map(([k, v]) => `${k} | ${v}`).join('\n'),
       pin: c.pin || generatePin(),
       ask_drinking: c.ask_drinking || false,
+      show_seating: c.show_seating || false,
     })
     setEditing(c.id)
   }
@@ -336,6 +338,7 @@ export default function AdminPage() {
       seats: seatsObj,
       pin: form.pin || generatePin(),
       ask_drinking: form.ask_drinking,
+      show_seating: form.show_seating,
     }
 
     let error
@@ -490,6 +493,26 @@ export default function AdminPage() {
               </button>
             </div>
 
+            {/* Seat assignment on/off toggle */}
+            <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>🪑 Show Seat Finder</div>
+                <div style={{ fontSize: 11, color: '#4338ca' }}>When enabled, guests can search their name on the invitation to find their assigned table. Turn this off if seating hasn't been finalised yet.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, show_seating: !form.show_seating })}
+                style={{
+                  width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                  background: form.show_seating ? '#4f46e5' : '#e2e8f0', position: 'relative', transition: 'background 0.2s',
+                }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3,
+                  left: form.show_seating ? 23 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }} />
+              </button>
+            </div>
+
             {/* Music section */}
             <div style={{ background: '#fdf2f8', borderRadius: 12, padding: 16, marginBottom: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#be185d', marginBottom: 10 }}>🎵 Background Music</div>
@@ -524,6 +547,9 @@ export default function AdminPage() {
               <textarea style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }}
                 placeholder={"amara | Table 3\nsilva | Table 7\nperera | Table 5"}
                 value={form.seats} onChange={e => setForm({ ...form, seats: e.target.value })} />
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+                Tip: turn on "🪑 Show Seat Finder" above once you're ready for guests to see this on the live invitation.
+              </div>
             </div>
 
             {message && <div style={{ marginBottom: 16, fontSize: 14, color: message.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{message}</div>}
@@ -584,6 +610,11 @@ export default function AdminPage() {
                           <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>
                             🔒 PIN: {c.pin || '----'}
                           </span>
+                          {c.show_seating && (
+                            <span style={{ fontSize: 12, color: '#4f46e5', fontWeight: 500 }}>
+                              🪑 Seating On
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

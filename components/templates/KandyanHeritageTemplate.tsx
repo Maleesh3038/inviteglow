@@ -659,7 +659,7 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
             </div>
 
             {/* Seat finder */}
-            {Object.keys(W.seats).length > 0 && (
+            {couple.show_seating && Object.keys(W.seats).length > 0 && (
               <MandalaSection eyebrow="Be Our Guest" title="Find Your Table" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
                 <div style={{ fontSize: 13, color: "#9a7050", marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
                 <SeatFinder seats={W.seats} primaryLight={PRIMARY_LIGHT} dark={DARK} />
