@@ -69,7 +69,7 @@ const steps = [
 const pricing = [
   {
     name: "Starter",
-    price: "3,000",
+    price: "4,000",
     tag: null,
     features: [
       "1 invitation template",
