@@ -7,6 +7,7 @@ const TEMPLATES = [
   { id: 'elegant-photo', name: 'Elegant Photo Hero' },
   { id: 'cinematic-gold', name: 'Cinematic Gold (Scratch to Reveal)' },
   { id: 'kandyan-heritage', name: 'Kandyan Heritage (Temple Doors)' },
+  { id: 'twilight-picnic', name: 'Twilight Picnic (After-Party)' },
 ]
 
 const BUCKET = 'wedding-photos'

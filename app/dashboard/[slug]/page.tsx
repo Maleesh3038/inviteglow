@@ -13,6 +13,7 @@ const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
   'elegant-photo': { primary: '#c9a06e', primaryLight: '#e8d5a0', dark: '#2d2424', cream: '#faf6f4' },
   'cinematic-gold': { primary: '#e8c468', primaryLight: '#f0d488', dark: '#1a1208', cream: '#241a0c' },
   'kandyan-heritage': { primary: '#d4923f', primaryLight: '#f0c878', dark: '#4a1f0f', cream: '#fbf0dc' },
+  'twilight-picnic': { primary: '#f0a868', primaryLight: '#e0849a', dark: '#171c33', cream: '#232a4d' },
   'garden-minimal': { primary: '#4a8a5a', primaryLight: '#a0d8b0', dark: '#1a2e20', cream: '#f0f7f0' },
 }
 
