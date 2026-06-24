@@ -377,6 +377,22 @@ export default function CoupleDashboard() {
   const drinkingNo = accepted.filter(r => r.drinking === 'no').length
   const totalGuests = accepted.reduce((sum, r) => sum + (r.guest_count || 1), 0)
 
+  // Twilight Picnic stores multi-select drinks as a comma-separated string in
+  // the same 'drinking' column (e.g. "Wine,Beer") — a guest picking more than
+  // one option counts toward each. Counted independently of the totalGuests
+  // figure above, which is unaffected by this template difference.
+  const isTwilightPicnic = couple.template === 'twilight-picnic'
+  const drinkCounts = { 'Hard Liquor': 0, 'Wine': 0, 'Beer': 0, 'Non-Alcoholic': 0 }
+  if (isTwilightPicnic) {
+    accepted.forEach(r => {
+      (r.drinking || '').split(',').map(d => d.trim()).forEach(d => {
+        if (d in drinkCounts) drinkCounts[d as keyof typeof drinkCounts]++
+      })
+    })
+  }
+  const accommodationNeeded = accepted.filter(r => r.accommodation === 'needed').length
+  const accommodationNotNeeded = accepted.filter(r => r.accommodation === 'not_needed').length
+
   const filteredRsvps = rsvps.filter(r => {
     if (search && !r.guest_name.toLowerCase().includes(search.toLowerCase())) return false
     if (filterResponse !== 'all' && r.response !== filterResponse) return false
@@ -436,22 +452,56 @@ export default function CoupleDashboard() {
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4, fontWeight: 500 }}>Total Guests Attending (including families)</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }}>🍷</span>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkingYes}</div>
-              <div style={{ fontSize: 10, color: "#9a7080" }}>Drinking Alcohol</div>
+        {isTwilightPicnic ? (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              {([
+                ['🥃', 'Hard Liquor'], ['🍷', 'Wine'], ['🍺', 'Beer'], ['🥤', 'Non-Alcoholic'],
+              ] as const).map(([icon, label]) => (
+                <div key={label} style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  <span style={{ fontSize: 22 }}>{icon}</span>
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkCounts[label]}</div>
+                    <div style={{ fontSize: 10, color: "#9a7080" }}>{label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                <span style={{ fontSize: 22 }}>🏡</span>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{accommodationNeeded}</div>
+                  <div style={{ fontSize: 10, color: "#9a7080" }}>Accommodation Needed</div>
+                </div>
+              </div>
+              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                <span style={{ fontSize: 22 }}>🚗</span>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{accommodationNotNeeded}</div>
+                  <div style={{ fontSize: 10, color: "#9a7080" }}>Not Needed</div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <span style={{ fontSize: 22 }}>🍷</span>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkingYes}</div>
+                <div style={{ fontSize: 10, color: "#9a7080" }}>Drinking Alcohol</div>
+              </div>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <span style={{ fontSize: 22 }}>🥤</span>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkingNo}</div>
+                <div style={{ fontSize: 10, color: "#9a7080" }}>Non-Alcoholic</div>
+              </div>
             </div>
           </div>
-          <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }}>🥤</span>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkingNo}</div>
-              <div style={{ fontSize: 10, color: "#9a7080" }}>Non-Alcoholic</div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Search */}
         <div style={{ marginBottom: 14 }}>
@@ -473,12 +523,14 @@ export default function CoupleDashboard() {
           <div onClick={() => setFilterResponse('yes')} style={pillStyle(filterResponse === 'yes')}>✓ Attending</div>
           <div onClick={() => setFilterResponse('no')} style={pillStyle(filterResponse === 'no')}>✗ Not Attending</div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          <span style={{ fontSize: 11, color: '#9a8d7d', alignSelf: 'center', marginRight: 4 }}>Drinks:</span>
-          <div onClick={() => setFilterDrinking('all')} style={pillStyle(filterDrinking === 'all')}>All</div>
-          <div onClick={() => setFilterDrinking('yes')} style={pillStyle(filterDrinking === 'yes')}>🍷 Yes</div>
-          <div onClick={() => setFilterDrinking('no')} style={pillStyle(filterDrinking === 'no')}>🥤 No</div>
-        </div>
+        {!isTwilightPicnic && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            <span style={{ fontSize: 11, color: '#9a8d7d', alignSelf: 'center', marginRight: 4 }}>Drinks:</span>
+            <div onClick={() => setFilterDrinking('all')} style={pillStyle(filterDrinking === 'all')}>All</div>
+            <div onClick={() => setFilterDrinking('yes')} style={pillStyle(filterDrinking === 'yes')}>🍷 Yes</div>
+            <div onClick={() => setFilterDrinking('no')} style={pillStyle(filterDrinking === 'no')}>🥤 No</div>
+          </div>
+        )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
           <button onClick={loadData} style={{
@@ -525,14 +577,33 @@ export default function CoupleDashboard() {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {r.response === 'yes' && r.drinking && (
-                      <div style={{
-                        padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                        background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
-                        color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
-                      }}>
-                        {r.drinking === 'yes' ? '🍷 Drinks' : '🥤 No Drinks'}
-                      </div>
+                    {isTwilightPicnic ? (
+                      <>
+                        {r.response === 'yes' && r.drinking && (
+                          <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
+                            🥂 {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
+                          </div>
+                        )}
+                        {r.response === 'yes' && r.accommodation && (
+                          <div style={{
+                            padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                            background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
+                            color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
+                          }}>
+                            {r.accommodation === 'needed' ? '🏡 Needs Stay' : '🚗 Sorted'}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      r.response === 'yes' && r.drinking && (
+                        <div style={{
+                          padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                          background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
+                          color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
+                        }}>
+                          {r.drinking === 'yes' ? '🍷 Drinks' : '🥤 No Drinks'}
+                        </div>
+                      )
                     )}
                     <div style={{
                       padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
