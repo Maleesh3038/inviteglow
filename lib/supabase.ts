@@ -46,5 +46,6 @@ export type RSVP = {
   response: 'yes' | 'no'
   drinking: 'yes' | 'no' | null
   guest_count: number
+  accommodation: 'needed' | 'not_needed' | null
   created_at: string
 }
