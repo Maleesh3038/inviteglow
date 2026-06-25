@@ -630,9 +630,9 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                       {v.label}
                     </div>
                     <div title={v.name} style={{
-                      width: "100%", aspectRatio: "1/1", borderRadius: 12, background: "#fff",
-                      overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 8,
-                      boxShadow: `0 4px 14px ${PRIMARY}1a`,
+                      width: "100%", aspectRatio: "1/1", borderRadius: 12, background: CREAM,
+                      overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 10,
+                      boxShadow: `0 4px 14px ${PRIMARY}1a`, border: `1px solid ${PRIMARY}1f`,
                     }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={v.src} alt={v.name}
