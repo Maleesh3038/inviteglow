@@ -9,13 +9,13 @@ const DEFAULT_SONG_TITLE = "Twilight Playlist"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
 // ── Default palette — overridden by couple.custom_colors ──
-// primary: warm amber fairy-light glow · primaryLight: dusty rose ember
-// dark: deep twilight indigo (the page's base) · cream: a lifted indigo for cards
+// primary: warm gold/amber lantern glow · primaryLight: lighter amber highlight
+// dark: near-black base (the page's backbone) · cream: a lifted charcoal for cards
 const DEFAULT_PALETTE = {
-  primary: "#f0a868",
-  primaryLight: "#e0849a",
-  dark: "#171c33",
-  cream: "#232a4d",
+  primary: "#d4a857",
+  primaryLight: "#e8c878",
+  dark: "#0a0806",
+  cream: "#1a1610",
   muted: "rgba(255,255,255,0.45)",
 }
 
@@ -73,33 +73,86 @@ function Countdown({ targetDate, primary, cream }: { targetDate: string; primary
   )
 }
 
-// ── Fairy-light string: the page's signature element. A loose hand-drawn
-// curve with glowing bulbs along it, gently twinkling — strung across the
-// hero like real string lights at a backyard party. ──
-function FairyLightString({ primary, primaryLight }: { primary: string; primaryLight: string }) {
-  const bulbs = [
-    { x: 20, y: 38 }, { x: 75, y: 18 }, { x: 135, y: 44 }, { x: 195, y: 14 },
-    { x: 250, y: 40 }, { x: 305, y: 16 }, { x: 360, y: 42 },
-  ]
-  const path = `M 0 30 Q 40 70 75 18 T 195 14 Q 230 60 250 40 T 360 42 Q 380 50 400 30`
-
+// ── Sky Lanterns: the page's signature element. Paper lanterns with a warm
+// glow inside, drifting slowly upward and swaying side to side — like the
+// reference photo's floating lanterns rising into a black sky. ──
+function SkyLantern({ size, primary, primaryLight, dark }: { size: number; primary: string; primaryLight: string; dark: string }) {
   return (
-    <svg viewBox="0 0 400 80" style={{ width: "100%", display: "block", overflow: "visible" }} preserveAspectRatio="none">
-      <path d={path} stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" fill="none" />
-      {bulbs.map((b, i) => (
-        <g key={i}>
-          <motion.circle
-            cx={b.x} cy={b.y} r="9"
-            fill={i % 2 === 0 ? primary : primaryLight}
-            initial={{ opacity: 0.5 }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2.4 + (i % 3) * 0.4, repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
-            style={{ filter: `drop-shadow(0 0 6px ${i % 2 === 0 ? primary : primaryLight})` }}
-          />
-          <circle cx={b.x} cy={b.y - 9} r="2" fill="rgba(255,255,255,0.5)" />
-        </g>
-      ))}
+    <svg width={size} height={size * 1.3} viewBox="0 0 60 78" style={{ display: "block" }}>
+      {/* Top cap */}
+      <ellipse cx="30" cy="10" rx="14" ry="4" fill={primary} opacity="0.9" />
+      {/* Body */}
+      <path d="M16 10 Q12 40 22 64 L38 64 Q48 40 44 10 Z" fill={`url(#lantern-grad-${size})`} stroke={primary} strokeWidth="1" opacity="0.95" />
+      <defs>
+        <linearGradient id={`lantern-grad-${size}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={primaryLight} />
+          <stop offset="60%" stopColor={primary} />
+          <stop offset="100%" stopColor={dark} />
+        </linearGradient>
+      </defs>
+      {/* Inner glow */}
+      <ellipse cx="30" cy="38" rx="9" ry="14" fill={primaryLight} opacity="0.55" />
+      {/* Bottom flame */}
+      <ellipse cx="30" cy="62" rx="5" ry="7" fill="#fff6d8" opacity="0.85" />
+      <ellipse cx="30" cy="64" rx="3" ry="4" fill="#ffd87a" />
     </svg>
+  )
+}
+
+function SkyLanterns({ count = 9, primary, primaryLight, dark }: { count?: number; primary: string; primaryLight: string; dark: string }) {
+  const [items, setItems] = useState<{ id: number; left: number; size: number; duration: number; delay: number; sway: number }[]>([])
+  useEffect(() => {
+    setItems(Array.from({ length: count }).map((_, i) => ({
+      id: i,
+      left: 4 + Math.random() * 92,
+      size: 22 + Math.random() * 20,
+      duration: 14 + Math.random() * 10,
+      delay: Math.random() * 12,
+      sway: 12 + Math.random() * 16,
+    })))
+  }, [count])
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 1 }}>
+      {items.map(p => (
+        <div key={p.id} style={{
+          position: "absolute", bottom: -120, left: `${p.left}%`,
+          animation: `lantern-rise ${p.duration}s linear ${p.delay}s infinite, lantern-sway ${p.duration / 3}s ease-in-out ${p.delay}s infinite alternate`,
+          opacity: 0.85, filter: `drop-shadow(0 0 10px ${primary}80)`,
+          ['--sway' as any]: `${p.sway}px`,
+        }}>
+          <SkyLantern size={p.size} primary={primary} primaryLight={primaryLight} dark={dark} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── A fixed decorative row of lanterns strung across the top of the cover,
+// echoing the reference image's lantern cluster near the hero text. ──
+function LanternCluster({ primary, primaryLight, dark }: { primary: string; primaryLight: string; dark: string }) {
+  const cluster = [
+    { size: 30, top: 8, side: "right" as const, offset: 4 },
+    { size: 22, top: 30, side: "right" as const, offset: 14 },
+    { size: 34, top: 4, side: "left" as const, offset: 2 },
+    { size: 20, top: 38, side: "left" as const, offset: 0 },
+  ]
+  return (
+    <>
+      {cluster.map((l, i) => (
+        <motion.div
+          key={i}
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 }}
+          style={{
+            position: "absolute", top: `${l.top}%`,
+            [l.side]: `${l.offset}%`,
+            filter: `drop-shadow(0 0 12px ${primary}99)`,
+            zIndex: 3,
+          }}>
+          <SkyLantern size={l.size} primary={primary} primaryLight={primaryLight} dark={dark} />
+        </motion.div>
+      ))}
+    </>
   )
 }
 
@@ -420,13 +473,23 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: DARK }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@500;600&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         @keyframes ember-rise {
           0% { transform: translateY(0) translateX(0); opacity: 0; }
           15% { opacity: 0.6; }
           85% { opacity: 0.6; }
           100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+        }
+        @keyframes lantern-rise {
+          0% { transform: translateY(0); opacity: 0; }
+          8% { opacity: 0.85; }
+          92% { opacity: 0.85; }
+          100% { transform: translateY(-115vh); opacity: 0; }
+        }
+        @keyframes lantern-sway {
+          0% { margin-left: calc(var(--sway) * -1); }
+          100% { margin-left: var(--sway); }
         }
         input::placeholder { color: rgba(255,255,255,0.3); }
       `}</style>
@@ -439,33 +502,44 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0 }} transition={{ duration: 0.5 }}
               style={{
                 minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                position: "relative", overflow: "hidden",
-                background: `radial-gradient(ellipse 90% 70% at 50% 0%, ${CREAM} 0%, ${DARK} 70%)`,
+                position: "relative", overflow: "hidden", background: DARK,
               }}>
 
-              <EmberField count={14} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
+              {/* Couple photo, dimmed and blended into the black so it reads as
+                  texture behind the text rather than a competing focal point */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt=""
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "saturate(0.6) brightness(0.55)" }}
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+              <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, ${DARK} 75%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, ${DARK} 0%, transparent 25%, transparent 70%, ${DARK} 100%)` }} />
 
-              <div style={{ position: "absolute", top: 28, left: 0, right: 0, padding: "0 24px" }}>
-                <FairyLightString primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
-              </div>
+              <SkyLanterns count={9} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
+              <LanternCluster primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
 
               <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
-                style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 1.8rem", maxWidth: 400 }}>
+                style={{ position: "relative", zIndex: 4, textAlign: "center", padding: "0 1.8rem", maxWidth: 420 }}>
 
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 16px", borderRadius: 100, background: `${PRIMARY}1f`, border: `1px solid ${PRIMARY}4d`, marginBottom: "1.4rem" }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY }} />
-                  <span style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700 }}>After-Wedding Twilight Picnic</span>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: PRIMARY_LIGHT, marginBottom: "0.4rem", textShadow: `0 0 20px ${PRIMARY}66` }}>
+                  You are invited
                 </div>
 
-                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(2.6rem,9vw,3.6rem)", color: "#fff", fontWeight: 700, lineHeight: 1.05 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.9rem,7vw,2.6rem)", color: PRIMARY_LIGHT, letterSpacing: "0.08em", fontWeight: 600, lineHeight: 1.15, textTransform: "uppercase" }}>
+                  A Magical Night
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", letterSpacing: "0.05em", marginTop: 8, marginBottom: "1.8rem" }}>
+                  With fairy lights and low seating
+                </div>
+
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(3rem,11vw,4.4rem)", color: "#fff", lineHeight: 1, textShadow: `0 0 30px ${PRIMARY}40` }}>
                   {W.bride}
                 </div>
-                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1.6rem", color: PRIMARY, margin: "2px 0", fontWeight: 700 }}>&amp;</div>
-                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(2.6rem,9vw,3.6rem)", color: "#fff", fontWeight: 700, lineHeight: 1.05, marginBottom: "1.2rem" }}>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: PRIMARY, margin: "0.1rem 0" }}>&amp;</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(3rem,11vw,4.4rem)", color: "#fff", lineHeight: 1, marginBottom: "1.6rem", textShadow: `0 0 30px ${PRIMARY}40` }}>
                   {W.groom}
                 </div>
 
-                <div style={{ fontSize: 11, letterSpacing: "0.15em", color: "rgba(255,255,255,0.5)", marginBottom: "1.6rem" }}>
+                <div style={{ fontSize: 12, letterSpacing: "0.1em", color: "rgba(255,255,255,0.6)", marginBottom: "2rem" }}>
                   {W.dateDisplay}
                 </div>
 
@@ -473,14 +547,14 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                   onClick={handleEnter}
                   style={{
-                    padding: "15px 34px", borderRadius: 100, border: "none",
-                    background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: DARK,
+                    padding: "15px 36px", borderRadius: 100, border: `1px solid ${PRIMARY}80`,
+                    background: `linear-gradient(135deg,${PRIMARY}33,${PRIMARY_LIGHT}1f)`, color: PRIMARY_LIGHT,
                     fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", cursor: "pointer",
-                    fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: `0 8px 30px ${PRIMARY}55`,
+                    fontFamily: "'Inter',sans-serif", fontWeight: 600, boxShadow: `0 8px 30px ${PRIMARY}33`,
                   }}>
-                  Light the Lanterns →
+                  RSVP &amp; Light a Lantern
                 </motion.button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", marginTop: 14, letterSpacing: "0.05em" }}>🎵 with music</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", marginTop: 14, letterSpacing: "0.05em" }}>♪ with music</div>
               </motion.div>
             </motion.div>
           )}
@@ -495,18 +569,16 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "saturate(0.9) brightness(0.85)" }}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "saturate(0.7) brightness(0.65)" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, rgba(23,28,51,0.2) 0%, ${DARK} 100%)` }} />
-              <div style={{ position: "absolute", top: 16, left: 0, right: 0, padding: "0 20px", zIndex: 3 }}>
-                <FairyLightString primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
-              </div>
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, rgba(10,8,6,0.25) 0%, ${DARK} 100%)` }} />
+              <LanternCluster primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 28px", textAlign: "center", zIndex: 4 }}>
-                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(1.8rem,6.5vw,2.6rem)", color: "#fff", fontWeight: 700, textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-                  {W.bride}<span style={{ color: PRIMARY }}> &amp; </span>{W.groom}
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.4rem,8vw,3.2rem)", color: "#fff", textShadow: `0 0 24px ${PRIMARY}55, 0 2px 20px rgba(0,0,0,0.6)` }}>
+                  {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
                 </div>
                 <div style={{ fontSize: 10, letterSpacing: "0.25em", color: "rgba(255,255,255,0.6)", marginTop: 6 }}>
-                  AFTER-WEDDING TWILIGHT PICNIC · {W.dateDisplay}
+                  A MAGICAL NIGHT · {W.dateDisplay}
                 </div>
               </div>
             </div>
