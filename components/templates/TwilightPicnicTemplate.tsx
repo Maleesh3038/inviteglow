@@ -30,13 +30,13 @@ const GUEST_HOUSES = [
 // on a soft white card so the logos read cleanly against the page's black
 // background regardless of each logo's own background color.
 const VENDOR_LOGOS = [
-  { name: "Seven Say", src: "/images/vendors/seven-say.jpg" },
-  { name: "Nova Events", src: "/images/vendors/nova-events.jpg" },
-  { name: "Gayan Disanayaka", src: "/images/vendors/gayan-dissanayaka.jpg" },
-  { name: "Digital Eye", src: "/images/vendors/digital-eye.jpg" },
-  { name: "Saloon Shenu / Anjali", src: "/images/vendors/saloon-shenu.jpg" },
-  { name: "Saaro", src: "/images/vendors/saaro.jpg" },
-  { name: "Awesome Flora", src: "/images/vendors/awesome-flora.jpg" },
+  { name: "Seven Say", label: "Seven Say", src: "/images/vendors/seven-say.jpg" },
+  { name: "Nova Events", label: "Nova Events", src: "/images/vendors/nova-events.jpg" },
+  { name: "Gayan Disanayaka", label: "Gayan Disanayaka", src: "/images/vendors/gayan-dissanayaka.jpg" },
+  { name: "Digital Eye", label: "Digital Eye", src: "/images/vendors/digital-eye.jpg" },
+  { name: "Saloon Shenu / Anjali", label: "Saloon Shenu", src: "/images/vendors/saloon-shenu.jpg" },
+  { name: "Saaro", label: "Saaro", src: "/images/vendors/saaro.jpg" },
+  { name: "Awesome Flora", label: "Awesome Flora", src: "/images/vendors/awesome-flora.jpg" },
 ]
 
 // ── Countdown ──
@@ -608,7 +608,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Magical Moments</div>
+              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
               <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
             </motion.div>
 
@@ -617,24 +617,28 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
               <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} />
             </div>
 
-            {/* Vendor logos footer — real partner artwork. Logos only, no text
-                labels on the live page per the brief. Each sits on a soft white
-                card so logos with light or colorful backgrounds of their own
-                still read cleanly against the page's black background. */}
+            {/* Vendor logos footer — real partner artwork, each labelled with
+                the partner name above the logo. The white card behind each
+                logo is kept minimal (no visible white border) so the tiles
+                sit quietly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>Our Wedding Partners</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
                 {VENDOR_LOGOS.map(v => (
-                  <div key={v.name} title={v.name} style={{
-                    aspectRatio: "1/1", borderRadius: 12, background: "#fff",
-                    border: `1px solid ${PRIMARY}40`, overflow: "hidden",
-                    display: "flex", alignItems: "center", justifyContent: "center", padding: 8,
-                    boxShadow: `0 4px 14px ${PRIMARY}1a`,
-                  }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={v.src} alt={v.name}
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                      onError={e => (e.currentTarget.style.display = "none")} />
+                  <div key={v.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase", color: PRIMARY_LIGHT, fontWeight: 700, lineHeight: 1.3, minHeight: 20 }}>
+                      {v.label}
+                    </div>
+                    <div title={v.name} style={{
+                      width: "100%", aspectRatio: "1/1", borderRadius: 12, background: "#fff",
+                      overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 8,
+                      boxShadow: `0 4px 14px ${PRIMARY}1a`,
+                    }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={v.src} alt={v.name}
+                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        onError={e => (e.currentTarget.style.display = "none")} />
+                    </div>
                   </div>
                 ))}
               </div>
