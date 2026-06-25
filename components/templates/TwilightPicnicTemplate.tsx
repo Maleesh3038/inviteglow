@@ -19,12 +19,11 @@ const DEFAULT_PALETTE = {
   muted: "rgba(255,255,255,0.45)",
 }
 
-// Guest houses shown when a guest requests accommodation. Static for now —
-// swap for real partner data whenever the couple provides it.
+// Guest houses shown when a guest requests accommodation — real partner list.
 const GUEST_HOUSES = [
-  { name: "Seven Say Boutique Stay", distance: "0.4 km from venue", phone: "077 123 4567" },
-  { name: "Veyangoda Garden Rooms", distance: "1.1 km from venue", phone: "077 234 5678" },
-  { name: "The Nightjar Homestay", distance: "1.8 km from venue", phone: "077 345 6789" },
+  { name: "IDEX Holiday Bungalow", distance: "1.8 km from venue", phone: "071 015 5555" },
+  { name: "Covanro", distance: "2.1 km from venue", phone: "033 224 5000" },
+  { name: "Sri V.O.C Home-Stay", distance: "1.8 km from venue", phone: "033 229 7255" },
 ]
 
 // Vendor logos — real partner artwork, supplied by the couple. Each tile sits
