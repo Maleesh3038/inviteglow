@@ -27,12 +27,17 @@ const GUEST_HOUSES = [
   { name: "The Nightjar Homestay", distance: "1.8 km from venue", phone: "077 345 6789" },
 ]
 
-// Vendor logos — placeholder tiles until real artwork is supplied. No text
-// labels render on the live page per the brief; the name only shows in the
-// dashed placeholder state so whoever wires in real logos knows what goes where.
-const VENDOR_PLACEHOLDERS = [
-  "Seven Say", "Nova Events", "Gayan Disanayaka", "Digital Eye",
-  "Saloon Shenu / Anjali", "Saaro", "Awesome Flora",
+// Vendor logos — real partner artwork, supplied by the couple. Each tile sits
+// on a soft white card so the logos read cleanly against the page's black
+// background regardless of each logo's own background color.
+const VENDOR_LOGOS = [
+  { name: "Seven Say", src: "/images/vendors/seven-say.jpg" },
+  { name: "Nova Events", src: "/images/vendors/nova-events.jpg" },
+  { name: "Gayan Disanayaka", src: "/images/vendors/gayan-dissanayaka.jpg" },
+  { name: "Digital Eye", src: "/images/vendors/digital-eye.jpg" },
+  { name: "Saloon Shenu / Anjali", src: "/images/vendors/saloon-shenu.jpg" },
+  { name: "Saaro", src: "/images/vendors/saaro.jpg" },
+  { name: "Awesome Flora", src: "/images/vendors/awesome-flora.jpg" },
 ]
 
 // ── Countdown ──
@@ -421,17 +426,6 @@ function RSVP({
   )
 }
 
-// ── Disclaimers strip ──
-function Disclaimers({ primary, cream }: { primary: string; cream: string }) {
-  return (
-    <div style={{ background: cream, borderRadius: 16, padding: "18px 20px", border: `1px dashed ${primary}40` }}>
-      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.8, textAlign: "center" }}>
-        ✦ To allow guests to fully unwind, this remains an <strong style={{ color: "#fff" }}>adults-only sanctuary</strong>. No children allowed.
-      </div>
-    </div>
-  )
-}
-
 const sectionCard = (cream: string, primary: string): React.CSSProperties => ({
   background: cream, margin: "0 16px 16px", borderRadius: 20, padding: "1.6rem", border: `1px solid ${primary}1f`,
 })
@@ -610,11 +604,6 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
               <RSVP coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
             </div>
 
-            {/* Disclaimers */}
-            <div style={{ margin: "0 16px 16px" }}>
-              <Disclaimers primary={PRIMARY} cream={CREAM} />
-            </div>
-
             {/* Countdown */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
@@ -626,18 +615,24 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
               <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} />
             </div>
 
-            {/* Vendor logos footer — logos only, no text labels on the live page.
-                Placeholder tiles show the partner name in dashed boxes until
-                real artwork replaces them. */}
+            {/* Vendor logos footer — real partner artwork. Logos only, no text
+                labels on the live page per the brief. Each sits on a soft white
+                card so logos with light or colorful backgrounds of their own
+                still read cleanly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-                {VENDOR_PLACEHOLDERS.map(name => (
-                  <div key={name} title={name} style={{
-                    aspectRatio: "1/1", borderRadius: 12, border: `1px dashed ${PRIMARY}40`,
-                    display: "flex", alignItems: "center", justifyContent: "center", padding: 6,
+                {VENDOR_LOGOS.map(v => (
+                  <div key={v.name} title={v.name} style={{
+                    aspectRatio: "1/1", borderRadius: 12, background: "#fff",
+                    border: `1px solid ${PRIMARY}40`, overflow: "hidden",
+                    display: "flex", alignItems: "center", justifyContent: "center", padding: 8,
+                    boxShadow: `0 4px 14px ${PRIMARY}1a`,
                   }}>
-                    <span style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.3 }}>{name}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={v.src} alt={v.name}
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                      onError={e => (e.currentTarget.style.display = "none")} />
                   </div>
                 ))}
               </div>
