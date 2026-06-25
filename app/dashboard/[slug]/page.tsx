@@ -281,6 +281,7 @@ export default function CoupleDashboard() {
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState("")
   const [pinError, setPinError] = useState(false)
+  const [deletingRsvpId, setDeletingRsvpId] = useState<string | null>(null)
 
   const loadData = async () => {
     const { data: coupleData, error: coupleError } = await supabase
@@ -315,6 +316,14 @@ export default function CoupleDashboard() {
     } else {
       setPinError(true)
     }
+  }
+
+  const handleDeleteRsvp = async (id: string, guestName: string) => {
+    if (!confirm(`Remove ${guestName}'s RSVP? This cannot be undone.`)) return
+    setDeletingRsvpId(id)
+    const { error } = await supabase.from('rsvps').delete().eq('id', id)
+    setDeletingRsvpId(null)
+    if (!error) setRsvps(prev => prev.filter(r => r.id !== id))
   }
 
   if (loading) {
@@ -576,42 +585,55 @@ export default function CoupleDashboard() {
                       {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {isTwilightPicnic ? (
-                      <>
-                        {r.response === 'yes' && r.drinking && (
-                          <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
-                            🥂 {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
-                          </div>
-                        )}
-                        {r.response === 'yes' && r.accommodation && (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {isTwilightPicnic ? (
+                        <>
+                          {r.response === 'yes' && r.drinking && (
+                            <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
+                              🥂 {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
+                            </div>
+                          )}
+                          {r.response === 'yes' && r.accommodation && (
+                            <div style={{
+                              padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                              background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
+                              color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
+                            }}>
+                              {r.accommodation === 'needed' ? '🏡 Needs Stay' : '🚗 Sorted'}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        r.response === 'yes' && r.drinking && (
                           <div style={{
                             padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                            background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
-                            color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
+                            background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
+                            color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
                           }}>
-                            {r.accommodation === 'needed' ? '🏡 Needs Stay' : '🚗 Sorted'}
+                            {r.drinking === 'yes' ? '🍷 Drinks' : '🥤 No Drinks'}
                           </div>
-                        )}
-                      </>
-                    ) : (
-                      r.response === 'yes' && r.drinking && (
-                        <div style={{
-                          padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                          background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
-                          color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
-                        }}>
-                          {r.drinking === 'yes' ? '🍷 Drinks' : '🥤 No Drinks'}
-                        </div>
-                      )
-                    )}
-                    <div style={{
-                      padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
-                      background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
-                      color: r.response === 'yes' ? '#16a34a' : '#dc2626',
-                    }}>
-                      {r.response === 'yes' ? '✓ Attending' : '✗ Not Attending'}
+                        )
+                      )}
+                      <div style={{
+                        padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
+                        background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
+                        color: r.response === 'yes' ? '#16a34a' : '#dc2626',
+                      }}>
+                        {r.response === 'yes' ? '✓ Attending' : '✗ Not Attending'}
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRsvp(r.id, r.guest_name)}
+                      disabled={deletingRsvpId === r.id}
+                      style={{
+                        padding: '4px 12px', borderRadius: 100, border: '1px solid #fecaca', cursor: 'pointer',
+                        background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500,
+                        opacity: deletingRsvpId === r.id ? 0.6 : 1,
+                      }}>
+                      {deletingRsvpId === r.id ? 'Removing...' : '🗑 Remove'}
+                    </button>
                   </div>
                 </motion.div>
               )
