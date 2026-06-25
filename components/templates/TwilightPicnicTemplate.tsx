@@ -466,7 +466,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: DARK }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@500;600&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Cormorant+Garamond:wght@500;600&family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         @keyframes ember-rise {
           0% { transform: translateY(0) translateX(0); opacity: 0; }
@@ -524,11 +524,11 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                   With fairy lights and low seating
                 </div>
 
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(3rem,11vw,4.4rem)", color: "#fff", lineHeight: 1, textShadow: `0 0 30px ${PRIMARY}40` }}>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontWeight: 600, fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: `0 0 30px ${PRIMARY}40` }}>
                   {W.bride}
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: PRIMARY, margin: "0.1rem 0" }}>&amp;</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(3rem,11vw,4.4rem)", color: "#fff", lineHeight: 1, marginBottom: "1.6rem", textShadow: `0 0 30px ${PRIMARY}40` }}>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontSize: "1.9rem", color: PRIMARY, margin: "0.1rem 0" }}>&amp;</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontWeight: 600, fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, marginBottom: "1.6rem", textShadow: `0 0 30px ${PRIMARY}40` }}>
                   {W.groom}
                 </div>
 
@@ -567,7 +567,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, rgba(10,8,6,0.25) 0%, ${DARK} 100%)` }} />
               <LanternCluster primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 28px", textAlign: "center", zIndex: 4 }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.4rem,8vw,3.2rem)", color: "#fff", textShadow: `0 0 24px ${PRIMARY}55, 0 2px 20px rgba(0,0,0,0.6)` }}>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontWeight: 600, fontSize: "clamp(2.1rem,7vw,2.9rem)", color: "#fff", textShadow: `0 0 24px ${PRIMARY}55, 0 2px 20px rgba(0,0,0,0.6)` }}>
                   {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
                 </div>
                 <div style={{ fontSize: 10, letterSpacing: "0.25em", color: "rgba(255,255,255,0.6)", marginTop: 6 }}>
@@ -608,7 +608,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Magical Moments</div>
+              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
               <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
             </motion.div>
 
@@ -622,7 +622,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                 card so logos with light or colorful backgrounds of their own
                 still read cleanly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>Our Wedding Partners</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
                 {VENDOR_LOGOS.map(v => (
                   <div key={v.name} title={v.name} style={{
