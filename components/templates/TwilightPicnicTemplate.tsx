@@ -587,6 +587,9 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             {/* Venue */}
             {couple.maps_url && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, textAlign: "center", marginBottom: 14 }}>
+                  Where the magic happens
+                </div>
                 <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                     <div style={{ width: 46, height: 46, borderRadius: "50%", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📍</div>
