@@ -509,7 +509,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                   texture behind the text rather than a competing focal point */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt=""
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "saturate(0.6) brightness(0.55)" }}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", opacity: 0.35, filter: "saturate(0.6) brightness(0.55)" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
               <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 80% 60% at 50% 30%, transparent 0%, ${DARK} 75%)` }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, ${DARK} 0%, transparent 25%, transparent 70%, ${DARK} 100%)` }} />
@@ -569,7 +569,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "saturate(0.7) brightness(0.65)" }}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", filter: "saturate(0.7) brightness(0.65)" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to bottom, rgba(10,8,6,0.25) 0%, ${DARK} 100%)` }} />
               <LanternCluster primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
