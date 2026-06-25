@@ -38,16 +38,26 @@ function findSeatForGuest(guestName: string, seats: Record<string, string>): str
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '11px 14px', borderRadius: 10,
-  border: '1px solid #e2d8c8', fontSize: 14, outline: 'none',
-  fontFamily: "'Inter',sans-serif", background: '#fff', color: '#2d2424',
+  border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
+  fontFamily: "'Inter',sans-serif", background: '#fff', color: '#1e293b',
 }
 const labelStyle: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, color: '#6b5d4f', marginBottom: 6, display: 'block',
+  fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block',
 }
 const fieldWrap: React.CSSProperties = { marginBottom: 16 }
 
 // ── Couple-facing self-service edit panel ──
 function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void }) {
+  // Same theme-neutral approach as the main dashboard: pull the accent from
+  // the couple's own customised color (or their template default) so this
+  // form doesn't look hardcoded to Floral Romance's pink regardless of which
+  // template the couple actually picked.
+  const panelTemplateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
+  const PANEL_ACCENT = couple.custom_colors?.primary || panelTemplateDefault.primary
+  const PANEL_BORDER = '#e2e8f0'
+  const PANEL_TEXT_MUTED = '#64748b'
+  const PANEL_TEXT_DARK = '#1e293b'
+
   const [photo, setPhoto] = useState(couple.couple_photo || '')
   const [weddingDate, setWeddingDate] = useState(couple.wedding_date ? couple.wedding_date.slice(0, 16) : '')
   const [venue, setVenue] = useState(couple.venue || '')
@@ -126,9 +136,9 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const resetColors = () => setColors(templateDefault)
 
   return (
-    <div style={{ background: '#fff', borderRadius: 18, padding: 24, marginBottom: 24, boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
-      <div style={{ fontSize: 16, fontWeight: 700, color: '#2d2424', marginBottom: 4 }}>Edit Your Invitation</div>
-      <div style={{ fontSize: 12, color: '#9a8d7d', marginBottom: 20 }}>Changes apply instantly to your live invitation link.</div>
+    <div style={{ background: '#fff', borderRadius: 18, padding: 24, marginBottom: 24, boxShadow: '0 2px 20px rgba(15,23,42,0.06)' }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 4 }}>Edit Your Invitation</div>
+      <div style={{ fontSize: 12, color: PANEL_TEXT_MUTED, marginBottom: 20 }}>Changes apply instantly to your live invitation link.</div>
 
       {/* Photo */}
       <div style={fieldWrap}>
@@ -136,14 +146,14 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {photo && (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: '1px solid #e2d8c8' }} />
+            <img src={photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: `1px solid ${PANEL_BORDER}` }} />
           )}
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-            style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid #e2d8c8', background: uploading ? '#f5f0e6' : '#fff', cursor: uploading ? 'default' : 'pointer', fontSize: 13, color: '#6b5d4f', fontWeight: 500 }}>
+            style={{ padding: '9px 16px', borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, background: uploading ? '#f1f5f9' : '#fff', cursor: uploading ? 'default' : 'pointer', fontSize: 13, color: PANEL_TEXT_MUTED, fontWeight: 500 }}>
             {uploading ? 'Uploading...' : photo ? '📷 Change Photo' : '📷 Upload Photo'}
           </button>
           {photo && (
-            <button type="button" onClick={() => setPhoto('')} style={{ fontSize: 12, color: '#c4607a', background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+            <button type="button" onClick={() => setPhoto('')} style={{ fontSize: 12, color: PANEL_ACCENT, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
           )}
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
@@ -222,7 +232,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       <div style={{ background: '#fdf8ec', borderRadius: 12, padding: 16, marginTop: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#8a6a2a' }}>🎨 Customise Colors</div>
-          <button type="button" onClick={resetColors} style={{ fontSize: 11, color: '#9a8d7d', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+          <button type="button" onClick={resetColors} style={{ fontSize: 11, color: PANEL_TEXT_MUTED, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
             Reset to default
           </button>
         </div>
@@ -237,7 +247,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
               <label style={labelStyle}>{c.label}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="color" value={colors[c.key]} onChange={e => setColors({ ...colors, [c.key]: e.target.value })}
-                  style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid #e2d8c8', cursor: 'pointer', padding: 0 }} />
+                  style={{ width: 38, height: 38, borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, cursor: 'pointer', padding: 0 }} />
                 <input value={colors[c.key]} onChange={e => setColors({ ...colors, [c.key]: e.target.value })}
                   style={{ ...inputStyle, padding: '8px 10px', fontSize: 12 }} />
               </div>
@@ -256,7 +266,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 
       <button onClick={handleSave} disabled={saving} style={{
         marginTop: 18, width: '100%', padding: 14, borderRadius: 12, border: 'none', cursor: 'pointer',
-        background: 'linear-gradient(135deg,#c4607a,#e08090)', color: '#fff', fontWeight: 700, fontSize: 14,
+        background: `linear-gradient(135deg,${PANEL_ACCENT},${panelTemplateDefault.primaryLight})`, color: '#fff', fontWeight: 700, fontSize: 14,
         opacity: saving ? 0.6 : 1,
       }}>
         {saving ? 'Saving...' : '💾 Save Changes'}
@@ -328,7 +338,7 @@ export default function CoupleDashboard() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fdf0f0", fontFamily: "'Inter',sans-serif", color: "#c4607a" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: "'Inter',sans-serif", color: "#475569" }}>
         Loading...
       </div>
     )
@@ -336,26 +346,40 @@ export default function CoupleDashboard() {
 
   if (notFound || !couple) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fdf0f0", fontFamily: "'Inter',sans-serif", color: "#3d1a2a", textAlign: "center", padding: 24 }}>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: "'Inter',sans-serif", color: "#1e293b", textAlign: "center", padding: 24 }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>💔</div>
-        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: "#c4607a", marginBottom: 8 }}>Dashboard Not Found</div>
-        <div style={{ fontSize: 14, color: "#9a7080" }}>This invitation doesn't exist.</div>
+        <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.6rem", color: "#1e293b", marginBottom: 8 }}>Dashboard Not Found</div>
+        <div style={{ fontSize: 14, color: "#64748b" }}>This invitation doesn't exist.</div>
       </div>
     )
   }
 
+  // ── Theme-neutral dashboard palette ──
+  // The dashboard is shared across every template (Floral, Twilight Picnic,
+  // etc.), so it doesn't hardcode the pink Floral Romance look. Instead it
+  // stays neutral (white/grey) and pulls just the accent color from whatever
+  // the couple has customised, falling back to a calm slate if they haven't.
+  // Placed here (couple is guaranteed non-null past the check above) so the
+  // PIN lock screen below can use it too.
+  const ACCENT = couple.custom_colors?.primary || '#475569'
+  const ACCENT_LIGHT = couple.custom_colors?.primaryLight || '#94a3b8'
+  const TEXT_DARK = '#1e293b'
+  const TEXT_MUTED = '#64748b'
+  const BORDER = '#e2e8f0'
+  const PAGE_BG = '#f8fafc'
+
   // ── PIN LOCK SCREEN ──
   if (!unlocked) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fdf0f0", fontFamily: "'Inter',sans-serif", padding: 24 }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;500;600&display=swap');`}</style>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: PAGE_BG, fontFamily: "'Inter',sans-serif", padding: 24 }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');`}</style>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          style={{ background: "#fff", borderRadius: 20, padding: "2.5rem 2rem", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 8px 40px rgba(200,120,140,0.15)" }}>
+          style={{ background: "#fff", borderRadius: 20, padding: "2.5rem 2rem", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 8px 32px rgba(15,23,42,0.1)" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-          <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: "#3d1a2a", marginBottom: 4 }}>
+          <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.4rem", color: TEXT_DARK, marginBottom: 4 }}>
             {couple.bride} &amp; {couple.groom}
           </div>
-          <div style={{ fontSize: 12, color: "#9a7080", marginBottom: 24 }}>Enter your PIN to view your dashboard</div>
+          <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 24 }}>Enter your PIN to view your dashboard</div>
           <input
             type="tel" inputMode="numeric" maxLength={4} value={pinInput}
             onChange={e => { setPinInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setPinError(false) }}
@@ -363,14 +387,14 @@ export default function CoupleDashboard() {
             placeholder="••••"
             style={{
               width: "100%", padding: "16px", borderRadius: 12, textAlign: "center",
-              fontSize: 28, letterSpacing: "0.5em", border: `2px solid ${pinError ? '#dc2626' : '#f0d0d8'}`,
-              outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif", color: "#3d1a2a",
+              fontSize: 28, letterSpacing: "0.5em", border: `2px solid ${pinError ? '#dc2626' : BORDER}`,
+              outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif", color: TEXT_DARK,
             }}
           />
           {pinError && <div style={{ color: "#dc2626", fontSize: 12, marginBottom: 12 }}>Incorrect PIN. Please try again.</div>}
           <button onClick={checkPin} style={{
             width: "100%", padding: "14px", borderRadius: 12, border: "none", cursor: "pointer",
-            background: "linear-gradient(135deg,#c4607a,#e08090)", color: "#fff", fontWeight: 600, fontSize: 14,
+            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: "#fff", fontWeight: 600, fontSize: 14,
           }}>
             Unlock Dashboard
           </button>
@@ -411,23 +435,23 @@ export default function CoupleDashboard() {
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-    border: active ? 'none' : '1px solid #e2d8c8',
-    background: active ? 'linear-gradient(135deg,#c4607a,#e08090)' : '#fff',
-    color: active ? '#fff' : '#6b5d4f',
+    border: active ? 'none' : `1px solid ${BORDER}`,
+    background: active ? `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})` : '#fff',
+    color: active ? '#fff' : TEXT_MUTED,
   })
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fdf0f0", fontFamily: "'Inter',sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700&display=swap');`}</style>
+    <div style={{ minHeight: "100vh", background: PAGE_BG, fontFamily: "'Inter',sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`}</style>
 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 20px" }}>
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.5rem", color: "#3d1a2a" }}>
-            {couple.bride} <span style={{ color: "#c4607a" }}>&amp;</span> {couple.groom}
+          <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.9rem", color: TEXT_DARK, letterSpacing: "-0.01em" }}>
+            {couple.bride} <span style={{ color: ACCENT }}>&amp;</span> {couple.groom}
           </div>
-          <div style={{ fontSize: 12, color: "#9a7080", letterSpacing: "0.1em", marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: TEXT_MUTED, letterSpacing: "0.1em", marginTop: 4 }}>
             Your Wedding Dashboard
           </div>
         </div>
@@ -435,8 +459,8 @@ export default function CoupleDashboard() {
         {/* Edit toggle */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <button onClick={() => setShowEdit(!showEdit)} style={{
-            padding: '10px 22px', borderRadius: 100, border: '1px solid #e2d8c8', background: '#fff',
-            cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#6b5d4f',
+            padding: '10px 22px', borderRadius: 100, border: `1px solid ${BORDER}`, background: '#fff',
+            cursor: 'pointer', fontSize: 13, fontWeight: 600, color: TEXT_MUTED,
           }}>
             {showEdit ? '✕ Close Editor' : '✏️ Edit My Invitation'}
           </button>
@@ -446,17 +470,17 @@ export default function CoupleDashboard() {
 
         {/* Stats cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 12 }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)" }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)" }}>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#16a34a" }}>{accepted.length}</div>
-            <div style={{ fontSize: 11, color: "#9a7080", marginTop: 4 }}>✓ RSVPs Accepted</div>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>✓ RSVPs Accepted</div>
           </div>
-          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)" }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)" }}>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#dc2626" }}>{declined.length}</div>
-            <div style={{ fontSize: 11, color: "#9a7080", marginTop: 4 }}>✗ Declined</div>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4 }}>✗ Declined</div>
           </div>
         </div>
 
-        <div style={{ background: "linear-gradient(135deg,#c4607a,#e08090)", borderRadius: 16, padding: "20px 16px", textAlign: "center", marginBottom: 16, boxShadow: "0 4px 20px rgba(196,96,122,0.25)" }}>
+        <div style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, borderRadius: 16, padding: "20px 16px", textAlign: "center", marginBottom: 16, boxShadow: `0 4px 20px ${ACCENT}40` }}>
           <div style={{ fontSize: 32, fontWeight: 800, color: "#fff" }}>{totalGuests}</div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 4, fontWeight: 500 }}>Total Guests Attending (including families)</div>
         </div>
@@ -467,46 +491,46 @@ export default function CoupleDashboard() {
               {([
                 ['🥃', 'Hard Liquor'], ['🍷', 'Wine'], ['🍺', 'Beer'], ['🥤', 'Non-Alcoholic'],
               ] as const).map(([icon, label]) => (
-                <div key={label} style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                <div key={label} style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <span style={{ fontSize: 22 }}>{icon}</span>
                   <div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkCounts[label]}</div>
-                    <div style={{ fontSize: 10, color: "#9a7080" }}>{label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: TEXT_DARK }}>{drinkCounts[label]}</div>
+                    <div style={{ fontSize: 10, color: TEXT_MUTED }}>{label}</div>
                   </div>
                 </div>
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                 <span style={{ fontSize: 22 }}>🏡</span>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{accommodationNeeded}</div>
-                  <div style={{ fontSize: 10, color: "#9a7080" }}>Accommodation Needed</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: TEXT_DARK }}>{accommodationNeeded}</div>
+                  <div style={{ fontSize: 10, color: TEXT_MUTED }}>Accommodation Needed</div>
                 </div>
               </div>
-              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                 <span style={{ fontSize: 22 }}>🚗</span>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{accommodationNotNeeded}</div>
-                  <div style={{ fontSize: 10, color: "#9a7080" }}>Not Needed</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: TEXT_DARK }}>{accommodationNotNeeded}</div>
+                  <div style={{ fontSize: 10, color: TEXT_MUTED }}>Not Needed</div>
                 </div>
               </div>
             </div>
           </>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-            <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
               <span style={{ fontSize: 22 }}>🍷</span>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkingYes}</div>
-                <div style={{ fontSize: 10, color: "#9a7080" }}>Drinking Alcohol</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: TEXT_DARK }}>{drinkingYes}</div>
+                <div style={{ fontSize: 10, color: TEXT_MUTED }}>Drinking Alcohol</div>
               </div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 16px rgba(200,120,140,0.08)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: "16px", textAlign: "center", boxShadow: "0 2px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
               <span style={{ fontSize: 22 }}>🥤</span>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#3d1a2a" }}>{drinkingNo}</div>
-                <div style={{ fontSize: 10, color: "#9a7080" }}>Non-Alcoholic</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: TEXT_DARK }}>{drinkingNo}</div>
+                <div style={{ fontSize: 10, color: TEXT_MUTED }}>Non-Alcoholic</div>
               </div>
             </div>
           </div>
@@ -519,7 +543,7 @@ export default function CoupleDashboard() {
             placeholder="Search guest by name..."
             style={{
               width: "100%", padding: "12px 18px", borderRadius: 12,
-              border: "1px solid #f0d0d8", background: "#fff", color: "#3d1a2a",
+              border: `1px solid ${BORDER}`, background: "#fff", color: TEXT_DARK,
               fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif",
             }}
           />
@@ -527,14 +551,14 @@ export default function CoupleDashboard() {
 
         {/* Dual filters */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: '#9a8d7d', alignSelf: 'center', marginRight: 4 }}>Status:</span>
+          <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Status:</span>
           <div onClick={() => setFilterResponse('all')} style={pillStyle(filterResponse === 'all')}>All</div>
           <div onClick={() => setFilterResponse('yes')} style={pillStyle(filterResponse === 'yes')}>✓ Attending</div>
           <div onClick={() => setFilterResponse('no')} style={pillStyle(filterResponse === 'no')}>✗ Not Attending</div>
         </div>
         {!isTwilightPicnic && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 11, color: '#9a8d7d', alignSelf: 'center', marginRight: 4 }}>Drinks:</span>
+            <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Drinks:</span>
             <div onClick={() => setFilterDrinking('all')} style={pillStyle(filterDrinking === 'all')}>All</div>
             <div onClick={() => setFilterDrinking('yes')} style={pillStyle(filterDrinking === 'yes')}>🍷 Yes</div>
             <div onClick={() => setFilterDrinking('no')} style={pillStyle(filterDrinking === 'no')}>🥤 No</div>
@@ -543,7 +567,7 @@ export default function CoupleDashboard() {
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
           <button onClick={loadData} style={{
-            fontSize: 12, color: "#c4607a", background: "transparent", border: "none",
+            fontSize: 12, color: ACCENT, background: "transparent", border: "none",
             cursor: "pointer", fontWeight: 500, display: "flex", alignItems: "center", gap: 6,
           }}>
             ↻ Refresh
@@ -552,7 +576,7 @@ export default function CoupleDashboard() {
 
         {/* RSVP List */}
         {filteredRsvps.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: "#9a7080" }}>
+          <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>
             {rsvps.length === 0 ? "No RSVP responses yet. Share your invitation link with guests!" : "No guests match your filters."}
           </div>
         ) : (
@@ -564,11 +588,11 @@ export default function CoupleDashboard() {
                   style={{
                     background: "#fff", borderRadius: 12, padding: "14px 18px",
                     display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10,
-                    boxShadow: "0 2px 10px rgba(200,120,140,0.06)",
+                    boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
                   }}>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#3d1a2a" }}>{r.guest_name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{r.guest_name}</div>
                       {r.response === 'yes' && r.guest_count > 1 && (
                         <div style={{ padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
                           👥 {r.guest_count}
@@ -580,7 +604,7 @@ export default function CoupleDashboard() {
                         </div>
                       )}
                     </div>
-                    <div style={{ fontSize: 11, color: "#c4a0b0", marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
                       {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
                       {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </div>
@@ -641,7 +665,7 @@ export default function CoupleDashboard() {
           </div>
         )}
 
-        <div style={{ textAlign: "center", marginTop: 40, fontSize: 11, color: "#c4a0b0" }}>
+        <div style={{ textAlign: "center", marginTop: 40, fontSize: 11, color: TEXT_MUTED }}>
           Auto-refreshes every 30 seconds · InviteGlow Dashboard
         </div>
       </div>
