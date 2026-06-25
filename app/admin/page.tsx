@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
-import { supabase, Couple } from '@/lib/supabase'
+import { supabase, Couple, RSVP } from '@/lib/supabase'
 
 const TEMPLATES = [
   { id: 'floral-romance', name: 'Floral Romance (Pink)' },
@@ -234,6 +234,75 @@ function TimelinePicker({ value, onChange }: { value: TimelineItem[]; onChange: 
       }}>
         + Add Custom Event
       </button>
+    </div>
+  )
+}
+
+// ── RSVP Manager: lets the admin view and delete individual guest RSVP
+// entries for a couple. Loads on demand when the edit form opens for that
+// couple, rather than being fetched for every couple in the list view. ──
+function RsvpManager({ coupleId }: { coupleId: string }) {
+  const [rsvps, setRsvps] = useState<RSVP[]>([])
+  const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const loadRsvps = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('rsvps').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+    if (!error && data) setRsvps(data as RSVP[])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadRsvps() }, [coupleId])
+
+  const handleDelete = async (id: string, guestName: string) => {
+    if (!confirm(`Delete ${guestName}'s RSVP? This cannot be undone.`)) return
+    setDeletingId(id)
+    const { error } = await supabase.from('rsvps').delete().eq('id', id)
+    setDeletingId(null)
+    if (!error) setRsvps(prev => prev.filter(r => r.id !== id))
+  }
+
+  return (
+    <div style={fieldWrap}>
+      <label style={labelStyle}>Guest RSVPs ({rsvps.length})</label>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>
+        Remove a guest's response here — useful for test entries or duplicate submissions.
+      </div>
+      {loading ? (
+        <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>Loading...</div>
+      ) : rsvps.length === 0 ? (
+        <div style={{ fontSize: 13, color: '#94a3b8', padding: 12, background: '#f8fafc', borderRadius: 10 }}>No RSVPs yet for this invitation.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 8, maxHeight: 280, overflowY: 'auto' }}>
+          {rsvps.map(r => (
+            <div key={r.id} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+              padding: '10px 12px', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0',
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{r.guest_name}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                  {r.response === 'yes' ? `✓ Attending · ${r.guest_count} guest${r.guest_count > 1 ? 's' : ''}` : '✗ Not attending'}
+                  {r.drinking ? ` · ${r.drinking}` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDelete(r.id, r.guest_name)}
+                disabled={deletingId === r.id}
+                style={{
+                  padding: '6px 14px', borderRadius: 8, border: '1px solid #fecaca', cursor: 'pointer',
+                  background: '#fef2f2', color: '#dc2626', fontSize: 12, fontWeight: 500, flexShrink: 0,
+                  opacity: deletingId === r.id ? 0.6 : 1,
+                }}>
+                {deletingId === r.id ? '...' : 'Delete'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -552,6 +621,8 @@ export default function AdminPage() {
                 Tip: turn on "🪑 Show Seat Finder" above once you're ready for guests to see this on the live invitation.
               </div>
             </div>
+
+            {editing !== 'new' && <RsvpManager coupleId={editing as string} />}
 
             {message && <div style={{ marginBottom: 16, fontSize: 14, color: message.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{message}</div>}
 
