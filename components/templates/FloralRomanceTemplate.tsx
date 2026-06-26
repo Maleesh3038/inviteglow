@@ -330,13 +330,25 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
     wedding: { label: 'Wedding Ceremony', icon: '👰' },
     homecoming: { label: 'Homecoming', icon: '🏡' },
   }
+  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+
   const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
-  const eventsList = hasNewEvents
+  const eventsList: RenderableEvent[] = hasNewEvents
     ? (['engagement', 'wedding', 'homecoming'] as const)
-        .map(key => ({ key, ...EVENT_META[key], ...couple.events![key] }))
-        .filter(e => e.enabled && e.date)
+        .map((key): RenderableEvent => {
+          const e = couple.events![key]
+          return {
+            key, ...EVENT_META[key],
+            enabled: e?.enabled ?? false,
+            venue: e?.venue ?? '',
+            venue_address: e?.venue_address ?? '',
+            date: e?.date ?? '',
+            maps_url: e?.maps_url ?? '',
+          }
+        })
+        .filter(e => e.enabled && e.date.length > 0)
     : (couple.wedding_date
-        ? [{ key: 'wedding' as const, ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
+        ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
         : [])
 
   // Section visibility — defaults to showing everything for couples saved
