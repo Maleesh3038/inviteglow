@@ -78,48 +78,6 @@ function FallingPetals({ count = 10 }: { count?: number }) {
   )
 }
 
-// ── Floral Arch: SVG arch of roses/foliage framing the cover, echoing the
-// reference photo's archway. Built from layered blossom clusters rather
-// than a photographic image, so it scales cleanly and recolors with the
-// couple's palette. ──
-function FloralArch({ primary, primaryLight, dark }: { primary: string; primaryLight: string; dark: string }) {
-  const blossom = (cx: number, cy: number, r: number, fill: string, opacity = 0.9) => (
-    <circle cx={cx} cy={cy} r={r} fill={fill} opacity={opacity} />
-  )
-  // A cluster of overlapping circles approximates a rose/hydrangea bloom.
-  const cluster = (cx: number, cy: number, scale: number, fill: string) => (
-    <g>
-      {blossom(cx, cy, 9 * scale, fill)}
-      {blossom(cx - 7 * scale, cy + 3 * scale, 6 * scale, fill, 0.8)}
-      {blossom(cx + 7 * scale, cy + 3 * scale, 6 * scale, fill, 0.8)}
-      {blossom(cx, cy - 6 * scale, 5 * scale, fill, 0.85)}
-    </g>
-  )
-  return (
-    <svg viewBox="0 0 400 420" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} preserveAspectRatio="none">
-      {/* Foliage vine along the arch */}
-      <path d="M20 380 Q10 200 90 60 Q160 -10 200 -10 Q240 -10 310 60 Q390 200 380 380"
-        stroke={dark} strokeWidth="14" fill="none" opacity="0.18" />
-      {/* Left side blossom clusters */}
-      {cluster(35, 360, 1.1, primaryLight)}
-      {cluster(45, 300, 1, primary)}
-      {cluster(60, 240, 1.1, primaryLight)}
-      {cluster(80, 180, 0.95, primary)}
-      {cluster(110, 120, 1, primaryLight)}
-      {cluster(150, 70, 0.9, primary)}
-      {cluster(190, 35, 1, primaryLight)}
-      {/* Right side blossom clusters (mirrored) */}
-      {cluster(365, 360, 1.1, primaryLight)}
-      {cluster(355, 300, 1, primary)}
-      {cluster(340, 240, 1.1, primaryLight)}
-      {cluster(320, 180, 0.95, primary)}
-      {cluster(290, 120, 1, primaryLight)}
-      {cluster(250, 70, 0.9, primary)}
-      {cluster(210, 35, 1, primaryLight)}
-    </svg>
-  )
-}
-
 // ── Countdown ──
 function Countdown({ targetDate, primary, dark, cream }: { targetDate: string; primary: string; dark: string; cream: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
@@ -433,15 +391,16 @@ export default function GoldenGardenTemplate({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: "linear-gradient(180deg,#fde8c8 0%,#f8d4a8 35%,#f0c0a0 65%,#e8a888 100%)" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Distant mountain silhouette */}
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "30%", background: `linear-gradient(to top, ${DARK}22, transparent)`, clipPath: "polygon(0 100%, 0 60%, 15% 40%, 30% 55%, 50% 30%, 70% 50%, 85% 35%, 100% 55%, 100% 100%)" }} />
+              {/* Real floral arch photo as the cover background */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/hero-golden-garden.png" alt=""
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.35) 100%)` }} />
 
-              <FlyingBirds count={6} color={DARK} />
-
-              {/* Floral arch frame */}
-              <FloralArch primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
+              <FlyingBirds count={6} color="rgba(255,255,255,0.7)" />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(10px)", borderRadius: 24, padding: "2.6rem 2.2rem", textAlign: "center", width: "78%", maxWidth: 320, position: "relative", zIndex: 10, boxShadow: "0 20px 60px rgba(180,120,80,0.18)" }}>
