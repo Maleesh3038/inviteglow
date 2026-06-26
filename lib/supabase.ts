@@ -65,6 +65,7 @@ export type Couple = {
   custom_colors: CoupleColors
   section_visibility: SectionVisibility
   events: CoupleEvents
+  intro_text: string | null
   created_at: string
 }
 

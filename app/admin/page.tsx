@@ -9,6 +9,7 @@ const TEMPLATES = [
   { id: 'kandyan-heritage', name: 'Kandyan Heritage (Temple Doors)' },
   { id: 'twilight-picnic', name: 'Twilight Picnic (After-Party)' },
   { id: 'golden-garden', name: 'Golden Garden (Floral Arch)' },
+  { id: 'ocean-pearl', name: 'Ocean Pearl (Beach Elegance)' },
 ]
 
 const BUCKET = 'wedding-photos'
@@ -52,6 +53,7 @@ const emptyForm = {
     wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '' },
     homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '' },
   } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }>,
+  intro_text: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -652,6 +654,7 @@ export default function AdminPage() {
           maps_url: c.events?.homecoming?.maps_url ?? '',
         },
       },
+      intro_text: c.intro_text ?? '',
     })
     setEditing(c.id)
   }
@@ -696,6 +699,7 @@ export default function AdminPage() {
       show_seating: form.show_seating,
       section_visibility: form.section_visibility,
       events: form.events,
+      intro_text: form.intro_text || null,
     }
 
     let error
@@ -910,6 +914,16 @@ export default function AdminPage() {
               value={form.section_visibility}
               onChange={v => setForm({ ...form, section_visibility: v })}
             />
+
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Cover Intro Text</label>
+              <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+                placeholder="Leave empty to use the theme's default line (e.g. Ocean Pearl: 'Where the tide meets eternity, we begin our forever')"
+                value={form.intro_text} onChange={e => setForm({ ...form, intro_text: e.target.value })} />
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+                Shown under the couple's names on the cover screen. Leave blank to use the template's default.
+              </div>
+            </div>
 
             <div style={fieldWrap}>
               <label style={labelStyle}>Guest Seat Assignments (one per line: Name | Table)</label>
