@@ -21,9 +21,10 @@ const DEFAULT_PALETTE = {
 
 // Guest houses shown when a guest requests accommodation — real partner list.
 const GUEST_HOUSES = [
-  { name: "IDEX Holiday Bungalow", distance: "1.8 km from venue", phone: "071 015 5555" },
-  { name: "Covanro", distance: "2.1 km from venue", phone: "033 224 5000" },
-  { name: "Sri V.O.C Home-Stay", distance: "1.8 km from venue", phone: "033 229 7255" },
+  { name: "White Wall Hotel", distance: "~1.5–2 km away", contact: "077 661 3062" },
+  { name: "PARADISE INN", distance: "~2.5–3.5 km away", contact: "Direct details on Booking Link" },
+  { name: "PARADISE VILLA", distance: "~6–7 km away", contact: "Online listings via Agoda/Booking.com" },
+  { name: "Sundale Hotel", distance: "~8.5 km away", contact: "031 224 6148" },
 ]
 
 // Vendor logos — real partner artwork, supplied by the couple. Each tile is
@@ -405,7 +406,7 @@ function RSVP({
             {GUEST_HOUSES.map(g => (
               <div key={g.name} style={{ padding: "12px 14px", borderRadius: 10, background: `${primary}14`, border: `1px solid ${primary}33` }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{g.name}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{g.distance} · {g.phone}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{g.distance} · {g.contact}</div>
               </div>
             ))}
           </div>
@@ -611,7 +612,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
+              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Magical Moment</div>
               <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
             </motion.div>
 
@@ -625,7 +626,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                 logo is kept minimal (no visible white border) so the tiles
                 sit quietly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>Our Wedding Partners</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
                 {VENDOR_LOGOS.map(v => (
                   <div key={v.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
