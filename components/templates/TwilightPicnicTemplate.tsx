@@ -26,17 +26,20 @@ const GUEST_HOUSES = [
   { name: "Sri V.O.C Home-Stay", distance: "1.8 km from venue", phone: "033 229 7255" },
 ]
 
-// Vendor logos — real partner artwork, supplied by the couple. Each tile sits
-// on a soft white card so the logos read cleanly against the page's black
-// background regardless of each logo's own background color.
+// Vendor logos — real partner artwork, supplied by the couple. Each tile is
+// labelled with the partner's role (not their brand name) above the logo,
+// and sits on a dark card so the logos read cleanly against the page's
+// black background regardless of each logo's own background color.
 const VENDOR_LOGOS = [
-  { name: "Seven Say", label: "Seven Say", src: "/images/vendors/seven-say.jpg" },
-  { name: "Nova Events", label: "Nova Events", src: "/images/vendors/nova-events.jpg" },
-  { name: "Gayan Disanayaka", label: "Gayan Disanayaka", src: "/images/vendors/gayan-dissanayaka.jpg" },
-  { name: "Digital Eye", label: "Digital Eye", src: "/images/vendors/digital-eye.jpg" },
-  { name: "Saloon Shenu / Anjali", label: "Saloon Shenu", src: "/images/vendors/saloon-shenu.jpg" },
-  { name: "Saaro", label: "Saaro", src: "/images/vendors/saaro.jpg" },
-  { name: "Awesome Flora", label: "Awesome Flora", src: "/images/vendors/awesome-flora.jpg" },
+  { name: "Digital Eye", label: "Film Crew", src: "/images/vendors/digital-eye.jpg" },
+  { name: "Gayan Disanayaka", label: "Lens Masters", src: "/images/vendors/gayan-dissanayaka.jpg" },
+  { name: "Seven Say", label: "The Stage", src: "/images/vendors/seven-say.jpg" },
+  { name: "Awesome Flora", label: "Space Designers", src: "/images/vendors/awesome-flora.jpg" },
+  { name: "Saloon Shenu / Anjali", label: "Bridal Glow", src: "/images/vendors/saloon-shenu.jpg" },
+  { name: "Nova Events", label: "Day Architects", src: "/images/vendors/nova-events.jpg" },
+  { name: "Saaro", label: "The Sound", src: "/images/vendors/saaro.jpg" },
+  { name: "Shots", label: "Liquid Chefs", src: "/images/vendors/shots.jpg" },
+  { name: "LIYO", label: "Groom Styling", src: "/images/vendors/liyo.jpg" },
 ]
 
 // ── Countdown ──
@@ -608,7 +611,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Magical Moments</div>
+              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
               <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
             </motion.div>
 
@@ -622,7 +625,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                 logo is kept minimal (no visible white border) so the tiles
                 sit quietly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>Our Wedding Partners</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
                 {VENDOR_LOGOS.map(v => (
                   <div key={v.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
