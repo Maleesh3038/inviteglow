@@ -583,7 +583,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             {/* Energetic description */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.9, textAlign: "center", fontStyle: "italic" }}>
-                "Tradition out, energy up. Kick back under the fairy lights with cozy low seating, flowing drinks, and loud music. No formalities—just pure celebration. Come ready to chill, dance, and party until dawn!"
+                "Tradition out, energy up. Kick back under the fairy lights with cozy low seating, flowing drinks, and loud music. No formalities-just pure celebration. Come ready to chill, dance, and party until dawn!"
               </div>
             </motion.div>
 
