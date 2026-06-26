@@ -8,6 +8,7 @@ import CinematicGoldTemplate from '@/components/templates/CinematicGoldTemplate'
 import KandyanHeritageTemplate from '@/components/templates/KandyanHeritageTemplate'
 import TwilightPicnicTemplate from '@/components/templates/TwilightPicnicTemplate'
 import GoldenGardenTemplate from '@/components/templates/GoldenGardenTemplate'
+import OceanPearlTemplate from '@/components/templates/OceanPearlTemplate'
 
 export default function InvitePage() {
   const params = useParams()
@@ -56,6 +57,8 @@ export default function InvitePage() {
       return <TwilightPicnicTemplate couple={couple} />
     case 'golden-garden':
       return <GoldenGardenTemplate couple={couple} />
+    case 'ocean-pearl':
+      return <OceanPearlTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
