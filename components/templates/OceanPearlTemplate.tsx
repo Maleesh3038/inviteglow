@@ -342,7 +342,14 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: `radial-gradient(ellipse 90% 70% at 50% 0%, ${CREAM} 0%, ${DARK} 70%)` }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
+
+              {/* Real beach photo as the cover background */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/hero-ocean-pearl.png" alt=""
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,58,71,0.35) 0%, rgba(15,58,71,0.15) 35%, rgba(15,58,71,0.3) 65%, rgba(15,58,71,0.6) 100%)` }} />
 
               <RisingBubbles count={16} color={PRIMARY_LIGHT} />
 
