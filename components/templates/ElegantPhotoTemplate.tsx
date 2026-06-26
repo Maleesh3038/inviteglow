@@ -241,6 +241,46 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
   }
 
+  // ── Derive the events list to render: prefer the new couple.events object,
+  // fall back to the legacy single wedding_date/venue columns if a couple
+  // hasn't been re-saved through the updated admin form yet. ──
+  const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
+    engagement: { label: 'Engagement', icon: '💍' },
+    wedding: { label: 'Wedding Ceremony', icon: '👰' },
+    homecoming: { label: 'Homecoming', icon: '🏡' },
+  }
+  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+
+  const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
+  const eventsList: RenderableEvent[] = hasNewEvents
+    ? (['engagement', 'wedding', 'homecoming'] as const)
+        .map((key): RenderableEvent => {
+          const e = couple.events![key]
+          return {
+            key, ...EVENT_META[key],
+            enabled: e?.enabled ?? false,
+            venue: e?.venue ?? '',
+            venue_address: e?.venue_address ?? '',
+            date: e?.date ?? '',
+            maps_url: e?.maps_url ?? '',
+          }
+        })
+        .filter(e => e.enabled && e.date.length > 0)
+    : (couple.wedding_date
+        ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
+        : [])
+
+  // Section visibility — defaults to showing everything for couples saved
+  // before this feature existed.
+  const sv = {
+    gallery: couple.section_visibility?.gallery ?? true,
+    countdown: couple.section_visibility?.countdown ?? true,
+    timeline: couple.section_visibility?.timeline ?? true,
+    seat_finder: couple.section_visibility?.seat_finder ?? true,
+    music: couple.section_visibility?.music ?? true,
+    thank_you: couple.section_visibility?.thank_you ?? true,
+  }
+
   const W = {
     bride: couple.bride,
     groom: couple.groom,
@@ -412,51 +452,63 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Wedding details strip (dark) */}
-            <div style={{ background: "#2d2424", margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(255,255,255,0.06)" }}>
-                {[
-                  { icon: "📅", label: "Date", val: W.dateDisplay, gold: true },
-                  { icon: "⏰", label: "Time", val: `${W.timeDisplay} Onwards` },
-                  { icon: "📍", label: "Venue", val: W.venue },
-                  { icon: "👗", label: "Dress", val: "Formal Attire" },
-                ].map(d => (
-                  <div key={d.label} style={{ background: "#2d2424", padding: 20, textAlign: "center" }}>
-                    <div style={{ fontSize: 16, marginBottom: 6 }}>{d.icon}</div>
-                    <div style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{d.label}</div>
-                    <div style={{
-                      fontSize: d.gold ? 15 : 13, color: d.gold ? "#f0d4a8" : "#fff", fontWeight: 500, marginTop: 4,
-                      fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal",
-                    }}>{d.val}</div>
+            {eventsList.map(ev => {
+              const evDate = new Date(ev.date)
+              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+              return (
+                <div key={ev.key}>
+                  {/* Event details strip (dark) */}
+                  <div style={{ background: "#2d2424", margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
+                    <div style={{ padding: "14px 20px 0", textAlign: "center", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#f0d4a8" }}>{ev.icon} {ev.label}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(255,255,255,0.06)", marginTop: 12 }}>
+                      {[
+                        { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
+                        { icon: "⏰", label: "Time", val: `${evTimeDisplay} Onwards` },
+                        { icon: "📍", label: "Venue", val: ev.venue },
+                        { icon: "👗", label: "Dress", val: "Formal Attire" },
+                      ].map(d => (
+                        <div key={d.label} style={{ background: "#2d2424", padding: 20, textAlign: "center" }}>
+                          <div style={{ fontSize: 16, marginBottom: 6 }}>{d.icon}</div>
+                          <div style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{d.label}</div>
+                          <div style={{
+                            fontSize: d.gold ? 15 : 13, color: d.gold ? "#f0d4a8" : "#fff", fontWeight: 500, marginTop: 4,
+                            fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal",
+                          }}>{d.val}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  {/* Event location */}
+                  {ev.maps_url && (
+                    <motion.div style={sectionCard} id={ev.key === eventsList[0]?.key ? "location" : undefined} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                      <div style={sectionEyebrowStyle(PRIMARY)}>Find Us</div>
+                      <div style={sectionTitleStyle(DARK)}>{ev.label} Venue</div>
+                      <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+                        <div style={{ background: CREAM, borderRadius: 16, padding: 24, textAlign: "center" }}>
+                          <div style={{ width: 48, height: 48, borderRadius: "50%", background: DARK, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: DARK, marginBottom: 4 }}>{ev.venue}</div>
+                          <div style={{ fontSize: 11, color: MUTED, marginBottom: 14 }}>{ev.venue_address}</div>
+                          <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, fontWeight: 600 }}>Tap to View on Maps →</div>
+                        </div>
+                      </a>
+                    </motion.div>
+                  )}
+                </div>
+              )
+            })}
 
             {/* Countdown */}
-            <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: DARK, marginBottom: 16 }}>Counting down to our big day</div>
-              <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
-            </div>
-
-            {/* Location */}
-            {couple.maps_url && (
-              <motion.div style={sectionCard} id="location" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrowStyle(PRIMARY)}>Find Us</div>
-                <div style={sectionTitleStyle(DARK)}>The Venue</div>
-                <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-                  <div style={{ background: CREAM, borderRadius: 16, padding: 24, textAlign: "center" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: DARK, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: DARK, marginBottom: 4 }}>{W.venue}</div>
-                    <div style={{ fontSize: 11, color: MUTED, marginBottom: 14 }}>{W.venueAddress}</div>
-                    <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, fontWeight: 600 }}>Tap to View on Maps →</div>
-                  </div>
-                </a>
-              </motion.div>
+            {sv.countdown && (
+              <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, boxShadow: "0 2px 24px rgba(45,36,36,0.05)" }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: DARK, marginBottom: 16 }}>Counting down to our big day</div>
+                <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
+              </div>
             )}
 
             {/* Timeline */}
-            {W.timeline.length > 0 && (
+            {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrowStyle(PRIMARY)}>The Celebration</div>
                 <div style={sectionTitleStyle(DARK)}>Wedding Day Schedule</div>
@@ -476,7 +528,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             </div>
 
             {/* Seat finder */}
-            {couple.show_seating && Object.keys(W.seats).length > 0 && (
+            {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrowStyle(PRIMARY)}>Be Our Guest</div>
                 <div style={sectionTitleStyle(DARK)}>Find Your Table</div>
@@ -486,13 +538,15 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             )}
 
             {/* Music */}
-            <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={sectionEyebrowStyle(PRIMARY)}>Our Song</div>
-              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
-            </motion.div>
+            {sv.music && (
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrowStyle(PRIMARY)}>Our Song</div>
+                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
+              </motion.div>
+            )}
 
             {/* Gallery */}
-            {W.gallery.length > 0 && (
+            {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrowStyle(PRIMARY)}>Our Story</div>
                 <div style={sectionTitleStyle(DARK)}>Moments Together</div>
@@ -508,19 +562,21 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
             )}
 
             {/* Thank You Note */}
-            <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={sectionEyebrowStyle(PRIMARY)}>A Special Note</div>
-              <div style={sectionTitleStyle(DARK)}>To Our Lovely Guests</div>
-              <div style={{ textAlign: "center", fontSize: 13, color: "#6a5a4a", lineHeight: 2 }}>
-                With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
-                <br /><br />
-                Thank you for your love, your blessings, and for being part of our journey.
-              </div>
-              <div style={{ textAlign: "center", marginTop: 16 }}>
-                <div style={{ fontSize: 11, color: MUTED }}>With all our love,</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
-              </div>
-            </motion.div>
+            {sv.thank_you && (
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrowStyle(PRIMARY)}>A Special Note</div>
+                <div style={sectionTitleStyle(DARK)}>To Our Lovely Guests</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: "#6a5a4a", lineHeight: 2 }}>
+                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
+                  <br /><br />
+                  Thank you for your love, your blessings, and for being part of our journey.
+                </div>
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <div style={{ fontSize: 11, color: MUTED }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Footer */}
             <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: CREAM }}>

@@ -456,6 +456,47 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
   }
 
+  // ── Derive the events list to render: prefer the new couple.events object,
+  // fall back to the legacy single wedding_date/venue columns if a couple
+  // hasn't been re-saved through the updated admin form yet. This template
+  // only shows one venue card (the picnic itself), so we just use the first
+  // enabled event for that card's details. ──
+  const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
+    engagement: { label: 'Engagement', icon: '💍' },
+    wedding: { label: 'Wedding Ceremony', icon: '👰' },
+    homecoming: { label: 'Homecoming', icon: '🏡' },
+  }
+  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+
+  const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
+  const eventsList: RenderableEvent[] = hasNewEvents
+    ? (['engagement', 'wedding', 'homecoming'] as const)
+        .map((key): RenderableEvent => {
+          const e = couple.events![key]
+          return {
+            key, ...EVENT_META[key],
+            enabled: e?.enabled ?? false,
+            venue: e?.venue ?? '',
+            venue_address: e?.venue_address ?? '',
+            date: e?.date ?? '',
+            maps_url: e?.maps_url ?? '',
+          }
+        })
+        .filter(e => e.enabled && e.date.length > 0)
+    : (couple.wedding_date
+        ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
+        : [])
+  const primaryEvent = eventsList[0]
+
+  // Section visibility — defaults to showing everything for couples saved
+  // before this feature existed. Twilight Picnic only has Countdown and
+  // Music as optional sections; the rest (gallery, timeline, seat finder,
+  // thank-you) don't exist in this template's layout.
+  const sv = {
+    countdown: couple.section_visibility?.countdown ?? true,
+    music: couple.section_visibility?.music ?? true,
+  }
+
   const W = {
     bride: couple.bride,
     groom: couple.groom,
@@ -583,21 +624,21 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             {/* Energetic description */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.9, textAlign: "center", fontStyle: "italic" }}>
-                "Tradition out, energy up. Kick back under the fairy lights with cozy low seating, flowing drinks, and loud music. No formalities-just pure celebration. Come ready to chill, dance, and party until dawn!"
+                "Tradition out, energy up. Kick back under the fairy lights with cozy low seating, flowing drinks, and loud music. No formalities—just pure celebration. Come ready to chill, dance, and party until dawn!"
               </div>
             </motion.div>
 
             {/* Venue */}
-            {couple.maps_url && (
+            {primaryEvent?.maps_url && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, textAlign: "center", marginBottom: 14 }}>
                   Where the magic happens
                 </div>
-                <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+                <a href={primaryEvent.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                     <div style={{ width: 46, height: 46, borderRadius: "50%", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📍</div>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{W.venue}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{primaryEvent.venue}</div>
                       <div style={{ fontSize: 11, color: PRIMARY, fontWeight: 600, marginTop: 2 }}>Tap to view on Google Maps →</div>
                     </div>
                   </div>
@@ -611,22 +652,26 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             </div>
 
             {/* Countdown */}
-            <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Magical Moment</div>
-              <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
-            </motion.div>
+            {sv.countdown && (
+              <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
+                <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
+              </motion.div>
+            )}
 
             {/* Music */}
-            <div style={{ margin: "0 16px 16px" }}>
-              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} />
-            </div>
+            {sv.music && (
+              <div style={{ margin: "0 16px 16px" }}>
+                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} />
+              </div>
+            )}
 
             {/* Vendor logos footer — real partner artwork, each labelled with
                 the partner name above the logo. The white card behind each
                 logo is kept minimal (no visible white border) so the tiles
                 sit quietly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>Our Wedding Partners</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
                 {VENDOR_LOGOS.map(v => (
                   <div key={v.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>

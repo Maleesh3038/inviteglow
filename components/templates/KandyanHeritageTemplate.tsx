@@ -498,6 +498,46 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
     audioRef.current?.play().catch(() => {})
   }
 
+  // ── Derive the events list to render: prefer the new couple.events object,
+  // fall back to the legacy single wedding_date/venue columns if a couple
+  // hasn't been re-saved through the updated admin form yet. ──
+  const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
+    engagement: { label: 'Engagement', icon: '💍' },
+    wedding: { label: 'Wedding Ceremony', icon: '👰' },
+    homecoming: { label: 'Homecoming', icon: '🏡' },
+  }
+  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+
+  const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
+  const eventsList: RenderableEvent[] = hasNewEvents
+    ? (['engagement', 'wedding', 'homecoming'] as const)
+        .map((key): RenderableEvent => {
+          const e = couple.events![key]
+          return {
+            key, ...EVENT_META[key],
+            enabled: e?.enabled ?? false,
+            venue: e?.venue ?? '',
+            venue_address: e?.venue_address ?? '',
+            date: e?.date ?? '',
+            maps_url: e?.maps_url ?? '',
+          }
+        })
+        .filter(e => e.enabled && e.date.length > 0)
+    : (couple.wedding_date
+        ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
+        : [])
+
+  // Section visibility — defaults to showing everything for couples saved
+  // before this feature existed.
+  const sv = {
+    gallery: couple.section_visibility?.gallery ?? true,
+    countdown: couple.section_visibility?.countdown ?? true,
+    timeline: couple.section_visibility?.timeline ?? true,
+    seat_finder: couple.section_visibility?.seat_finder ?? true,
+    music: couple.section_visibility?.music ?? true,
+    thank_you: couple.section_visibility?.thank_you ?? true,
+  }
+
   const W = {
     bride: couple.bride,
     groom: couple.groom,
@@ -596,50 +636,60 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
               </MandalaSection>
             )}
 
-            {/* Wedding details — circular badges in a ring layout */}
-            <MandalaSection eyebrow="Save the Date" title="Wedding Details" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                {[
-                  { icon: "📅", label: "Date", val: W.dateDisplay },
-                  { icon: "⏰", label: "Time", val: `${W.timeDisplay}` },
-                  { icon: "📍", label: "Venue", val: W.venue },
-                  { icon: "👗", label: "Dress", val: "Traditional" },
-                ].map(d => (
-                  <div key={d.label} style={{ textAlign: "center" }}>
-                    <div style={{
-                      width: 56, height: 56, borderRadius: "50%", margin: "0 auto 8px",
-                      background: `radial-gradient(circle at 35% 35%, ${GOLD_LIGHT}, ${PRIMARY_LIGHT})`,
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-                      boxShadow: "0 4px 14px rgba(212,168,67,0.3)",
-                    }}>{d.icon}</div>
-                    <div style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: "#9a7050" }}>{d.label}</div>
-                    <div style={{ fontSize: 12, color: "#3a1010", fontWeight: 600, marginTop: 2 }}>{d.val}</div>
-                  </div>
-                ))}
-              </div>
-            </MandalaSection>
+            {/* Events — circular badges in a ring layout, one set per enabled event */}
+            {eventsList.map(ev => {
+              const evDate = new Date(ev.date)
+              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+              return (
+                <div key={ev.key}>
+                  <MandalaSection eyebrow="Save the Date" title={ev.label} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                      {[
+                        { icon: "📅", label: "Date", val: evDateDisplay },
+                        { icon: "⏰", label: "Time", val: evTimeDisplay },
+                        { icon: "📍", label: "Venue", val: ev.venue },
+                        { icon: "👗", label: "Dress", val: "Traditional" },
+                      ].map(d => (
+                        <div key={d.label} style={{ textAlign: "center" }}>
+                          <div style={{
+                            width: 56, height: 56, borderRadius: "50%", margin: "0 auto 8px",
+                            background: `radial-gradient(circle at 35% 35%, ${GOLD_LIGHT}, ${PRIMARY_LIGHT})`,
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                            boxShadow: "0 4px 14px rgba(212,168,67,0.3)",
+                          }}>{d.icon}</div>
+                          <div style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: "#9a7050" }}>{d.label}</div>
+                          <div style={{ fontSize: 12, color: "#3a1010", fontWeight: 600, marginTop: 2 }}>{d.val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </MandalaSection>
+
+                  {ev.maps_url && (
+                    <MandalaSection eyebrow="Find Us" title={`${ev.label} Venue`} id={ev.key === eventsList[0]?.key ? "location" : undefined} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
+                      <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+                        <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }} style={{ background: "#fff", borderRadius: 18, padding: 22, textAlign: "center", border: `1px solid ${PRIMARY_LIGHT}33`, boxShadow: "0 6px 20px rgba(74,16,16,0.08)" }}>
+                          <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD_LIGHT},${PRIMARY_LIGHT})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "#3a1010", marginBottom: 4 }}>{ev.venue}</div>
+                          <div style={{ fontSize: 11, color: "#9a7050", marginBottom: 14 }}>{ev.venue_address}</div>
+                          <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700 }}>Tap to View on Maps →</div>
+                        </motion.div>
+                      </a>
+                    </MandalaSection>
+                  )}
+                </div>
+              )
+            })}
 
             {/* Countdown */}
-            <MandalaSection eyebrow="Counting Down" dark primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
-              <Countdown targetDate={W.date} primaryLight={PRIMARY_LIGHT} dark={DARK} />
-            </MandalaSection>
-
-            {/* Location */}
-            {couple.maps_url && (
-              <MandalaSection eyebrow="Find Us" title="The Venue" id="location" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
-                <a href={couple.maps_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
-                  <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }} style={{ background: "#fff", borderRadius: 18, padding: 22, textAlign: "center", border: `1px solid ${PRIMARY_LIGHT}33`, boxShadow: "0 6px 20px rgba(74,16,16,0.08)" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg,${GOLD_LIGHT},${PRIMARY_LIGHT})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 18 }}>🗺️</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#3a1010", marginBottom: 4 }}>{W.venue}</div>
-                    <div style={{ fontSize: 11, color: "#9a7050", marginBottom: 14 }}>{W.venueAddress}</div>
-                    <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700 }}>Tap to View on Maps →</div>
-                  </motion.div>
-                </a>
+            {sv.countdown && (
+              <MandalaSection eyebrow="Counting Down" dark primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
+                <Countdown targetDate={W.date} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </MandalaSection>
             )}
 
             {/* Schedule */}
-            {W.timeline.length > 0 && (
+            {sv.timeline && W.timeline.length > 0 && (
               <MandalaSection eyebrow="The Celebration" title="Wedding Day Schedule" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
                 {W.timeline.map((t, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 0", borderBottom: i < W.timeline.length - 1 ? `1px solid ${PRIMARY_LIGHT}22` : "none" }}>
@@ -659,7 +709,7 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
             </div>
 
             {/* Seat finder */}
-            {couple.show_seating && Object.keys(W.seats).length > 0 && (
+            {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <MandalaSection eyebrow="Be Our Guest" title="Find Your Table" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
                 <div style={{ fontSize: 13, color: "#9a7050", marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
                 <SeatFinder seats={W.seats} primaryLight={PRIMARY_LIGHT} dark={DARK} />
@@ -667,29 +717,33 @@ export default function KandyanHeritageTemplate({ couple }: { couple: Couple }) 
             )}
 
             {/* Music */}
-            <MandalaSection eyebrow="Our Song" dark primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
-              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primaryLight={PRIMARY_LIGHT} dark={DARK} />
-            </MandalaSection>
+            {sv.music && (
+              <MandalaSection eyebrow="Our Song" dark primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
+                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primaryLight={PRIMARY_LIGHT} dark={DARK} />
+              </MandalaSection>
+            )}
 
             {/* Gallery — photo book viewer */}
-            {W.gallery.length > 0 && (
+            {sv.gallery && W.gallery.length > 0 && (
               <MandalaSection eyebrow="Our Story" title="Moments Together" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
                 <PhotoBook photos={W.gallery} dark={DARK} primaryLight={PRIMARY_LIGHT} />
               </MandalaSection>
             )}
 
             {/* Thank You Note */}
-            <MandalaSection eyebrow="A Special Note" title="To Our Lovely Guests" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
-              <div style={{ textAlign: "center", fontSize: 13, color: "#6a3030", lineHeight: 2 }}>
-                With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
-                <br /><br />
-                Thank you for your love, your blessings, and for being part of our journey.
-              </div>
-              <div style={{ textAlign: "center", marginTop: 16 }}>
-                <div style={{ fontSize: 11, color: "#9a7050" }}>With all our love,</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
-              </div>
-            </MandalaSection>
+            {sv.thank_you && (
+              <MandalaSection eyebrow="A Special Note" title="To Our Lovely Guests" primary={PRIMARY} primaryLight={PRIMARY_LIGHT} darkColor={DARK} creamColor={CREAM}>
+                <div style={{ textAlign: "center", fontSize: 13, color: "#6a3030", lineHeight: 2 }}>
+                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
+                  <br /><br />
+                  Thank you for your love, your blessings, and for being part of our journey.
+                </div>
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <div style={{ fontSize: 11, color: "#9a7050" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                </div>
+              </MandalaSection>
+            )}
 
             {/* Footer */}
             <div style={{
