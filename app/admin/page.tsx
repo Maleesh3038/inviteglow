@@ -8,6 +8,7 @@ const TEMPLATES = [
   { id: 'cinematic-gold', name: 'Cinematic Gold (Scratch to Reveal)' },
   { id: 'kandyan-heritage', name: 'Kandyan Heritage (Temple Doors)' },
   { id: 'twilight-picnic', name: 'Twilight Picnic (After-Party)' },
+  { id: 'golden-garden', name: 'Golden Garden (Floral Arch)' },
 ]
 
 const BUCKET = 'wedding-photos'
