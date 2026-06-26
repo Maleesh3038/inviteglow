@@ -38,6 +38,19 @@ const emptyForm = {
   pin: '',
   ask_drinking: false,
   show_seating: false,
+  section_visibility: {
+    gallery: true,
+    countdown: true,
+    timeline: true,
+    seat_finder: true,
+    music: true,
+    thank_you: true,
+  },
+  events: {
+    engagement: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '' },
+    wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '' },
+    homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '' },
+  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }>,
 }
 
 const inputStyle: React.CSSProperties = {
@@ -413,6 +426,140 @@ function PendingReviewsManager() {
   )
 }
 
+// ── Section Visibility Picker: toggle which optional sections show on the
+// public invitation. RSVP is deliberately not here — it's always on. ──
+type SectionVisibilityValue = {
+  gallery: boolean
+  countdown: boolean
+  timeline: boolean
+  seat_finder: boolean
+  music: boolean
+  thank_you: boolean
+}
+
+const SECTION_LABELS: { key: keyof SectionVisibilityValue; label: string; icon: string }[] = [
+  { key: 'gallery', label: 'Photo Gallery', icon: '📷' },
+  { key: 'countdown', label: 'Countdown Timer', icon: '⏳' },
+  { key: 'timeline', label: 'Wedding Timeline', icon: '🗓️' },
+  { key: 'seat_finder', label: 'Seat Finder', icon: '🪑' },
+  { key: 'music', label: 'Background Music', icon: '🎵' },
+  { key: 'thank_you', label: 'Thank You Note', icon: '🤍' },
+]
+
+function SectionTogglesPicker({ value, onChange }: { value: SectionVisibilityValue; onChange: (v: SectionVisibilityValue) => void }) {
+  const toggle = (key: keyof SectionVisibilityValue) => {
+    onChange({ ...value, [key]: !value[key] })
+  }
+  return (
+    <div style={fieldWrap}>
+      <label style={labelStyle}>Page Sections</label>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>
+        Turn off any section the couple doesn't want on their invitation. RSVP always stays on.
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {SECTION_LABELS.map(s => (
+          <div key={s.key} onClick={() => toggle(s.key)} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+            background: value[s.key] ? '#fdf2f8' : '#f8fafc',
+            border: `1px solid ${value[s.key] ? '#fbcfe8' : '#e2e8f0'}`,
+          }}>
+            <span style={{ fontSize: 13, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>{s.icon}</span>{s.label}
+            </span>
+            <div style={{
+              width: 38, height: 22, borderRadius: 100, position: 'relative', flexShrink: 0,
+              background: value[s.key] ? '#c4607a' : '#e2e8f0', transition: 'background 0.2s',
+            }}>
+              <div style={{
+                width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3,
+                left: value[s.key] ? 19 : 3, transition: 'left 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+              }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Events Picker: Engagement / Wedding / Homecoming, each with its own
+// enabled flag, venue, address, date/time, and maps link. ──
+type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+type EventsValue = Record<'engagement' | 'wedding' | 'homecoming', EventValue>
+
+const EVENT_LABELS: { key: keyof EventsValue; label: string; icon: string }[] = [
+  { key: 'engagement', label: 'Engagement', icon: '💍' },
+  { key: 'wedding', label: 'Wedding', icon: '👰' },
+  { key: 'homecoming', label: 'Homecoming', icon: '🏡' },
+]
+
+function EventsPicker({ value, onChange }: { value: EventsValue; onChange: (v: EventsValue) => void }) {
+  const updateEvent = (key: keyof EventsValue, field: keyof EventValue, val: string | boolean) => {
+    onChange({ ...value, [key]: { ...value[key], [field]: val } })
+  }
+  return (
+    <div style={fieldWrap}>
+      <label style={labelStyle}>Events</label>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>
+        Add details for each event this couple is celebrating. Turn an event off if it doesn't apply — its card won't show on the invitation.
+      </div>
+      <div style={{ display: 'grid', gap: 12 }}>
+        {EVENT_LABELS.map(ev => {
+          const e = value[ev.key]
+          return (
+            <div key={ev.key} style={{
+              borderRadius: 12, padding: 14, background: e.enabled ? '#fdf2f8' : '#f8fafc',
+              border: `1px solid ${e.enabled ? '#fbcfe8' : '#e2e8f0'}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: e.enabled ? 12 : 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>{ev.icon}</span>{ev.label}
+                </span>
+                <div onClick={() => updateEvent(ev.key, 'enabled', !e.enabled)} style={{
+                  width: 38, height: 22, borderRadius: 100, position: 'relative', flexShrink: 0, cursor: 'pointer',
+                  background: e.enabled ? '#c4607a' : '#e2e8f0', transition: 'background 0.2s',
+                }}>
+                  <div style={{
+                    width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3,
+                    left: e.enabled ? 19 : 3, transition: 'left 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                  }} />
+                </div>
+              </div>
+              {e.enabled && (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <input
+                      placeholder="Venue name" value={e.venue}
+                      onChange={ev2 => updateEvent(ev.key, 'venue', ev2.target.value)}
+                      style={{ ...inputStyle, marginBottom: 0 }}
+                    />
+                    <input
+                      type="datetime-local" value={e.date}
+                      onChange={ev2 => updateEvent(ev.key, 'date', ev2.target.value)}
+                      style={{ ...inputStyle, marginBottom: 0 }}
+                    />
+                  </div>
+                  <input
+                    placeholder="Venue address" value={e.venue_address}
+                    onChange={ev2 => updateEvent(ev.key, 'venue_address', ev2.target.value)}
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                  />
+                  <input
+                    placeholder="Google Maps URL" value={e.maps_url}
+                    onChange={ev2 => updateEvent(ev.key, 'maps_url', ev2.target.value)}
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                  />
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [couples, setCouples] = useState<Couple[]>([])
   const [loading, setLoading] = useState(true)
@@ -473,6 +620,37 @@ export default function AdminPage() {
       pin: c.pin || generatePin(),
       ask_drinking: c.ask_drinking || false,
       show_seating: c.show_seating || false,
+      section_visibility: {
+        gallery: c.section_visibility?.gallery ?? true,
+        countdown: c.section_visibility?.countdown ?? true,
+        timeline: c.section_visibility?.timeline ?? true,
+        seat_finder: c.section_visibility?.seat_finder ?? true,
+        music: c.section_visibility?.music ?? true,
+        thank_you: c.section_visibility?.thank_you ?? true,
+      },
+      events: {
+        engagement: {
+          enabled: c.events?.engagement?.enabled ?? false,
+          venue: c.events?.engagement?.venue ?? '',
+          venue_address: c.events?.engagement?.venue_address ?? '',
+          date: c.events?.engagement?.date ? c.events.engagement.date.slice(0, 16) : '',
+          maps_url: c.events?.engagement?.maps_url ?? '',
+        },
+        wedding: {
+          enabled: c.events?.wedding?.enabled ?? true,
+          venue: c.events?.wedding?.venue ?? c.venue ?? '',
+          venue_address: c.events?.wedding?.venue_address ?? c.venue_address ?? '',
+          date: c.events?.wedding?.date ? c.events.wedding.date.slice(0, 16) : (c.wedding_date ? c.wedding_date.slice(0, 16) : ''),
+          maps_url: c.events?.wedding?.maps_url ?? c.maps_url ?? '',
+        },
+        homecoming: {
+          enabled: c.events?.homecoming?.enabled ?? false,
+          venue: c.events?.homecoming?.venue ?? '',
+          venue_address: c.events?.homecoming?.venue_address ?? '',
+          date: c.events?.homecoming?.date ? c.events.homecoming.date.slice(0, 16) : '',
+          maps_url: c.events?.homecoming?.maps_url ?? '',
+        },
+      },
     })
     setEditing(c.id)
   }
@@ -515,6 +693,8 @@ export default function AdminPage() {
       pin: form.pin || generatePin(),
       ask_drinking: form.ask_drinking,
       show_seating: form.show_seating,
+      section_visibility: form.section_visibility,
+      events: form.events,
     }
 
     let error
@@ -718,6 +898,16 @@ export default function AdminPage() {
             <TimelinePicker
               value={form.timeline}
               onChange={items => setForm({ ...form, timeline: items })}
+            />
+
+            <EventsPicker
+              value={form.events}
+              onChange={v => setForm({ ...form, events: v })}
+            />
+
+            <SectionTogglesPicker
+              value={form.section_visibility}
+              onChange={v => setForm({ ...form, section_visibility: v })}
             />
 
             <div style={fieldWrap}>

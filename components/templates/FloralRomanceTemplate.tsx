@@ -322,6 +322,34 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
     }
   }
 
+  // ── Derive the events list to render: prefer the new couple.events object,
+  // fall back to the legacy single wedding_date/venue columns if a couple
+  // hasn't been re-saved through the updated admin form yet. ──
+  const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
+    engagement: { label: 'Engagement', icon: '💍' },
+    wedding: { label: 'Wedding Ceremony', icon: '👰' },
+    homecoming: { label: 'Homecoming', icon: '🏡' },
+  }
+  const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
+  const eventsList = hasNewEvents
+    ? (['engagement', 'wedding', 'homecoming'] as const)
+        .map(key => ({ key, ...EVENT_META[key], ...couple.events![key] }))
+        .filter(e => e.enabled && e.date)
+    : (couple.wedding_date
+        ? [{ key: 'wedding' as const, ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
+        : [])
+
+  // Section visibility — defaults to showing everything for couples saved
+  // before this feature existed.
+  const sv = {
+    gallery: couple.section_visibility?.gallery ?? true,
+    countdown: couple.section_visibility?.countdown ?? true,
+    timeline: couple.section_visibility?.timeline ?? true,
+    seat_finder: couple.section_visibility?.seat_finder ?? true,
+    music: couple.section_visibility?.music ?? true,
+    thank_you: couple.section_visibility?.thank_you ?? true,
+  }
+
   const W = {
     bride: couple.bride,
     groom: couple.groom,
@@ -482,39 +510,48 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={pretitleStyle(PRIMARY_LIGHT)}>Save the Date</div>
-              <div style={titleStyle(DARK)}>Wedding Details</div>
-              {[
-                { icon: "📅", label: "Date", val: W.dateDisplay, pink: true },
-                { icon: "⏰", label: "Time", val: W.timeDisplay },
-                { icon: "📍", label: "Venue", val: W.venue, sub: W.venueAddress },
-              ].map(d => d.val && (
-                <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}33` }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
-                  <div>
-                    <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#c4a0b0" }}>{d.label}</div>
-                    <div style={{ fontSize: d.pink ? 18 : 15, color: d.pink ? PRIMARY : DARK, fontWeight: 500, marginTop: 2, fontFamily: d.pink ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.pink ? "italic" : "normal" }}>{d.val}</div>
-                    {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
-                  </div>
-                </div>
-              ))}
-              {couple.maps_url && (
-                <a href={couple.maps_url} target="_blank" rel="noopener noreferrer"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}33`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 500 }}>
-                  📍 View Location on Maps
-                </a>
-              )}
-            </motion.div>
+            {eventsList.map(ev => {
+              const evDate = new Date(ev.date)
+              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
+              return (
+                <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <div style={pretitleStyle(PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
+                  <div style={titleStyle(DARK)}>{ev.label}</div>
+                  {[
+                    { icon: "📅", label: "Date", val: evDateDisplay, pink: true },
+                    { icon: "⏰", label: "Time", val: evTimeDisplay },
+                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
+                  ].map(d => d.val && (
+                    <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}33` }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
+                      <div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#c4a0b0" }}>{d.label}</div>
+                        <div style={{ fontSize: d.pink ? 18 : 15, color: d.pink ? PRIMARY : DARK, fontWeight: 500, marginTop: 2, fontFamily: d.pink ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.pink ? "italic" : "normal" }}>{d.val}</div>
+                        {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
+                      </div>
+                    </div>
+                  ))}
+                  {ev.maps_url && (
+                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}33`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 500 }}>
+                      📍 View Location on Maps
+                    </a>
+                  )}
+                </motion.div>
+              )
+            })}
 
-            <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}` , borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
-              <div style={pretitleStyle(PRIMARY_LIGHT)}>Counting Down to Our Big Day</div>
-              <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
-            </div>
+            {sv.countdown && (
+              <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}` , borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
+                <div style={pretitleStyle(PRIMARY_LIGHT)}>Counting Down to Our Big Day</div>
+                <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
+              </div>
+            )}
 
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} /></div>
 
-            {W.timeline.length > 0 && (
+            {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>The Wedding Lineup</div>
@@ -532,7 +569,7 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {couple.show_seating && Object.keys(W.seats).length > 0 && (
+            {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={cardStyle()} id="seat" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Be Our Guest</div>
                 <div style={titleStyle(DARK)}>Find Your Table</div>
@@ -542,12 +579,14 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
             )}
 
             {/* Music — auto-played on Open Invitation, controls here too */}
-            <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Song</div>
-              <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
-            </motion.div>
+            {sv.music && (
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Song</div>
+                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
+              </motion.div>
+            )}
 
-            {W.gallery.length > 0 && (
+            {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>Moments of Love</div>
@@ -566,21 +605,23 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
             )}
 
             {/* Thank You Note */}
-            <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={pretitleStyle(PRIMARY_LIGHT)}>A Special Note</div>
-              <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
-              <div style={{ textAlign: "center", fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
-                With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.
-                <br /><br />
-                Thank you for your love, your blessings, and for being part of our journey. We cannot wait to share laughter, joy, and unforgettable memories with the people who mean so much to us.
-              </div>
-              <div style={{ textAlign: "center", marginTop: 18 }}>
-                <div style={{ fontSize: 11, color: "#c4a0b0", letterSpacing: "0.1em" }}>With all our love,</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>
-                  {W.bride} &amp; {W.groom}
+            {sv.thank_you && (
+              <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={pretitleStyle(PRIMARY_LIGHT)}>A Special Note</div>
+                <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
+                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.
+                  <br /><br />
+                  Thank you for your love, your blessings, and for being part of our journey. We cannot wait to share laughter, joy, and unforgettable memories with the people who mean so much to us.
                 </div>
-              </div>
-            </motion.div>
+                <div style={{ textAlign: "center", marginTop: 18 }}>
+                  <div style={{ fontSize: 11, color: "#c4a0b0", letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>
+                    {W.bride} &amp; {W.groom}
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ fontSize: 18, marginBottom: 10, opacity: 0.5 }}>🌸 🌷 🌸</div>

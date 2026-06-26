@@ -13,6 +13,33 @@ export type CoupleColors = {
   cream?: string
 }
 
+// Which optional sections show on the public invitation. RSVP is intentionally
+// not included here — it's a core feature and always renders.
+export type SectionVisibility = {
+  gallery?: boolean
+  countdown?: boolean
+  timeline?: boolean
+  seat_finder?: boolean
+  music?: boolean
+  thank_you?: boolean
+}
+
+// A single event slot (Engagement / Wedding / Homecoming). `enabled` controls
+// whether this event's card renders on the invitation at all.
+export type EventDetails = {
+  enabled: boolean
+  venue: string
+  venue_address: string
+  date: string // ISO datetime string, same format as wedding_date
+  maps_url: string
+}
+
+export type CoupleEvents = {
+  engagement?: EventDetails
+  wedding?: EventDetails
+  homecoming?: EventDetails
+}
+
 export type Couple = {
   id: string
   slug: string
@@ -36,6 +63,8 @@ export type Couple = {
   ask_drinking: boolean
   show_seating: boolean
   custom_colors: CoupleColors
+  section_visibility: SectionVisibility
+  events: CoupleEvents
   created_at: string
 }
 
