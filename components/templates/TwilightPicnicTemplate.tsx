@@ -38,8 +38,8 @@ const VENDOR_LOGOS = [
   { name: "Saloon Shenu / Anjali", label: "Bridal Glow", src: "/images/vendors/saloon-shenu.jpg" },
   { name: "Nova Events", label: "Day Architects", src: "/images/vendors/nova-events.jpg" },
   { name: "Saaro", label: "The Sound", src: "/images/vendors/saaro.jpg" },
-  { name: "Shots", label: "Liquid Chefs", src: "/images/vendors/shots.jpg" },
-  { name: "LIYO", label: "Groom Styling", src: "/images/vendors/liyo.jpg" },
+  { name: "Shots", label: "Liquid Chefs", src: "/images/vendors/shots.jpeg" },
+  { name: "LIYO", label: "Groom Styling", src: "/images/vendors/liyo.jpeg" },
 ]
 
 // ── Countdown ──
