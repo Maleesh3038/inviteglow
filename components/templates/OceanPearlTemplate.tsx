@@ -44,6 +44,43 @@ function RisingBubbles({ count = 14, color }: { count?: number; color: string })
   )
 }
 
+// ── Flying birds: gulls drifting across the sky on the beach photo, echoing
+// the cover photo's coastal sky. ──
+function Bird({ size, color }: { size: number; color: string }) {
+  return (
+    <svg width={size} height={size * 0.5} viewBox="0 0 40 20" style={{ display: "block" }}>
+      <path d="M0 10 Q10 0 20 8 Q30 0 40 10 Q30 6 20 12 Q10 6 0 10 Z" fill={color} opacity="0.85" />
+    </svg>
+  )
+}
+
+function FlyingBirds({ count = 6, color }: { count?: number; color: string }) {
+  const [items, setItems] = useState<{ id: number; top: number; size: number; duration: number; delay: number; flip: boolean }[]>([])
+  useEffect(() => {
+    setItems(Array.from({ length: count }).map((_, i) => ({
+      id: i,
+      top: 4 + Math.random() * 28,
+      size: 18 + Math.random() * 16,
+      duration: 14 + Math.random() * 10,
+      delay: Math.random() * 6,
+      flip: Math.random() > 0.5,
+    })))
+  }, [count])
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 3 }}>
+      {items.map(b => (
+        <div key={b.id} style={{
+          position: "absolute", top: `${b.top}%`, left: b.flip ? "auto" : "-10%", right: b.flip ? "-10%" : "auto",
+          animation: `bird-fly-${b.flip ? "rev" : "fwd"} ${b.duration}s linear ${b.delay}s infinite`,
+          transform: b.flip ? "scaleX(-1)" : undefined,
+        }}>
+          <Bird size={b.size} color={color} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Pearl/shell corner ornament — used to frame key cards, echoing the
 // reference photo's pearl and seashell clusters. ──
 function PearlOrnament({ color, flip }: { color: string; flip?: boolean }) {
@@ -332,6 +369,14 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
           88% { opacity: 0.8; }
           100% { transform: translateY(-105vh) translateX(12px); opacity: 0; }
         }
+        @keyframes bird-fly-fwd {
+          0% { left: -10%; }
+          100% { left: 110%; }
+        }
+        @keyframes bird-fly-rev {
+          0% { right: -10%; }
+          100% { right: 110%; }
+        }
         @keyframes pulse-pearl { 0%,100%{box-shadow:0 0 0 0 rgba(212,168,87,0.35);} 50%{box-shadow:0 0 0 14px rgba(212,168,87,0);} }
         input::placeholder { color: rgba(255,255,255,0.35); }
       `}</style>
@@ -349,33 +394,27 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               <img src="/images/hero-ocean-pearl.png" alt=""
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,58,71,0.35) 0%, rgba(15,58,71,0.15) 35%, rgba(15,58,71,0.3) 65%, rgba(15,58,71,0.6) 100%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(10,25,30,0.4) 0%, rgba(10,25,30,0.15) 35%, rgba(10,25,30,0.3) 65%, rgba(10,25,30,0.65) 100%)` }} />
 
-              <RisingBubbles count={16} color={PRIMARY_LIGHT} />
+              <RisingBubbles count={14} color={PRIMARY_LIGHT} />
+              <FlyingBirds count={6} color="rgba(255,255,255,0.8)" />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{
-                  background: `${DARK}aa`, backdropFilter: "blur(14px)", borderRadius: 26, padding: "2.8rem 2.2rem", textAlign: "center",
-                  width: "82%", maxWidth: 340, position: "relative", zIndex: 10,
-                  border: `1px solid ${PRIMARY}55`, boxShadow: `0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 ${PRIMARY}22`,
-                }}>
-                <div style={{ position: "absolute", top: 14, left: 14 }}><PearlOrnament color={PRIMARY_LIGHT} /></div>
-                <div style={{ position: "absolute", top: 14, right: 14 }}><PearlOrnament color={PRIMARY_LIGHT} flip /></div>
-
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${PRIMARY}1f`, borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: "1.2rem" }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY, display: "inline-block" }} />
+                style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY_LIGHT, display: "inline-block" }} />
                   Wedding Invitation
                 </div>
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "0.8rem" }}>You Are Invited</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,3.6rem)", color: "#fff", lineHeight: 1 }}>{W.bride}</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.2rem", color: PRIMARY, margin: "0.1rem 0" }}>&amp;</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,3.6rem)", color: "#fff", lineHeight: 1 }}>{W.groom}</div>
+                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>You Are Invited</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 14px rgba(0,0,0,0.4)" }}>&amp;</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>{W.groom}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", margin: "1.1rem 0" }}>
-                  <div style={{ height: 1, width: 36, background: `${PRIMARY}55` }} />
+                  <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
                   <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />
-                  <div style={{ height: 1, width: 36, background: `${PRIMARY}55` }} />
+                  <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
                 </div>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, marginBottom: "1.6rem" }}>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.88)", lineHeight: 1.7, marginBottom: "1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   {couple.intro_text || "Where the tide meets eternity, we begin our forever"}
                 </div>
                 <button onClick={handleOpenInvitation} style={{
@@ -384,12 +423,12 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                   border: "none", borderRadius: 100, padding: "13px 28px",
                   fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
                   cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700,
-                  boxShadow: `0 8px 24px ${PRIMARY}55`,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                   animation: "pulse-pearl 2.5s ease infinite",
                 }}>
                   You're Invited →
                 </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", marginTop: 12, letterSpacing: "0.05em" }}>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                   🎵 Tap to begin — with music
                 </div>
               </motion.div>
