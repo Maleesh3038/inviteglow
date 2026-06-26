@@ -25,7 +25,7 @@ const DEFAULT_PALETTE = {
 function Bird({ size, color }: { size: number; color: string }) {
   return (
     <svg width={size} height={size * 0.5} viewBox="0 0 40 20" style={{ display: "block" }}>
-      <path d="M0 10 Q10 0 20 8 Q30 0 40 10 Q30 6 20 12 Q10 6 0 10 Z" fill={color} opacity="0.55" />
+      <path d="M0 10 Q10 0 20 8 Q30 0 40 10 Q30 6 20 12 Q10 6 0 10 Z" fill={color} opacity="0.85" />
     </svg>
   )
 }
@@ -35,15 +35,15 @@ function FlyingBirds({ count = 6, color }: { count?: number; color: string }) {
   useEffect(() => {
     setItems(Array.from({ length: count }).map((_, i) => ({
       id: i,
-      top: 5 + Math.random() * 35,
-      size: 14 + Math.random() * 14,
-      duration: 18 + Math.random() * 14,
-      delay: Math.random() * 10,
+      top: 4 + Math.random() * 30,
+      size: 20 + Math.random() * 18,
+      duration: 14 + Math.random() * 10,
+      delay: Math.random() * 6,
       flip: Math.random() > 0.5,
     })))
   }, [count])
   return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 2 }}>
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 3 }}>
       {items.map(b => (
         <div key={b.id} style={{
           position: "absolute", top: `${b.top}%`, left: b.flip ? "auto" : "-10%", right: b.flip ? "-10%" : "auto",
@@ -398,26 +398,26 @@ export default function GoldenGardenTemplate({ couple }: { couple: Couple }) {
               <img src="/images/hero-golden-garden.png" alt=""
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.35) 100%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,12,5,0.35) 0%, rgba(20,12,5,0.15) 35%, rgba(20,12,5,0.25) 65%, rgba(20,12,5,0.55) 100%)` }} />
 
-              <FlyingBirds count={6} color="rgba(255,255,255,0.7)" />
+              <FlyingBirds count={6} color="rgba(255,255,255,0.75)" />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(10px)", borderRadius: 24, padding: "2.6rem 2.2rem", textAlign: "center", width: "78%", maxWidth: 320, position: "relative", zIndex: 10, boxShadow: "0 20px 60px rgba(180,120,80,0.18)" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${PRIMARY_LIGHT}33`, borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, marginBottom: "1.2rem" }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY, display: "inline-block" }} />
+                style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY_LIGHT, display: "inline-block" }} />
                   Wedding Invitation
                 </div>
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#c4a888", marginBottom: "0.8rem" }}>You Are Invited</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,3.6rem)", color: DARK, lineHeight: 1 }}>{W.bride}</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.2rem", color: PRIMARY, margin: "0.1rem 0" }}>&amp;</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,3.6rem)", color: DARK, lineHeight: 1 }}>{W.groom}</div>
+                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>You Are Invited</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 14px rgba(0,0,0,0.4)" }}>&amp;</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", margin: "1.1rem 0" }}>
-                  <div style={{ height: 1, width: 36, background: "#e0c0a0" }} />
+                  <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
                   <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />
-                  <div style={{ height: 1, width: 36, background: "#e0c0a0" }} />
+                  <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
                 </div>
-                <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.7, marginBottom: "1.6rem" }}>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, marginBottom: "1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   Join us as we celebrate love, joy, and<br />unforgettable moments together
                 </div>
                 <button onClick={handleOpenInvitation} style={{
@@ -426,12 +426,12 @@ export default function GoldenGardenTemplate({ couple }: { couple: Couple }) {
                   border: "none", borderRadius: 100, padding: "13px 26px",
                   fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
                   cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 500,
-                  boxShadow: "0 8px 24px rgba(212,168,87,0.35)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
                   animation: "pulse-gold 2.5s ease infinite",
                 }}>
                   Open Invitation →
                 </button>
-                <div style={{ fontSize: 9, color: "#c4a888", marginTop: 12, letterSpacing: "0.05em" }}>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                   🎵 Tap to begin — with music
                 </div>
               </motion.div>
