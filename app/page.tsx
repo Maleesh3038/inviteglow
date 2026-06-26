@@ -1,6 +1,7 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase, Review } from '@/lib/supabase'
 
 const templates = [
   {
@@ -115,6 +116,230 @@ const pricing = [
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } }
 
+const REVIEWS_BUCKET = 'wedding-photos'
+
+// ── Star rating display (read-only) ──
+function StarRow({ rating, size = 16 }: { rating: number; size?: number }) {
+  return (
+    <div style={{ display: "flex", gap: 2 }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <svg key={n} width={size} height={size} viewBox="0 0 24 24" fill={n <= rating ? "#f0a868" : "#f0ddd8"}>
+          <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </svg>
+      ))}
+    </div>
+  )
+}
+
+// ── Interactive star picker (for the submission form) ──
+function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 6 }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} stars`}
+          style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2 }}>
+          <svg width={28} height={28} viewBox="0 0 24 24" fill={n <= value ? "#f0a868" : "#f0ddd8"}>
+            <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+          </svg>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── Review submission form ──
+function ReviewForm({ onSubmitted }: { onSubmitted: () => void }) {
+  const [name, setName] = useState("")
+  const [rating, setRating] = useState(0)
+  const [text, setText] = useState("")
+  const [photo, setPhoto] = useState<string>("")
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handlePhotoUpload = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const fileName = `reviews/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from(REVIEWS_BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!error) {
+      const { data } = supabase.storage.from(REVIEWS_BUCKET).getPublicUrl(fileName)
+      setPhoto(data.publicUrl)
+    }
+    setUploading(false)
+  }
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !rating || !text.trim()) {
+      setMessage('⚠️ Please add your name, a star rating, and a short review.')
+      return
+    }
+    setSaving(true)
+    setMessage("")
+    const { error } = await supabase.from('reviews').insert([{
+      name: name.trim(),
+      rating,
+      review_text: text.trim(),
+      photo_url: photo || null,
+      status: 'pending',
+    }])
+    setSaving(false)
+    if (error) {
+      setMessage('❌ Something went wrong — please try again.')
+    } else {
+      setMessage('✅ Thank you! Your review has been submitted and will appear once approved.')
+      setName(""); setRating(0); setText(""); setPhoto("")
+      onSubmitted()
+    }
+  }
+
+  return (
+    <div style={{ background: "#fff", borderRadius: 20, padding: "28px 24px", border: "1px solid #f0ddd8", boxShadow: "0 4px 20px rgba(196,96,122,0.07)", maxWidth: 480, margin: "0 auto" }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: "#2d1515", marginBottom: 4, textAlign: "center" }}>Share Your Experience</div>
+      <div style={{ fontSize: 13, color: "#9a7080", marginBottom: 20, textAlign: "center" }}>Loved your invitation? Tell other couples about it.</div>
+
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#7a4040", marginBottom: 6, display: "block" }}>Your Name</label>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Amara Perera"
+          style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: "1px solid #f0ddd8", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#7a4040", marginBottom: 6, display: "block" }}>Your Rating</label>
+        <StarPicker value={rating} onChange={setRating} />
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#7a4040", marginBottom: 6, display: "block" }}>Your Review</label>
+        <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Tell us about your experience with InviteGlow..."
+          style={{ width: "100%", minHeight: 90, padding: "11px 14px", borderRadius: 10, border: "1px solid #f0ddd8", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif", resize: "vertical" }} />
+      </div>
+
+      <div style={{ marginBottom: 18 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#7a4040", marginBottom: 6, display: "block" }}>Add a Photo (optional)</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {photo && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={photo} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid #f0ddd8" }} />
+          )}
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            style={{ padding: "9px 16px", borderRadius: 8, border: "1px solid #f0ddd8", background: uploading ? "#fdf0f3" : "#fff", cursor: uploading ? "default" : "pointer", fontSize: 13, color: "#7a4040", fontWeight: 500 }}>
+            {uploading ? "Uploading..." : photo ? "Change Photo" : "📷 Upload Photo"}
+          </button>
+          {photo && (
+            <button type="button" onClick={() => setPhoto("")} style={{ fontSize: 12, color: "#c4607a", background: "transparent", border: "none", cursor: "pointer" }}>Remove</button>
+          )}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
+        </div>
+      </div>
+
+      {message && <div style={{ marginBottom: 14, fontSize: 13, color: message.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{message}</div>}
+
+      <button onClick={handleSubmit} disabled={saving} style={{
+        width: "100%", padding: 14, borderRadius: 12, border: "none", cursor: "pointer",
+        background: "linear-gradient(135deg,#c4607a,#e08090)", color: "#fff", fontWeight: 700, fontSize: 14,
+        opacity: saving ? 0.6 : 1,
+      }}>
+        {saving ? "Submitting..." : "Submit Review"}
+      </button>
+    </div>
+  )
+}
+
+// ── Reviews section: approved reviews grid + toggleable submission form ──
+function ReviewsSection() {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+
+  const loadReviews = async () => {
+    const { data, error } = await supabase
+      .from('reviews').select('*').eq('status', 'approved').order('created_at', { ascending: false })
+    if (!error && data) setReviews(data as Review[])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadReviews() }, [])
+
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0
+
+  return (
+    <section id="reviews" style={{ background: "#fffaf9", padding: "80px 24px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.4em", textTransform: "uppercase", color: "#e8a0b8", marginBottom: 12, fontWeight: 600 }}>💌 Couples Love Us</div>
+          <h2 style={{ fontSize: "clamp(1.8rem,4vw,2.8rem)", fontWeight: 800, color: "#2d1515", marginBottom: 12, letterSpacing: "-0.03em" }}>What Our Couples Say</h2>
+          {reviews.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8 }}>
+              <StarRow rating={Math.round(avgRating)} size={20} />
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#2d1515" }}>{avgRating.toFixed(1)}</span>
+              <span style={{ fontSize: 13, color: "#9a7080" }}>· {reviews.length} review{reviews.length === 1 ? "" : "s"}</span>
+            </div>
+          )}
+          <p style={{ color: "#9a7080", fontSize: 15, marginTop: 8 }}>Real feedback from couples who created their invitation with us.</p>
+        </motion.div>
+
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#9a7080" }}>Loading reviews...</div>
+        ) : reviews.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#9a7080", background: "#fff", borderRadius: 16, border: "1px solid #f0ddd8", maxWidth: 480, margin: "0 auto 32px" }}>
+            No reviews yet — be the first to share your experience!
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 20, marginBottom: 40 }}>
+            {reviews.map((r, i) => (
+              <motion.div key={r.id} variants={fadeUp} initial="hidden" whileInView="visible" transition={{ delay: i * 0.06 }} viewport={{ once: true }}
+                style={{ background: "#fff", borderRadius: 18, padding: "22px 20px", border: "1px solid #f0ddd8", boxShadow: "0 4px 20px rgba(196,96,122,0.07)" }}>
+                <StarRow rating={r.rating} />
+                <p style={{ fontSize: 14, color: "#6a4040", lineHeight: 1.7, margin: "12px 0 16px" }}>"{r.review_text}"</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {r.photo_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={r.photo_url} alt={r.name} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#fde8ed,#f9d0dc)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#c4607a" }}>
+                      {r.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#2d1515" }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: "#c4a0b0" }}>
+                      {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ textAlign: "center" }}>
+          {!showForm ? (
+            <button onClick={() => setShowForm(true)} style={{
+              padding: "14px 32px", borderRadius: 100, border: "none", cursor: "pointer",
+              background: "linear-gradient(135deg,#c4607a,#e08090)", color: "#fff", fontWeight: 600, fontSize: 14,
+              boxShadow: "0 8px 24px rgba(196,96,122,0.3)",
+            }}>
+              ✍️ Leave a Review
+            </button>
+          ) : (
+            <AnimatePresence>
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <ReviewForm onSubmitted={() => { setShowForm(false); loadReviews() }} />
+                <button onClick={() => setShowForm(false)} style={{ marginTop: 14, fontSize: 13, color: "#9a7080", background: "transparent", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                  Cancel
+                </button>
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function MarketingPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
@@ -127,7 +352,7 @@ export default function MarketingPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: "#c4607a" }}>InviteGlow</div>
           <div className="hidden md:flex" style={{ alignItems: "center", gap: 4 }}>
-            {["Features", "Themes", "Pricing", "About"].map(item => (
+            {["Features", "Themes", "Reviews", "Pricing", "About"].map(item => (
               <a key={item} href={`#${item.toLowerCase()}`}
                 style={{ padding: "8px 16px", borderRadius: 10, fontSize: 14, color: "#7a4040", textDecoration: "none", transition: "all 0.2s" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fde8ed"; (e.currentTarget as HTMLElement).style.color = "#c4607a" }}
@@ -147,7 +372,7 @@ export default function MarketingPage() {
         </div>
         {menuOpen && (
           <div style={{ padding: "1rem 24px", borderTop: "1px solid #f0ddd8", display: "flex", flexDirection: "column", gap: 8 }}>
-            {["Features", "Themes", "Pricing", "About"].map(item => (
+            {["Features", "Themes", "Reviews", "Pricing", "About"].map(item => (
               <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setMenuOpen(false)}
                 style={{ fontSize: 15, color: "#7a4040", textDecoration: "none", padding: "8px 0" }}>{item}</a>
             ))}
@@ -321,6 +546,9 @@ export default function MarketingPage() {
         </div>
       </section>
 
+      {/* ── REVIEWS ── */}
+      <ReviewsSection />
+
       {/* ── PRICING ── */}
       <section id="pricing" style={{ background: "#fff", padding: "80px 24px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -432,7 +660,7 @@ export default function MarketingPage() {
             </div>
 
             {[
-              { title: "Product", links: [{ label: "Features", href: "#features" }, { label: "Themes", href: "#themes" }, { label: "Pricing", href: "#pricing" }, { label: "How it Works", href: "#" }] },
+              { title: "Product", links: [{ label: "Features", href: "#features" }, { label: "Themes", href: "#themes" }, { label: "Reviews", href: "#reviews" }, { label: "Pricing", href: "#pricing" }, { label: "How it Works", href: "#" }] },
               {
                 title: "Support", links: [
                   { label: "WhatsApp Us", href: "https://wa.me/94770024484?text=Hi InviteGlow! I have a question." },
@@ -531,6 +759,7 @@ export default function MarketingPage() {
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         input::placeholder { color: #c4a0b0; }
+        textarea::placeholder { color: #c4a0b0; }
       `}</style>
     </div>
   )

@@ -49,3 +49,13 @@ export type RSVP = {
   accommodation: 'needed' | 'not_needed' | null
   created_at: string
 }
+
+export type Review = {
+  id: string
+  name: string
+  rating: number
+  review_text: string
+  photo_url: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+}

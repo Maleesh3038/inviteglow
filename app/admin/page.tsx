@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
-import { supabase, Couple, RSVP } from '@/lib/supabase'
+import { supabase, Couple, RSVP, Review } from '@/lib/supabase'
 
 const TEMPLATES = [
   { id: 'floral-romance', name: 'Floral Romance (Pink)' },
@@ -307,6 +307,112 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
   )
 }
 
+// ── Pending Reviews Manager: approve/reject reviews submitted via the public
+// homepage form. Shows pending reviews by default with an option to view
+// approved/rejected ones too, so the admin can revisit a decision. ──
+function PendingReviewsManager() {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected'>('pending')
+  const [actingId, setActingId] = useState<string | null>(null)
+
+  const loadReviews = async () => {
+    setLoading(true)
+    const { data, error } = await supabase.from('reviews').select('*').order('created_at', { ascending: false })
+    if (!error && data) setReviews(data as Review[])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadReviews() }, [])
+
+  const setStatus = async (id: string, status: 'approved' | 'rejected') => {
+    setActingId(id)
+    const { error } = await supabase.from('reviews').update({ status }).eq('id', id)
+    setActingId(null)
+    if (!error) setReviews(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+  }
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Permanently delete ${name}'s review?`)) return
+    setActingId(id)
+    const { error } = await supabase.from('reviews').delete().eq('id', id)
+    setActingId(null)
+    if (!error) setReviews(prev => prev.filter(r => r.id !== id))
+  }
+
+  const filtered = reviews.filter(r => r.status === filter)
+  const pendingCount = reviews.filter(r => r.status === 'pending').length
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 32, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
+          ⭐ Site Reviews {pendingCount > 0 && <span style={{ color: '#dc2626' }}>({pendingCount} pending)</span>}
+        </h2>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {(['pending', 'approved', 'rejected'] as const).map(s => (
+            <button key={s} type="button" onClick={() => setFilter(s)} style={{
+              padding: '6px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              border: filter === s ? 'none' : '1px solid #e2e8f0',
+              background: filter === s ? '#c4607a' : '#fff',
+              color: filter === s ? '#fff' : '#475569',
+            }}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>Loading...</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ fontSize: 13, color: '#94a3b8', padding: 12, background: '#f8fafc', borderRadius: 10 }}>No {filter} reviews.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {filtered.map(r => (
+            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, padding: '14px 16px', borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 240 }}>
+                {r.photo_url && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={r.photo_url} alt={r.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                )}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{r.name}</span>
+                    <span style={{ fontSize: 12, color: '#f59e0b' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.5 }}>{r.review_text}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+                    {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {r.status !== 'approved' && (
+                  <button type="button" onClick={() => setStatus(r.id, 'approved')} disabled={actingId === r.id}
+                    style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: actingId === r.id ? 0.6 : 1 }}>
+                    ✓ Approve
+                  </button>
+                )}
+                {r.status !== 'rejected' && (
+                  <button type="button" onClick={() => setStatus(r.id, 'rejected')} disabled={actingId === r.id}
+                    style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: actingId === r.id ? 0.6 : 1 }}>
+                    ✗ Reject
+                  </button>
+                )}
+                <button type="button" onClick={() => handleDelete(r.id, r.name)} disabled={actingId === r.id}
+                  style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 12, fontWeight: 500, cursor: 'pointer', opacity: actingId === r.id ? 0.6 : 1 }}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [couples, setCouples] = useState<Couple[]>([])
   const [loading, setLoading] = useState(true)
@@ -457,6 +563,8 @@ export default function AdminPage() {
             </button>
           )}
         </div>
+
+        {!editing && <PendingReviewsManager />}
 
         {/* FORM */}
         {editing && (
