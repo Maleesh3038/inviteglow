@@ -202,9 +202,9 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: "#fff", marginBottom: 16, textAlign: "center" }}>Will You Join Us?</div>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button onClick={handleAccept} style={{ padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, color: dark, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Joyfully Accepts</button>
-            <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>
-              {saving ? "..." : "✗ Regretfully Declines"}
+            <button onClick={handleAccept} style={{ padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, color: dark, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>♥ Joyfully Accepts</button>
+            <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", opacity: saving ? 0.6 : 1 }}>
+              {saving ? "..." : "Regretfully Declines"}
             </button>
           </div>
         </>
@@ -401,6 +401,22 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+
+                {/* Circular monogram badge — initials of bride & groom, framed
+                    by a thin laurel-style ring, echoing the reference's "A/D" badge */}
+                <div style={{
+                  width: 76, height: 76, borderRadius: "50%", margin: "0 auto 1rem",
+                  background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)",
+                  border: `1.5px solid ${PRIMARY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
+                }}>
+                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                    {W.bride.charAt(0)}<span style={{ color: PRIMARY_LIGHT, fontSize: "1rem" }}> / </span>{W.groom.charAt(0)}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.5rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>Together with their families</div>
+
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY_LIGHT, display: "inline-block" }} />
                   Wedding Invitation
@@ -515,8 +531,28 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
             })}
 
             {sv.countdown && (
-              <div style={{ background: `${CREAM}cc`, padding: "1.5rem 1rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, border: `1px solid ${PRIMARY}33` }}>
-                <div style={sectionEyebrow(PRIMARY)}>Counting Down to Our Big Day</div>
+              <div style={{ background: `${CREAM}cc`, padding: "1.8rem 1rem 1.5rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, border: `1px solid ${PRIMARY}33` }}>
+                <div style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 4 }}>Counting Down to</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 600, fontSize: "1.4rem", color: "#fff", marginBottom: 18 }}>Our Big Day</div>
+
+                {/* Circular framed couple photo, echoing the reference's coral/pearl-framed portrait */}
+                <div style={{ position: "relative", width: 150, height: 150, margin: "0 auto 20px" }}>
+                  <div style={{
+                    position: "absolute", inset: 0, borderRadius: "50%",
+                    background: `conic-gradient(${PRIMARY_LIGHT}, ${PRIMARY}, ${PRIMARY_LIGHT})`,
+                    padding: 4,
+                  }}>
+                    <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", border: `2px solid ${DARK}` }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                    </div>
+                  </div>
+                  <div style={{ position: "absolute", bottom: -4, left: -8 }}><PearlOrnament color={PRIMARY_LIGHT} /></div>
+                  <div style={{ position: "absolute", bottom: -4, right: -8 }}><PearlOrnament color={PRIMARY_LIGHT} flip /></div>
+                </div>
+
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </div>
             )}
@@ -529,16 +565,33 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
                 <div style={sectionTitle()}>Event Timeline</div>
-                <div style={{ position: "relative", paddingLeft: 20 }}>
-                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY}40` }} />
-                  {W.timeline.map((t, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                      style={{ position: "relative", padding: "10px 0 10px 20px" }}>
-                      <div style={{ position: "absolute", left: -14, top: 14, width: 10, height: 10, borderRadius: "50%", background: PRIMARY, border: `2px solid ${DARK}`, boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}66` }} />
-                      <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY_LIGHT, letterSpacing: "0.1em" }}>{t.time}</div>
-                      <div style={{ fontSize: 13, color: "#fff", fontWeight: 500, marginTop: 2 }}>{t.event}</div>
-                    </motion.div>
-                  ))}
+                <div style={{ display: "grid", gap: 12 }}>
+                  {W.timeline.map((t, i) => {
+                    const label = t.event.toLowerCase()
+                    const icon = label.includes('ceremon') ? '🪷'
+                      : label.includes('reception') || label.includes('cocktail') || label.includes('drink') ? '🥂'
+                      : label.includes('dinner') || label.includes('lunch') ? '🍽️'
+                      : label.includes('danc') ? '💃'
+                      : label.includes('music') || label.includes('band') || label.includes('dj') ? '🎵'
+                      : label.includes('party') || label.includes('after') ? '✨'
+                      : label.includes('away') || label.includes('depart') ? '👋'
+                      : '⏰'
+                    return (
+                      <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                        style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 0", borderBottom: i < W.timeline.length - 1 ? `1px solid ${PRIMARY}1f` : "none" }}>
+                        <div style={{
+                          width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                          background: `linear-gradient(135deg, ${PRIMARY_LIGHT}33, ${PRIMARY}26)`,
+                          border: `1.5px solid ${PRIMARY}55`,
+                          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                        }}>{icon}</div>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY_LIGHT, letterSpacing: "0.08em" }}>{t.time}</div>
+                          <div style={{ fontSize: 13, color: "#fff", fontWeight: 500, marginTop: 1 }}>{t.event}</div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
                 </div>
               </motion.div>
             )}
