@@ -411,7 +411,12 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
-                <div className="sinhala-text" style={{ fontSize: 13, color: PRIMARY_LIGHT, letterSpacing: "0.05em", marginBottom: "0.6rem", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                <div className="sinhala-text" style={{
+                  display: "inline-block", fontSize: 13, color: "#fff", letterSpacing: "0.05em",
+                  marginBottom: "0.6rem", padding: "4px 14px", borderRadius: 100,
+                  background: "rgba(20,16,8,0.45)", backdropFilter: "blur(4px)",
+                  textShadow: "0 2px 8px rgba(0,0,0,0.6)",
+                }}>
                   ශ්‍රී සුභ මංගලම්
                 </div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: `1px solid ${PRIMARY_LIGHT}55` }}>
