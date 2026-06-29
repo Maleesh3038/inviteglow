@@ -9,6 +9,7 @@ import KandyanHeritageTemplate from '@/components/templates/KandyanHeritageTempl
 import TwilightPicnicTemplate from '@/components/templates/TwilightPicnicTemplate'
 import GoldenGardenTemplate from '@/components/templates/GoldenGardenTemplate'
 import OceanPearlTemplate from '@/components/templates/OceanPearlTemplate'
+import SunsetShoresTemplate from '@/components/templates/SunsetShoresTemplate'
 
 export default function InvitePage() {
   const params = useParams()
@@ -59,6 +60,8 @@ export default function InvitePage() {
       return <GoldenGardenTemplate couple={couple} />
     case 'ocean-pearl':
       return <OceanPearlTemplate couple={couple} />
+    case 'sunset-shores':
+      return <SunsetShoresTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />

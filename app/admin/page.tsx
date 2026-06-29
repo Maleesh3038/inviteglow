@@ -10,6 +10,7 @@ const TEMPLATES = [
   { id: 'twilight-picnic', name: 'Twilight Picnic (After-Party)' },
   { id: 'golden-garden', name: 'Golden Garden (Floral Arch)' },
   { id: 'ocean-pearl', name: 'Ocean Pearl (Beach Elegance)' },
+  { id: 'sunset-shores', name: 'Sunset Shores (Bali Sunset)' },
 ]
 
 const BUCKET = 'wedding-photos'
