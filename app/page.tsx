@@ -73,6 +73,29 @@ const templates = [
     photo: "/images/hero-ocean-pearl.png",
     demoUrl: "https://www.inviteglow.com/invite/akila-nethmi",
   },
+  {
+    id: 7,
+    name: "Sunset Shores",
+    desc: "Bali sunset romance with hibiscus and ocean waves",
+    tag: "New",
+    bg: "linear-gradient(135deg,#fbd4ae,#e0795a)",
+    emoji: "🌺",
+    color: "#e0795a",
+    photo: "/images/hero-sunset-shores.png",
+    demoUrl: "https://www.inviteglow.com/invite/manisha-sachin",
+  },
+  {
+    id: 8,
+    name: "Traditional Ceylon",
+    desc: "Kandyan culture and royal gold elegance",
+    tag: "Sri Lankan",
+    bg: "linear-gradient(135deg,#1f2e22,#2f4a35)",
+    emoji: "🪔",
+    color: "#c9a227",
+    dark: true,
+    photo: "/images/hero-traditional-ceylon.png",
+    demoUrl: "https://www.inviteglow.com/invite/maheshi-dilip",
+  },
 ]
 
 const features = [
