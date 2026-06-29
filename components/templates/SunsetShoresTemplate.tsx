@@ -43,114 +43,6 @@ function FloatingPetals({ count = 9 }: { count?: number }) {
   )
 }
 
-// ── Envelope-open transition — plays once between the cover and the full
-// invitation. A coral envelope with a seashell wax seal: the seal cracks,
-// the flap swings open, and the invitation slides up out of the envelope.
-// Calls onDone() when the sequence finishes so the parent can swap to the
-// full invitation view. ──
-function EnvelopeOpen({ primary, primaryLight, dark, bride, groom, onDone }: {
-  primary: string; primaryLight: string; dark: string; bride: string; groom: string; onDone: () => void
-}) {
-  const [stage, setStage] = useState<'closed' | 'cracking' | 'opening' | 'sliding'>('closed')
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setStage('cracking'), 350)
-    const t2 = setTimeout(() => setStage('opening'), 950)
-    const t3 = setTimeout(() => setStage('sliding'), 1650)
-    const t4 = setTimeout(() => onDone(), 2500)
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4) }
-  }, [onDone])
-
-  return (
-    <motion.div
-      exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
-      style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: dark, overflow: "hidden" }}
-    >
-      <div style={{ position: "relative", width: 260, height: 180 }}>
-
-        {/* Envelope back/body */}
-        <div style={{
-          position: "absolute", inset: 0, borderRadius: 10,
-          background: `linear-gradient(160deg,${primaryLight},${primary})`,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.4)", overflow: "hidden",
-        }}>
-          {/* Inner shadow lines mimicking envelope side folds */}
-          <div style={{ position: "absolute", left: 0, top: 0, width: "50%", height: "100%", background: "linear-gradient(120deg, rgba(0,0,0,0.08), transparent 60%)" }} />
-          <div style={{ position: "absolute", right: 0, top: 0, width: "50%", height: "100%", background: "linear-gradient(240deg, rgba(0,0,0,0.08), transparent 60%)" }} />
-        </div>
-
-        {/* Invitation card sliding up out of the envelope */}
-        <motion.div
-          initial={{ y: 18, opacity: 0 }}
-          animate={stage === 'sliding' ? { y: -150, opacity: 1 } : { y: 18, opacity: stage === 'opening' ? 1 : 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{
-            position: "absolute", left: 14, right: 14, top: 14, bottom: 14,
-            background: "#fff", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            zIndex: 2, padding: "0 12px", textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: `${primary}99` }}>You're Invited</div>
-          <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: dark, lineHeight: 1.1, marginTop: 4 }}>
-            {bride} &amp; {groom}
-          </div>
-        </motion.div>
-
-        {/* Bottom triangle flap (static, behind the card) */}
-        <div style={{
-          position: "absolute", left: 0, right: 0, bottom: 0, height: "55%",
-          background: `linear-gradient(160deg,${primary},${primaryLight})`,
-          clipPath: "polygon(0 100%, 100% 100%, 50% 0%)",
-          borderRadius: "0 0 10px 10px", zIndex: 1,
-        }} />
-
-        {/* Top triangle flap — swings open like a lid */}
-        <motion.div
-          initial={{ rotateX: 0 }}
-          animate={{ rotateX: stage === 'opening' || stage === 'sliding' ? -165 : 0 }}
-          transition={{ duration: 0.7, ease: "easeInOut" }}
-          style={{
-            position: "absolute", left: 0, right: 0, top: 0, height: "58%",
-            background: `linear-gradient(200deg,${primaryLight},${primary})`,
-            clipPath: "polygon(0 0, 100% 0, 50% 100%)",
-            transformOrigin: "top center", transformStyle: "preserve-3d",
-            borderRadius: "10px 10px 0 0", zIndex: 3,
-            boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
-          }}
-        />
-
-        {/* Wax seal — seashell, cracks and fades away */}
-        <AnimatePresence>
-          {stage !== 'opening' && stage !== 'sliding' && (
-            <motion.div
-              initial={{ scale: 1, rotate: 0 }}
-              animate={stage === 'cracking' ? { scale: [1, 1.15, 0.9, 1.2], rotate: [0, -6, 6, 0] } : {}}
-              exit={{ scale: 0, opacity: 0, transition: { duration: 0.3 } }}
-              transition={{ duration: 0.55 }}
-              style={{
-                position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-                width: 46, height: 46, borderRadius: "50%", zIndex: 4,
-                background: `radial-gradient(circle at 35% 30%, ${primaryLight}, ${primary})`,
-                boxShadow: "0 4px 10px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.4)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
-              }}
-            >
-              🐚
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div style={{ position: "absolute", bottom: "12%", left: 0, right: 0, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.6)", letterSpacing: "0.1em" }}>
-        {stage === 'closed' && "Breaking the seal..."}
-        {stage === 'cracking' && "Opening your invitation..."}
-        {(stage === 'opening' || stage === 'sliding') && "✨"}
-      </div>
-    </motion.div>
-  )
-}
-
 // ── Animated ocean wave — sits at the bottom edge of the cover, a soft
 // rolling SVG wave in the sunset palette. This template's signature motif,
 // echoing the reference image's "Sunset Shores" wave-and-surf imagery. ──
@@ -379,7 +271,6 @@ const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Great
 
 export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
-  const [envelopeOpening, setEnvelopeOpening] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
@@ -398,13 +289,8 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
   }, [couple])
 
   const handleOpenInvitation = () => {
-    setEnvelopeOpening(true)
-    audioRef.current?.play().catch(() => {})
-  }
-
-  const handleEnvelopeDone = () => {
-    setEnvelopeOpening(false)
     setOpened(true)
+    audioRef.current?.play().catch(() => {})
   }
 
   // ── Derive the events list to render: prefer the new couple.events object,
@@ -496,7 +382,7 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
 
         {/* ══ COVER ══ */}
         <AnimatePresence>
-          {!opened && !envelopeOpening && (
+          {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
@@ -543,20 +429,6 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ══ ENVELOPE OPENING TRANSITION ══ */}
-        <AnimatePresence>
-          {envelopeOpening && (
-            <EnvelopeOpen
-              primary={PRIMARY}
-              primaryLight={PRIMARY_LIGHT}
-              dark={DARK}
-              bride={W.bride}
-              groom={W.groom}
-              onDone={handleEnvelopeDone}
-            />
           )}
         </AnimatePresence>
 
