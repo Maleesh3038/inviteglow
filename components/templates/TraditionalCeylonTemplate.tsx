@@ -58,6 +58,37 @@ function VineCorner({ color, flip = false }: { color: string; flip?: boolean }) 
   )
 }
 
+// ── Ornate gold arch frame — a single connected border (not just corner
+// flourishes) used on the family invitation card, echoing the carved
+// floral-arch motif from Kandyan wedding cards. Drawn as a full rounded
+// rectangle outline with small leaf/scroll flourishes at each corner and
+// top-center, so the card reads as "framed" rather than just bordered. ──
+function OrnateFrame({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 400 300" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+      {/* Main border */}
+      <rect x="8" y="8" width="384" height="284" rx="16" fill="none" stroke={color} strokeWidth="1.4" opacity="0.85" />
+      <rect x="14" y="14" width="372" height="272" rx="13" fill="none" stroke={color} strokeWidth="0.6" opacity="0.5" />
+
+      {/* Top-center crest flourish */}
+      <g opacity="0.9">
+        <path d="M178 8 Q188 0 200 8 Q212 0 222 8" stroke={color} strokeWidth="1.3" fill="none" />
+        <circle cx="200" cy="4" r="2.4" fill={color} />
+        <path d="M192 8 Q196 14 200 8 Q204 14 208 8" stroke={color} strokeWidth="1" fill="none" />
+      </g>
+
+      {/* Corner scroll flourishes (leaf curls) */}
+      {[[8, 8, 1, 1], [392, 8, -1, 1], [8, 292, 1, -1], [392, 292, -1, -1]].map(([cx, cy, sx, sy], i) => (
+        <g key={i} transform={`translate(${cx},${cy}) scale(${sx},${sy})`} opacity="0.85">
+          <path d="M0 18 Q0 4 14 2 Q26 0 28 14" stroke={color} strokeWidth="1.2" fill="none" />
+          <circle cx="28" cy="14" r="1.8" fill={color} />
+          <circle cx="14" cy="2" r="1.4" fill={color} />
+        </g>
+      ))}
+    </svg>
+  )
+}
+
 // ── Countdown ──
 function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: string; primary: string; primaryLight: string; dark: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
@@ -78,9 +109,9 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
   }, [targetDate])
 
   return (
-    <div style={{ display: "flex", maxWidth: 380, margin: "0 auto" }}>
+    <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
       {[["දින", t.d], ["පැය", t.h], ["විනාඩි", t.m], ["තප්පර", t.s]].map(([l, v]) => (
-        <div key={l} style={{ flex: 1, textAlign: "center", padding: "10px 6px" }}>
+        <div key={l} style={{ flex: 1, textAlign: "center", padding: "4px 2px" }}>
           <div style={{ borderRadius: 10, background: `linear-gradient(145deg,${primaryLight}33,${primary}1a)`, border: `1.5px solid ${primaryLight}88`, padding: "10px 4px" }}>
             <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 600 }}>{v}</span>
           </div>
@@ -443,18 +474,17 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY_LIGHT},${PRIMARY_LIGHT}cc)`, color: DARK, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>RSVP</a>
-                    <a href="#location" style={{ background: "rgba(255,255,255,0.14)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif" }}>Location</a>
+                    <a href="#location" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(8px)", color: PRIMARY_LIGHT, border: `1.5px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
                   </div>
                 </motion.div>
               </div>
             </div>
 
             {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <VineCorner color={PRIMARY_LIGHT} />
-                <VineCorner color={PRIMARY_LIGHT} flip />
-                <div className="sinhala-text" style={{ ...pretitleSinhala(PRIMARY), marginBottom: 10 }}>ශ්‍රී සුභ මංගලම්</div>
-                <div style={{ textAlign: "center", padding: 14, background: `${PRIMARY_LIGHT}14`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
+              <motion.div style={{ ...cardStyle(), padding: "2.2rem 1.6rem 1.8rem" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <OrnateFrame color={PRIMARY_LIGHT} />
+                <div className="sinhala-text" style={{ ...pretitleSinhala(PRIMARY), marginBottom: 10, position: "relative" }}>ශ්‍රී සුභ මංගලම්</div>
+                <div style={{ textAlign: "center", padding: "14px 10px", background: `${PRIMARY_LIGHT}14`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, position: "relative" }}>
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong> ගේ පුත් <strong>{W.groom}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>සහ<br /></>}
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong> ගේ දියණිය <strong>{W.bride}</strong><br /></>}
@@ -499,10 +529,10 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
             })}
 
             {sv.countdown && (
-              <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}55`, borderBottom: `1px solid ${PRIMARY_LIGHT}55`, marginBottom: 16 }}>
-                <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>මහා දිනයට තව</div>
+              <motion.div style={{ ...cardStyle(), padding: "1.4rem 1rem 1.2rem" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div className="sinhala-text" style={{ ...pretitleSinhala(PRIMARY), marginBottom: 10 }}>මහා දිනයට තව</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
-              </div>
+              </motion.div>
             )}
 
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} /></div>
