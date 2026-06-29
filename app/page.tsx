@@ -50,6 +50,29 @@ const templates = [
     photo: "/images/hero-elegant.png",
     demoUrl: "https://www.inviteglow.com/invite/sheneli-kevin",
   },
+  {
+    id: 5,
+    name: "Golden Garden",
+    desc: "Sunset floral arch with flying birds",
+    tag: "New",
+    bg: "linear-gradient(135deg,#fde8c8,#e8a888)",
+    emoji: "🌼",
+    color: "#d4a857",
+    photo: "/images/hero-golden-garden.png",
+    demoUrl: "https://www.inviteglow.com/invite/sanjeewani-lalith",
+  },
+  {
+    id: 6,
+    name: "Ocean Pearl",
+    desc: "Deep ocean elegance with pearls and bubbles",
+    tag: "New",
+    bg: "linear-gradient(135deg,#0f3a47,#1d5666)",
+    emoji: "🦪",
+    color: "#d4a857",
+    dark: true,
+    photo: "/images/hero-ocean-pearl.png",
+    demoUrl: "https://www.inviteglow.com/invite/akila-nethmi",
+  },
 ]
 
 const features = [
