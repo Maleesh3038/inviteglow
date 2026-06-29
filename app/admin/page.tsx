@@ -11,6 +11,7 @@ const TEMPLATES = [
   { id: 'golden-garden', name: 'Golden Garden (Floral Arch)' },
   { id: 'ocean-pearl', name: 'Ocean Pearl (Beach Elegance)' },
   { id: 'sunset-shores', name: 'Sunset Shores (Bali Sunset)' },
+  { id: 'traditional-ceylon', name: 'Traditional Ceylon (Kandyan Culture)' },
 ]
 
 const BUCKET = 'wedding-photos'
