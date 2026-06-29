@@ -110,7 +110,7 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
 
   return (
     <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
-      {[["දින", t.d], ["පැය", t.h], ["විනාඩි", t.m], ["තප්පර", t.s]].map(([l, v]) => (
+      {[["Days", t.d], ["Hours", t.h], ["Mins", t.m], ["Secs", t.s]].map(([l, v]) => (
         <div key={l} style={{ flex: 1, textAlign: "center", padding: "4px 2px" }}>
           <div style={{ borderRadius: 10, background: `linear-gradient(145deg,${primaryLight}33,${primary}1a)`, border: `1.5px solid ${primaryLight}88`, padding: "10px 4px" }}>
             <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 600 }}>{v}</span>
@@ -184,7 +184,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
 
   return (
     <div style={{ background: `linear-gradient(135deg,${primaryLight}22,${cream})`, padding: "2.5rem 1.5rem", textAlign: "center" }}>
-      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 6 }}>කරුණාකර පැමිණීම තහවුරු කරන්න</div>
+      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 6 }}>Kindly Confirm Your Attendance</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: dark, marginBottom: 6 }}>Kindly RSVP</div>
       <div style={{ fontSize: 12, color: muted, marginBottom: 20 }}>Please enter your name and let us know — we'd love to celebrate with you!</div>
       <div style={{ background: "#fff", borderRadius: 16, padding: "1.5rem", maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
@@ -465,7 +465,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(31,46,34,0.1) 60%,rgba(31,46,34,0.4) 100%)` }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div className="sinhala-text" style={{ fontSize: 11, color: PRIMARY_LIGHT, marginBottom: "0.6rem" }}>දෙපවුලේ පෙරටුව</div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: "0.6rem" }}>Together with their families</div>
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.3rem,8.5vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(31,46,34,0.4)" }}>
                     {W.bride}
                     <span style={{ display: "block", fontSize: "1.7rem", color: PRIMARY_LIGHT, fontStyle: "normal" }}>&amp;</span>
@@ -502,7 +502,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
                 <motion.div key={ev.key} id={idx === 0 ? "location" : undefined} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <VineCorner color={PRIMARY_LIGHT} />
                   <VineCorner color={PRIMARY_LIGHT} flip />
-                  <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>{ev.icon} {ev.sinhala}</div>
+                  <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={titleStyle(DARK)}>{ev.label}</div>
                   {[
                     { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
@@ -530,7 +530,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
 
             {sv.countdown && (
               <motion.div style={{ ...cardStyle(), padding: "1.4rem 1rem 1.2rem" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div className="sinhala-text" style={{ ...pretitleSinhala(PRIMARY), marginBottom: 10 }}>මහා දිනයට තව</div>
+                <div style={{ ...pretitleStyle(PRIMARY), marginBottom: 10 }}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
             )}
@@ -541,7 +541,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <VineCorner color={PRIMARY_LIGHT} />
                 <VineCorner color={PRIMARY_LIGHT} flip />
-                <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>මංගල්‍ය වැඩසටහන</div>
+                <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>Event Timeline</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
                   <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}55` }} />
@@ -561,7 +561,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
               <motion.div style={cardStyle()} id="seat" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <VineCorner color={PRIMARY_LIGHT} />
                 <VineCorner color={PRIMARY_LIGHT} flip />
-                <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>ආසන සොයන්න</div>
+                <div style={pretitleStyle(PRIMARY)}>Be Our Guest</div>
                 <div style={titleStyle(DARK)}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 4 }}>Search your name to find your assigned table</div>
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
@@ -572,7 +572,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <VineCorner color={PRIMARY_LIGHT} />
                 <VineCorner color={PRIMARY_LIGHT} flip />
-                <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>අපගේ ගීතය</div>
+                <div style={pretitleStyle(PRIMARY)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
@@ -581,7 +581,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <VineCorner color={PRIMARY_LIGHT} />
                 <VineCorner color={PRIMARY_LIGHT} flip />
-                <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>අපගේ සුන්දර මොහොත්</div>
+                <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>Moments of Love</div>
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 16, lineHeight: 1.7 }}>
                   Holding onto the laughter, the quiet moments, and the little sparks of magic that brought us here.
@@ -601,7 +601,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
               <motion.div style={{ ...cardStyle(), borderRadius: 18 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <VineCorner color={PRIMARY_LIGHT} />
                 <VineCorner color={PRIMARY_LIGHT} flip />
-                <div className="sinhala-text" style={pretitleSinhala(PRIMARY)}>ස්තූතියි</div>
+                <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
                   With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.
