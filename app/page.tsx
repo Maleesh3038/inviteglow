@@ -82,6 +82,7 @@ const templates = [
     emoji: "🌺",
     color: "#e0795a",
     photo: "/images/hero-sunset-shores.png",
+    video: "/videos/sunset-shores-cover.mp4",
     demoUrl: "https://www.inviteglow.com/invite/manisha-sachin",
   },
   {
@@ -520,9 +521,20 @@ export default function MarketingPage() {
                 onClick={() => window.open(t.demoUrl, '_blank')}
                 style={{ background: "#fff", borderRadius: 20, overflow: "hidden", border: "1px solid #f0ddd8", boxShadow: "0 4px 20px rgba(196,96,122,0.07)", cursor: "pointer", transition: "all 0.3s" }}>
                 <div style={{ height: 160, position: "relative", overflow: "hidden" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={t.photo} alt={t.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                  {t.video ? (
+                    <video
+                      autoPlay loop muted playsInline preload="auto"
+                      poster={t.photo}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
+                      onError={e => { (e.currentTarget as HTMLVideoElement).style.display = "none" }}
+                    >
+                      <source src={t.video} type="video/mp4" />
+                    </video>
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={t.photo} alt={t.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
+                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                  )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.65) 100%)" }} />
                   {t.tag && (
                     <div style={{ position: "absolute", top: 12, right: 12, background: t.color, color: "#fff", borderRadius: 100, padding: "3px 10px", fontSize: 10, fontWeight: 600, zIndex: 2 }}>{t.tag}</div>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
 const DEFAULT_PHOTO = "/images/hero-sunset-shores.png"
+const DEFAULT_COVER_VIDEO = "/videos/sunset-shores-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
@@ -386,11 +387,17 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Real beach sunset photo as the cover background */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={DEFAULT_PHOTO} alt=""
+              {/* Cover background: looping video, with the photo as a poster
+                  fallback for the instant before the video starts playing
+                  (and for browsers/data-saver modes that block autoplay) */}
+              <video
+                autoPlay loop muted playsInline preload="auto"
+                poster={DEFAULT_PHOTO}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                onError={e => { (e.currentTarget as HTMLVideoElement).style.display = "none" }}
+              >
+                <source src={DEFAULT_COVER_VIDEO} type="video/mp4" />
+              </video>
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(60,30,18,0.30) 0%, rgba(60,30,18,0.10) 35%, rgba(60,30,18,0.25) 65%, rgba(60,30,18,0.6) 100%)` }} />
 
               <OceanWave color={PRIMARY_LIGHT} opacity={0.9} />
