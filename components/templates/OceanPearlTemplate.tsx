@@ -8,9 +8,6 @@ const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
-// ── Default palette — overridden by couple.custom_colors ──
-// primary: warm gold (the reference's filigree/text accent) · primaryLight: pearl cream
-// dark: deep ocean teal (background, text) · cream: lifted teal for cards
 const DEFAULT_PALETTE = {
   primary: "#d4a857",
   primaryLight: "#f0ead8",
@@ -19,9 +16,6 @@ const DEFAULT_PALETTE = {
   muted: "rgba(240,234,216,0.65)",
 }
 
-// ── Rising bubbles: the page's signature ambient element — soft translucent
-// circles drifting upward like bubbles underwater, echoing the reference's
-// ocean theme. ──
 function RisingBubbles({ count = 14, color }: { count?: number; color: string }) {
   const [items, setItems] = useState<{ id: number; left: number; size: number; duration: number; delay: number }[]>([])
   useEffect(() => {
@@ -44,8 +38,6 @@ function RisingBubbles({ count = 14, color }: { count?: number; color: string })
   )
 }
 
-// ── Flying birds: gulls drifting across the sky on the beach photo, echoing
-// the cover photo's coastal sky. ──
 function Bird({ size, color }: { size: number; color: string }) {
   return (
     <svg width={size} height={size * 0.5} viewBox="0 0 40 20" style={{ display: "block" }}>
@@ -81,24 +73,19 @@ function FlyingBirds({ count = 6, color }: { count?: number; color: string }) {
   )
 }
 
-// ── Pearl/shell corner ornament — used to frame key cards, echoing the
-// reference photo's pearl and seashell clusters. ──
 function PearlOrnament({ color, flip }: { color: string; flip?: boolean }) {
   return (
     <svg width="34" height="34" viewBox="0 0 34 34" style={{ transform: flip ? "scaleX(-1)" : undefined }}>
-      {/* Shell fan */}
       <path d="M4 30 Q4 12 17 8 Q30 12 30 30 Q24 24 17 24 Q10 24 4 30 Z" fill={color} opacity="0.45" />
       <path d="M17 8 L17 24" stroke={color} strokeWidth="0.8" opacity="0.5" />
       <path d="M11 11 L14 23" stroke={color} strokeWidth="0.6" opacity="0.4" />
       <path d="M23 11 L20 23" stroke={color} strokeWidth="0.6" opacity="0.4" />
-      {/* Pearls */}
       <circle cx="6" cy="6" r="2.6" fill={color} opacity="0.6" />
       <circle cx="12" cy="3" r="1.8" fill={color} opacity="0.5" />
     </svg>
   )
 }
 
-// ── Countdown — circular pearl-style numerals ──
 function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: string; primary: string; primaryLight: string; dark: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
@@ -136,7 +123,6 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
   )
 }
 
-// ── Music Player ──
 function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string }) {
   const [playing, setPlaying] = useState(false)
   const [prog, setProg] = useState(0)
@@ -174,7 +160,6 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark }:
   )
 }
 
-// ── RSVP ──
 function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string }) {
   const [name, setName] = useState("")
   const [guestCount, setGuestCount] = useState(1)
@@ -209,7 +194,6 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
           </div>
         </>
       )}
-
       {step === "count" && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div style={{ fontSize: 13, color: "#fff", fontWeight: 600, marginBottom: 16, textAlign: "center" }}>How many people, including you?</div>
@@ -223,7 +207,6 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
           </button>
         </motion.div>
       )}
-
       {step === "drinking" && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 14, textAlign: "center" }}>Will you be having alcohol?</div>
@@ -233,7 +216,6 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
           </div>
         </motion.div>
       )}
-
       {step === "done" && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: "center" }}>
           <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🎉" : "💙"}</div>
@@ -251,7 +233,6 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
   )
 }
 
-// ── Seat Finder ──
 function SeatFinder({ seats, primary, primaryLight, dark }: { seats: Record<string, string>; primary: string; primaryLight: string; dark: string }) {
   const [q, setQ] = useState("")
   const [res, setRes] = useState("")
@@ -303,9 +284,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
   }
 
-  // ── Derive the events list to render: prefer the new couple.events object,
-  // fall back to the legacy single wedding_date/venue columns if a couple
-  // hasn't been re-saved through the updated admin form yet. ──
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' },
     wedding: { label: 'Wedding Ceremony', icon: '👰' },
@@ -332,8 +310,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
         ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
         : [])
 
-  // Section visibility — defaults to showing everything for couples saved
-  // before this feature existed.
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true,
     countdown: couple.section_visibility?.countdown ?? true,
@@ -369,14 +345,8 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
           88% { opacity: 0.8; }
           100% { transform: translateY(-105vh) translateX(12px); opacity: 0; }
         }
-        @keyframes bird-fly-fwd {
-          0% { left: -10%; }
-          100% { left: 110%; }
-        }
-        @keyframes bird-fly-rev {
-          0% { right: -10%; }
-          100% { right: 110%; }
-        }
+        @keyframes bird-fly-fwd { 0% { left: -10%; } 100% { left: 110%; } }
+        @keyframes bird-fly-rev { 0% { right: -10%; } 100% { right: 110%; } }
         @keyframes pulse-pearl { 0%,100%{box-shadow:0 0 0 0 rgba(212,168,87,0.35);} 50%{box-shadow:0 0 0 14px rgba(212,168,87,0);} }
         input::placeholder { color: rgba(255,255,255,0.35); }
       `}</style>
@@ -389,11 +359,12 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Real beach photo as the cover background */}
+              {/* ── FIXED: use W.couplePhoto so uploaded photo shows on cover,
+                  with DEFAULT_PHOTO as the fallback if no photo uploaded ── */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/hero-ocean-pearl.png" alt=""
+              <img src={W.couplePhoto} alt=""
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(10,25,30,0.4) 0%, rgba(10,25,30,0.15) 35%, rgba(10,25,30,0.3) 65%, rgba(10,25,30,0.65) 100%)` }} />
 
               <RisingBubbles count={14} color={PRIMARY_LIGHT} />
@@ -402,8 +373,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                {/* Circular monogram badge — initials of bride & groom, framed
-                    by a thin laurel-style ring, echoing the reference's "A/D" badge */}
                 <div style={{
                   width: 76, height: 76, borderRadius: "50%", margin: "0 auto 1rem",
                   background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)",
@@ -496,7 +465,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Events — one card per enabled event (Engagement / Wedding / Homecoming) */}
             {eventsList.map((ev, idx) => {
               const evDate = new Date(ev.date)
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -534,8 +502,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               <div style={{ background: `${CREAM}cc`, padding: "1.8rem 1rem 1.5rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, border: `1px solid ${PRIMARY}33` }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 4 }}>Counting Down to</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 600, fontSize: "1.4rem", color: "#fff", marginBottom: 18 }}>Our Big Day</div>
-
-                {/* Circular framed couple photo, echoing the reference's coral/pearl-framed portrait */}
                 <div style={{ position: "relative", width: 150, height: 150, margin: "0 auto 20px" }}>
                   <div style={{
                     position: "absolute", inset: 0, borderRadius: "50%",
@@ -552,7 +518,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                   <div style={{ position: "absolute", bottom: -4, left: -8 }}><PearlOrnament color={PRIMARY_LIGHT} /></div>
                   <div style={{ position: "absolute", bottom: -4, right: -8 }}><PearlOrnament color={PRIMARY_LIGHT} flip /></div>
                 </div>
-
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </div>
             )}
