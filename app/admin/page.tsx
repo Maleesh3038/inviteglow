@@ -565,6 +565,85 @@ function EventsPicker({ value, onChange }: { value: EventsValue; onChange: (v: E
   )
 }
 
+// ── Music uploader: upload an audio file to Supabase Storage (guaranteed
+// no CORS issues unlike Google Drive), or paste a YouTube link for embed. ──
+function MusicUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const [tab, setTab] = useState<'upload' | 'youtube'>(value.includes('youtube.com') || value.includes('youtu.be') ? 'youtube' : 'upload')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const fileName = `music/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!error) {
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      onChange(data.publicUrl)
+    }
+    setUploading(false)
+  }
+
+  const isYouTube = value.includes('youtube.com') || value.includes('youtu.be')
+  const isUploaded = value && !isYouTube
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <label style={labelStyle}>Song File / YouTube Link</label>
+
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {(['upload', 'youtube'] as const).map(t => (
+          <button key={t} type="button" onClick={() => setTab(t)} style={{
+            padding: '6px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            border: tab === t ? 'none' : '1px solid #e2e8f0',
+            background: tab === t ? '#be185d' : '#fff',
+            color: tab === t ? '#fff' : '#475569',
+          }}>
+            {t === 'upload' ? '📁 Upload Audio File' : '▶ YouTube Link'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'upload' && (
+        <div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
+              style={{ padding: '10px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: uploading ? '#f1f5f9' : '#fff', cursor: uploading ? 'default' : 'pointer', fontSize: 13, color: '#475569', fontWeight: 500 }}>
+              {uploading ? 'Uploading...' : isUploaded ? '🎵 Change Song' : '🎵 Upload Song'}
+            </button>
+            {isUploaded && (
+              <>
+                <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 500 }}>✓ Song uploaded</span>
+                <button type="button" onClick={() => onChange('')} style={{ fontSize: 12, color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+              </>
+            )}
+          </div>
+          <input ref={inputRef} type="file" accept="audio/*,.mp3,.wav,.aac,.m4a,.ogg" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+            Upload MP3, AAC, WAV, or M4A. File plays automatically when guests open the invitation.
+          </div>
+        </div>
+      )}
+
+      {tab === 'youtube' && (
+        <div>
+          <input
+            style={inputStyle}
+            placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+            value={isYouTube ? value : ''}
+            onChange={e => onChange(e.target.value)}
+          />
+          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+            YouTube link paste karakoat Music section eke embedded player ekak pennaawa (muted autoplay).
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [couples, setCouples] = useState<Couple[]>([])
   const [loading, setLoading] = useState(true)
@@ -891,18 +970,10 @@ export default function AdminPage() {
                   <input style={inputStyle} placeholder="Leave empty for default" value={form.song_artist} onChange={e => setForm({ ...form, song_artist: e.target.value })} />
                 </div>
               </div>
-              <div style={{ marginTop: 12 }}>
-                <label style={labelStyle}>Song URL (YouTube link or .mp3 URL)</label>
-                <input
-                  style={inputStyle}
-                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
-                  value={form.song_url}
-                  onChange={e => setForm({ ...form, song_url: e.target.value })}
-                />
-                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
-                  Paste a YouTube link to embed the video player, or leave empty to use the default background music.
-                </div>
-              </div>
+              <MusicUploader
+                value={form.song_url}
+                onChange={url => setForm({ ...form, song_url: url })}
+              />
             </div>
 
             {/* Gallery Upload */}
