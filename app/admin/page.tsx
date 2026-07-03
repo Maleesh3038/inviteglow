@@ -891,8 +891,17 @@ export default function AdminPage() {
                   <input style={inputStyle} placeholder="Leave empty for default" value={form.song_artist} onChange={e => setForm({ ...form, song_artist: e.target.value })} />
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: '#94a3b8' }}>
-                Default calm wedding music plays automatically when the couple hasn't customised it.
+              <div style={{ marginTop: 12 }}>
+                <label style={labelStyle}>Song URL (YouTube link or .mp3 URL)</label>
+                <input
+                  style={inputStyle}
+                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                  value={form.song_url}
+                  onChange={e => setForm({ ...form, song_url: e.target.value })}
+                />
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+                  Paste a YouTube link to embed the video player, or leave empty to use the default background music.
+                </div>
               </div>
             </div>
 
