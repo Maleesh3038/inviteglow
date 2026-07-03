@@ -123,10 +123,34 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
   )
 }
 
-function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string }) {
+// ── Detect YouTube URLs and extract the video ID ──
+function getYouTubeId(url: string): string | null {
+  if (!url) return null
+  const patterns = [
+    /youtu\.be\/([^?&]+)/,
+    /youtube\.com\/watch\?v=([^&]+)/,
+    /youtube\.com\/embed\/([^?&]+)/,
+    /youtube\.com\/shorts\/([^?&]+)/,
+  ]
+  for (const p of patterns) {
+    const m = url.match(p)
+    if (m) return m[1]
+  }
+  return null
+}
+
+function MusicPlayerUI({ title, artist, songUrl, audioRef, primary, primaryLight, dark }: {
+  title: string; artist: string; songUrl: string;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
+  primary: string; primaryLight: string; dark: string
+}) {
+  const youtubeId = getYouTubeId(songUrl)
   const [playing, setPlaying] = useState(false)
   const [prog, setProg] = useState(0)
+
+  // ── Regular audio player ──
   useEffect(() => {
+    if (youtubeId) return
     const audio = audioRef.current
     if (!audio) return
     const onPlay = () => setPlaying(true)
@@ -137,12 +161,38 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark }:
     audio.addEventListener('timeupdate', onTime)
     setPlaying(!audio.paused)
     return () => { audio.removeEventListener('play', onPlay); audio.removeEventListener('pause', onPause); audio.removeEventListener('timeupdate', onTime) }
-  }, [audioRef])
+  }, [audioRef, youtubeId])
+
   const toggle = () => {
     const audio = audioRef.current
     if (!audio) return
     if (audio.paused) { audio.play().catch(() => {}) } else { audio.pause() }
   }
+
+  // ── YouTube embed ──
+  if (youtubeId) {
+    return (
+      <div style={{ background: `${dark}88`, borderRadius: 14, padding: 16, border: `1px solid ${primary}40` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: `linear-gradient(135deg,${primary},${primaryLight})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🎵</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{title}</div>
+            <div style={{ fontSize: 11, color: `${primary}cc` }}>{artist}</div>
+          </div>
+        </div>
+        <div style={{ borderRadius: 10, overflow: "hidden", aspectRatio: "16/9" }}>
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ── Regular audio player ──
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, background: `${dark}88`, borderRadius: 14, padding: 16, border: `1px solid ${primary}40` }}>
       <div style={{ width: 44, height: 44, borderRadius: playing ? "50%" : 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
@@ -272,6 +322,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
   useEffect(() => {
     const songUrl = couple.song_url || DEFAULT_SONG_URL
+    if (getYouTubeId(songUrl)) return // YouTube handled by iframe, no Audio object needed
     const audio = new Audio(songUrl)
     audio.loop = true
     audio.volume = 0.6
@@ -281,7 +332,10 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
   const handleOpenInvitation = () => {
     setOpened(true)
-    audioRef.current?.play().catch(() => {})
+    const songUrl = couple.song_url || DEFAULT_SONG_URL
+    if (!getYouTubeId(songUrl)) {
+      audioRef.current?.play().catch(() => {})
+    }
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -329,6 +383,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
     couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
     song: couple.song_title || DEFAULT_SONG_TITLE,
     artist: couple.song_artist || DEFAULT_SONG_ARTIST,
+    songUrl: couple.song_url || DEFAULT_SONG_URL,
     timeline: couple.timeline || [],
     seats: couple.seats || {},
     gallery: couple.gallery || [],
@@ -573,7 +628,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
             {sv.music && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Song</div>
-                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
+                <MusicPlayerUI title={W.song} artist={W.artist} songUrl={W.songUrl} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
             )}
 
