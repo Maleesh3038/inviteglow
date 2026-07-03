@@ -447,7 +447,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: DARK, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 700 }}>RSVP</a>
-                    <a href="#location" style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif" }}>Location</a>
+                    <a href="#location" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(8px)", color: PRIMARY_LIGHT, border: `1.5px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
                   </div>
                 </motion.div>
               </div>
