@@ -322,10 +322,13 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
   useEffect(() => {
     const songUrl = couple.song_url || DEFAULT_SONG_URL
-    if (getYouTubeId(songUrl)) return // YouTube handled by iframe, no Audio object needed
-    const audio = new Audio(songUrl)
+    if (getYouTubeId(songUrl)) return
+    const audio = new Audio()
+    audio.crossOrigin = "anonymous"
+    audio.src = songUrl
     audio.loop = true
     audio.volume = 0.6
+    audio.preload = "auto"
     audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [couple])
@@ -334,7 +337,16 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
     setOpened(true)
     const songUrl = couple.song_url || DEFAULT_SONG_URL
     if (!getYouTubeId(songUrl)) {
-      audioRef.current?.play().catch(() => {})
+      const audio = audioRef.current
+      if (!audio) return
+      // Try play — if CORS blocks it, reload without crossOrigin and retry
+      audio.play().catch(() => {
+        const fallback = new Audio(songUrl)
+        fallback.loop = true
+        fallback.volume = 0.6
+        audioRef.current = fallback
+        fallback.play().catch(() => {})
+      })
     }
   }
 
