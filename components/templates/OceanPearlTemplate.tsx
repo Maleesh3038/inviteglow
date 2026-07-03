@@ -182,7 +182,7 @@ function MusicPlayerUI({ title, artist, songUrl, audioRef, primary, primaryLight
         </div>
         <div style={{ borderRadius: 10, overflow: "hidden", aspectRatio: "16/9" }}>
           <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1`}
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&rel=0&modestbranding=1&loop=1&playlist=${youtubeId}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             style={{ width: "100%", height: "100%", border: "none", display: "block" }}
