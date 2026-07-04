@@ -123,7 +123,16 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
   )
 }
 
-// ── Detect YouTube URLs and extract the video ID ──
+// ── Normalize Maps URLs so they always open in the browser rather than
+// trying to deep-link into the Maps app (which fails on some Android devices).
+// maps.app.goo.gl short links are wrapped into a google.com redirect. ──
+function normalizeMapsUrl(url: string): string {
+  if (!url) return '#'
+  if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
+    return `https://www.google.com/maps?q=${encodeURIComponent(url)}`
+  }
+  return url
+}
 function getYouTubeId(url: string): string | null {
   if (!url) return null
   const patterns = [
@@ -514,7 +523,13 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: DARK, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 700 }}>RSVP</a>
-                    <a href={eventsList[0]?.maps_url || couple.maps_url || "#"} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(8px)", color: PRIMARY_LIGHT, border: `1.5px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
+                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer" onClick={e => {
+                      const url = eventsList[0]?.maps_url || couple.maps_url
+                      if (url) {
+                        e.preventDefault()
+                        window.open(normalizeMapsUrl(url), '_blank', 'noopener,noreferrer')
+                      }
+                    }} style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(8px)", color: PRIMARY_LIGHT, border: `1.5px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
                   </div>
                 </motion.div>
               </div>
@@ -556,7 +571,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                     </div>
                   ))}
                   {ev.maps_url && (
-                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer"
+                    <a href={normalizeMapsUrl(ev.maps_url)} target="_blank" rel="noopener noreferrer"
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY}26`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginTop: 16, textDecoration: "none", fontWeight: 500 }}>
                       📍 View Location on Maps
                     </a>
