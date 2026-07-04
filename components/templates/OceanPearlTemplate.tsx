@@ -242,7 +242,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
     <div style={{ background: `${dark}cc`, borderRadius: 20, padding: 24, border: `1px solid ${primary}40` }}>
       {step === "form" && (
         <>
-          <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 8, fontWeight: 600, textAlign: "center" }}>Kindly RSVP</div>
+          <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primaryLight, marginBottom: 8, fontWeight: 600, textAlign: "center" }}>Kindly RSVP</div>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: "#fff", marginBottom: 16, textAlign: "center" }}>Will You Join Us?</div>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
