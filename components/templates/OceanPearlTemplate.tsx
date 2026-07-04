@@ -110,13 +110,13 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
         <div key={l} style={{ flex: 1, textAlign: "center", padding: "16px 6px" }}>
           <div style={{
             width: 56, height: 56, borderRadius: "50%", margin: "0 auto 8px",
-            background: `linear-gradient(135deg, ${dark}, ${dark}cc)`, border: `1.5px solid ${primary}`,
+            background: `linear-gradient(135deg, ${dark}, ${dark}cc)`, border: `1.5px solid ${primaryLight}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: `0 0 16px ${primary}40`,
+            boxShadow: `0 0 16px ${primaryLight}40`,
           }}>
             <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.25rem", color: primaryLight, fontWeight: 600 }}>{v}</span>
           </div>
-          <span style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: `${primary}cc` }}>{l}</span>
+          <span style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: `${primaryLight}cc` }}>{l}</span>
         </div>
       ))}
     </div>
@@ -316,7 +316,7 @@ function SeatFinder({ seats, primary, primaryLight, dark }: { seats: Record<stri
 const sectionCard = (cream: string, primary: string): React.CSSProperties => ({
   background: `${cream}cc`, margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", border: `1px solid ${primary}33`, position: "relative",
 })
-const sectionEyebrow = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
+const sectionEyebrow = (primary: string, primaryLight?: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primaryLight || primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
 const sectionTitle = (): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#fff", textAlign: "center", marginBottom: 20 })
 
 export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
@@ -537,7 +537,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow(PRIMARY)}>With Love</div>
+                <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>With Love</div>
                 <div style={{ textAlign: "center", padding: 12, background: "rgba(255,255,255,0.05)", borderRadius: 12, fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong style={{ color: "#fff" }}>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
@@ -554,7 +554,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               return (
                 <motion.div key={ev.key} id={idx === 0 ? "location" : undefined} style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div style={{ position: "absolute", bottom: 10, right: 10, opacity: 0.4 }}><PearlOrnament color={PRIMARY} flip /></div>
-                  <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
+                  <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
                   <div style={sectionTitle()}>{ev.label}</div>
                   {[
                     { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
@@ -610,7 +610,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
+                <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={sectionTitle()}>Event Timeline</div>
                 <div style={{ display: "grid", gap: 12 }}>
                   {W.timeline.map((t, i) => {
@@ -645,7 +645,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow(PRIMARY)}>Be Our Guest</div>
+                <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>Be Our Guest</div>
                 <div style={sectionTitle()}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
                 <SeatFinder seats={W.seats} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
@@ -654,14 +654,14 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
             {sv.music && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow(PRIMARY)}>Our Song</div>
+                <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} songUrl={W.songUrl} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
             )}
 
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow(PRIMARY)}>Our Story</div>
+                <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>Our Story</div>
                 <div style={sectionTitle()}>Moments Together</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {W.gallery.map((src, i) => (
@@ -676,7 +676,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
 
             {sv.thank_you && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={sectionEyebrow(PRIMARY)}>A Special Note</div>
+                <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>A Special Note</div>
                 <div style={sectionTitle()}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 2 }}>
                   With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
