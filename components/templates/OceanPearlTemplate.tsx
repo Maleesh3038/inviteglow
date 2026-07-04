@@ -565,7 +565,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY}26`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{d.label}</div>
-                        <div style={{ fontSize: d.gold ? 17 : 14, color: d.gold ? PRIMARY_LIGHT : "#fff", fontWeight: 500, marginTop: 2, fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal" }}>{d.val}</div>
+                        <div style={{ fontSize: d.gold ? 17 : 14, color: d.gold ? PRIMARY_LIGHT : "#fff", fontWeight: 700, marginTop: 2, fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal" }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
