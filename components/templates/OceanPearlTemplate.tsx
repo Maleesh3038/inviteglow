@@ -557,10 +557,10 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                   <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
                   <div style={sectionTitle()}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
+                    { icon: "📅", label: "Date", val: evDateDisplay },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
-                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
-                  ].map(d => d.val && (
+                    { icon: "📍", label: "Venue", val: ev.venue || couple.venue || "", sub: ev.venue_address || couple.venue_address || "" },
+                  ].map(d => (
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY}26` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY}26`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
