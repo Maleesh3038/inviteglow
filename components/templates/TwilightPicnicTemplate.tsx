@@ -624,7 +624,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             {/* Energetic description */}
             <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.9, textAlign: "center", fontStyle: "italic" }}>
-                "Tradition out, energy up. Kick back under the fairy lights with cozy low seating, flowing drinks, and loud music. No formalities—just pure celebration. Come ready to chill, dance, and party until dawn!"
+                "Tradition out, energy up. Kick back under the fairy lights with cozy low seating, flowing drinks, and loud music. No formalities-just pure celebration. Come ready to chill, dance, and party until dawn!"
               </div>
             </motion.div>
 
@@ -654,7 +654,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
             {/* Countdown */}
             {sv.countdown && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Picnic</div>
+                <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "1rem", color: "#fff", fontWeight: 700, marginBottom: 14, textAlign: "center" }}>Countdown to the Magical Moments</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} cream={DARK} />
               </motion.div>
             )}
@@ -671,7 +671,7 @@ export default function TwilightPicnicTemplate({ couple }: { couple: Couple }) {
                 logo is kept minimal (no visible white border) so the tiles
                 sit quietly against the page's black background. */}
             <div style={{ padding: "1.5rem 1.2rem 2.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>With thanks to our partners</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>Our Wedding Partners</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
                 {VENDOR_LOGOS.map(v => (
                   <div key={v.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
