@@ -258,8 +258,8 @@ const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Great
 // ── Small lotus corner accent — placed at top-right of each card ──
 function LotusCornerAccent({ color, flip = false }: { color: string; flip?: boolean }) {
   return (
-    <div style={{ position: "absolute", top: 10, [flip ? "left" : "right"]: 10, opacity: 0.18, transform: flip ? "scaleX(-1)" : undefined, pointerEvents: "none" }}>
-      <LotusDecoration color={color} size={52} opacity={1} />
+    <div style={{ position: "absolute", top: 10, [flip ? "left" : "right"]: 10, opacity: 0.35, transform: flip ? "scaleX(-1)" : undefined, pointerEvents: "none" }}>
+      <LotusDecoration color={color} size={64} opacity={1} />
     </div>
   )
 }
