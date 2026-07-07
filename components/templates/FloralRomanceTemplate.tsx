@@ -28,30 +28,34 @@ function normalizeMapsUrl(url: string): string {
 // ── Lotus flower SVG decoration — cover screen signature motif ──
 function LotusDecoration({ color, size = 90, opacity = 0.75 }: { color: string; size?: number; opacity?: number }) {
   return (
-    <svg width={size} height={size * 0.72} viewBox="0 0 120 86" style={{ opacity, display: "block" }}>
-      {/* Center tall petal */}
-      <path d="M60 82 Q52 52 54 14 Q58 46 60 82 Z" fill={color} opacity="0.3" />
-      <path d="M60 82 Q68 52 66 14 Q62 46 60 82 Z" fill={color} opacity="0.3" />
-      <path d="M54 14 Q60 4 66 14 Q62 46 60 82 Q58 46 54 14 Z" fill={color} opacity="0.15" />
-      <path d="M54 14 Q60 4 66 14" fill="none" stroke={color} strokeWidth="1.2" />
-      {/* Inner left petal */}
-      <path d="M60 74 Q44 56 30 44 Q46 60 60 74 Z" fill={color} opacity="0.25" />
-      <path d="M60 74 Q44 56 30 44" fill="none" stroke={color} strokeWidth="1.1" />
-      {/* Inner right petal */}
-      <path d="M60 74 Q76 56 90 44 Q74 60 60 74 Z" fill={color} opacity="0.25" />
-      <path d="M60 74 Q76 56 90 44" fill="none" stroke={color} strokeWidth="1.1" />
-      {/* Outer left petal */}
-      <path d="M60 76 Q38 64 14 60 Q40 68 60 76 Z" fill={color} opacity="0.18" />
-      <path d="M60 76 Q38 64 14 60" fill="none" stroke={color} strokeWidth="0.9" />
-      {/* Outer right petal */}
-      <path d="M60 76 Q82 64 106 60 Q80 68 60 76 Z" fill={color} opacity="0.18" />
-      <path d="M60 76 Q82 64 106 60" fill="none" stroke={color} strokeWidth="0.9" />
-      {/* Water ripple base */}
-      <ellipse cx="60" cy="82" rx="22" ry="3" fill="none" stroke={color} strokeWidth="0.8" opacity="0.4" />
-      <ellipse cx="60" cy="82" rx="34" ry="4.5" fill="none" stroke={color} strokeWidth="0.6" opacity="0.25" />
-      {/* Center stamen */}
-      <circle cx="60" cy="78" r="3.5" fill={color} opacity="0.7" />
-      <circle cx="60" cy="78" r="6" fill="none" stroke={color} strokeWidth="0.9" opacity="0.5" />
+    <svg width={size} height={size} viewBox="0 0 120 120" style={{ opacity, display: "block" }}>
+      {/* Outer petals */}
+      <path d="M60 95 C38 82 18 64 14 42 C28 62 44 80 58 92 Z" fill={color} stroke={color} strokeWidth="0.6" opacity="0.55"/>
+      <path d="M60 95 C82 82 102 64 106 42 C92 62 76 80 62 92 Z" fill={color} stroke={color} strokeWidth="0.6" opacity="0.55"/>
+      <path d="M60 95 C42 78 36 55 40 34 C46 54 52 76 60 95 Z" fill={color} stroke={color} strokeWidth="0.6" opacity="0.6"/>
+      <path d="M60 95 C78 78 84 55 80 34 C74 54 68 76 60 95 Z" fill={color} stroke={color} strokeWidth="0.6" opacity="0.6"/>
+      <path d="M60 95 C52 72 52 48 60 28 C68 48 68 72 60 95 Z" fill={color} stroke={color} strokeWidth="0.7" opacity="0.65"/>
+      {/* Mid petals */}
+      <path d="M60 93 C46 78 40 58 44 38 C49 57 54 77 60 93 Z" fill={color} stroke={color} strokeWidth="0.7" opacity="0.75"/>
+      <path d="M60 93 C74 78 80 58 76 38 C71 57 66 77 60 93 Z" fill={color} stroke={color} strokeWidth="0.7" opacity="0.75"/>
+      {/* Inner petals */}
+      <path d="M60 91 C50 76 48 58 52 40 C55 57 57 76 60 91 Z" fill={color} opacity="0.88"/>
+      <path d="M60 91 C70 76 72 58 68 40 C65 57 63 76 60 91 Z" fill={color} opacity="0.88"/>
+      {/* Sepals */}
+      <path d="M60 96 C44 88 30 78 22 66 C36 78 48 88 60 97 Z" fill="#88c860" opacity="0.55"/>
+      <path d="M60 96 C76 88 90 78 98 66 C84 78 72 88 60 97 Z" fill="#88c860" opacity="0.55"/>
+      {/* Center */}
+      <ellipse cx="60" cy="92" rx="12" ry="7" fill="#f0c840" opacity="0.9"/>
+      <circle cx="56" cy="90" r="2" fill="#c89020" opacity="0.8"/>
+      <circle cx="60" cy="88" r="2" fill="#c89020" opacity="0.8"/>
+      <circle cx="64" cy="90" r="2" fill="#c89020" opacity="0.8"/>
+      {/* Stamens */}
+      <line x1="56" y1="90" x2="54" y2="83" stroke="#e8c038" strokeWidth="0.7" opacity="0.8"/>
+      <circle cx="54" cy="82" r="1.2" fill="#f0d050"/>
+      <line x1="60" y1="88" x2="60" y2="80" stroke="#e8c038" strokeWidth="0.7" opacity="0.8"/>
+      <circle cx="60" cy="79" r="1.2" fill="#f0d050"/>
+      <line x1="64" y1="90" x2="66" y2="83" stroke="#e8c038" strokeWidth="0.7" opacity="0.8"/>
+      <circle cx="66" cy="82" r="1.2" fill="#f0d050"/>
     </svg>
   )
 }
@@ -256,10 +260,10 @@ const pretitleStyle = (primaryLight: string): React.CSSProperties => ({ fontSize
 const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: dark, textAlign: "center", marginBottom: "1.5rem" })
 
 // ── Small lotus corner accent — placed at top-right of each card ──
-function LotusCornerAccent({ color, flip = false }: { color: string; flip?: boolean }) {
+function LotusCornerAccent({ flip = false }: { flip?: boolean }) {
   return (
-    <div style={{ position: "absolute", top: 10, [flip ? "left" : "right"]: 10, opacity: 0.35, transform: flip ? "scaleX(-1)" : undefined, pointerEvents: "none" }}>
-      <LotusDecoration color={color} size={64} opacity={1} />
+    <div style={{ position: "absolute", top: 8, [flip ? "left" : "right"]: 8, opacity: 0.4, transform: flip ? "scaleX(-1)" : undefined, pointerEvents: "none" }}>
+      <LotusDecoration color="#ffffff" size={60} opacity={1} />
     </div>
   )
 }
@@ -451,8 +455,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LotusCornerAccent color={PRIMARY} />
-                <LotusCornerAccent color={PRIMARY} flip />
+                <LotusCornerAccent />
+                <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>With Love</div>
                 <div style={{ textAlign: "center", padding: 12, background: "#fdf5f7", borderRadius: 12, fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
@@ -469,8 +473,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <LotusCornerAccent color={PRIMARY} />
-                  <LotusCornerAccent color={PRIMARY} flip />
+                  <LotusCornerAccent />
+                  <LotusCornerAccent flip />
                   <div style={pretitleStyle(PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
                   <div style={titleStyle(DARK)}>{ev.label}</div>
                   {[
@@ -508,8 +512,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LotusCornerAccent color={PRIMARY} />
-                <LotusCornerAccent color={PRIMARY} flip />
+                <LotusCornerAccent />
+                <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>The Wedding Lineup</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -528,8 +532,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={cardStyle()} id="seat" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LotusCornerAccent color={PRIMARY} />
-                <LotusCornerAccent color={PRIMARY} flip />
+                <LotusCornerAccent />
+                <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Be Our Guest</div>
                 <div style={titleStyle(DARK)}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 4 }}>Search your name to find your assigned table</div>
@@ -539,8 +543,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.music && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LotusCornerAccent color={PRIMARY} />
-                <LotusCornerAccent color={PRIMARY} flip />
+                <LotusCornerAccent />
+                <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
@@ -548,8 +552,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LotusCornerAccent color={PRIMARY} />
-                <LotusCornerAccent color={PRIMARY} flip />
+                <LotusCornerAccent />
+                <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>Moments of Love</div>
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 16, lineHeight: 1.7 }}>
@@ -568,8 +572,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LotusCornerAccent color={PRIMARY} />
-                <LotusCornerAccent color={PRIMARY} flip />
+                <LotusCornerAccent />
+                <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
