@@ -251,9 +251,18 @@ function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<stri
   )
 }
 
-const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 24, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.07)" })
+const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 24, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.07)", position: "relative", overflow: "hidden" })
 const pretitleStyle = (primaryLight: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primaryLight, textAlign: "center", marginBottom: 6 })
 const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: dark, textAlign: "center", marginBottom: "1.5rem" })
+
+// ── Small lotus corner accent — placed at top-right of each card ──
+function LotusCornerAccent({ color, flip = false }: { color: string; flip?: boolean }) {
+  return (
+    <div style={{ position: "absolute", top: 10, [flip ? "left" : "right"]: 10, opacity: 0.18, transform: flip ? "scaleX(-1)" : undefined, pointerEvents: "none" }}>
+      <LotusDecoration color={color} size={52} opacity={1} />
+    </div>
+  )
+}
 
 export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
@@ -442,6 +451,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LotusCornerAccent color={PRIMARY} />
+                <LotusCornerAccent color={PRIMARY} flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>With Love</div>
                 <div style={{ textAlign: "center", padding: 12, background: "#fdf5f7", borderRadius: 12, fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
@@ -458,6 +469,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <LotusCornerAccent color={PRIMARY} />
+                  <LotusCornerAccent color={PRIMARY} flip />
                   <div style={pretitleStyle(PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
                   <div style={titleStyle(DARK)}>{ev.label}</div>
                   {[
@@ -495,6 +508,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LotusCornerAccent color={PRIMARY} />
+                <LotusCornerAccent color={PRIMARY} flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>The Wedding Lineup</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -513,6 +528,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={cardStyle()} id="seat" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LotusCornerAccent color={PRIMARY} />
+                <LotusCornerAccent color={PRIMARY} flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Be Our Guest</div>
                 <div style={titleStyle(DARK)}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 4 }}>Search your name to find your assigned table</div>
@@ -522,6 +539,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.music && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LotusCornerAccent color={PRIMARY} />
+                <LotusCornerAccent color={PRIMARY} flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
@@ -529,6 +548,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LotusCornerAccent color={PRIMARY} />
+                <LotusCornerAccent color={PRIMARY} flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>Moments of Love</div>
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 16, lineHeight: 1.7 }}>
@@ -547,6 +568,8 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LotusCornerAccent color={PRIMARY} />
+                <LotusCornerAccent color={PRIMARY} flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
