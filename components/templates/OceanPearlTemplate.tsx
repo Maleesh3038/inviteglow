@@ -305,7 +305,7 @@ function SeatFinder({ seats, primary, primaryLight, dark }: { seats: Record<stri
     <div>
       <div style={{ display: "flex", gap: 10 }}>
         <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()}
-          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: `${primary}44`, color: DARK, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
+          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: `${primary}44`, color: dark, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
         <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, color: dark, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>Search</button>
       </div>
       {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("🦪") ? primary : "rgba(255,255,255,0.55)", fontWeight: res.startsWith("🦪") ? 600 : 400 }}>{res}</div>}
@@ -702,4 +702,3 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
     </div>
   )
 }
-
