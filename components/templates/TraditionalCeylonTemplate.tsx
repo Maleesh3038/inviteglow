@@ -8,6 +8,15 @@ const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
+// ── Normalize Maps URLs — maps.app.goo.gl short links open in browser ──
+function normalizeMapsUrl(url: string): string {
+  if (!url) return '#'
+  if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
+    return `https://www.google.com/maps?q=${encodeURIComponent(url)}`
+  }
+  return url
+}
+
 // ── Default palette — overridden by couple.custom_colors ──
 // primary: deep Kandyan green · primaryLight: warm gold accent
 // dark: near-black green (text) · cream: ivory/parchment background
@@ -479,7 +488,7 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY_LIGHT},${PRIMARY_LIGHT}cc)`, color: DARK, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>RSVP</a>
-                    <a href="#location" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(8px)", color: PRIMARY_LIGHT, border: `1.5px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
+                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(8px)", color: PRIMARY_LIGHT, border: `1.5px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
                   </div>
                 </motion.div>
               </div>
@@ -510,21 +519,21 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
                   <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={titleStyle(DARK)}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
+                    { icon: "📅", label: "Date", val: evDateDisplay },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
-                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
-                  ].map(d => d.val && (
+                    { icon: "📍", label: "Venue", val: ev.venue || couple.venue || "", sub: ev.venue_address || couple.venue_address || "" },
+                  ].map(d => (
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}33` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#b5ab8c" }}>{d.label}</div>
-                        <div style={{ fontSize: d.gold ? 18 : 15, color: d.gold ? PRIMARY : DARK, fontWeight: 500, marginTop: 2, fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal" }}>{d.val}</div>
+                        <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
                   ))}
                   {ev.maps_url && (
-                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer"
+                    <a href={normalizeMapsUrl(ev.maps_url)} target="_blank" rel="noopener noreferrer"
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}22`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 500 }}>
                       📍 View Location on Maps
                     </a>
@@ -536,6 +545,31 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
             {sv.countdown && (
               <motion.div style={{ ...cardStyle(), padding: "1.4rem 1rem 1.2rem" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={{ ...pretitleStyle(PRIMARY), marginBottom: 10 }}>Counting Down to Our Big Day</div>
+                {eventsList[0] && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16, padding: "12px 16px", background: `${PRIMARY_LIGHT}18`, borderRadius: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 15 }}>📅</span>
+                      <span style={{ fontSize: 14, color: DARK, fontWeight: 700 }}>
+                        {new Date(eventsList[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 15 }}>⏰</span>
+                      <span style={{ fontSize: 14, color: DARK, fontWeight: 700 }}>
+                        {new Date(eventsList[0].date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} Onwards
+                      </span>
+                    </div>
+                    {(eventsList[0].venue || couple.venue) && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 15 }}>📍</span>
+                        <a href={normalizeMapsUrl(eventsList[0].maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: 14, color: PRIMARY, fontWeight: 700, textDecoration: "none" }}>
+                          {eventsList[0].venue || couple.venue}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
             )}
