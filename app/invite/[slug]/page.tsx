@@ -10,6 +10,7 @@ import TwilightPicnicTemplate from '@/components/templates/TwilightPicnicTemplat
 import GoldenGardenTemplate from '@/components/templates/GoldenGardenTemplate'
 import OceanPearlTemplate from '@/components/templates/OceanPearlTemplate'
 import SunsetShoresTemplate from '@/components/templates/SunsetShoresTemplate'
+import SacredPoruwaTemplate from '@/components/templates/SacredPoruwaTemplate'
 import TraditionalCeylonTemplate from '@/components/templates/TraditionalCeylonTemplate'
 
 export default function InvitePage() {
@@ -63,6 +64,8 @@ export default function InvitePage() {
       return <OceanPearlTemplate couple={couple} />
     case 'sunset-shores':
       return <SunsetShoresTemplate couple={couple} />
+    case 'sacred-poruwa':
+      return <SacredPoruwaTemplate couple={couple} />
     case 'traditional-ceylon':
       return <TraditionalCeylonTemplate couple={couple} />
     case 'garden-minimal':
