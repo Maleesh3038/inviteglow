@@ -471,7 +471,7 @@ export default function SacredPoruwaTemplate({ couple }: { couple: Couple }) {
                   <div style={{ height: 1, width: 36, background: `${PRIMARY_LIGHT}88` }} />
                 </div>
 
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, marginBottom: "1.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)", fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem" }}>
+                <div style={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.8, marginBottom: "1.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)", fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem" }}>
                   {W.introText}
                 </div>
 
