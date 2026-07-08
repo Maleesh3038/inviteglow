@@ -422,19 +422,17 @@ export default function SacredPoruwaTemplate({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Video background — falls back to photo */}
-              <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                onError={e => { (e.currentTarget as HTMLVideoElement).style.display = "none" }}>
+              {/* Video background — plays when /videos/sacred-poruwa-cover.mp4 exists,
+                  couple photo shows as poster while video loads (and as permanent
+                  fallback on devices that can't autoplay) */}
+              <video autoPlay loop muted playsInline preload="auto"
+                poster={W.couplePhoto}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
                 <source src={DEFAULT_COVER_VIDEO} type="video/mp4" />
               </video>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" id="cover-fallback-img"
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0 }}
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
 
               {/* Warm dark overlay */}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(30,14,4,0.45) 0%, rgba(30,14,4,0.12) 35%, rgba(30,14,4,0.28) 65%, rgba(30,14,4,0.72) 100%)", zIndex: 1 }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(30,14,4,0.45) 0%, rgba(30,14,4,0.12) 35%, rgba(30,14,4,0.28) 65%, rgba(30,14,4,0.72) 100%)", zIndex: 2 }} />
 
               {/* Golden particles */}
               <GoldenParticles count={18} color={PRIMARY_LIGHT} />
