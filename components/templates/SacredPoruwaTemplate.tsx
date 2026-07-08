@@ -496,10 +496,12 @@ export default function SacredPoruwaTemplate({ couple }: { couple: Couple }) {
             {/* Hero */}
             <div style={{ position: "relative", height: 490, overflow: "hidden" }}>
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(160deg,${PRIMARY_LIGHT},${PRIMARY})` }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                {/* Video background — same Supabase video as cover */}
+                <video autoPlay loop muted playsInline preload="auto"
+                  poster={W.couplePhoto}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}>
+                  <source src={DEFAULT_COVER_VIDEO} type="video/mp4" />
+                </video>
               </div>
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(40,20,8,0.12) 60%,rgba(40,20,8,0.38) 100%)` }} />
 
