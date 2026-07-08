@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
 const DEFAULT_PHOTO = "/images/hero-sacred-poruwa.png"
-const DEFAULT_COVER_VIDEO = "/videos/sacred-poruwa-cover.mp4"
+const DEFAULT_COVER_VIDEO = "https://eqacrwhbrfqcnlgegvtl.supabase.co/storage/v1/object/public/wedding-photos/videos/sacred-poruwa-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
