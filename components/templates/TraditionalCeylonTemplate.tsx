@@ -545,31 +545,6 @@ export default function TraditionalCeylonTemplate({ couple }: { couple: Couple }
             {sv.countdown && (
               <motion.div style={{ ...cardStyle(), padding: "1.4rem 1rem 1.2rem" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={{ ...pretitleStyle(PRIMARY), marginBottom: 10 }}>Counting Down to Our Big Day</div>
-                {eventsList[0] && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16, padding: "12px 16px", background: `${PRIMARY_LIGHT}18`, borderRadius: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 15 }}>📅</span>
-                      <span style={{ fontSize: 14, color: DARK, fontWeight: 700 }}>
-                        {new Date(eventsList[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontSize: 15 }}>⏰</span>
-                      <span style={{ fontSize: 14, color: DARK, fontWeight: 700 }}>
-                        {new Date(eventsList[0].date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} Onwards
-                      </span>
-                    </div>
-                    {(eventsList[0].venue || couple.venue) && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 15 }}>📍</span>
-                        <a href={normalizeMapsUrl(eventsList[0].maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer"
-                          style={{ fontSize: 14, color: PRIMARY, fontWeight: 700, textDecoration: "none" }}>
-                          {eventsList[0].venue || couple.venue}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
             )}
