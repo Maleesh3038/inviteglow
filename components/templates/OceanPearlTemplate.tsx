@@ -236,7 +236,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
   const handleDecline = () => { if (name.trim()) save("no", null, 1) }
   const handleCountNext = () => { if (askDrinking) setStep("drinking"); else save("yes", null, guestCount) }
 
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: `${primary}44`, color: DARK, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: `${primary}44`, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
 
   return (
     <div style={{ background: `${primary}cc`, borderRadius: 20, padding: 24, border: `1px solid ${primaryLight}40` }}>
