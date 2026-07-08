@@ -110,7 +110,7 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
         <div key={l} style={{ flex: 1, textAlign: "center", padding: "16px 6px" }}>
           <div style={{
             width: 56, height: 56, borderRadius: "50%", margin: "0 auto 8px",
-            background: `linear-gradient(135deg, ${dark}, ${dark}cc)`, border: `1.5px solid ${primaryLight}`,
+            background: `linear-gradient(135deg, ${primary}, ${primary}cc)`, border: `1.5px solid ${primaryLight}`,
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: `0 0 16px ${primaryLight}40`,
           }}>
@@ -181,7 +181,7 @@ function MusicPlayerUI({ title, artist, songUrl, audioRef, primary, primaryLight
   // ── YouTube embed ──
   if (youtubeId) {
     return (
-      <div style={{ background: `${dark}88`, borderRadius: 14, padding: 16, border: `1px solid ${primary}40` }}>
+      <div style={{ background: `${primary}88`, borderRadius: 14, padding: 16, border: `1px solid ${primary}40` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 8, background: `linear-gradient(135deg,${primary},${primaryLight})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🎵</div>
           <div>
@@ -203,7 +203,7 @@ function MusicPlayerUI({ title, artist, songUrl, audioRef, primary, primaryLight
 
   // ── Regular audio player ──
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, background: `${dark}88`, borderRadius: 14, padding: 16, border: `1px solid ${primary}40` }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14, background: `${primary}88`, borderRadius: 14, padding: 16, border: `1px solid ${primary}40` }}>
       <div style={{ width: 44, height: 44, borderRadius: playing ? "50%" : 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{title}</div>
@@ -236,10 +236,10 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
   const handleDecline = () => { if (name.trim()) save("no", null, 1) }
   const handleCountNext = () => { if (askDrinking) setStep("drinking"); else save("yes", null, guestCount) }
 
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: dark, color: "#fff", fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: `${primary}44`, color: DARK, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
 
   return (
-    <div style={{ background: `${dark}cc`, borderRadius: 20, padding: 24, border: `1px solid ${primary}40` }}>
+    <div style={{ background: `${primary}cc`, borderRadius: 20, padding: 24, border: `1px solid ${primaryLight}40` }}>
       {step === "form" && (
         <>
           <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primaryLight, marginBottom: 8, fontWeight: 600, textAlign: "center" }}>Kindly RSVP</div>
@@ -247,7 +247,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark }: { coupleId
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <button onClick={handleAccept} style={{ padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, color: dark, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>♥ Joyfully Accepts</button>
-            <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", opacity: saving ? 0.6 : 1 }}>
+            <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: primaryLight, border: `1px solid ${primaryLight}55`, cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", opacity: saving ? 0.6 : 1 }}>
               {saving ? "..." : "Regretfully Declines"}
             </button>
           </div>
@@ -305,7 +305,7 @@ function SeatFinder({ seats, primary, primaryLight, dark }: { seats: Record<stri
     <div>
       <div style={{ display: "flex", gap: 10 }}>
         <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()}
-          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: dark, color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
+          placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}40`, background: `${primary}44`, color: DARK, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
         <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, color: dark, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>Search</button>
       </div>
       {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("🦪") ? primary : "rgba(255,255,255,0.55)", fontWeight: res.startsWith("🦪") ? 600 : 400 }}>{res}</div>}
