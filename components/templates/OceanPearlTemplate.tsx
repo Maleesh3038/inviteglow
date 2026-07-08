@@ -314,7 +314,7 @@ function SeatFinder({ seats, primary, primaryLight, dark }: { seats: Record<stri
 }
 
 const sectionCard = (cream: string, primary: string): React.CSSProperties => ({
-  background: `${cream}cc`, margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", border: `1px solid ${primary}33`, position: "relative",
+  background: cream, margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", border: `1px solid ${primary}33`, position: "relative",
 })
 const sectionEyebrow = (primary: string, primaryLight?: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primaryLight || primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
 const sectionTitle = (): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: "#fff", textAlign: "center", marginBottom: 20 })
@@ -538,10 +538,10 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>With Love</div>
-                <div style={{ textAlign: "center", padding: 12, background: "rgba(255,255,255,0.05)", borderRadius: 12, fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 2 }}>
-                  {W.brideFamilyName && <><strong style={{ color: "#fff" }}>{W.brideFamilyName}</strong><br /></>}
+                <div style={{ textAlign: "center", padding: 12, background: `${PRIMARY}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
+                  {W.brideFamilyName && <><strong style={{ color: DARK }}>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
-                  {W.groomFamilyName && <><strong style={{ color: "#fff" }}>{W.groomFamilyName}</strong><br /></>}
+                  {W.groomFamilyName && <><strong style={{ color: DARK }}>{W.groomFamilyName}</strong><br /></>}
                   <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
                 </div>
               </motion.div>
@@ -565,7 +565,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY}26`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>{d.label}</div>
-                        <div style={{ fontSize: 14, color: "#fff", fontWeight: 700, marginTop: 2 }}>{d.val}</div>
+                        <div style={{ fontSize: 14, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
@@ -581,9 +581,9 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
             })}
 
             {sv.countdown && (
-              <div style={{ background: `${CREAM}cc`, padding: "1.8rem 1rem 1.5rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, border: `1px solid ${PRIMARY}33` }}>
+              <div style={{ background: CREAM, padding: "1.8rem 1rem 1.5rem", textAlign: "center", margin: "0 16px 16px", borderRadius: 22, border: `1px solid ${PRIMARY}33` }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.35em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 4 }}>Counting Down to</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 600, fontSize: "1.4rem", color: "#fff", marginBottom: 18 }}>Our Big Day</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 600, fontSize: "1.4rem", color: DARK, marginBottom: 18 }}>Our Big Day</div>
                 <div style={{ position: "relative", width: 150, height: 150, margin: "0 auto 20px" }}>
                   <div style={{
                     position: "absolute", inset: 0, borderRadius: "50%",
@@ -634,7 +634,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                         }}>{icon}</div>
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY_LIGHT, letterSpacing: "0.08em" }}>{t.time}</div>
-                          <div style={{ fontSize: 13, color: "#fff", fontWeight: 500, marginTop: 1 }}>{t.event}</div>
+                          <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 1 }}>{t.event}</div>
                         </div>
                       </motion.div>
                     )
@@ -678,7 +678,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
               <motion.div style={sectionCard(CREAM, PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY, PRIMARY_LIGHT)}>A Special Note</div>
                 <div style={sectionTitle()}>To Our Lovely Guests</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 2 }}>
+                <div style={{ textAlign: "center", fontSize: 13, color: `${DARK}dd`, lineHeight: 2 }}>
                   With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.
                   <br /><br />
                   Thank you for your love, your blessings, and for being part of our journey.
