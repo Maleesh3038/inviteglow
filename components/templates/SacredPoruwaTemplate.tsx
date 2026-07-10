@@ -604,24 +604,6 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   You're Invited →
                 </button>
                 <div style={{ fontSize: 9, color: "rgba(255,255,255,0.65)", marginTop: 12 }}>🎵 Tap to begin — with music</div>
-
-                {/* Call buttons */}
-                {((couple as any).groom_phone || (couple as any).bride_phone) && (
-                  <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "center", flexWrap: "wrap" }}>
-                    {(couple as any).groom_phone && (
-                      <a href={`tel:${(couple as any).groom_phone}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "9px 18px", fontSize: 11, color: "#fff", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
-                        📞 Call {W.groom} · {(couple as any).groom_phone}
-                      </a>
-                    )}
-                    {(couple as any).bride_phone && (
-                      <a href={`tel:${(couple as any).bride_phone}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "9px 18px", fontSize: 11, color: "#fff", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
-                        📞 Call {W.bride} · {(couple as any).bride_phone}
-                      </a>
-                    )}
-                  </div>
-                )}
               </motion.div>
             </motion.div>
           )}
@@ -808,6 +790,24 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride}<span style={{ margin: "0 6px" }}>&amp;</span>{W.groom}</div>
                 </div>
+
+                {/* Call buttons — shown if phone numbers are set */}
+                {((couple as any).groom_phone || (couple as any).bride_phone) && (
+                  <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "center", flexWrap: "wrap" }}>
+                    {(couple as any).groom_phone && (
+                      <a href={`tel:${(couple as any).groom_phone}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${PRIMARY_LIGHT}22`, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 18px", fontSize: 12, color: PRIMARY, textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
+                        📞 Call {W.groom} · {(couple as any).groom_phone}
+                      </a>
+                    )}
+                    {(couple as any).bride_phone && (
+                      <a href={`tel:${(couple as any).bride_phone}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${PRIMARY_LIGHT}22`, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 18px", fontSize: 12, color: PRIMARY, textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
+                        📞 Call {W.bride} · {(couple as any).bride_phone}
+                      </a>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
 
