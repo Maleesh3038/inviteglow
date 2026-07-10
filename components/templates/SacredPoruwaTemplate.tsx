@@ -611,13 +611,13 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                     {(couple as any).groom_phone && (
                       <a href={`tel:${(couple as any).groom_phone}`}
                         style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "9px 18px", fontSize: 11, color: "#fff", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
-                        📞 Call {W.groom}
+                        📞 Call {W.groom} · {(couple as any).groom_phone}
                       </a>
                     )}
                     {(couple as any).bride_phone && (
                       <a href={`tel:${(couple as any).bride_phone}`}
                         style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "9px 18px", fontSize: 11, color: "#fff", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
-                        📞 Call {W.bride}
+                        📞 Call {W.bride} · {(couple as any).bride_phone}
                       </a>
                     )}
                   </div>
