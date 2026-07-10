@@ -633,7 +633,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: "0.8rem" }}>Together with their families</div>
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,4.2rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
                     {W.bride}
-                    <span style={{ display: "block", fontSize: "2rem", color: PRIMARY_LIGHT }}>&amp;</span>
+                    <span style={{ display: "block", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.2rem 0" }}>&amp;</span>
                     {W.groom}
                   </div>
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
@@ -788,7 +788,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride}<span style={{ margin: "0 6px" }}>&amp;</span>{W.groom}</div>
                 </div>
               </motion.div>
             )}
