@@ -59,6 +59,7 @@ const emptyForm = {
     homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '' },
   } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }>,
   intro_text: '',
+  cover_badge_text: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -741,6 +742,7 @@ export default function AdminPage() {
         },
       },
       intro_text: c.intro_text ?? '',
+      cover_badge_text: (c as any).cover_badge_text ?? '',
     })
     setEditing(c.id)
   }
@@ -788,6 +790,7 @@ export default function AdminPage() {
       section_visibility: form.section_visibility,
       events: form.events,
       intro_text: form.intro_text || null,
+      cover_badge_text: (form as any).cover_badge_text || null,
     }
 
     let error
@@ -1015,6 +1018,17 @@ export default function AdminPage() {
               value={form.section_visibility}
               onChange={v => setForm({ ...form, section_visibility: v })}
             />
+
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Cover Badge Text</label>
+              <input style={inputStyle}
+                placeholder="e.g. Wedding Invitation / Engagement Invitation / Homecoming Invitation"
+                value={(form as any).cover_badge_text || ''}
+                onChange={e => setForm({ ...form, cover_badge_text: e.target.value } as any)} />
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
+                The small badge on the cover screen (default: auto from event type). e.g. "Engagement Invitation"
+              </div>
+            </div>
 
             <div style={fieldWrap}>
               <label style={labelStyle}>Cover Intro Text</label>
