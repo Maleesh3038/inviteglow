@@ -24,6 +24,8 @@ const emptyForm = {
   groom: '',
   bride_family: '',
   groom_family: '',
+  bride_phone: '',
+  groom_phone: '',
   wedding_date: '',
   venue: '',
   venue_address: '',
@@ -675,6 +677,8 @@ export default function AdminPage() {
       groom: c.groom,
       bride_family: c.bride_family || '',
       groom_family: c.groom_family || '',
+      bride_phone: (c as any).bride_phone || '',
+      groom_phone: (c as any).groom_phone || '',
       wedding_date: c.wedding_date ? c.wedding_date.slice(0, 16) : '',
       venue: c.venue || '',
       venue_address: c.venue_address || '',
@@ -765,6 +769,8 @@ export default function AdminPage() {
       groom: form.groom,
       bride_family: form.bride_family || null,
       groom_family: form.groom_family || null,
+      bride_phone: (form as any).bride_phone || null,
+      groom_phone: (form as any).groom_phone || null,
       wedding_date: form.wedding_date,
       venue: form.venue || null,
       venue_address: form.venue_address || null,
@@ -873,6 +879,18 @@ export default function AdminPage() {
               <div style={fieldWrap}>
                 <label style={labelStyle}>Groom's Family Name</label>
                 <input style={inputStyle} placeholder="MR & MRS GAMGODA" value={form.groom_family} onChange={e => setForm({ ...form, groom_family: e.target.value })} />
+              </div>
+
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Groom's Phone Number</label>
+                <input style={inputStyle} placeholder="0778509638" value={(form as any).groom_phone || ''} onChange={e => setForm({ ...form, groom_phone: e.target.value } as any)} />
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Shows "Call [Groom]" button on invitation cover. Leave empty to hide.</div>
+              </div>
+
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Bride's Phone Number</label>
+                <input style={inputStyle} placeholder="0766128546" value={(form as any).bride_phone || ''} onChange={e => setForm({ ...form, bride_phone: e.target.value } as any)} />
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Shows "Call [Bride]" button on invitation cover. Leave empty to hide.</div>
               </div>
 
               <div style={fieldWrap}>
