@@ -551,7 +551,6 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={eyebrow(`${PRIMARY}aa`)}>With Love</div>
                 <div style={{ textAlign: "center", padding: "12px 10px", background: `${PRIMARY_LIGHT}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <>{(couple as any).together_with_text || "together with"}<br /></>}
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
                   <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
                 </div>
