@@ -1,5 +1,6 @@
 "use client"
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
@@ -336,6 +337,16 @@ function CornerLotus({ flip = false }: { flip?: boolean }) {
 }
 
 export default function SacredPoruwaTemplate({ couple }: { couple: Couple }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#3d2510" }} />}>
+      <SacredPoruwaInner couple={couple} />
+    </Suspense>
+  )
+}
+
+function SacredPoruwaInner({ couple }: { couple: Couple }) {
+  const searchParams = useSearchParams()
+  const guestName = searchParams.get('name') || ''
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -470,7 +481,14 @@ export default function SacredPoruwaTemplate({ couple }: { couple: Couple }) {
                 </div>
 
                 <div style={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.8, marginBottom: "1.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)", fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem" }}>
-                  {W.introText}
+                  {guestName ? (
+                    <>
+                      <span style={{ display: "block", fontSize: "1.15rem", color: PRIMARY_LIGHT, marginBottom: 6 }}>
+                        Dear {guestName},
+                      </span>
+                      {W.introText}
+                    </>
+                  ) : W.introText}
                 </div>
 
                 <button onClick={handleOpenInvitation} style={{
