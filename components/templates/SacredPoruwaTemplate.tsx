@@ -437,46 +437,69 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: "easeInOut" }}
             style={{
-              position: "fixed", inset: 0, zIndex: 100,
-              background: `linear-gradient(160deg, ${CREAM} 0%, ${PRIMARY_LIGHT}33 50%, ${CREAM} 100%)`,
+              position: "fixed", inset: 0, zIndex: 200,
+              background: `linear-gradient(160deg, ${CREAM} 0%, #f7ede0 40%, ${CREAM} 100%)`,
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               textAlign: "center", padding: "2rem",
+              overflow: "hidden",
             }}
           >
+            {/* Subtle ambient glow */}
+            <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${PRIMARY_LIGHT}44, transparent)`, top: "20%", left: "50%", transform: "translateX(-50%)" }} />
+            <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle, ${PRIMARY}22, transparent)`, bottom: "15%", left: "50%", transform: "translateX(-50%)" }} />
+
             {/* Animated lotus */}
             <motion.div
-              initial={{ scale: 0.3, opacity: 0, rotate: -15 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
-              style={{ marginBottom: "1.8rem" }}
+              initial={{ scale: 0.2, opacity: 0, rotate: -20 }}
+              animate={{ scale: [0.2, 1.12, 0.96, 1], opacity: 1, rotate: [-20, 5, -2, 0] }}
+              transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
+              style={{ marginBottom: "2rem", position: "relative", zIndex: 1 }}
             >
-              <LotusIcon color={PRIMARY} size={100} opacity={0.85} />
+              <LotusIcon color={PRIMARY} size={110} opacity={0.9} />
+              {/* Glow ring around lotus */}
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: [0.5, 1.3, 1], opacity: [0, 0.4, 0] }}
+                transition={{ duration: 1.8, delay: 0.8, repeat: Infinity, repeatDelay: 2 }}
+                style={{ position: "absolute", inset: -20, borderRadius: "50%", border: `2px solid ${PRIMARY_LIGHT}`, pointerEvents: "none" }}
+              />
             </motion.div>
 
-            {/* Dear [name] */}
+            {/* Dear [name] with highlight animation */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.9 }}
-              style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.8rem,7vw,2.8rem)", color: DARK, marginBottom: "0.6rem", lineHeight: 1.2 }}
+              transition={{ duration: 0.9, delay: 1.0 }}
+              style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}
             >
-              Dear {guestName},
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.6rem,6vw,2.4rem)", color: DARK, lineHeight: 1.3 }}>
+                Dear{" "}
+                <motion.span
+                  initial={{ color: DARK }}
+                  animate={{ color: [DARK, PRIMARY, PRIMARY_LIGHT, PRIMARY] }}
+                  transition={{ duration: 2, delay: 1.6, repeat: Infinity, repeatType: "reverse" }}
+                  style={{ fontWeight: 600 }}
+                >
+                  {guestName}
+                </motion.span>
+                ,
+              </div>
             </motion.div>
 
             {/* Divider */}
             <motion.div
               initial={{ scaleX: 0, opacity: 0 }}
               animate={{ scaleX: 1, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 1.4 }}
-              style={{ width: 60, height: 1, background: PRIMARY, margin: "0.8rem auto" }}
+              transition={{ duration: 0.7, delay: 1.5 }}
+              style={{ width: 60, height: 1, background: `linear-gradient(to right, transparent, ${PRIMARY}, transparent)`, margin: "0 auto 1rem" }}
             />
 
             {/* You're Invited */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.6 }}
-              style={{ fontSize: 11, letterSpacing: "0.5em", textTransform: "uppercase", color: `${PRIMARY}bb`, fontFamily: "'Inter',sans-serif" }}
+              initial={{ opacity: 0, letterSpacing: "0.1em" }}
+              animate={{ opacity: 1, letterSpacing: "0.5em" }}
+              transition={{ duration: 1, delay: 1.8 }}
+              style={{ fontSize: 11, textTransform: "uppercase", color: `${PRIMARY}bb`, fontFamily: "'Inter',sans-serif", position: "relative", zIndex: 1 }}
             >
               You're Invited
             </motion.div>
@@ -486,17 +509,17 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
               style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${PRIMARY},${PRIMARY_LIGHT})`, borderRadius: 100 }}
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
-              transition={{ duration: 5, ease: "linear" }}
+              transition={{ duration: 5, ease: "linear", delay: 0.5 }}
               onAnimationComplete={() => setShowIntro(false)}
             />
 
             {/* Skip button */}
             <motion.button
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2 }}
+              animate={{ opacity: 0.6 }}
+              transition={{ delay: 2.5 }}
               onClick={() => setShowIntro(false)}
-              style={{ position: "absolute", bottom: 28, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: `${PRIMARY}88`, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}
+              style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: PRIMARY, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}
             >
               Skip →
             </motion.button>
