@@ -608,7 +608,6 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Countdown */}
             {sv.countdown && (
               <motion.div style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
                 <div style={eyebrow(`${PRIMARY}aa`)}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
