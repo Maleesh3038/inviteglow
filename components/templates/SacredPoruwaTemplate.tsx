@@ -234,8 +234,8 @@ function MusicPlayerUI({ title, artist, songUrl, audioRef, primary, primaryLight
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string }) {
-  const [name, setName] = useState("")
+function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string }) {
+  const [name, setName] = useState(guestName || "")
   const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes")
@@ -483,7 +483,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={{ color: "rgba(255,255,255,0.85)", lineHeight: 1.8, marginBottom: "1.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)", fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem" }}>
                   {guestName ? (
                     <>
-                      <span style={{ display: "block", fontSize: "1.15rem", color: PRIMARY_LIGHT, marginBottom: 6 }}>
+                      <span style={{ display: "block", fontSize: "1.2rem", color: "#ffffff", marginBottom: 6, textShadow: "0 2px 12px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)", fontWeight: 600 }}>
                         Dear {guestName},
                       </span>
                       {W.introText}
@@ -603,7 +603,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
             {/* RSVP */}
             <div id="rsvp">
-              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
+              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} />
             </div>
 
             {/* Timeline */}
