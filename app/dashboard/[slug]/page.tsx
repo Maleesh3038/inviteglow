@@ -72,6 +72,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [thankYouText, setThankYouText] = useState((couple as any).thank_you_text || '')
   const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
   const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
+  const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
 
   // Seat rows: editable list derived from couple.seats (name -> table).
   // show_seating itself is admin-controlled only — the couple can rearrange
@@ -135,6 +136,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       thank_you_text: thankYouText || null,
       bride_family: brideFamilyName || null,
       groom_family: groomFamilyName || null,
+      together_with_text: togetherWithText || null,
     }).eq('id', couple.id)
 
     setSaving(false)
@@ -284,6 +286,13 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           <input style={inputStyle} value={groomFamilyName} onChange={e => setGroomFamilyName(e.target.value)}
             placeholder="e.g. MR & MRS De Silva" />
           <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginTop: 4 }}>Shown in the family invitation card (e.g. "MR & MRS De Silva's son...")</div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>"Together With" Label</label>
+          <input style={inputStyle} value={togetherWithText} onChange={e => setTogetherWithText(e.target.value)}
+            placeholder="together with (default)" />
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginTop: 4 }}>The joining word between the two family names. Leave empty to use "together with".</div>
         </div>
 
         <div style={{ marginBottom: 14 }}>
