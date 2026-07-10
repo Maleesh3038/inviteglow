@@ -456,7 +456,7 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
                   boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
                 }}>
                   <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                    {W.bride.charAt(0)}<span style={{ color: PRIMARY_LIGHT, fontSize: "1rem" }}> / </span>{W.groom.charAt(0)}
+                    {W.bride.charAt(0)}{W.groom.charAt(0)}
                   </span>
                 </div>
 
