@@ -1,10 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
 // ── Types ──
 export type CoupleColors = {
   primary?: string
@@ -12,9 +9,6 @@ export type CoupleColors = {
   dark?: string
   cream?: string
 }
-
-// Which optional sections show on the public invitation. RSVP is intentionally
-// not included here — it's a core feature and always renders.
 export type SectionVisibility = {
   gallery?: boolean
   countdown?: boolean
@@ -23,23 +17,18 @@ export type SectionVisibility = {
   music?: boolean
   thank_you?: boolean
 }
-
-// A single event slot (Engagement / Wedding / Homecoming). `enabled` controls
-// whether this event's card renders on the invitation at all.
 export type EventDetails = {
   enabled: boolean
   venue: string
   venue_address: string
-  date: string // ISO datetime string, same format as wedding_date
+  date: string
   maps_url: string
 }
-
 export type CoupleEvents = {
   engagement?: EventDetails
   wedding?: EventDetails
   homecoming?: EventDetails
 }
-
 export type Couple = {
   id: string
   slug: string
@@ -62,13 +51,12 @@ export type Couple = {
   pin: string
   ask_drinking: boolean
   show_seating: boolean
-  custom_colors: CoupleColors
-  section_visibility: SectionVisibility
-  events: CoupleEvents
+  custom_colors: CoupleColors | null   // ← null-safe fix
+  section_visibility: SectionVisibility | null
+  events: CoupleEvents | null
   intro_text: string | null
   created_at: string
 }
-
 export type RSVP = {
   id: string
   couple_id: string
@@ -79,7 +67,6 @@ export type RSVP = {
   accommodation: 'needed' | 'not_needed' | null
   created_at: string
 }
-
 export type Review = {
   id: string
   name: string
