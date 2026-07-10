@@ -280,6 +280,80 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   )
 }
 
+// ── Guest Link Generator — lets the couple create personalised invite
+// links for each guest with their name pre-filled in the URL. ──
+function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string }) {
+  const [guestName, setGuestName] = useState("")
+  const [copied, setCopied] = useState(false)
+
+  const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
+  const generatedLink = guestName.trim()
+    ? `${baseUrl}?name=${encodeURIComponent(guestName.trim())}`
+    : baseUrl
+
+  const copyLink = async () => {
+    if (!guestName.trim()) return
+    await navigator.clipboard.writeText(generatedLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const shareWhatsApp = () => {
+    if (!guestName.trim()) return
+    const msg = encodeURIComponent(`You're invited! 🎊\n${generatedLink}`)
+    window.open(`https://wa.me/?text=${msg}`, '_blank')
+  }
+
+  return (
+    <div style={{ background: "#fff", borderRadius: 18, padding: 24, marginBottom: 24, boxShadow: "0 2px 20px rgba(15,23,42,0.06)" }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>💌 Generate Guest Link</div>
+      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 16 }}>
+        Type a guest's name to generate a personalised invitation link — their name will appear on the cover and auto-fill in the RSVP form.
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <input
+          value={guestName}
+          onChange={e => { setGuestName(e.target.value); setCopied(false) }}
+          placeholder="e.g. Amara & Family"
+          style={{ flex: 1, padding: "11px 14px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif", color: "#1e293b" }}
+        />
+      </div>
+
+      {guestName.trim() && (
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#475569", wordBreak: "break-all", border: "1px solid #e2e8f0" }}>
+          🔗 {generatedLink}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <button
+          onClick={copyLink}
+          disabled={!guestName.trim()}
+          style={{
+            flex: 1, padding: "11px", borderRadius: 10, border: "none", cursor: guestName.trim() ? "pointer" : "default",
+            background: copied ? "#16a34a" : accent,
+            color: "#fff", fontWeight: 600, fontSize: 13,
+            opacity: guestName.trim() ? 1 : 0.4,
+            transition: "background 0.2s",
+          }}>
+          {copied ? "✓ Copied!" : "📋 Copy Link"}
+        </button>
+        <button
+          onClick={shareWhatsApp}
+          disabled={!guestName.trim()}
+          style={{
+            flex: 1, padding: "11px", borderRadius: 10, border: "none", cursor: guestName.trim() ? "pointer" : "default",
+            background: "#25d366", color: "#fff", fontWeight: 600, fontSize: 13,
+            opacity: guestName.trim() ? 1 : 0.4,
+          }}>
+          📲 Share on WhatsApp
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function CoupleDashboard() {
   const params = useParams()
   const slug = params.slug as string
@@ -472,6 +546,9 @@ export default function CoupleDashboard() {
         </div>
 
         {showEdit && <EditPanel couple={couple} onSaved={loadData} />}
+
+        {/* Guest Link Generator — always visible */}
+        <GuestLinkGenerator couple={couple} accent={ACCENT} />
 
         {/* Stats cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 12 }}>
