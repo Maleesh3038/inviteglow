@@ -348,6 +348,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
   const searchParams = useSearchParams()
   const guestName = searchParams.get('name') || ''
   const [opened, setOpened] = useState(false)
+  const [showIntro, setShowIntro] = useState(!!guestName) // show intro only when guest name present
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
@@ -421,9 +422,87 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         @keyframes pulse-gold { 0%,100%{box-shadow:0 0 0 0 rgba(196,149,106,0.4);} 50%{box-shadow:0 0 0 16px rgba(196,149,106,0);} }
-        @keyframes float-slow { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        @keyframes lotus-bloom { 0%{transform:scale(0.4) rotate(-15deg);opacity:0;} 60%{transform:scale(1.08) rotate(3deg);opacity:1;} 80%{transform:scale(0.97) rotate(-1deg);} 100%{transform:scale(1) rotate(0deg);opacity:1;} }
+        @keyframes fade-up { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes shimmer { 0%,100%{opacity:0.6;} 50%{opacity:1;} }
         input::placeholder { color: #b5a08a; }
       `}</style>
+
+      {/* ══ GUEST INTRO SCREEN ══ */}
+      <AnimatePresence>
+        {showIntro && guestName && (
+          <motion.div
+            key="intro"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 100,
+              background: `linear-gradient(160deg, ${CREAM} 0%, ${PRIMARY_LIGHT}33 50%, ${CREAM} 100%)`,
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              textAlign: "center", padding: "2rem",
+            }}
+          >
+            {/* Animated lotus */}
+            <motion.div
+              initial={{ scale: 0.3, opacity: 0, rotate: -15 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
+              style={{ marginBottom: "1.8rem" }}
+            >
+              <LotusIcon color={PRIMARY} size={100} opacity={0.85} />
+            </motion.div>
+
+            {/* Dear [name] */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.9 }}
+              style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.8rem,7vw,2.8rem)", color: DARK, marginBottom: "0.6rem", lineHeight: 1.2 }}
+            >
+              Dear {guestName},
+            </motion.div>
+
+            {/* Divider */}
+            <motion.div
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.4 }}
+              style={{ width: 60, height: 1, background: PRIMARY, margin: "0.8rem auto" }}
+            />
+
+            {/* You're Invited */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.6 }}
+              style={{ fontSize: 11, letterSpacing: "0.5em", textTransform: "uppercase", color: `${PRIMARY}bb`, fontFamily: "'Inter',sans-serif" }}
+            >
+              You're Invited
+            </motion.div>
+
+            {/* Auto-progress bar */}
+            <motion.div
+              style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${PRIMARY},${PRIMARY_LIGHT})`, borderRadius: 100 }}
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 5, ease: "linear" }}
+              onAnimationComplete={() => setShowIntro(false)}
+            />
+
+            {/* Skip button */}
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2 }}
+              onClick={() => setShowIntro(false)}
+              style={{ position: "absolute", bottom: 28, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: `${PRIMARY}88`, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}
+            >
+              Skip →
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.1)", position: "relative" }}>
 
