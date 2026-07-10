@@ -568,7 +568,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.14)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 16px", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: "#fff", marginBottom: "1.1rem", border: `1px solid ${PRIMARY_LIGHT}55` }}>
                   <span style={{ width: 5, height: 5, borderRadius: "50%", background: PRIMARY_LIGHT, display: "inline-block" }} />
-                  Wedding Invitation
+                  {(couple as any).cover_badge_text || `${eventsList[0]?.label || "Wedding"} Invitation`}
                 </div>
 
                 <div style={{ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem" }}>You Are Invited</div>
