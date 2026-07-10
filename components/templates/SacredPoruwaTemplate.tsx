@@ -547,7 +547,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Family card */}
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
+                
                 <div style={eyebrow(`${PRIMARY}aa`)}>With Love</div>
                 <div style={{ textAlign: "center", padding: "12px 10px", background: `${PRIMARY_LIGHT}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
@@ -578,7 +578,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <CornerLotus /><CornerLotus flip />
+                  
                   <div style={eyebrow(`${PRIMARY}aa`)}>{ev.icon} Save the Date</div>
                   <div style={heading(DARK)}>{ev.label}</div>
                   {[
@@ -621,7 +621,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
+                
                 <div style={eyebrow(`${PRIMARY}aa`)}>Our Celebration</div>
                 <div style={heading(DARK)}>Event Timeline</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -641,7 +641,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Seat Finder */}
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
+                
                 <div style={eyebrow(`${PRIMARY}aa`)}>Be Our Guest</div>
                 <div style={heading(DARK)}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 4 }}>Search your name to find your assigned table</div>
@@ -652,7 +652,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Music */}
             {sv.music && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
+                
                 <div style={eyebrow(`${PRIMARY}aa`)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} songUrl={songUrl} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
@@ -661,7 +661,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
+                
                 <div style={eyebrow(`${PRIMARY}aa`)}>Our Celebration</div>
                 <div style={heading(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -678,7 +678,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Thank You */}
             {sv.thank_you && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerLotus /><CornerLotus flip />
+                
                 <div style={eyebrow(`${PRIMARY}aa`)}>A Special Note</div>
                 <div style={heading(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
