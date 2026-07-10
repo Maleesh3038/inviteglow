@@ -68,6 +68,10 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [venue, setVenue] = useState(couple.venue || '')
   const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
   const [mapsUrl, setMapsUrl] = useState(couple.maps_url || '')
+  const [introText, setIntroText] = useState(couple.intro_text || '')
+  const [thankYouText, setThankYouText] = useState((couple as any).thank_you_text || '')
+  const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
+  const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
 
   // Seat rows: editable list derived from couple.seats (name -> table).
   // show_seating itself is admin-controlled only — the couple can rearrange
@@ -127,6 +131,10 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       maps_url: mapsUrl || null,
       custom_colors: colors,
       seats: seatsObj,
+      intro_text: introText || null,
+      thank_you_text: thankYouText || null,
+      bride_family: brideFamilyName || null,
+      groom_family: groomFamilyName || null,
     }).eq('id', couple.id)
 
     setSaving(false)
@@ -267,6 +275,44 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         </div>
       </div>
 
+      {/* ── Text Customisation ── */}
+      <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginTop: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#166534', marginBottom: 14 }}>✏️ Customise Text</div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Groom's Family Name</label>
+          <input style={inputStyle} value={groomFamilyName} onChange={e => setGroomFamilyName(e.target.value)}
+            placeholder="e.g. MR & MRS De Silva" />
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginTop: 4 }}>Shown in the family invitation card (e.g. "MR & MRS De Silva's son...")</div>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Bride's Family Name</label>
+          <input style={inputStyle} value={brideFamilyName} onChange={e => setBrideFamilyName(e.target.value)}
+            placeholder="e.g. MR & MRS Perera" />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Cover Intro Text</label>
+          <textarea
+            value={introText} onChange={e => setIntroText(e.target.value)}
+            placeholder="Leave empty to use the template's default line..."
+            style={{ ...inputStyle, minHeight: 70, resize: 'vertical' as const }}
+          />
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginTop: 4 }}>The line shown below your names on the cover screen.</div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Thank You Message</label>
+          <textarea
+            value={thankYouText} onChange={e => setThankYouText(e.target.value)}
+            placeholder="Leave empty to use the default thank you message..."
+            style={{ ...inputStyle, minHeight: 90, resize: 'vertical' as const }}
+          />
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginTop: 4 }}>Shown in the Thank You card at the bottom of the invitation.</div>
+        </div>
+      </div>
+
       {message && <div style={{ marginTop: 16, fontSize: 13, color: message.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{message}</div>}
 
       <button onClick={handleSave} disabled={saving} style={{
@@ -275,6 +321,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         opacity: saving ? 0.6 : 1,
       }}>
         {saving ? 'Saving...' : '💾 Save Changes'}
+
       </button>
     </div>
   )
