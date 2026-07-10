@@ -552,6 +552,12 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={{ textAlign: "center", padding: "12px 10px", background: `${PRIMARY_LIGHT}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
+                  {(() => {
+                    const txt = (couple as any).family_invitation_text
+                    if (txt === null || txt === '') return null
+                    const lines = (txt ?? 'request the honour of your presence\nto celebrate the marriage of their loving children').split('\n')
+                    return <span style={{ color: MUTED }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</span>
+                  })()}
                   <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
                 </div>
               </motion.div>
