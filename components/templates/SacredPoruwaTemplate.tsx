@@ -604,6 +604,24 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   You're Invited →
                 </button>
                 <div style={{ fontSize: 9, color: "rgba(255,255,255,0.65)", marginTop: 12 }}>🎵 Tap to begin — with music</div>
+
+                {/* Call buttons */}
+                {((couple as any).groom_phone || (couple as any).bride_phone) && (
+                  <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "center", flexWrap: "wrap" }}>
+                    {(couple as any).groom_phone && (
+                      <a href={`tel:${(couple as any).groom_phone}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "9px 18px", fontSize: 11, color: "#fff", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
+                        📞 Call {W.groom}
+                      </a>
+                    )}
+                    {(couple as any).bride_phone && (
+                      <a href={`tel:${(couple as any).bride_phone}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "9px 18px", fontSize: 11, color: "#fff", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
+                        📞 Call {W.bride}
+                      </a>
+                    )}
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}
