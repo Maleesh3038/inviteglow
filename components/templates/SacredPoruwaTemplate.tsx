@@ -670,9 +670,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={eyebrow(`${PRIMARY}aa`)}>A Special Note</div>
                 <div style={heading(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.
-                  <br /><br />
-                  Thank you for your love, your blessings, and for being part of our journey.
+                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.\n\nThank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
