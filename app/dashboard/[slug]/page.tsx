@@ -73,6 +73,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
   const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
   const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
+  const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text ?? 'request the honour of your presence\nto celebrate the marriage of their loving children')
 
   // Seat rows: editable list derived from couple.seats (name -> table).
   // show_seating itself is admin-controlled only — the couple can rearrange
@@ -137,6 +138,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       bride_family: brideFamilyName || null,
       groom_family: groomFamilyName || null,
       together_with_text: togetherWithText || null,
+      family_invitation_text: familyInvitationText || null,
     }).eq('id', couple.id)
 
     setSaving(false)
@@ -299,6 +301,17 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           <label style={labelStyle}>Bride's Family Name</label>
           <input style={inputStyle} value={brideFamilyName} onChange={e => setBrideFamilyName(e.target.value)}
             placeholder="e.g. MR & MRS Perera" />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Family Invitation Text</label>
+          <textarea
+            value={familyInvitationText} onChange={e => setFamilyInvitationText(e.target.value)}
+            style={{ ...inputStyle, minHeight: 70, resize: 'vertical' as const }}
+          />
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginTop: 4 }}>
+            Shown below the family names in the "With Love" card. Leave empty to hide this text completely.
+          </div>
         </div>
 
         <div style={{ marginBottom: 14 }}>
