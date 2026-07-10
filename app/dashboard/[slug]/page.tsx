@@ -73,7 +73,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
   const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
   const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
-  const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text ?? 'request the honour of your presence\nto celebrate the marriage of their loving children')
+  const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text || '')
 
   // Seat rows: editable list derived from couple.seats (name -> table).
   // show_seating itself is admin-controlled only — the couple can rearrange
