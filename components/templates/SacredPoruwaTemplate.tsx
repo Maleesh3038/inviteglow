@@ -636,7 +636,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                     <span style={{ display: "block", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.2rem 0" }}>&amp;</span>
                     {W.groom}
                   </div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", margin: "4px 0", letterSpacing: "0.1em" }}></div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: DARK, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 700 }}>RSVP</a>
                     <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer"
@@ -657,17 +657,10 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   {(() => {
                     const txt = (couple as any).family_invitation_text
                     const trimmed = (txt || '').trim()
-                    // Custom text set → show it
-                    if (trimmed) {
-                      const lines = trimmed.split('\n')
-                      return <span style={{ color: MUTED }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</span>
-                    }
-                    // null/undefined = never saved = show default
-                    if (txt === null || txt === undefined) {
-                      return <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
-                    }
-                    // Empty string or whitespace = explicitly hidden
-                    return null
+                    // Only show if explicitly set with real content
+                    if (!trimmed) return null
+                    const lines = trimmed.split('\n')
+                    return <span style={{ color: MUTED }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</span>
                   })()}
                 </div>
               </motion.div>
@@ -676,7 +669,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
-              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              const evDateDisplay = evDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
