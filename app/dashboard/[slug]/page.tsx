@@ -354,6 +354,8 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string }) {
   const [guestName, setGuestName] = useState("")
   const [copied, setCopied] = useState(false)
+  const [waMessage, setWaMessage] = useState((couple as any).whatsapp_invite_message || "You're invited! 🎊")
+  const [editingMsg, setEditingMsg] = useState(false)
 
   const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
   const generatedLink = guestName.trim()
@@ -369,8 +371,13 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
 
   const shareWhatsApp = () => {
     if (!guestName.trim()) return
-    const msg = encodeURIComponent(`You're invited! 🎊\n${generatedLink}`)
+    const msg = encodeURIComponent(`${waMessage}\n${generatedLink}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
+  }
+
+  const saveMessage = async () => {
+    await supabase.from('couples').update({ whatsapp_invite_message: waMessage }).eq('id', couple.id)
+    setEditingMsg(false)
   }
 
   return (
@@ -394,6 +401,30 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
           🔗 {generatedLink}
         </div>
       )}
+
+      {/* WhatsApp message editor */}
+      <div style={{ background: "#f0fdf4", borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: "1px solid #bbf7d0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#166534" }}>📲 WhatsApp Message</div>
+          <button onClick={() => setEditingMsg(!editingMsg)} style={{ fontSize: 11, color: accent, background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 }}>
+            {editingMsg ? "Cancel" : "✏️ Edit"}
+          </button>
+        </div>
+        {editingMsg ? (
+          <div>
+            <textarea
+              value={waMessage}
+              onChange={e => setWaMessage(e.target.value)}
+              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none", fontFamily: "'Inter',sans-serif", resize: "vertical" as const, minHeight: 60 }}
+            />
+            <button onClick={saveMessage} style={{ marginTop: 6, padding: "7px 16px", borderRadius: 8, background: accent, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+              Save Message
+            </button>
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: "#1e293b" }}>{waMessage}<br /><span style={{ color: "#64748b" }}>[link eka auto-add wenawa]</span></div>
+        )}
+      </div>
 
       <div style={{ display: "flex", gap: 10 }}>
         <button
