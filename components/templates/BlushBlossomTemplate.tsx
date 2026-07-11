@@ -161,6 +161,28 @@ function Medallion({ initials, color, size = 190 }: { initials: string; color: s
   )
 }
 
+// Isolated so its per-second tick only re-renders this small subtree —
+// not the whole page (which was previously causing the map iframe and
+// everything else to visibly flicker/reload every second).
+function CountdownDisplay({ targetDate, dark, primary }: { targetDate?: string; dark: string; primary: string }) {
+  const countdown = useCountdown(targetDate)
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0 }}>
+      {[['DAYS', countdown.d], ['HOURS', countdown.h], ['MINUTES', countdown.m], ['SECONDS', countdown.s]].map(([label, value], i) => (
+        <div key={label as string} style={{ display: 'flex', alignItems: 'center' }}>
+          {i > 0 && <div style={{ width: 1, height: 30, background: primary, opacity: 0.3, margin: '0 16px' }} />}
+          <div>
+            <div className="bb-num" style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.9rem', fontWeight: 700, color: dark }}>
+              {String(value).padStart(2, '0')}
+            </div>
+            <div style={{ fontSize: 9, letterSpacing: '0.12em', color: primary, fontWeight: 700, marginTop: 2 }}>{label}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const [showRsvpForm, setShowRsvpForm] = useState(false)
@@ -178,7 +200,6 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const bridePhone = (couple as any).bride_phone
   const groomPhone = (couple as any).groom_phone
   const section = couple.section_visibility || {}
-  const countdown = useCountdown(couple.wedding_date)
 
   const enabledEvents = useMemo(() => {
     const ev = (couple as any).events as Record<'engagement' | 'wedding' | 'homecoming', {
@@ -499,19 +520,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             {/* Countdown — plain numbers, no boxes */}
             {(section.countdown ?? true) && (
               <Reveal mt={80}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0 }}>
-                  {[['DAYS', countdown.d], ['HOURS', countdown.h], ['MINUTES', countdown.m], ['SECONDS', countdown.s]].map(([label, value], i) => (
-                    <div key={label as string} style={{ display: 'flex', alignItems: 'center' }}>
-                      {i > 0 && <div style={{ width: 1, height: 30, background: colors.primary, opacity: 0.3, margin: '0 16px' }} />}
-                      <div>
-                        <div className="bb-num" style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.9rem', fontWeight: 700, color: colors.dark }}>
-                          {String(value).padStart(2, '0')}
-                        </div>
-                        <div style={{ fontSize: 9, letterSpacing: '0.12em', color: colors.primary, fontWeight: 700, marginTop: 2 }}>{label}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <CountdownDisplay targetDate={couple.wedding_date} dark={colors.dark} primary={colors.primary} />
               </Reveal>
             )}
 
