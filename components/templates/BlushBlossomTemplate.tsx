@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { supabase, Couple, CoupleColors } from '@/lib/supabase'
@@ -232,10 +232,18 @@ function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetD
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const [flapOpen, setFlapOpen] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const handleOpenClick = () => {
     setFlapOpen(true)
     setTimeout(() => setOpened(true), 550)
   }
+  // The <audio> element only mounts once `opened` is true, so we wait for
+  // that render (a same-tick .play() call would hit a still-null ref).
+  useEffect(() => {
+    if (!opened) return
+    const id = setTimeout(() => { audioRef.current?.play().catch(() => {}) }, 60)
+    return () => clearTimeout(id)
+  }, [opened])
   const [showRsvpForm, setShowRsvpForm] = useState(false)
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
@@ -360,7 +368,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               backgroundColor: colors.dark,
               backgroundPosition: 'center',
             }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(90,50,110,0.16) 0%, rgba(0,0,0,0.08) 50%, rgba(90,50,110,0.2) 100%)' }} />
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1, scale: flapOpen ? 0.93 : 1 }}
@@ -408,7 +416,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 transition={{ duration: 0.55, ease: [0.45, 0, 0.55, 1] }}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: 58, zIndex: 2,
-                  background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
+                  background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary},#8c6aa8)`,
                   clipPath: 'polygon(0 0, 50% 100%, 100% 0)', transformOrigin: 'top center', transformStyle: 'preserve-3d',
                   borderTopLeftRadius: 14, borderTopRightRadius: 14,
                 }}
@@ -612,6 +620,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Large monogram watermark — fixed to the viewport so it stays put
               while the page scrolls, rather than moving with the content */}
           <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+              width: 500, height: 500, borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(139,106,168,0.10) 0%, transparent 70%)',
+            }} />
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', opacity: 0.08 }}>
               <Medallion initials={initials} color={colors.dark} size={560} />
             </div>
@@ -647,11 +660,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   {couple.song_url.includes('youtube.com') || couple.song_url.includes('youtu.be') ? (
                     <div style={{ borderRadius: 14, overflow: 'hidden' }}>
                       <iframe width="100%" height="170"
-                        src={`https://www.youtube.com/embed/${couple.song_url.split(/v=|youtu\.be\//)[1]?.split('&')[0]}?autoplay=0`}
+                        src={`https://www.youtube.com/embed/${couple.song_url.split(/v=|youtu\.be\//)[1]?.split('&')[0]}?autoplay=1&mute=1&loop=1`}
                         title="song" allow="autoplay; encrypted-media" style={{ border: 0 }} />
                     </div>
                   ) : (
-                    <audio controls src={couple.song_url} style={{ width: '100%' }} />
+                    <audio ref={audioRef} controls loop src={couple.song_url} style={{ width: '100%' }} />
                   )}
                 </div>
               </Reveal>
