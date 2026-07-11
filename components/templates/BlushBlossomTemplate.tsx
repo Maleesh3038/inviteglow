@@ -192,6 +192,11 @@ function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetD
 
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
+  const [flapOpen, setFlapOpen] = useState(false)
+  const handleOpenClick = () => {
+    setFlapOpen(true)
+    setTimeout(() => setOpened(true), 550)
+  }
   const [showRsvpForm, setShowRsvpForm] = useState(false)
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
@@ -305,26 +310,41 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)' }} />
             <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, ease: 'easeOut' }}
-              style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-              <div style={{ height: 58, background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`, clipPath: 'polygon(0 0, 50% 100%, 100% 0)' }} />
-              <div style={{ background: '#fff', padding: '34px 26px 30px', textAlign: 'center' }}>
-                <div style={{ width: 58, height: 58, borderRadius: '50%', border: `1px solid ${colors.primary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, letterSpacing: 2, color: colors.dark }}>{initials}</span>
+              style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, perspective: 800 }}>
+              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative' }}>
+                {/* Flap — hinged at the top edge, folds open like a real envelope lid */}
+                <motion.div
+                  animate={{ rotateX: flapOpen ? -150 : 0 }}
+                  transition={{ duration: 0.6, ease: [0.45, 0, 0.55, 1] }}
+                  style={{
+                    height: 58, background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
+                    clipPath: 'polygon(0 0, 50% 100%, 100% 0)', transformOrigin: 'top center', transformStyle: 'preserve-3d',
+                  }}
+                />
+                <div style={{ background: '#fff', padding: '36px 26px 32px', textAlign: 'center' }}>
+                  <div style={{ width: 58, height: 58, borderRadius: '50%', border: `1px solid ${colors.primary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+                    <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, letterSpacing: 2, color: colors.dark }}>{initials}</span>
+                  </div>
+                  <div style={{ fontSize: 11, letterSpacing: '0.28em', fontWeight: 700, color: colors.primary, marginBottom: 8 }}>{badgeText}</div>
+                  <div style={{ fontSize: 12, color: colors.primary, opacity: 0.5, marginBottom: 22 }}>~ &#42; ~</div>
+                  <motion.button
+                    onClick={handleOpenClick}
+                    aria-label="Open invitation"
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.92 }}
+                    style={{
+                      position: 'relative', width: 68, height: 62, background: 'transparent', border: 'none', cursor: 'pointer',
+                      margin: '0 auto', display: 'block',
+                    }}>
+                    <svg width="68" height="62" viewBox="0 0 100 90" style={{ position: 'absolute', inset: 0 }}>
+                      <path
+                        d="M50 88 C 20 66, 0 46, 0 26 C 0 8, 16 -2, 32 6 C 42 11, 48 19, 50 27 C 52 19, 58 11, 68 6 C 84 -2, 100 8, 100 26 C 100 46, 80 66, 50 88 Z"
+                        fill={colors.primary}
+                      />
+                    </svg>
+                    <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', paddingTop: 6, color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em' }}>OPEN</span>
+                  </motion.button>
                 </div>
-                <div style={{ fontSize: 11, letterSpacing: '0.28em', fontWeight: 700, color: colors.primary, marginBottom: 6 }}>{badgeText}</div>
-                <div style={{ fontSize: 12, color: colors.primary, opacity: 0.5, marginBottom: 20 }}>~ * ~</div>
-                <button onClick={() => setOpened(true)} aria-label="Open invitation" style={{
-                  position: 'relative', width: 68, height: 62, background: 'transparent', border: 'none', cursor: 'pointer',
-                  margin: '0 auto', display: 'block',
-                }}>
-                  <svg width="68" height="62" viewBox="0 0 100 90" style={{ position: 'absolute', inset: 0 }}>
-                    <path
-                      d="M50 88 C 20 66, 0 46, 0 26 C 0 8, 16 -2, 32 6 C 42 11, 48 19, 50 27 C 52 19, 58 11, 68 6 C 84 -2, 100 8, 100 26 C 100 46, 80 66, 50 88 Z"
-                      fill={colors.primary}
-                    />
-                  </svg>
-                  <span style={{ position: 'relative', zIndex: 1, display: 'block', paddingTop: 24, color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em' }}>OPEN</span>
-                </button>
               </div>
             </motion.div>
           </motion.div>
