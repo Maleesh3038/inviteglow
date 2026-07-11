@@ -19,6 +19,8 @@ import { supabase, Couple, CoupleColors } from '@/lib/supabase'
  * loops. No emoji — plain SVG icons only.
  */
 
+const DEFAULT_COVER_BG = '/images/blush-blossom-cover-bg.png'
+
 const DEFAULT_COLORS: Required<CoupleColors> = {
   primary: '#c1876d',
   primaryLight: '#f4e6d9',
@@ -293,9 +295,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           <motion.div key="cover" exit={{ opacity: 0, transition: { duration: 0.5 } }}
             style={{
               position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backgroundImage: (couple as any).cover_background_image
-                ? `url(${(couple as any).cover_background_image})`
-                : `radial-gradient(circle at 50% 25%, ${colors.primaryLight} 0%, ${colors.primary}cc 65%, ${colors.dark} 140%)`,
+              backgroundImage: `url(${(couple as any).cover_background_image || DEFAULT_COVER_BG})`,
+              backgroundColor: colors.dark,
               backgroundSize: 'cover', backgroundPosition: 'center',
             }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)' }} />
