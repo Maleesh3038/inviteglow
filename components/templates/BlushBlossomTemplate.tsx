@@ -277,6 +277,10 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         html, body { background: ${colors.cream} !important; margin: 0; overflow-x: hidden; }
+        .bb-cover-bg { background-size: cover; }
+        @media (min-aspect-ratio: 3/4) {
+          .bb-cover-bg { background-size: auto 100%; }
+        }
         .bb-num { font-variant-numeric: tabular-nums lining-nums; }
         .bb-wrap-wide { max-width: 420px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; width: 100%; }
         @media (min-width: 640px) {
@@ -292,12 +296,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
       {/* ───────── ENVELOPE COVER ───────── */}
       <AnimatePresence>
         {!opened && (
-          <motion.div key="cover" exit={{ opacity: 0, transition: { duration: 0.5 } }}
+          <motion.div key="cover" className="bb-cover-bg" exit={{ opacity: 0, transition: { duration: 0.5 } }}
             style={{
               position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
               backgroundImage: `url(${(couple as any).cover_background_image || DEFAULT_COVER_BG})`,
               backgroundColor: colors.dark,
-              backgroundSize: 'cover', backgroundPosition: 'center',
+              backgroundPosition: 'center',
             }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)' }} />
             <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, ease: 'easeOut' }}
