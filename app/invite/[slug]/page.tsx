@@ -12,15 +12,13 @@ import OceanPearlTemplate from '@/components/templates/OceanPearlTemplate'
 import SunsetShoresTemplate from '@/components/templates/SunsetShoresTemplate'
 import SacredPoruwaTemplate from '@/components/templates/SacredPoruwaTemplate'
 import TraditionalCeylonTemplate from '@/components/templates/TraditionalCeylonTemplate'
-
+import BlushBlossomTemplate from '@/components/templates/BlushBlossomTemplate'
 export default function InvitePage() {
   const params = useParams()
   const slug = params.slug as string
-
   const [couple, setCouple] = useState<Couple | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase.from('couples').select('*').eq('slug', slug).single()
@@ -29,7 +27,6 @@ export default function InvitePage() {
     }
     load()
   }, [slug])
-
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fdf0f0", fontFamily: "'Inter',sans-serif", color: "#c4607a" }}>
@@ -37,7 +34,6 @@ export default function InvitePage() {
       </div>
     )
   }
-
   if (notFound || !couple) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fdf0f0", fontFamily: "'Inter',sans-serif", color: "#3d1a2a", textAlign: "center", padding: 24 }}>
@@ -47,7 +43,6 @@ export default function InvitePage() {
       </div>
     )
   }
-
   // ── Pick the right template based on what was selected in the admin panel ──
   switch (couple.template) {
     case 'elegant-photo':
@@ -68,6 +63,8 @@ export default function InvitePage() {
       return <SacredPoruwaTemplate couple={couple} />
     case 'traditional-ceylon':
       return <TraditionalCeylonTemplate couple={couple} />
+    case 'blush-blossom':
+      return <BlushBlossomTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
