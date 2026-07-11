@@ -438,18 +438,23 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 </div>
 
                 <div style={{ ...cardStyle, padding: '16px 18px', textAlign: 'left' }}>
-                  <div style={{ display: 'flex', gap: 12, paddingBottom: (bridePhone || groomPhone) ? 14 : 0, borderBottom: (bridePhone || groomPhone) ? `1px solid ${colors.primaryLight}` : 'none', marginBottom: (bridePhone || groomPhone) ? 14 : 0 }}>
-                    <div style={iconBadge}><Icon name="clock" size={15} color={colors.primary} /></div>
-                    <div>
-                      <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>EVENT TIME</div>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.dark, marginTop: 2 }}>
-                        {ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'To be announced'} onwards
-                      </div>
-                      <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 3, lineHeight: 1.5 }}>
-                        Ceremony and celebration with family, friends and blessings
+                  {[
+                    { icon: 'calendar' as const, label: 'DATE', value: ev.date ? new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'To be announced' },
+                    { icon: 'clock' as const, label: 'TIME', value: (ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'To be announced') + ' Onwards' },
+                    { icon: 'pin' as const, label: 'VENUE', value: ev.venue || 'Venue to be announced', sub: ev.venue_address },
+                  ].map((row, i, arr) => (
+                    <div key={row.label} style={{
+                      display: 'flex', gap: 12, paddingBottom: 14, marginBottom: 14,
+                      borderBottom: (i < arr.length - 1 || bridePhone || groomPhone) ? `1px solid ${colors.primaryLight}` : 'none',
+                    }}>
+                      <div style={iconBadge}><Icon name={row.icon} size={15} color={colors.primary} /></div>
+                      <div>
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>{row.label}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.dark, marginTop: 2 }}>{row.value}</div>
+                        {row.sub && <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 3, lineHeight: 1.5 }}>{row.sub}</div>}
                       </div>
                     </div>
-                  </div>
+                  ))}
                   {(bridePhone || groomPhone) && (
                     <div style={{ display: 'flex', gap: 12 }}>
                       <div style={iconBadge}><Icon name="phone" size={15} color={colors.primary} /></div>
