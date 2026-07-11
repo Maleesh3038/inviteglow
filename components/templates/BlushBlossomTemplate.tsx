@@ -349,9 +349,16 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           {/* Events — the ONLY sections with cards, besides the couple photo */}
           {enabledEvents.map(ev => {
-            const mapsEmbed = ev.maps_url
-              ? ev.maps_url.includes('output=embed') ? ev.maps_url : `${ev.maps_url}${ev.maps_url.includes('?') ? '&' : '?'}output=embed`
-              : undefined
+            // Most pasted Google Maps links (place pages, share links, etc.)
+            // refuse to load inside an iframe — Google blocks framing on
+            // everything except its own "output=embed" search endpoint. So
+            // instead of trying to embed whatever URL was pasted, we build a
+            // reliable embed straight from the venue name/address, and keep
+            // the pasted link (or a generated one) purely for the "Open in
+            // Maps" button, which can point anywhere.
+            const mapQuery = [ev.venue, ev.venue_address].filter(Boolean).join(', ')
+            const mapsEmbed = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : undefined
+            const mapsLinkHref = ev.maps_url || (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : undefined)
             const hasVenueInfo = !!(ev.venue || ev.venue_address)
             return (
               <Reveal key={ev.key} wide>
@@ -363,10 +370,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   {mapsEmbed ? (
                     <div style={{ position: 'relative' }}>
                       <iframe src={mapsEmbed} style={{ width: '100%', height: 130, border: 0, display: 'block' }} loading="lazy" title={`${ev.venue || 'venue'}-map`} />
-                      <a href={ev.maps_url} target="_blank" rel="noopener noreferrer"
-                        style={{ position: 'absolute', top: 8, left: 8, fontSize: 10, background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: 100, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>
-                        Open in Maps
-                      </a>
+                      {mapsLinkHref && (
+                        <a href={mapsLinkHref} target="_blank" rel="noopener noreferrer"
+                          style={{ position: 'absolute', top: 8, left: 8, fontSize: 10, background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: 100, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>
+                          Open in Maps
+                        </a>
+                      )}
                     </div>
                   ) : (
                     <div style={{ height: 90, background: colors.primaryLight, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
