@@ -775,12 +775,18 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   </p>
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => setShowRsvpForm(true)} style={{
-                      padding: '13px 28px', borderRadius: 100, border: 'none', cursor: 'pointer',
-                      background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 13.5,
-                    }}>Confirm Attendance</button>
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '13px 26px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                      background: colors.primary, color: '#fff', fontWeight: 700, fontSize: 13.5,
+                      boxShadow: `0 8px 20px ${colors.primary}55`,
+                    }}>
+                      <Icon name="check" size={13} color="#fff" />
+                      Confirm Attendance
+                    </button>
                     <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
-                      padding: '13px 22px', borderRadius: 100, border: `1px solid ${colors.dark}`,
-                      background: 'transparent', color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
+                      background: '#fff', color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      boxShadow: `0 4px 14px ${colors.dark}0d`,
                     }}>Back to Top Details</button>
                   </div>
                 </>
