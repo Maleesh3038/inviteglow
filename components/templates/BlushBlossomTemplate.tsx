@@ -223,8 +223,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   }
-  const Reveal = ({ id, mt = 56, children }: { id?: string; mt?: number; children: React.ReactNode }) => (
-    <div id={id} style={{ ...wrap, marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+  const Reveal = ({ id, mt = 56, wide = false, children }: { id?: string; mt?: number; wide?: boolean; children: React.ReactNode }) => (
+    <div id={id} className={wide ? 'bb-wrap-wide' : undefined}
+      style={{ ...(wide ? {} : wrap), marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
       {children}
     </div>
   )
@@ -235,6 +236,15 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         html, body { background: ${colors.cream} !important; margin: 0; }
         .bb-num { font-variant-numeric: tabular-nums lining-nums; }
+        .bb-wrap-wide { max-width: 420px; margin: 0 auto; padding: 0 24px; }
+        @media (min-width: 640px) {
+          .bb-wrap-wide { max-width: 760px; }
+        }
+        .bb-event-row { display: flex; flex-direction: column; }
+        @media (min-width: 640px) {
+          .bb-event-row { flex-direction: row; align-items: flex-start; gap: 16px; }
+          .bb-event-row > div { flex: 1; margin-bottom: 0 !important; }
+        }
       `}</style>
 
       {/* ───────── ENVELOPE COVER ───────── */}
@@ -344,10 +354,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               : undefined
             const hasVenueInfo = !!(ev.venue || ev.venue_address)
             return (
-              <Reveal key={ev.key}>
+              <Reveal key={ev.key} wide>
                 <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{ev.title}</div>
                 <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, margin: '6px 0 18px' }}>Venue, Location and Time Details</p>
 
+                <div className="bb-event-row">
                 <div style={{ ...cardStyle, overflow: 'hidden', textAlign: 'left', marginBottom: 10 }}>
                   {mapsEmbed ? (
                     <div style={{ position: 'relative' }}>
@@ -394,7 +405,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                         {groomPhone && <a href={`tel:${groomPhone}`} style={{ display: 'block', fontSize: 12.5, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>{groomPhone} ({couple.groom})</a>}
                       </div>
                     </div>
+
                   )}
+                </div>
                 </div>
               </Reveal>
             )
