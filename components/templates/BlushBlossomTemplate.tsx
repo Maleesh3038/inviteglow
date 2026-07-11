@@ -430,20 +430,22 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             </Reveal>
           )}
 
-          {/* Large monogram watermark + scattered dots — sits quietly behind countdown/RSVP/footer, static */}
-          <div style={{ position: 'relative', marginTop: 60 }}>
-            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)', opacity: 0.09 }}>
-                <Medallion initials={initials} color={colors.dark} size={440} />
-              </div>
-              {[
-                { top: 60, right: '6%', size: 9 },
-                { top: 240, right: '4%', size: 7 },
-                { top: 420, right: '7%', size: 6 },
-              ].map((d, i) => (
-                <div key={i} style={{ position: 'absolute', top: d.top, right: d.right, width: d.size, height: d.size, borderRadius: '50%', background: colors.primary, opacity: 0.35 }} />
-              ))}
+          {/* Large monogram watermark — fixed to the viewport so it stays put
+              while the page scrolls, rather than moving with the content */}
+          <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', opacity: 0.08 }}>
+              <Medallion initials={initials} color={colors.dark} size={560} />
             </div>
+            {[
+              { top: '18%', right: '6%', size: 9 },
+              { top: '48%', right: '4%', size: 7 },
+              { top: '76%', right: '7%', size: 6 },
+            ].map((d, i) => (
+              <div key={i} style={{ position: 'absolute', top: d.top, right: d.right, width: d.size, height: d.size, borderRadius: '50%', background: colors.primary, opacity: 0.35 }} />
+            ))}
+          </div>
+
+          <div style={{ marginTop: 60 }}>
 
             {/* Countdown — plain numbers, no boxes */}
             {(section.countdown ?? true) && (
