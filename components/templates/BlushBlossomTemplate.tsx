@@ -146,8 +146,6 @@ function Medallion({ initials, color, size = 190 }: { initials: string; color: s
   )
 }
 
-const fadeUp = { hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }
-
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const [showRsvpForm, setShowRsvpForm] = useState(false)
@@ -225,10 +223,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   }
   const Reveal = ({ id, mt = 56, children }: { id?: string; mt?: number; children: React.ReactNode }) => (
-    <motion.div id={id} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.5, ease: 'easeOut' }} style={{ ...wrap, marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+    <div id={id} style={{ ...wrap, marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
       {children}
-    </motion.div>
+    </div>
   )
 
   return (
