@@ -108,7 +108,7 @@ const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: str
   homecoming: { title: 'Homecoming' },
 }
 
-type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo' | 'ring'
+type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo' | 'ring' | 'play' | 'pause'
 function Icon({ name, size = 16, color }: { name: IconName; size?: number; color: string }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -124,6 +124,8 @@ function Icon({ name, size = 16, color }: { name: IconName; size?: number; color
     case 'cross': return <svg {...c}><path d="M6 6l12 12M18 6L6 18" /></svg>
     case 'photo': return <svg {...c}><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="M20.5 16l-4.7-4.7a2 2 0 00-2.8 0L5 19" /></svg>
     case 'ring': return <svg {...c}><circle cx="12" cy="14.5" r="6.5" /><path d="M9 8l3-5 3 5" /><path d="M9 8h6l-1.3 3H10.3z" fill={color} stroke="none" /></svg>
+    case 'play': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M8 5v14l11-7z" /></svg>
+    case 'pause': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
     default: return null
   }
 }
@@ -206,6 +208,61 @@ function pickTimelineIcon(eventName: string): IconName {
   if (n.includes('away') || n.includes('depart') || n.includes('leav')) return 'pin'
   if (n.includes('photo')) return 'photo'
   return 'heart'
+}
+
+// Custom player UI wrapping a shared <audio> ref — replaces the plain
+// native browser controls with something that matches the theme.
+function MusicPlayer({ audioRef, title, artist, primary, primaryLight, dark }: {
+  audioRef: React.RefObject<HTMLAudioElement | null>
+  title?: string; artist?: string; primary: string; primaryLight: string; dark: string
+}) {
+  const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    const onTime = () => { if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100) }
+    audio.addEventListener('play', onPlay)
+    audio.addEventListener('pause', onPause)
+    audio.addEventListener('timeupdate', onTime)
+    setPlaying(!audio.paused)
+    return () => {
+      audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('pause', onPause)
+      audio.removeEventListener('timeupdate', onTime)
+    }
+  }, [audioRef])
+
+  const toggle = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (audio.paused) audio.play().catch(() => {})
+    else audio.pause()
+  }
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14, background: '#fff', borderRadius: 16,
+      padding: '14px 18px', boxShadow: `0 4px 18px ${dark}14`, textAlign: 'left',
+    }}>
+      <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} style={{
+        width: 44, height: 44, borderRadius: '50%', background: primary, border: 'none', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <Icon name={playing ? 'pause' : 'play'} size={17} color="#fff" />
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {title && <div style={{ fontSize: 13, fontWeight: 700, color: dark, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>}
+        {artist && <div style={{ fontSize: 11, color: dark, opacity: 0.55, marginTop: 1 }}>{artist}</div>}
+        <div style={{ height: 3, background: primaryLight, borderRadius: 100, marginTop: 7, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progress}%`, background: primary, borderRadius: 100, transition: 'width 0.2s linear' }} />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetDate?: string; dark: string; primary: string; primaryLight: string }) {
@@ -651,11 +708,10 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               </Reveal>
             )}
 
-            {/* Music — no card */}
+            {/* Music — no card wrapper, but the player itself has one */}
             {(section.music ?? true) && couple.song_url && (
               <Reveal>
                 <div style={capsHeading}><Icon name="music" size={12} color={colors.primary} />Our Song</div>
-                {couple.song_artist && <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 4 }}>{couple.song_artist}</p>}
                 <div style={{ marginTop: 16 }}>
                   {couple.song_url.includes('youtube.com') || couple.song_url.includes('youtu.be') ? (
                     <div style={{ borderRadius: 14, overflow: 'hidden' }}>
@@ -664,7 +720,17 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                         title="song" allow="autoplay; encrypted-media" style={{ border: 0 }} />
                     </div>
                   ) : (
-                    <audio ref={audioRef} controls loop src={couple.song_url} style={{ width: '100%' }} />
+                    <>
+                      <audio ref={audioRef} loop src={couple.song_url} style={{ display: 'none' }} />
+                      <MusicPlayer
+                        audioRef={audioRef}
+                        title={couple.song_title}
+                        artist={couple.song_artist}
+                        primary={colors.primary}
+                        primaryLight={colors.primaryLight}
+                        dark={colors.dark}
+                      />
+                    </>
                   )}
                 </div>
               </Reveal>
