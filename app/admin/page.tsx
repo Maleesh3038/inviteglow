@@ -61,6 +61,7 @@ const emptyForm = {
   } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }>,
   intro_text: '',
   cover_badge_text: '',
+  cover_background_image: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -744,6 +745,7 @@ export default function AdminPage() {
       },
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
+      cover_background_image: (c as any).cover_background_image ?? '',
     })
     setEditing(c.id)
   }
@@ -792,6 +794,7 @@ export default function AdminPage() {
       events: form.events,
       intro_text: form.intro_text || null,
       cover_badge_text: (form as any).cover_badge_text || null,
+      cover_background_image: (form as any).cover_background_image || null,
     }
 
     let error
@@ -924,6 +927,14 @@ export default function AdminPage() {
               onChange={url => setForm({ ...form, couple_photo: url })}
               label="Couple Photo (Hero Image)"
               hint="Leave empty to use the default AI-generated photo. Best results: portrait orientation, faces near the top third of the image."
+            />
+
+            {/* Cover Background Image (envelope/intro screen — used by templates like Blush Blossom) */}
+            <PhotoUploader
+              value={(form as any).cover_background_image || ''}
+              onChange={url => setForm({ ...form, cover_background_image: url } as any)}
+              label="Cover / Envelope Background Image"
+              hint="Full-screen background behind the opening envelope (e.g. Blush Blossom's cherry blossom arch). Leave empty to use the theme's default gradient. Best results: portrait orientation, 9:16 ratio."
             />
 
             {/* PIN */}
