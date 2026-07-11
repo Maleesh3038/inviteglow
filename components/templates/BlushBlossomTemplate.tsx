@@ -93,6 +93,20 @@ function useCountdown(target?: string) {
   return left
 }
 
+// Google Maps place URLs (like the ones you get from "Share" on a place)
+// embed the exact coordinates in the URL itself — e.g. "!3d6.0040545!4d80.2566833"
+// for the precise pin, or "@6.004,80.254,1131m" for the map view. Pulling
+// these out gives a far more reliable embed than searching by venue text,
+// which can mismatch or fail to geocode.
+function extractLatLng(url?: string): { lat: number; lng: number } | null {
+  if (!url) return null
+  let m = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) }
+  m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) }
+  return null
+}
+
 const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: string }> = {
   engagement: { title: 'Engagement' },
   wedding: { title: 'Event Details' },
@@ -350,10 +364,14 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Events — the ONLY sections with cards, besides the couple photo */}
           {enabledEvents.map(ev => {
             const mapQuery = [ev.venue, ev.venue_address].filter(Boolean).join(', ')
+            const coords = extractLatLng(ev.maps_url)
             // maps.google.com (not www.google.com/maps) is the classic
-            // no-API-key embeddable endpoint — it works without needing the
-            // couple to paste a special "embed" link themselves.
-            const mapsEmbed = mapQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : undefined
+            // no-API-key embeddable endpoint. Coordinates (when we can pull
+            // them from the pasted link) geocode far more reliably than
+            // searching by venue text.
+            const mapsEmbed = coords
+              ? `https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=16&output=embed`
+              : mapQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : undefined
             const mapsLinkHref = ev.maps_url || (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : undefined)
             return (
               <Reveal key={ev.key} wide>
