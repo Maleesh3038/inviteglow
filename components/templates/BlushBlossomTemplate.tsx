@@ -724,8 +724,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                       <audio ref={audioRef} loop src={couple.song_url} style={{ display: 'none' }} />
                       <MusicPlayer
                         audioRef={audioRef}
-                        title={couple.song_title}
-                        artist={couple.song_artist}
+                        title={couple.song_title ?? undefined}
+                        artist={couple.song_artist ?? undefined}
                         primary={colors.primary}
                         primaryLight={colors.primaryLight}
                         dark={colors.dark}
