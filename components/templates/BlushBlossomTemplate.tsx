@@ -5,28 +5,29 @@ import { useSearchParams } from 'next/navigation'
 import { supabase, Couple, CoupleColors } from '@/lib/supabase'
 
 /**
- * BlushBlossomTemplate v2 — cherry blossom envelope cover + blush/gold interior.
- * Inspired by: https://wedding-invitation-senu.vercel.app/
+ * BlushBlossomTemplate v3 — light, airy cherry-blossom invitation.
+ * Matches https://wedding-invitation-senu.vercel.app/ closely:
+ * pale cream/peach background, warm brown serif headings, subtle repeated
+ * monogram watermark, plain-text countdown, quiet icon badges, and a
+ * progressive RSVP (button reveals the form, matching the reference).
  *
- * v2 changes:
- * - Color-safe: sanitises couple.custom_colors so a stray/invalid saved
- *   value (e.g. from testing another theme) can never turn the page purple
- *   or hide text — anything that isn't a valid hex falls back to the
- *   Blush Blossom defaults.
- * - Forces html/body background so no parent layout background can bleed
- *   through gaps between sections.
- * - Softer, larger rounded cards, floating blossom accents, staggered
- *   scroll-in animations, and a proper countdown "chip" layout (no more
- *   stray-looking old-style numerals).
- * - Venue / event cards always show sensible fallback text instead of
- *   rendering empty when a field hasn't been filled in yet.
+ * v3 changes from v2:
+ * - Much lighter default palette (no saturated pink/rose backgrounds).
+ * - Removed the floating-blossom animation clutter — replaced with a
+ *   quiet repeated monogram + laurel watermark, like the reference.
+ * - Countdown is plain serif numerals over a label, not boxed "chips".
+ * - Icon badges are soft cream circles, not bright colored ones.
+ * - RSVP starts as a single button + "Back to Top", and reveals the
+ *   name/accept-decline form on click — matching the reference exactly.
+ * - Colors are still sanitised, so a stray saved value can never turn
+ *   the page purple or oversaturated.
  */
 
 const DEFAULT_COLORS: Required<CoupleColors> = {
-  primary: '#c17d8a',      // rose accent — buttons, dividers, "OPEN" button
-  primaryLight: '#f6d9de', // blush pink — soft backgrounds, icon circles
-  dark: '#5c4632',         // warm brown — headings & body text
-  cream: '#fff5f2',        // page background
+  primary: '#c1876d',      // muted coral/rose — labels, dividers, accents
+  primaryLight: '#f4e6d9', // soft cream — icon badge backgrounds
+  dark: '#6b4f36',         // warm brown — headings & body text
+  cream: '#fdf6f2',        // page background (top of gradient)
 }
 
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
@@ -75,63 +76,52 @@ function useCountdown(target?: string) {
   return left
 }
 
-const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: string; icon: string }> = {
-  engagement: { title: 'Engagement', icon: '💍' },
-  wedding: { title: 'Wedding Ceremony', icon: '👰' },
-  homecoming: { title: 'Homecoming', icon: '🏡' },
+const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: string }> = {
+  engagement: { title: 'Engagement' },
+  wedding: { title: 'Event Details' },
+  homecoming: { title: 'Homecoming' },
 }
 
-// Small inline blossom used for floating accents & divider ornament — kept
-// as a tiny embedded SVG so no external image/font is needed.
-function Blossom({ size = 14, color }: { size?: number; color: string }) {
+// Small leaf/vine flourish used to flank the monogram, matching the
+// reference's laurel-style watermark.
+function Vine({ color, flip = false }: { color: string; flip?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <g fill={color} opacity={0.9}>
-        <ellipse cx="12" cy="6" rx="3.4" ry="5" />
-        <ellipse cx="12" cy="18" rx="3.4" ry="5" />
-        <ellipse cx="6" cy="12" rx="5" ry="3.4" />
-        <ellipse cx="18" cy="12" rx="5" ry="3.4" />
-        <ellipse cx="7.8" cy="7.8" rx="3.4" ry="5" transform="rotate(45 7.8 7.8)" />
-        <ellipse cx="16.2" cy="16.2" rx="3.4" ry="5" transform="rotate(45 16.2 16.2)" />
-        <ellipse cx="16.2" cy="7.8" rx="3.4" ry="5" transform="rotate(-45 16.2 7.8)" />
-        <ellipse cx="7.8" cy="16.2" rx="3.4" ry="5" transform="rotate(-45 7.8 16.2)" />
-      </g>
-      <circle cx="12" cy="12" r="2.6" fill="#fff" opacity={0.85} />
+    <svg width="46" height="90" viewBox="0 0 46 90" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined }}>
+      <path d="M4 4C20 20 8 40 24 50C10 58 20 76 4 86" stroke={color} strokeWidth="1.2" fill="none" opacity={0.6} />
+      {[14, 30, 50, 66].map((y, i) => (
+        <ellipse key={i} cx={i % 2 === 0 ? 12 : 30} cy={y} rx="6" ry="3" fill={color} opacity={0.5}
+          transform={`rotate(${i % 2 === 0 ? -30 : 30} ${i % 2 === 0 ? 12 : 30} ${y})`} />
+      ))}
     </svg>
   )
 }
 
-function FloatingBlossoms({ color }: { color: string }) {
-  const items = [
-    { left: '6%', size: 16, delay: 0, dur: 9 },
-    { left: '85%', size: 12, delay: 1.5, dur: 11 },
-    { left: '22%', size: 10, delay: 3, dur: 8 },
-    { left: '70%', size: 14, delay: 2, dur: 10 },
-  ]
+// A single quiet monogram medallion — circle border, initials, dotted ring,
+// flanking vines. Used repeated (very low opacity) as a background watermark.
+function Medallion({ initials, color, size = 190 }: { initials: string; color: string; size?: number }) {
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-      {items.map((it, i) => (
-        <motion.div
-          key={i}
-          style={{ position: 'absolute', left: it.left, top: -20 }}
-          initial={{ y: -20, opacity: 0, rotate: 0 }}
-          animate={{ y: 900, opacity: [0, 0.7, 0.7, 0], rotate: 180 }}
-          transition={{ duration: it.dur, delay: it.delay, repeat: Infinity, ease: 'linear' }}
-        >
-          <Blossom size={it.size} color={color} />
-        </motion.div>
-      ))}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+      <Vine color={color} />
+      <div style={{
+        width: size, height: size, borderRadius: '50%', border: `1px solid ${color}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0,
+      }}>
+        <div style={{ position: 'absolute', inset: 10, borderRadius: '50%', border: `1px dashed ${color}`, opacity: 0.5 }} />
+        <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: size * 0.34, color, letterSpacing: 1 }}>{initials}</span>
+      </div>
+      <Vine color={color} flip />
     </div>
   )
 }
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 22 },
+  hidden: { opacity: 0, y: 18 },
   visible: { opacity: 1, y: 0 },
 }
 
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
+  const [showRsvpForm, setShowRsvpForm] = useState(false)
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
 
@@ -192,98 +182,82 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   }
 
   // ── shared style helpers ──
-  const sectionWrap: React.CSSProperties = { maxWidth: 460, margin: '0 auto', padding: '0 22px', position: 'relative', zIndex: 1 }
+  const sectionWrap: React.CSSProperties = { maxWidth: 440, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }
   const sectionHeading: React.CSSProperties = {
-    fontFamily: "'Cormorant Garamond',serif", fontSize: '1.75rem', fontWeight: 600,
-    color: colors.dark, textAlign: 'center', letterSpacing: '0.01em',
+    fontFamily: "'Cormorant Garamond',serif", fontSize: '1.5rem', fontWeight: 700,
+    color: colors.dark, textAlign: 'center', letterSpacing: '0.06em',
   }
-  const divider = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '14px auto' }}>
-      <span style={{ width: 24, height: 1, background: colors.primary, opacity: 0.5 }} />
-      <Blossom size={13} color={colors.primary} />
-      <span style={{ width: 24, height: 1, background: colors.primary, opacity: 0.5 }} />
-    </div>
-  )
+  const divider = <div style={{ width: 30, height: 1, background: colors.primary, opacity: 0.5, margin: '10px auto 0' }} />
   const eyebrow: React.CSSProperties = {
-    fontSize: 11, letterSpacing: '0.28em', textTransform: 'uppercase', textAlign: 'center',
-    color: colors.primary, fontWeight: 700, marginBottom: 8,
+    fontSize: 10.5, letterSpacing: '0.24em', textTransform: 'uppercase', textAlign: 'center',
+    color: colors.primary, fontWeight: 700, marginBottom: 10,
   }
   const cardStyle: React.CSSProperties = {
-    background: '#fff', borderRadius: 22, boxShadow: `0 10px 34px ${colors.dark}1a`,
+    background: '#fff', borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
   }
-  const Section = ({ id, children, mt = 60 }: { id?: string; children: React.ReactNode; mt?: number }) => (
+  const iconBadge: React.CSSProperties = {
+    width: 30, height: 30, borderRadius: '50%', background: colors.primaryLight,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13,
+  }
+  const Section = ({ id, children, mt = 64 }: { id?: string; children: React.ReactNode; mt?: number }) => (
     <motion.div
       id={id}
-      variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
       style={{ ...sectionWrap, marginTop: mt, textAlign: 'center' }}>
       {children}
     </motion.div>
   )
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", background: colors.cream, minHeight: '100vh', overflowX: 'hidden', position: 'relative' }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", background: `linear-gradient(180deg, ${colors.cream} 0%, #fdeee6 55%, #fce0d2 100%)`, minHeight: '100vh', overflowX: 'hidden', position: 'relative' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         html, body { background: ${colors.cream} !important; margin: 0; }
         .bb-num { font-variant-numeric: tabular-nums lining-nums; }
       `}</style>
 
-      {/* ambient floating blossoms behind everything */}
-      {opened && <FloatingBlossoms color={colors.primaryLight} />}
-
       {/* ───────── ENVELOPE COVER ───────── */}
       <AnimatePresence>
         {!opened && (
           <motion.div
             key="cover"
-            exit={{ opacity: 0, transition: { duration: 0.6 } }}
+            exit={{ opacity: 0, transition: { duration: 0.5 } }}
             style={{
               position: 'fixed', inset: 0, zIndex: 50, display: 'flex',
               alignItems: 'center', justifyContent: 'center',
               backgroundImage: (couple as any).cover_background_image
                 ? `url(${(couple as any).cover_background_image})`
-                : `radial-gradient(circle at 50% 25%, ${colors.primaryLight} 0%, ${colors.primary} 60%, ${colors.dark} 135%)`,
+                : `radial-gradient(circle at 50% 25%, ${colors.primaryLight} 0%, ${colors.primary}cc 65%, ${colors.dark} 140%)`,
               backgroundSize: 'cover', backgroundPosition: 'center',
             }}>
-            <FloatingBlossoms color="#ffffff" />
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.14)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)' }} />
             <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              style={{ position: 'relative', zIndex: 1, width: 300, borderRadius: 18, overflow: 'hidden', boxShadow: '0 24px 70px rgba(0,0,0,0.35)' }}>
+              initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              style={{ position: 'relative', zIndex: 1, width: 290, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
               <div style={{
-                height: 66, background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
+                height: 60, background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
                 clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
               }} />
-              <div style={{ background: 'rgba(255,255,255,0.98)', padding: '38px 30px 34px', textAlign: 'center' }}>
+              <div style={{ background: '#fff', padding: '36px 28px 32px', textAlign: 'center' }}>
                 <div style={{
-                  width: 66, height: 66, borderRadius: '50%', border: `1.5px solid ${colors.primary}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px',
-                  background: colors.primaryLight,
+                  width: 60, height: 60, borderRadius: '50%', border: `1px solid ${colors.primary}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
                 }}>
-                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 21, letterSpacing: 2, color: colors.dark }}>{initials}</span>
+                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 19, letterSpacing: 2, color: colors.dark }}>{initials}</span>
                 </div>
-                <div style={{ fontSize: 13, letterSpacing: '0.32em', fontWeight: 700, color: colors.primary, marginBottom: 8 }}>{badgeText}</div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}>
-                  <Blossom size={16} color={colors.primary} />
-                </div>
+                <div style={{ fontSize: 12, letterSpacing: '0.3em', fontWeight: 700, color: colors.primary, marginBottom: 22 }}>{badgeText}</div>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.92 }}
-                  animate={{ boxShadow: [`0 0 0 0 ${colors.primary}55`, `0 0 0 14px ${colors.primary}00`] }}
-                  transition={{ boxShadow: { duration: 1.8, repeat: Infinity } }}
+                  whileTap={{ scale: 0.94 }}
                   onClick={() => setOpened(true)}
                   aria-label="Open invitation"
                   style={{
-                    width: 68, height: 68, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                    background: colors.primary, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
+                    width: 60, height: 60, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                    background: colors.primary, color: '#fff', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em',
                   }}>
                   OPEN
                 </motion.button>
-              </div>
-              <div style={{ height: 18, background: 'rgba(255,255,255,0.98)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: colors.primary, display: 'inline-block' }} />
               </div>
             </motion.div>
           </motion.div>
@@ -292,57 +266,54 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
       {/* ───────── MAIN CONTENT ───────── */}
       {opened && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7 }} style={{ paddingTop: 60, paddingBottom: 90, position: 'relative' }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} style={{ paddingTop: 50, paddingBottom: 80, position: 'relative' }}>
 
           {/* Heading */}
-          <motion.div variants={fadeUp} initial="hidden" animate="visible" transition={{ duration: 0.6 }} style={sectionWrap}>
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" transition={{ duration: 0.55 }} style={sectionWrap}>
             <div style={{ textAlign: 'center' }}>
-              <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '2.1rem', color: colors.dark, marginBottom: 2, fontWeight: 600 }}>
+              <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', color: colors.dark, marginBottom: 4, fontWeight: 700 }}>
                 {(couple as any).invitation_heading || 'Together with Love'}
               </h1>
               {divider}
-              <p style={{ fontSize: 13, color: colors.dark, opacity: 0.7 }}>
+              <p style={{ fontSize: 12.5, color: colors.dark, opacity: 0.65, marginTop: 12 }}>
                 {(couple as any).invitation_subheading || 'Together with love, joy and blessings'}
               </p>
               {guestName && (
-                <p style={{ fontSize: 12, color: colors.primary, fontStyle: 'italic', marginTop: 10 }}>Dear {guestName},</p>
+                <p style={{ fontSize: 12, color: colors.primary, fontStyle: 'italic', marginTop: 8 }}>Dear {guestName},</p>
               )}
             </div>
 
             {/* Couple photo card */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 20 }} whileInView={{ opacity: 1, scale: 1, y: 0 }} viewport={{ once: true }}
-              transition={{ duration: 0.7, ease: 'easeOut' }}
-              style={{ ...cardStyle, marginTop: 30, overflow: 'hidden', position: 'relative' }}>
+              initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+              style={{ ...cardStyle, marginTop: 26, overflow: 'hidden', position: 'relative' }}>
               {couple.couple_photo ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={couple.couple_photo} alt={`${couple.bride} & ${couple.groom}`} style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', display: 'block' }} />
               ) : (
                 <div style={{
-                  width: '100%', aspectRatio: '3/4',
-                  background: `linear-gradient(160deg,${colors.primaryLight},${colors.primary}55)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44,
+                  width: '100%', aspectRatio: '3/4', background: colors.primaryLight,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40,
                 }}>💐</div>
               )}
-              <div style={{ background: 'rgba(255,255,255,0.96)', padding: '16px 12px', textAlign: 'center' }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '2.1rem', color: colors.dark, lineHeight: 1.1 }}>
+              <div style={{ background: 'rgba(255,255,255,0.95)', padding: '14px 12px 12px', textAlign: 'center' }}>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
                   {couple.bride} &amp; {couple.groom}
                 </div>
-                <div style={{ fontSize: 10, letterSpacing: '0.24em', fontWeight: 700, color: colors.primary, marginTop: 4 }}>{badgeText}</div>
+                <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, color: colors.dark, opacity: 0.7, marginTop: 5 }}>{badgeText}</div>
               </div>
             </motion.div>
 
-            <motion.button
+            <button
               onClick={() => scrollToId('invitation')}
-              animate={{ y: [0, 7, 0] }} transition={{ repeat: Infinity, duration: 1.7 }}
               aria-label="Scroll down"
               style={{
-                display: 'block', margin: '18px auto 0', width: 38, height: 38, borderRadius: '50%',
-                background: colors.primaryLight, color: colors.dark, border: 'none', cursor: 'pointer', fontSize: 15,
-                boxShadow: `0 4px 14px ${colors.primary}33`,
+                display: 'block', margin: '16px auto 0', width: 30, height: 30, borderRadius: '50%',
+                background: colors.dark, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12,
               }}>
               ⌄
-            </motion.button>
+            </button>
           </motion.div>
 
           {/* Invitation */}
@@ -350,30 +321,27 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <div style={sectionHeading}>Invitation</div>
             {divider}
             {(brideFamily || groomFamily) && (
-              <p style={{ fontSize: 13, color: colors.dark, opacity: 0.9, marginBottom: 8, fontWeight: 600 }}>
+              <p style={{ fontSize: 12.5, color: colors.dark, opacity: 0.85, marginTop: 16, marginBottom: 2, fontWeight: 600 }}>
                 {groomFamily} {togetherWithText} {brideFamily}
               </p>
             )}
-            <div style={eyebrow}>A Loving Invitation From Our Family</div>
-            <p style={{ fontSize: 14.5, color: colors.dark, opacity: 0.85, lineHeight: 1.85 }}>
+            <div style={{ ...eyebrow, marginTop: 16 }}>A Loving Invitation From Our Family</div>
+            <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
               {familyInvitationText || 'We warmly invite you to join us as we celebrate the beautiful beginning of our lifelong bond.'}
             </p>
           </Section>
 
           {/* Save the date */}
           <Section>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', color: colors.dark, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.14em', color: colors.dark, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <span style={{ color: colors.primary }}>♥</span> SAVE THE DATE
             </div>
-            <p style={{ fontSize: 12, color: colors.dark, opacity: 0.55, marginTop: 6 }}>Mark Your Calendar</p>
-            <motion.div
-              whileInView={{ rotate: [0, -8, 8, 0] }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}
-              style={{
-                width: 56, height: 56, borderRadius: '50%', background: colors.primaryLight,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '18px auto', fontSize: 22,
-                boxShadow: `0 6px 18px ${colors.primary}33`,
-              }}>📅</motion.div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.5rem', color: colors.dark, fontWeight: 700 }}>
+            <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.5, marginTop: 6 }}>Mark Your Calendar</p>
+            <div style={{
+              width: 46, height: 46, borderRadius: '50%', background: colors.primaryLight,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '18px auto', fontSize: 18,
+            }}>📅</div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.3rem', color: colors.dark, fontWeight: 700 }}>
               {formatDate(couple.wedding_date)}
             </div>
           </Section>
@@ -386,51 +354,59 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             const hasVenueInfo = !!(ev.venue || ev.venue_address)
             return (
               <Section key={ev.key}>
-                <div style={sectionHeading}>{ev.icon} {ev.title}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.14em', color: colors.dark, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <span style={{ color: colors.primary }}>♥</span> {ev.title.toUpperCase()}
+                </div>
                 {divider}
-                <p style={{ fontSize: 12, color: colors.dark, opacity: 0.55, marginBottom: 18 }}>Venue, Location and Time Details</p>
+                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.5, margin: '10px 0 16px' }}>Venue, Location and Time Details</p>
 
-                <div style={{ ...cardStyle, overflow: 'hidden', textAlign: 'left', marginBottom: 14 }}>
+                <div style={{ ...cardStyle, overflow: 'hidden', textAlign: 'left', marginBottom: 10 }}>
                   {mapsEmbed ? (
                     <div style={{ position: 'relative' }}>
-                      <iframe src={mapsEmbed} style={{ width: '100%', height: 150, border: 0, display: 'block' }} loading="lazy" title={`${ev.venue || 'venue'}-map`} />
+                      <iframe src={mapsEmbed} style={{ width: '100%', height: 130, border: 0, display: 'block' }} loading="lazy" title={`${ev.venue || 'venue'}-map`} />
                       <a href={ev.maps_url} target="_blank" rel="noopener noreferrer"
-                        style={{ position: 'absolute', top: 10, left: 10, fontSize: 10, background: 'rgba(255,255,255,0.94)', padding: '5px 12px', borderRadius: 100, color: colors.dark, textDecoration: 'none', fontWeight: 700, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                        style={{ position: 'absolute', top: 8, left: 8, fontSize: 10, background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: 100, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>
                         Open in Maps ↗
                       </a>
                     </div>
                   ) : (
                     <div style={{
-                      height: 110, background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary}40)`,
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      height: 90, background: colors.primaryLight,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
                     }}>
-                      <span style={{ fontSize: 26 }}>📍</span>
-                      {!hasVenueInfo && <span style={{ fontSize: 11, color: colors.dark, opacity: 0.6 }}>Location to be announced</span>}
+                      <span style={{ fontSize: 20 }}>📍</span>
+                      {!hasVenueInfo && <span style={{ fontSize: 10.5, color: colors.dark, opacity: 0.55 }}>Location to be announced</span>}
                     </div>
                   )}
-                  <div style={{ padding: '14px 18px' }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: colors.dark }}>{ev.venue || 'Venue to be announced'}</div>
-                    {ev.venue_address && <div style={{ fontSize: 12, color: colors.dark, opacity: 0.6, marginTop: 2 }}>{ev.venue_address}</div>}
+                  <div style={{ padding: '12px 16px' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: colors.dark }}>{ev.venue || 'Venue to be announced'}</div>
+                    {ev.venue_address && <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 2 }}>{ev.venue_address}</div>}
                   </div>
                 </div>
 
-                <div style={{ ...cardStyle, padding: '18px 20px', textAlign: 'left' }}>
-                  <div style={{ display: 'flex', gap: 12, marginBottom: (bridePhone || groomPhone) ? 16 : 0 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 15 }}>🕗</div>
+                <div style={{ ...cardStyle, padding: '16px 18px', textAlign: 'left' }}>
+                  <div style={{ display: 'flex', gap: 12, paddingBottom: (bridePhone || groomPhone) ? 14 : 0, borderBottom: (bridePhone || groomPhone) ? `1px solid ${colors.primaryLight}` : 'none', marginBottom: (bridePhone || groomPhone) ? 14 : 0 }}>
+                    <div style={iconBadge}>🕗</div>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>EVENT TIME</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.dark, marginTop: 2 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>EVENT TIME</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.dark, marginTop: 2 }}>
                         {ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'To be announced'} onwards
+                      </div>
+                      <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 3, lineHeight: 1.5 }}>
+                        Ceremony and celebration with family, friends and blessings
                       </div>
                     </div>
                   </div>
                   {(bridePhone || groomPhone) && (
                     <div style={{ display: 'flex', gap: 12 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 15 }}>📞</div>
+                      <div style={iconBadge}>📞</div>
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>CONTACT</div>
-                        {bridePhone && <a href={`tel:${bridePhone}`} style={{ display: 'block', fontSize: 13, color: colors.dark, textDecoration: 'none', marginTop: 2 }}>{bridePhone} ({couple.bride})</a>}
-                        {groomPhone && <a href={`tel:${groomPhone}`} style={{ display: 'block', fontSize: 13, color: colors.dark, textDecoration: 'none' }}>{groomPhone} ({couple.groom})</a>}
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>CONTACT</div>
+                        <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 2, marginBottom: 4 }}>
+                          For inquiries, feel free to contact us at the below numbers.
+                        </div>
+                        {bridePhone && <a href={`tel:${bridePhone}`} style={{ display: 'block', fontSize: 12.5, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>{bridePhone} ({couple.bride})</a>}
+                        {groomPhone && <a href={`tel:${groomPhone}`} style={{ display: 'block', fontSize: 12.5, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>{groomPhone} ({couple.groom})</a>}
                       </div>
                     </div>
                   )}
@@ -444,13 +420,10 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <Section>
               <div style={sectionHeading}>Our Moments</div>
               {divider}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 18 }}>
                 {couple.gallery.map((url, i) => (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <motion.img key={i} src={url} alt=""
-                    initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-                    transition={{ delay: i * 0.06 }}
-                    style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 16, boxShadow: `0 6px 18px ${colors.dark}22` }} />
+                  <img key={i} src={url} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 12 }} />
                 ))}
               </div>
             </Section>
@@ -461,172 +434,171 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <Section>
               <div style={sectionHeading}>Wedding Timeline</div>
               {divider}
-              <div style={{ display: 'grid', gap: 10, marginTop: 18, textAlign: 'left' }}>
+              <div style={{ display: 'grid', gap: 8, marginTop: 18, textAlign: 'left' }}>
                 {couple.timeline.map((t, i) => (
-                  <motion.div key={i}
-                    initial={{ opacity: 0, x: -14 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                    style={{ ...cardStyle, padding: '13px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13.5, color: colors.dark, fontWeight: 600 }}>{t.event}</span>
-                    <span style={{ fontSize: 13, color: '#fff', fontWeight: 700, background: colors.primary, padding: '4px 12px', borderRadius: 100 }}>{t.time}</span>
-                  </motion.div>
+                  <div key={i} style={{ ...cardStyle, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 13, color: colors.dark, fontWeight: 600 }}>{t.event}</span>
+                    <span style={{ fontSize: 12.5, color: colors.primary, fontWeight: 700 }}>{t.time}</span>
+                  </div>
                 ))}
               </div>
             </Section>
           )}
 
-          {/* Monogram watermark */}
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '70px 0', position: 'relative' }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
-              style={{
-                width: 210, height: 210, borderRadius: '50%', border: `1px solid ${colors.dark}`,
-                opacity: 0.18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-              <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '4.2rem', color: colors.dark }}>{initials}</span>
-            </motion.div>
-          </div>
+          {/* Repeated monogram watermark — sits quietly behind the countdown & RSVP */}
+          <div style={{ position: 'relative', marginTop: 60 }}>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 60, opacity: 0.07, pointerEvents: 'none', zIndex: 0 }}>
+              <Medallion initials={initials} color={colors.dark} size={210} />
+              <Medallion initials={initials} color={colors.dark} size={170} />
+              <Medallion initials={initials} color={colors.dark} size={190} />
+            </div>
 
-          {/* Countdown */}
-          {(section.countdown ?? true) && (
-            <Section mt={0}>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-                {[['DAYS', countdown.d], ['HOURS', countdown.h], ['MINS', countdown.m], ['SECS', countdown.s]].map(([label, value]) => (
-                  <div key={label as string} style={{
-                    ...cardStyle, width: 68, padding: '14px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  }}>
-                    <div className="bb-num" style={{ fontFamily: "'Inter',sans-serif", fontSize: '1.5rem', fontWeight: 700, color: colors.dark }}>
-                      {String(value).padStart(2, '0')}
+            {/* Countdown */}
+            {(section.countdown ?? true) && (
+              <Section mt={90}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 30 }}>
+                  {[['DAYS', countdown.d], ['HOURS', countdown.h], ['MINUTES', countdown.m], ['SECONDS', countdown.s]].map(([label, value]) => (
+                    <div key={label as string}>
+                      <div className="bb-num" style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.9rem', fontWeight: 700, color: colors.dark }}>
+                        {String(value).padStart(2, '0')}
+                      </div>
+                      <div style={{ fontSize: 9, letterSpacing: '0.12em', color: colors.primary, fontWeight: 700, marginTop: 2 }}>{label}</div>
                     </div>
-                    <div style={{ fontSize: 9, letterSpacing: '0.14em', color: colors.primary, fontWeight: 700 }}>{label}</div>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
+                  ))}
+                </div>
+              </Section>
+            )}
 
-          {/* Music */}
-          {(section.music ?? true) && couple.song_url && (
-            <Section>
-              <div style={sectionHeading}>🎵 {couple.song_title || 'Our Song'}</div>
-              {couple.song_artist && <p style={{ fontSize: 12, color: colors.dark, opacity: 0.6, marginTop: 4 }}>{couple.song_artist}</p>}
-              <div style={{ marginTop: 16 }}>
-                {couple.song_url.includes('youtube.com') || couple.song_url.includes('youtu.be') ? (
-                  <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: `0 8px 24px ${colors.dark}22` }}>
-                    <iframe
-                      width="100%" height="180"
-                      src={`https://www.youtube.com/embed/${couple.song_url.split(/v=|youtu\.be\//)[1]?.split('&')[0]}?autoplay=0`}
-                      title="song" allow="autoplay; encrypted-media" style={{ border: 0 }}
-                    />
-                  </div>
-                ) : (
-                  <div style={{ ...cardStyle, padding: 14 }}>
-                    <audio controls src={couple.song_url} style={{ width: '100%' }} />
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
+            {/* Music */}
+            {(section.music ?? true) && couple.song_url && (
+              <Section>
+                <div style={sectionHeading}>Our Song</div>
+                {couple.song_artist && <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 4 }}>{couple.song_artist}</p>}
+                <div style={{ marginTop: 16 }}>
+                  {couple.song_url.includes('youtube.com') || couple.song_url.includes('youtu.be') ? (
+                    <div style={{ borderRadius: 14, overflow: 'hidden' }}>
+                      <iframe
+                        width="100%" height="170"
+                        src={`https://www.youtube.com/embed/${couple.song_url.split(/v=|youtu\.be\//)[1]?.split('&')[0]}?autoplay=0`}
+                        title="song" allow="autoplay; encrypted-media" style={{ border: 0 }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ ...cardStyle, padding: 12 }}>
+                      <audio controls src={couple.song_url} style={{ width: '100%' }} />
+                    </div>
+                  )}
+                </div>
+              </Section>
+            )}
 
-          {/* Thank you */}
-          {(section.thank_you ?? true) && (
-            <Section>
-              <div style={sectionHeading}>🤍 Thank You</div>
-              {divider}
-              <p style={{ fontSize: 14.5, color: colors.dark, opacity: 0.85, lineHeight: 1.85 }}>
-                {thankYouText || 'Thank you for being part of our journey. Your presence means the world to us.'}
-              </p>
-            </Section>
-          )}
-
-          {/* RSVP */}
-          <Section id="rsvp-form">
-            <motion.div
-              whileInView={{ scale: [0.85, 1.05, 1] }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-              style={{
-                width: 52, height: 52, borderRadius: '50%', background: colors.primaryLight,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', fontSize: 22,
-                boxShadow: `0 6px 18px ${colors.primary}33`,
-              }}>🎁</motion.div>
-
-            {submitted ? (
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ ...cardStyle, padding: '28px 20px' }}>
-                <div style={{ fontSize: 30, marginBottom: 8 }}>✅</div>
-                <p style={{ fontSize: 14, color: colors.dark, fontWeight: 700 }}>Thank you!</p>
-                <p style={{ fontSize: 13, color: colors.dark, opacity: 0.7, marginTop: 4 }}>Your response has been recorded.</p>
-              </motion.div>
-            ) : (
-              <>
-                <p style={{ fontSize: 13, color: colors.dark, opacity: 0.8, marginBottom: 18 }}>
-                  Please confirm your attendance by filling in the form below.
+            {/* Thank you */}
+            {(section.thank_you ?? true) && (
+              <Section>
+                <div style={sectionHeading}>Thank You</div>
+                {divider}
+                <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9, marginTop: 14 }}>
+                  {thankYouText || 'Thank you for being part of our journey. Your presence means the world to us.'}
                 </p>
-                <div style={{ ...cardStyle, padding: '22px 20px', textAlign: 'left' }}>
+              </Section>
+            )}
+
+            {/* RSVP — progressive: button first, form reveals on click, matching the reference */}
+            <Section id="rsvp-form">
+              <div style={{
+                width: 42, height: 42, borderRadius: '50%', background: colors.primaryLight,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 18,
+              }}>🎁</div>
+
+              {submitted ? (
+                <div style={{ ...cardStyle, padding: '24px 20px' }}>
+                  <div style={{ fontSize: 26, marginBottom: 6 }}>✅</div>
+                  <p style={{ fontSize: 13.5, color: colors.dark, fontWeight: 700 }}>Thank you!</p>
+                  <p style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6, marginTop: 4 }}>Your response has been recorded.</p>
+                </div>
+              ) : !showRsvpForm ? (
+                <>
+                  <p style={{ fontSize: 13, color: colors.dark, opacity: 0.75, marginBottom: 20, fontWeight: 600 }}>
+                    Please confirm your attendance by clicking the button below.
+                  </p>
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                    <button onClick={() => setShowRsvpForm(true)} style={{
+                      padding: '13px 28px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                      background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 13.5,
+                    }}>
+                      Confirm Attendance
+                    </button>
+                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
+                      padding: '13px 22px', borderRadius: 100, border: `1px solid ${colors.dark}`,
+                      background: 'transparent', color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    }}>
+                      Back to Top Details
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...cardStyle, padding: '20px 18px', textAlign: 'left' }}>
                   <input
                     value={guestNameInput} onChange={e => setGuestNameInput(e.target.value)}
                     placeholder="Your name"
-                    style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${colors.primaryLight}`, fontSize: 14, outline: 'none', marginBottom: 14, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', marginBottom: 12, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
                   />
-                  <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-                    <motion.button whileTap={{ scale: 0.96 }} type="button" onClick={() => setResponse('yes')} style={{
-                      flex: 1, padding: '13px', borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    <button type="button" onClick={() => setResponse('yes')} style={{
+                      flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
                       background: response === 'yes' ? colors.primary : colors.primaryLight,
-                      color: response === 'yes' ? '#fff' : colors.dark, transition: 'background 0.2s',
-                    }}>✓ Accept</motion.button>
-                    <motion.button whileTap={{ scale: 0.96 }} type="button" onClick={() => setResponse('no')} style={{
-                      flex: 1, padding: '13px', borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                      color: response === 'yes' ? '#fff' : colors.dark,
+                    }}>✓ Accept</button>
+                    <button type="button" onClick={() => setResponse('no')} style={{
+                      flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
                       background: response === 'no' ? colors.dark : colors.primaryLight,
-                      color: response === 'no' ? '#fff' : colors.dark, transition: 'background 0.2s',
-                    }}>✗ Decline</motion.button>
+                      color: response === 'no' ? '#fff' : colors.dark,
+                    }}>✗ Decline</button>
                   </div>
-                  <AnimatePresence>
-                    {response === 'yes' && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
-                        <div style={{ marginBottom: 14 }}>
-                          <label style={{ fontSize: 11, color: colors.dark, opacity: 0.7, display: 'block', marginBottom: 5, fontWeight: 600 }}>Number of guests</label>
-                          <input
-                            type="number" min={1} max={10} value={guestCount}
-                            onChange={e => setGuestCount(Math.max(1, parseInt(e.target.value) || 1))}
-                            style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: `1.5px solid ${colors.primaryLight}`, fontSize: 14, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
-                          />
-                        </div>
-                        {couple.ask_drinking && (
-                          <div style={{ marginBottom: 14 }}>
-                            <label style={{ fontSize: 11, color: colors.dark, opacity: 0.7, display: 'block', marginBottom: 5, fontWeight: 600 }}>Will you be drinking alcohol?</label>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <button type="button" onClick={() => setDrinking('yes')} style={{
-                                flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                                background: drinking === 'yes' ? colors.primary : colors.primaryLight, color: drinking === 'yes' ? '#fff' : colors.dark,
-                              }}>🍷 Yes</button>
-                              <button type="button" onClick={() => setDrinking('no')} style={{
-                                flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                                background: drinking === 'no' ? colors.primary : colors.primaryLight, color: drinking === 'no' ? '#fff' : colors.dark,
-                              }}>🥤 No</button>
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  {rsvpMessage && <div style={{ fontSize: 12, color: rsvpMessage.startsWith('✅') ? '#16a34a' : '#dc2626', marginBottom: 10 }}>{rsvpMessage}</div>}
-                  <motion.button whileTap={{ scale: 0.97 }} onClick={submitRsvp} disabled={submitting} style={{
-                    width: '100%', padding: 14, borderRadius: 12, border: 'none', cursor: 'pointer',
-                    background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 14.5, opacity: submitting ? 0.6 : 1,
-                    boxShadow: `0 8px 20px ${colors.dark}44`,
+                  {response === 'yes' && (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Number of guests</label>
+                      <input
+                        type="number" min={1} max={10} value={guestCount}
+                        onChange={e => setGuestCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  )}
+                  {response === 'yes' && couple.ask_drinking && (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Will you be drinking alcohol?</label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button type="button" onClick={() => setDrinking('yes')} style={{
+                          flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                          background: drinking === 'yes' ? colors.primary : colors.primaryLight, color: drinking === 'yes' ? '#fff' : colors.dark,
+                        }}>Yes</button>
+                        <button type="button" onClick={() => setDrinking('no')} style={{
+                          flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                          background: drinking === 'no' ? colors.primary : colors.primaryLight, color: drinking === 'no' ? '#fff' : colors.dark,
+                        }}>No</button>
+                      </div>
+                    </div>
+                  )}
+                  {rsvpMessage && <div style={{ fontSize: 11.5, color: rsvpMessage.startsWith('✅') ? '#16a34a' : '#dc2626', marginBottom: 10 }}>{rsvpMessage}</div>}
+                  <button onClick={submitRsvp} disabled={submitting} style={{
+                    width: '100%', padding: 13, borderRadius: 10, border: 'none', cursor: 'pointer',
+                    background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 13.5, opacity: submitting ? 0.6 : 1,
                   }}>
                     {submitting ? 'Submitting...' : 'Confirm Attendance'}
-                  </motion.button>
-                </div>
-              </>
-            )}
-
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              style={{
-                marginTop: 18, padding: '11px 26px', borderRadius: 100, border: `1.5px solid ${colors.dark}`,
-                background: 'transparent', color: colors.dark, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              }}>
-              Back to Top
-            </button>
-          </Section>
+                  </button>
+                  <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
+                      padding: '9px 20px', borderRadius: 100, border: `1px solid ${colors.dark}`,
+                      background: 'transparent', color: colors.dark, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                    }}>
+                      Back to Top Details
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </Section>
+          </div>
         </motion.div>
       )}
     </div>
