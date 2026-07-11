@@ -99,7 +99,7 @@ const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: str
   homecoming: { title: 'Homecoming' },
 }
 
-type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo'
+type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo' | 'ring'
 function Icon({ name, size = 16, color }: { name: IconName; size?: number; color: string }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -114,6 +114,7 @@ function Icon({ name, size = 16, color }: { name: IconName; size?: number; color
     case 'check': return <svg {...c}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
     case 'cross': return <svg {...c}><path d="M6 6l12 12M18 6L6 18" /></svg>
     case 'photo': return <svg {...c}><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="M20.5 16l-4.7-4.7a2 2 0 00-2.8 0L5 19" /></svg>
+    case 'ring': return <svg {...c}><circle cx="12" cy="14.5" r="6.5" /><path d="M9 8l3-5 3 5" /><path d="M9 8h6l-1.3 3H10.3z" fill={color} stroke="none" /></svg>
     default: return null
   }
 }
@@ -429,12 +430,19 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             </Reveal>
           )}
 
-          {/* Repeated monogram watermark — sits quietly behind countdown/RSVP, static */}
+          {/* Large monogram watermark + scattered dots — sits quietly behind countdown/RSVP/footer, static */}
           <div style={{ position: 'relative', marginTop: 60 }}>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 60, opacity: 0.07, pointerEvents: 'none', zIndex: 0 }}>
-              <Medallion initials={initials} color={colors.dark} size={210} />
-              <Medallion initials={initials} color={colors.dark} size={170} />
-              <Medallion initials={initials} color={colors.dark} size={190} />
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)', opacity: 0.09 }}>
+                <Medallion initials={initials} color={colors.dark} size={440} />
+              </div>
+              {[
+                { top: 60, right: '6%', size: 9 },
+                { top: 240, right: '4%', size: 7 },
+                { top: 420, right: '7%', size: 6 },
+              ].map((d, i) => (
+                <div key={i} style={{ position: 'absolute', top: d.top, right: d.right, width: d.size, height: d.size, borderRadius: '50%', background: colors.primary, opacity: 0.35 }} />
+              ))}
             </div>
 
             {/* Countdown — plain numbers, no boxes */}
@@ -488,8 +496,18 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
             {/* RSVP — no card for the prompt; a light card only appears once the form is revealed */}
             <Reveal id="rsvp-form">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 22px' }}>
+                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
+                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+              </div>
               <div style={{ ...iconBadge, margin: '0 auto 16px' }}>
                 <Icon name="gift" size={16} color={colors.primary} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 18px' }}>
+                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
+                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
               </div>
 
               {submitted ? (
@@ -571,6 +589,25 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 </motion.div>
               )}
             </Reveal>
+
+            {/* Footer flourish — matches the reference's closing monogram section */}
+            <div style={{ ...wrap, marginTop: 50, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 260, margin: '0 auto 18px' }}>
+                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+              </div>
+              <Icon name="ring" size={20} color={colors.primary} />
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.3rem', color: colors.dark, marginTop: 10 }}>
+                {couple.bride} &amp; {couple.groom}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 10 }}>
+                <Icon name="heart" size={9} color={colors.primary} />
+                <Icon name="heart" size={9} color={colors.primary} />
+                <Icon name="heart" size={9} color={colors.primary} />
+              </div>
+              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 12 }}>
+                May our love bloom eternal
+              </p>
+            </div>
           </div>
         </motion.div>
       )}
