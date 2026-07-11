@@ -28,12 +28,33 @@ const DEFAULT_COLORS: Required<CoupleColors> = {
 
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
 
+// Relative luminance (0 = black, 1 = white) — used to reject colors that
+// are hex-valid but wrong for their role (e.g. a pale lilac saved as
+// "dark" text color, which would make every dark-opacity text block
+// nearly invisible instead of throwing a format error).
+function luminance(hex: string): number {
+  const clean = hex.replace('#', '')
+  const full = clean.length === 3 ? clean.split('').map(ch => ch + ch).join('') : clean
+  const r = parseInt(full.substring(0, 2), 16) / 255
+  const g = parseInt(full.substring(2, 4), 16) / 255
+  const b = parseInt(full.substring(4, 6), 16) / 255
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
 function sanitizeColors(input?: CoupleColors | null): Required<CoupleColors> {
   const safe = { ...DEFAULT_COLORS }
   if (!input) return safe
   ;(Object.keys(safe) as (keyof CoupleColors)[]).forEach(key => {
     const v = input[key]
-    if (v && HEX_RE.test(v)) safe[key] = v
+    if (!v || !HEX_RE.test(v)) return
+    const lum = luminance(v)
+    // "dark" is used as body/heading text at various opacities — if it's
+    // not actually dark, text becomes unreadable. "cream" is the page
+    // background — if it's not actually light, the whole page inverts.
+    if (key === 'dark' && lum > 0.45) return
+    if (key === 'cream' && lum < 0.7) return
+    if (key === 'primary' && lum > 0.85) return
+    safe[key] = v
   })
   return safe
 }
