@@ -167,19 +167,21 @@ function pickTimelineIcon(eventName: string): IconName {
   return 'heart'
 }
 
-function CountdownDisplay({ targetDate, dark, primary }: { targetDate?: string; dark: string; primary: string }) {
+function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetDate?: string; dark: string; primary: string; primaryLight: string }) {
   const countdown = useCountdown(targetDate)
+  const items: [string, number][] = [['DAYS', countdown.d], ['HOURS', countdown.h], ['MINUTES', countdown.m], ['SECONDS', countdown.s]]
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0 }}>
-      {[['DAYS', countdown.d], ['HOURS', countdown.h], ['MINUTES', countdown.m], ['SECONDS', countdown.s]].map(([label, value], i) => (
-        <div key={label as string} style={{ display: 'flex', alignItems: 'center' }}>
-          {i > 0 && <div style={{ width: 1, height: 30, background: primary, opacity: 0.3, margin: '0 16px' }} />}
-          <div>
-            <div className="bb-num" style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.9rem', fontWeight: 700, color: dark }}>
-              {String(value).padStart(2, '0')}
-            </div>
-            <div style={{ fontSize: 9, letterSpacing: '0.12em', color: primary, fontWeight: 700, marginTop: 2 }}>{label}</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      {items.map(([label, value], i) => (
+        <div key={label} style={{
+          padding: '18px 20px', textAlign: i % 2 === 0 ? 'left' : 'right',
+          borderRight: i % 2 === 0 ? `1px solid ${primary}55` : 'none',
+          borderBottom: i < 2 ? `1px solid ${primary}30` : 'none',
+        }}>
+          <div className="bb-num" style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '2.6rem', fontWeight: 800, color: dark, lineHeight: 1 }}>
+            {String(value).padStart(2, '0')}
           </div>
+          <div style={{ fontSize: 10.5, letterSpacing: '0.15em', color: dark, opacity: 0.6, fontWeight: 700, marginTop: 6 }}>{label}</div>
         </div>
       ))}
     </div>
@@ -523,10 +525,15 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           <div style={{ marginTop: 60 }}>
 
-            {/* Countdown — plain numbers, no boxes */}
+            {/* Countdown — big 2x2 grid */}
             {(section.countdown ?? true) && (
               <Reveal mt={80}>
-                <CountdownDisplay targetDate={couple.wedding_date} dark={colors.dark} primary={colors.primary} />
+                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Just a Few More</div>
+                {divider}
+                <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 16, marginBottom: 20 }}>
+                  We are counting the days until our beautiful celebration.
+                </p>
+                <CountdownDisplay targetDate={couple.wedding_date} dark={colors.dark} primary={colors.primary} primaryLight={colors.primaryLight} />
               </Reveal>
             )}
 
