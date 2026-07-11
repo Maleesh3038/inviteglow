@@ -157,6 +157,16 @@ function Medallion({ initials, color, size = 190 }: { initials: string; color: s
 // Isolated so its per-second tick only re-renders this small subtree —
 // not the whole page (which was previously causing the map iframe and
 // everything else to visibly flicker/reload every second).
+function pickTimelineIcon(eventName: string): IconName {
+  const n = eventName.toLowerCase()
+  if (n.includes('ceremony') || n.includes('poruwa') || n.includes('vow') || n.includes('bless')) return 'ring'
+  if (n.includes('lunch') || n.includes('dinner') || n.includes('meal') || n.includes('reception')) return 'gift'
+  if (n.includes('danc') || n.includes('music') || n.includes('party') || n.includes('floor')) return 'music'
+  if (n.includes('away') || n.includes('depart') || n.includes('leav')) return 'pin'
+  if (n.includes('photo')) return 'photo'
+  return 'heart'
+}
+
 function CountdownDisplay({ targetDate, dark, primary }: { targetDate?: string; dark: string; primary: string }) {
   const countdown = useCountdown(targetDate)
   return (
@@ -470,16 +480,26 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             </Reveal>
           )}
 
-          {/* Timeline — no card, simple list */}
+          {/* Timeline — big vertical timeline with connecting line + icon circles */}
           {(section.timeline ?? true) && couple.timeline && couple.timeline.length > 0 && (
             <Reveal>
-              <div style={capsHeading}>Wedding Timeline</div>
+              <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />The Day's Events</div>
               {divider}
-              <div style={{ display: 'grid', gap: 8, textAlign: 'left' }}>
+              <div style={{ position: 'relative', textAlign: 'left', marginTop: 20, paddingLeft: 10 }}>
+                <div style={{ position: 'absolute', left: 41, top: 34, bottom: 34, width: 2, background: colors.primaryLight }} />
                 {couple.timeline.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 4px', borderBottom: `1px solid ${colors.primaryLight}` }}>
-                    <span style={{ fontSize: 13, color: colors.dark, fontWeight: 600 }}>{t.event}</span>
-                    <span style={{ fontSize: 12.5, color: colors.primary, fontWeight: 700 }}>{t.time}</span>
+                  <div key={i} style={{ display: 'flex', gap: 18, marginBottom: i < couple.timeline.length - 1 ? 30 : 0, position: 'relative' }}>
+                    <div style={{
+                      width: 64, height: 64, borderRadius: '50%', background: '#fff', border: `2px solid ${colors.primaryLight}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 14px ${colors.dark}12`,
+                      position: 'relative', zIndex: 1,
+                    }}>
+                      <Icon name={pickTimelineIcon(t.event)} size={22} color={colors.primary} />
+                    </div>
+                    <div style={{ paddingTop: 10 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: colors.primary, letterSpacing: '0.01em' }}>{t.time}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: colors.dark, marginTop: 3 }}>{t.event}</div>
+                    </div>
                   </div>
                 ))}
               </div>
