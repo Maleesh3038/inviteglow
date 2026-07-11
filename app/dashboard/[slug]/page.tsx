@@ -20,6 +20,7 @@ const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
   'traditional-ceylon': { primary: '#2f4a35', primaryLight: '#c9a227', dark: '#1f2e22', cream: '#fbf6e9' },
   'sacred-poruwa': { primary: '#c4956a', primaryLight: '#e8c99a', dark: '#3d2510', cream: '#fdf6e9' },
   'garden-minimal': { primary: '#4a8a5a', primaryLight: '#a0d8b0', dark: '#1a2e20', cream: '#f0f7f0' },
+  'blush-blossom': { primary: '#c17d8a', primaryLight: '#f3d6d6', dark: '#5c4632', cream: '#fff6f1' },
 }
 
 async function uploadToStorage(file: File, folder: string): Promise<string | null> {
