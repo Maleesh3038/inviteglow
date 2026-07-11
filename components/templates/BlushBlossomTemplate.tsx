@@ -364,7 +364,13 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Events — the ONLY sections with cards, besides the couple photo */}
           {enabledEvents.map(ev => {
             const mapQuery = [ev.venue, ev.venue_address].filter(Boolean).join(', ')
-            const coords = extractLatLng(ev.maps_url)
+            // Explicit lat/lng fields (if the admin form saved them, either
+            // per-event or on the couple record) are the most reliable
+            // source — they win over anything guessed from a pasted URL.
+            const manualLat = parseFloat((ev as any).venue_latitude ?? (couple as any).venue_latitude)
+            const manualLng = parseFloat((ev as any).venue_longitude ?? (couple as any).venue_longitude)
+            const manualCoords = !isNaN(manualLat) && !isNaN(manualLng) ? { lat: manualLat, lng: manualLng } : null
+            const coords = manualCoords || extractLatLng(ev.maps_url)
             // maps.google.com (not www.google.com/maps) is the classic
             // no-API-key embeddable endpoint. Coordinates (when we can pull
             // them from the pasted link) geocode far more reliably than
