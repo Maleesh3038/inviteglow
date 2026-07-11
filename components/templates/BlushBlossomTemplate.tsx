@@ -234,16 +234,16 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: '100vh', background: `linear-gradient(180deg, ${colors.cream} 0%, #fdeee6 55%, #fce0d2 100%)`, position: 'relative', overflowX: 'hidden' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        html, body { background: ${colors.cream} !important; margin: 0; }
+        html, body { background: ${colors.cream} !important; margin: 0; overflow-x: hidden; }
         .bb-num { font-variant-numeric: tabular-nums lining-nums; }
-        .bb-wrap-wide { max-width: 420px; margin: 0 auto; padding: 0 24px; }
+        .bb-wrap-wide { max-width: 420px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; width: 100%; }
         @media (min-width: 640px) {
           .bb-wrap-wide { max-width: 760px; }
         }
-        .bb-event-row { display: flex; flex-direction: column; }
+        .bb-event-row { display: flex; flex-direction: column; min-width: 0; }
         @media (min-width: 640px) {
           .bb-event-row { flex-direction: row; align-items: flex-start; gap: 16px; }
-          .bb-event-row > div { flex: 1; margin-bottom: 0 !important; }
+          .bb-event-row > div { flex: 1 1 0; min-width: 0; margin-bottom: 0 !important; }
         }
       `}</style>
 
