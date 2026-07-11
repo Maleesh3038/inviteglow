@@ -65,13 +65,6 @@ function getInitials(bride?: string, groom?: string) {
   return `${b}${g}` || ''
 }
 
-function formatDate(dateStr?: string) {
-  if (!dateStr) return 'Date to be announced'
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
-}
-
 function useCountdown(target?: string) {
   const [left, setLeft] = useState({ d: 0, h: 0, m: 0, s: 0 })
   useEffect(() => {
@@ -368,18 +361,6 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
               {familyInvitationText || 'We warmly invite you to join us as we celebrate the beautiful beginning of our lifelong bond.'}
             </p>
-          </Reveal>
-
-          {/* Save the date — no card */}
-          <Reveal>
-            <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Save the Date</div>
-            <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 6 }}>Mark Your Calendar</p>
-            <div style={{ ...iconBadge, margin: '18px auto' }}>
-              <Icon name="calendar" size={16} color={colors.primary} />
-            </div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.35rem', fontWeight: 700, color: colors.dark }}>
-              {formatDate(couple.wedding_date)}
-            </div>
           </Reveal>
 
           {/* Events — the ONLY sections with cards, besides the couple photo */}
