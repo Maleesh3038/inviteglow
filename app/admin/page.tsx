@@ -13,6 +13,7 @@ const TEMPLATES = [
   { id: 'sunset-shores', name: 'Sunset Shores (Bali Sunset)' },
   { id: 'traditional-ceylon', name: 'Traditional Ceylon (Kandyan Culture)' },
   { id: 'sacred-poruwa', name: 'Sacred Poruwa (Kandyan Sunset)' },
+  { id: 'blush-blossom', name: 'Blush Blossom (Cherry Blossom Envelope)' },
 ]
 
 const BUCKET = 'wedding-photos'
