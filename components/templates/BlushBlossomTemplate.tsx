@@ -349,15 +349,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           {/* Events — the ONLY sections with cards, besides the couple photo */}
           {enabledEvents.map(ev => {
-            // Most pasted Google Maps links (place pages, share links, etc.)
-            // refuse to load inside an iframe — Google blocks framing on
-            // everything except its own "output=embed" search endpoint. So
-            // instead of trying to embed whatever URL was pasted, we build a
-            // reliable embed straight from the venue name/address, and keep
-            // the pasted link (or a generated one) purely for the "Open in
-            // Maps" button, which can point anywhere.
+            // A live embedded map (iframe) depends on Google's framing rules
+            // and the site's CSP, both of which are unreliable to guarantee
+            // from here — it can silently render blank with no error. A
+            // static location card + a real "Open in Maps" link can't fail
+            // that way, so that's what we use instead.
             const mapQuery = [ev.venue, ev.venue_address].filter(Boolean).join(', ')
-            const mapsEmbed = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed` : undefined
             const mapsLinkHref = ev.maps_url || (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : undefined)
             const hasVenueInfo = !!(ev.venue || ev.venue_address)
             return (
@@ -367,22 +364,22 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
                 <div className="bb-event-row">
                 <div style={{ ...cardStyle, overflow: 'hidden', textAlign: 'left', marginBottom: 10 }}>
-                  {mapsEmbed ? (
-                    <div style={{ position: 'relative' }}>
-                      <iframe src={mapsEmbed} style={{ width: '100%', height: 130, border: 0, display: 'block' }} loading="lazy" title={`${ev.venue || 'venue'}-map`} />
-                      {mapsLinkHref && (
-                        <a href={mapsLinkHref} target="_blank" rel="noopener noreferrer"
-                          style={{ position: 'absolute', top: 8, left: 8, fontSize: 10, background: 'rgba(255,255,255,0.95)', padding: '4px 10px', borderRadius: 100, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>
-                          Open in Maps
-                        </a>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{ height: 90, background: colors.primaryLight, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                      <Icon name="pin" size={20} color={colors.primary} />
-                      {!hasVenueInfo && <span style={{ fontSize: 10.5, color: colors.dark, opacity: 0.55 }}>Location to be announced</span>}
-                    </div>
-                  )}
+                  <div style={{
+                    height: 120, background: `linear-gradient(135deg, ${colors.primaryLight}, ${colors.primaryLight}88)`,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  }}>
+                    <Icon name="pin" size={26} color={colors.primary} />
+                    {!hasVenueInfo && <span style={{ fontSize: 10.5, color: colors.dark, opacity: 0.55 }}>Location to be announced</span>}
+                    {mapsLinkHref && (
+                      <a href={mapsLinkHref} target="_blank" rel="noopener noreferrer" style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700,
+                        background: '#fff', padding: '7px 16px', borderRadius: 100, color: colors.dark,
+                        textDecoration: 'none', boxShadow: `0 2px 8px ${colors.dark}22`,
+                      }}>
+                        Open in Maps ↗
+                      </a>
+                    )}
+                  </div>
                   <div style={{ padding: '12px 16px' }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: colors.dark }}>{ev.venue || 'Venue to be announced'}</div>
                     {ev.venue_address && <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 2 }}>{ev.venue_address}</div>}
