@@ -301,7 +301,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
       {/* ───────── ENVELOPE COVER ───────── */}
       <AnimatePresence>
         {!opened && (
-          <motion.div key="cover" className="bb-cover-bg" exit={{ opacity: 0, transition: { duration: 0.5 } }}
+          <motion.div key="cover" className="bb-cover-bg"
+            exit={{ opacity: 0, transition: { duration: 0.5, delay: 0.15 } }}
             style={{
               position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
               backgroundImage: `url(${(couple as any).cover_background_image || DEFAULT_COVER_BG})`,
@@ -309,19 +310,16 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               backgroundPosition: 'center',
             }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)' }} />
-            <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, ease: 'easeOut' }}
-              style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, perspective: 800 }}>
-              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative' }}>
-                {/* Flap — hinged at the top edge, folds open like a real envelope lid */}
-                <motion.div
-                  animate={{ rotateX: flapOpen ? -150 : 0 }}
-                  transition={{ duration: 0.6, ease: [0.45, 0, 0.55, 1] }}
-                  style={{
-                    height: 58, background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
-                    clipPath: 'polygon(0 0, 50% 100%, 100% 0)', transformOrigin: 'top center', transformStyle: 'preserve-3d',
-                  }}
-                />
-                <div style={{ background: '#fff', padding: '36px 26px 32px', textAlign: 'center' }}>
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1, scale: flapOpen ? 0.93 : 1 }}
+              transition={{ y: { duration: 0.6, ease: 'easeOut' }, opacity: { duration: 0.6, ease: 'easeOut' }, scale: { duration: 0.5, delay: 0.35, ease: 'easeIn' } }}
+              style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, perspective: 900 }}>
+
+              {/* White card body — has its own rounded corners + shadow */}
+              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative', background: '#fff' }}>
+                <div style={{ height: 58 }} />
+                <div style={{ padding: '36px 26px 32px', textAlign: 'center' }}>
                   <div style={{ width: 58, height: 58, borderRadius: '50%', border: `1px solid ${colors.primary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
                     <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, letterSpacing: 2, color: colors.dark }}>{initials}</span>
                   </div>
@@ -332,8 +330,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                     aria-label="Open invitation"
                     whileHover={{ scale: 1.06 }}
                     whileTap={{ scale: 0.92 }}
+                    disabled={flapOpen}
                     style={{
-                      position: 'relative', width: 68, height: 62, background: 'transparent', border: 'none', cursor: 'pointer',
+                      position: 'relative', width: 68, height: 62, background: 'transparent', border: 'none', cursor: flapOpen ? 'default' : 'pointer',
                       margin: '0 auto', display: 'block',
                     }}>
                     <svg width="68" height="62" viewBox="0 0 100 90" style={{ position: 'absolute', inset: 0 }}>
@@ -346,6 +345,19 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   </motion.button>
                 </div>
               </div>
+
+              {/* Flap — positioned on top, outside any clipped container, so its
+                  3D open animation is never cut off */}
+              <motion.div
+                animate={{ rotateX: flapOpen ? -160 : 0 }}
+                transition={{ duration: 0.55, ease: [0.45, 0, 0.55, 1] }}
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: 58, zIndex: 2,
+                  background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
+                  clipPath: 'polygon(0 0, 50% 100%, 100% 0)', transformOrigin: 'top center', transformStyle: 'preserve-3d',
+                  borderTopLeftRadius: 14, borderTopRightRadius: 14,
+                }}
+              />
             </motion.div>
           </motion.div>
         )}
