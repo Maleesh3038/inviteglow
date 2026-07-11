@@ -128,6 +128,20 @@ function Icon({ name, size = 16, color }: { name: IconName; size?: number; color
   }
 }
 
+function Blossom({ size = 14, color }: { size?: number; color: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <g fill={color}>
+        <ellipse cx="12" cy="6" rx="3.2" ry="4.6" />
+        <ellipse cx="12" cy="18" rx="3.2" ry="4.6" />
+        <ellipse cx="6" cy="12" rx="4.6" ry="3.2" />
+        <ellipse cx="18" cy="12" rx="4.6" ry="3.2" />
+      </g>
+      <circle cx="12" cy="12" r="2.4" fill="#fff" opacity={0.8} />
+    </svg>
+  )
+}
+
 function Vine({ color, flip = false }: { color: string; flip?: boolean }) {
   return (
     <svg width="40" height="80" viewBox="0 0 46 90" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined }}>
@@ -152,6 +166,31 @@ function Medallion({ initials, color, size = 190 }: { initials: string; color: s
         <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: size * 0.32, color, letterSpacing: 1 }}>{initials}</span>
       </div>
       <Vine color={color} flip />
+    </div>
+  )
+}
+
+// Gentle falling petals across the whole site. Pure CSS keyframes (not
+// framer-motion/JS state), so this costs nothing on re-render and never
+// interferes with the countdown-isolation fix — it just runs on its own.
+function FallingPetals({ color }: { color: string }) {
+  const petals = [
+    { left: '4%', size: 11, delay: 0, dur: 13 },
+    { left: '16%', size: 8, delay: 3.2, dur: 16 },
+    { left: '30%', size: 13, delay: 6.5, dur: 12 },
+    { left: '46%', size: 9, delay: 1.5, dur: 15 },
+    { left: '60%', size: 12, delay: 5, dur: 14 },
+    { left: '74%', size: 8, delay: 2.2, dur: 17 },
+    { left: '86%', size: 12, delay: 8, dur: 13 },
+    { left: '94%', size: 9, delay: 4.5, dur: 15 },
+  ]
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 60, overflow: 'hidden' }}>
+      {petals.map((p, i) => (
+        <span key={i} className="bb-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
+          <Blossom size={p.size} color={color} />
+        </span>
+      ))}
     </div>
   )
 }
@@ -282,6 +321,16 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         html, body { background: ${colors.cream} !important; margin: 0; overflow-x: hidden; }
+        .bb-petal {
+          position: absolute; top: -20px; opacity: 0; display: block;
+          animation-name: bb-fall; animation-timing-function: linear; animation-iteration-count: infinite;
+        }
+        @keyframes bb-fall {
+          0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+          8% { opacity: 0.55; }
+          92% { opacity: 0.45; }
+          100% { transform: translateY(110vh) translateX(34px) rotate(260deg); opacity: 0; }
+        }
         .bb-cover-bg { background-size: cover; }
         @media (min-aspect-ratio: 3/4) {
           .bb-cover-bg { background-size: auto 100%; }
@@ -297,6 +346,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           .bb-event-row > div { flex: 1 1 0; min-width: 0; margin-bottom: 0 !important; }
         }
       `}</style>
+
+      <FallingPetals color={colors.primary} />
 
       {/* ───────── ENVELOPE COVER ───────── */}
       <AnimatePresence>
@@ -316,10 +367,14 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               transition={{ y: { duration: 0.6, ease: 'easeOut' }, opacity: { duration: 0.6, ease: 'easeOut' }, scale: { duration: 0.5, delay: 0.35, ease: 'easeIn' } }}
               style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, perspective: 900 }}>
 
-              {/* White card body — has its own rounded corners + shadow */}
-              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative', background: '#fff' }}>
+              {/* White card body — glass-like finish with corner flourishes for more detail */}
+              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(6px)', border: `1px solid ${colors.primaryLight}` }}>
+                <div style={{ position: 'absolute', top: 66, left: 10, opacity: 0.5, pointerEvents: 'none' }}><Blossom size={16} color={colors.primaryLight} /></div>
+                <div style={{ position: 'absolute', top: 66, right: 10, opacity: 0.5, pointerEvents: 'none' }}><Blossom size={16} color={colors.primaryLight} /></div>
+                <div style={{ position: 'absolute', bottom: 10, left: 14, opacity: 0.4, pointerEvents: 'none' }}><Blossom size={13} color={colors.primaryLight} /></div>
+                <div style={{ position: 'absolute', bottom: 10, right: 14, opacity: 0.4, pointerEvents: 'none' }}><Blossom size={13} color={colors.primaryLight} /></div>
                 <div style={{ height: 58 }} />
-                <div style={{ padding: '36px 26px 32px', textAlign: 'center' }}>
+                <div style={{ padding: '36px 26px 32px', textAlign: 'center', position: 'relative' }}>
                   <div style={{ width: 58, height: 58, borderRadius: '50%', border: `1px solid ${colors.primary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
                     <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, letterSpacing: 2, color: colors.dark }}>{initials}</span>
                   </div>
