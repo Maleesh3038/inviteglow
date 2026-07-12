@@ -21,6 +21,10 @@ import { supabase, Couple, CoupleColors } from '@/lib/supabase'
 
 const DEFAULT_COVER_BG = '/images/blush-blossom-cover-bg.png'
 
+// Shared box background for every card in the template (was plain white,
+// now a deeper light-purple tint per request).
+const PURPLE_BOX = '#e9d9f0'
+
 const DEFAULT_COLORS: Required<CoupleColors> = {
   primary: '#c1876d',
   primaryLight: '#f4e6d9',
@@ -245,7 +249,7 @@ function MusicPlayer({ audioRef, title, artist, primary, primaryLight, dark }: {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14, background: '#fff', borderRadius: 16,
+      display: 'flex', alignItems: 'center', gap: 14, background: PURPLE_BOX, borderRadius: 16,
       padding: '14px 18px', boxShadow: `0 4px 18px ${dark}14`, textAlign: 'left',
     }}>
       <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} style={{
@@ -369,7 +373,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     color: colors.primary, fontWeight: 700,
   }
   const cardStyle: React.CSSProperties = {
-    background: '#f8f2fa', borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
+    background: PURPLE_BOX, borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
   }
   const iconBadge: React.CSSProperties = {
     width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
@@ -434,7 +438,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, perspective: 900 }}>
 
               {/* White card body — glass-like finish with corner flourishes for more detail */}
-              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative', background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(6px)', border: `1px solid ${colors.primaryLight}` }}>
+              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative', background: PURPLE_BOX, backdropFilter: 'blur(6px)', border: `1px solid ${colors.primaryLight}` }}>
                 <div style={{ position: 'absolute', top: 66, left: 10, opacity: 0.5, pointerEvents: 'none' }}><Blossom size={16} color={colors.primaryLight} /></div>
                 <div style={{ position: 'absolute', top: 66, right: 10, opacity: 0.5, pointerEvents: 'none' }}><Blossom size={16} color={colors.primaryLight} /></div>
                 <div style={{ position: 'absolute', bottom: 10, left: 14, opacity: 0.4, pointerEvents: 'none' }}><Blossom size={13} color={colors.primaryLight} /></div>
@@ -511,7 +515,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   <Icon name="photo" size={38} color={colors.primary} />
                 </div>
               )}
-              <div style={{ background: '#fff', padding: '15px 12px 13px', textAlign: 'center' }}>
+              <div style={{ background: PURPLE_BOX, padding: '15px 12px 13px', textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
                   {couple.bride} &amp; {couple.groom}
                 </div>
@@ -578,7 +582,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                       {mapsLinkHref && (
                         <a href={mapsLinkHref} target="_blank" rel="noopener noreferrer" style={{
                           position: 'absolute', top: 8, left: 8, fontSize: 10, fontWeight: 700,
-                          background: 'rgba(255,255,255,0.95)', padding: '5px 12px', borderRadius: 100,
+                          background: PURPLE_BOX, padding: '5px 12px', borderRadius: 100,
                           color: colors.dark, textDecoration: 'none', boxShadow: `0 2px 8px ${colors.dark}22`,
                         }}>
                           Open in Maps ↗
@@ -659,7 +663,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 {couple.timeline.map((t, i) => (
                   <div key={i} style={{ display: 'flex', gap: 18, marginBottom: i < couple.timeline.length - 1 ? 30 : 0, position: 'relative' }}>
                     <div style={{
-                      width: 64, height: 64, borderRadius: '50%', background: '#fff', border: `2px solid ${colors.primaryLight}`,
+                      width: 64, height: 64, borderRadius: '50%', background: PURPLE_BOX, border: `2px solid ${colors.primaryLight}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 14px ${colors.dark}12`,
                       position: 'relative', zIndex: 1,
                     }}>
@@ -786,7 +790,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                     </button>
                     <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
                       padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
-                      background: '#fff', color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      background: PURPLE_BOX, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                       boxShadow: `0 4px 14px ${colors.dark}0d`,
                     }}>Back to Top Details</button>
                   </div>
