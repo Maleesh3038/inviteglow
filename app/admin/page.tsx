@@ -62,6 +62,7 @@ const emptyForm = {
   intro_text: '',
   cover_badge_text: '',
   cover_background_image: '',
+  project_status: 'ongoing' as 'sample' | 'ongoing' | 'complete',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -558,6 +559,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'templates' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'sample' | 'ongoing' | 'complete'>('all')
 
   const loadCouples = async () => {
     setLoading(true)
@@ -649,6 +651,7 @@ export default function AdminPage() {
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
       cover_background_image: (c as any).cover_background_image ?? '',
+      project_status: ((c as any).project_status ?? 'ongoing') as 'sample' | 'ongoing' | 'complete',
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -697,6 +700,7 @@ export default function AdminPage() {
       intro_text: form.intro_text || null,
       cover_badge_text: (form as any).cover_badge_text || null,
       cover_background_image: (form as any).cover_background_image || null,
+      project_status: form.project_status || 'ongoing',
     }
 
     let error
@@ -738,14 +742,25 @@ export default function AdminPage() {
     const totalGuests = allRsvps.filter(r => r.response === 'yes').reduce((s, r) => s + (r.guest_count || 1), 0)
     const templateCounts: Record<string, number> = {}
     couples.forEach(c => { templateCounts[c.template] = (templateCounts[c.template] || 0) + 1 })
-    return { upcoming, totalRsvps, totalGuests, templateCounts }
+    const statusOf = (c: Couple) => ((c as any).project_status as string) || 'ongoing'
+    const sampleCount = couples.filter(c => statusOf(c) === 'sample').length
+    const ongoingCount = couples.filter(c => statusOf(c) === 'ongoing').length
+    const completeCount = couples.filter(c => statusOf(c) === 'complete').length
+    const realCount = ongoingCount + completeCount // real client work, excludes samples
+    return { upcoming, totalRsvps, totalGuests, templateCounts, sampleCount, ongoingCount, completeCount, realCount }
   }, [couples, allRsvps])
 
   const filteredCouples = useMemo(() => {
-    if (!coupleSearch.trim()) return couples
-    const q = coupleSearch.toLowerCase()
-    return couples.filter(c => `${c.bride} ${c.groom} ${c.slug}`.toLowerCase().includes(q))
-  }, [couples, coupleSearch])
+    let result = couples
+    if (statusFilter !== 'all') {
+      result = result.filter(c => (((c as any).project_status as string) || 'ongoing') === statusFilter)
+    }
+    if (coupleSearch.trim()) {
+      const q = coupleSearch.toLowerCase()
+      result = result.filter(c => `${c.bride} ${c.groom} ${c.slug}`.toLowerCase().includes(q))
+    }
+    return result
+  }, [couples, coupleSearch, statusFilter])
 
   return (
     <div style={{ minHeight: '100vh', background: '#f6f7fb', fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
@@ -796,29 +811,29 @@ export default function AdminPage() {
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: `${ACCENT}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                   <Icon name="users" size={16} color={ACCENT} />
                 </div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{couples.length}</div>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Total Invitations</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{stats.realCount}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Real Client Projects</div>
+              </div>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <Icon name="edit" size={16} color="#b45309" />
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{stats.ongoingCount}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Ongoing Projects</div>
               </div>
               <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                   <Icon name="check" size={16} color="#16a34a" />
                 </div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{stats.totalRsvps}</div>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Total RSVPs Received</div>
-              </div>
-              <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                  <Icon name="calendar" size={16} color="#b45309" />
-                </div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{stats.upcoming}</div>
-                <div style={{ fontSize: 11, color: '#64748b' }}>Weddings in Next 30 Days</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{stats.completeCount}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Completed Projects</div>
               </div>
               <div style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, borderRadius: 16, padding: 18, boxShadow: `0 4px 20px ${ACCENT}40` }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                  <Icon name="chart" size={16} color="#fff" />
+                  <Icon name="template" size={16} color="#fff" />
                 </div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>{stats.totalGuests}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Confirmed Guests (all couples)</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>{stats.sampleCount}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Sample / Demo Projects</div>
               </div>
             </div>
 
@@ -931,13 +946,30 @@ export default function AdminPage() {
         {activeTab === 'couples' && (
           <div>
             {!editing && (
-              <div style={{ position: 'relative', marginBottom: 18 }}>
-                <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                  <Icon name="search" size={16} color="#94a3b8" />
+              <>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                  {([
+                    { key: 'all', label: 'All' },
+                    { key: 'ongoing', label: 'Ongoing' },
+                    { key: 'complete', label: 'Complete' },
+                    { key: 'sample', label: 'Sample' },
+                  ] as const).map(f => (
+                    <button key={f.key} onClick={() => setStatusFilter(f.key)} style={{
+                      padding: '7px 16px', borderRadius: 100, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                      border: statusFilter === f.key ? 'none' : '1px solid #e2e8f0',
+                      background: statusFilter === f.key ? ACCENT : '#fff',
+                      color: statusFilter === f.key ? '#fff' : '#475569',
+                    }}>{f.label}</button>
+                  ))}
                 </div>
-                <input value={coupleSearch} onChange={e => setCoupleSearch(e.target.value)} placeholder="Search by bride, groom, or slug..."
-                  style={{ width: '100%', padding: '12px 18px 12px 42px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#fff', fontSize: 14, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }} />
-              </div>
+                <div style={{ position: 'relative', marginBottom: 18 }}>
+                  <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <Icon name="search" size={16} color="#94a3b8" />
+                  </div>
+                  <input value={coupleSearch} onChange={e => setCoupleSearch(e.target.value)} placeholder="Search by bride, groom, or slug..."
+                    style={{ width: '100%', padding: '12px 18px 12px 42px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#fff', fontSize: 14, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }} />
+                </div>
+              </>
             )}
 
             {/* FORM */}
@@ -958,6 +990,25 @@ export default function AdminPage() {
                     <select style={inputStyle} value={form.template} onChange={e => setForm({ ...form, template: e.target.value })}>
                       {TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
+                  </div>
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>Project Status</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {([
+                        { key: 'ongoing', label: 'Ongoing', color: '#d97706' },
+                        { key: 'complete', label: 'Complete', color: '#16a34a' },
+                        { key: 'sample', label: 'Sample', color: '#6366f1' },
+                      ] as const).map(s => (
+                        <button key={s.key} type="button" onClick={() => setForm({ ...form, project_status: s.key })}
+                          style={{
+                            flex: 1, padding: '10px 4px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                            border: form.project_status === s.key ? 'none' : '1px solid #e2e8f0',
+                            background: form.project_status === s.key ? s.color : '#fff',
+                            color: form.project_status === s.key ? '#fff' : '#475569',
+                          }}>{s.label}</button>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Sample = template demo, not a real client.</div>
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Bride's Name *</label>
@@ -1126,11 +1177,22 @@ export default function AdminPage() {
                               <div style={{ fontSize: 12, color: '#64748b' }}>{new Date(c.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                             </div>
                           </div>
-                          {templateMeta && (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, color: templateMeta.color, background: `${templateMeta.color}1a`, padding: '3px 10px', borderRadius: 100, marginBottom: 10 }}>
-                              {templateMeta.name}
-                            </div>
-                          )}
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                            {templateMeta && (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, color: templateMeta.color, background: `${templateMeta.color}1a`, padding: '3px 10px', borderRadius: 100 }}>
+                                {templateMeta.name}
+                              </div>
+                            )}
+                            {(() => {
+                              const status = ((c as any).project_status as string) || 'ongoing'
+                              const statusMeta = { sample: { label: 'Sample', color: '#6366f1' }, ongoing: { label: 'Ongoing', color: '#d97706' }, complete: { label: 'Complete', color: '#16a34a' } }[status] || { label: status, color: '#64748b' }
+                              return (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, color: statusMeta.color, background: `${statusMeta.color}1a`, padding: '3px 10px', borderRadius: 100 }}>
+                                  {statusMeta.label}
+                                </div>
+                              )
+                            })()}
+                          </div>
                           <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                             <a href={`/invite/${c.slug}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: ACCENT, textDecoration: 'none', fontWeight: 500 }}>
                               <Icon name="link" size={11} color={ACCENT} /> Invite
