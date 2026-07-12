@@ -359,7 +359,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   // ── style tokens ──
   const wrap: React.CSSProperties = { maxWidth: 420, margin: '0 auto', padding: '0 24px' }
   const capsHeading: React.CSSProperties = {
-    fontSize: 15, fontWeight: 700, letterSpacing: '0.14em', color: colors.dark, textAlign: 'center',
+    fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 700, letterSpacing: '0.12em',
+    color: colors.dark, textAlign: 'center',
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textTransform: 'uppercase',
   }
   const divider = <div style={{ width: 1, height: 24, background: colors.primary, opacity: 0.4, margin: '10px auto' }} />
@@ -368,7 +369,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     color: colors.primary, fontWeight: 700,
   }
   const cardStyle: React.CSSProperties = {
-    background: '#fff', borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
+    background: '#f8f2fa', borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
   }
   const iconBadge: React.CSSProperties = {
     width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
