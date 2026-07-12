@@ -602,7 +602,7 @@ export default function CoupleDashboard() {
   })
 
   return (
-    <div style={{ minHeight: "100vh", background: PAGE_BG, fontFamily: "'Inter',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: PAGE_BG, fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`}</style>
 
       {/* ── NAV BAR ── */}
@@ -645,6 +645,10 @@ export default function CoupleDashboard() {
         @media (max-width: 520px) {
           .dash-tab-label { display: none; }
         }
+        .dash-overview-grid { grid-template-columns: 1fr; }
+        @media (min-width: 600px) {
+          .dash-overview-grid { grid-template-columns: minmax(160px, auto) 1fr; }
+        }
       `}</style>
 
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 20px 60px" }}>
@@ -653,7 +657,7 @@ export default function CoupleDashboard() {
           {/* ── OVERVIEW TAB ── */}
           {activeTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 24, alignItems: 'stretch', marginBottom: 20 }}>
+              <div className="dash-overview-grid" style={{ display: 'grid', gap: 16, alignItems: 'stretch', marginBottom: 20 }}>
                 <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 2px 16px rgba(15,23,42,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <RsvpDonut accepted={accepted.length} declined={declined.length} accent={ACCENT} accentLight={ACCENT_LIGHT} />
                 </div>
