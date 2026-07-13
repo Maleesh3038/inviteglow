@@ -62,7 +62,7 @@ const emptyForm = {
   intro_text: '',
   cover_badge_text: '',
   cover_background_image: '',
-  project_status: 'ongoing' as 'lead' | 'sample' | 'ongoing' | 'complete',
+  project_status: 'lead' as 'lead' | 'sample' | 'ongoing' | 'complete',
   payment_status: 'unpaid' as 'unpaid' | 'partial' | 'paid',
   paid_amount: '',
   package_tier: '' as '' | 'starter' | 'premium' | 'luxury',
@@ -583,22 +583,6 @@ export default function AdminPage() {
     setActiveTab('couples')
   }
 
-  // Quick lead capture — minimal required fields, full invitation details
-  // get filled in later once the client is confirmed and pays.
-  const startNewLead = () => {
-    const today = new Date()
-    today.setMonth(today.getMonth() + 6)
-    setForm({
-      ...emptyForm,
-      pin: generatePin(),
-      project_status: 'lead',
-      wedding_date: today.toISOString().slice(0, 16),
-      slug: `lead-${Date.now().toString(36)}`,
-    })
-    setEditing('new')
-    setActiveTab('couples')
-  }
-
   const startEdit = (c: Couple) => {
     setForm({
       slug: c.slug,
@@ -833,22 +817,13 @@ export default function AdminPage() {
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={startNewLead} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '10px 16px', borderRadius: 10, border: '1px solid #cffafe', cursor: 'pointer',
-              background: '#ecfeff', color: '#0e7490', fontWeight: 600, fontSize: 13,
-            }}>
-              <Icon name="plus" size={14} color="#0e7490" /> New Lead
-            </button>
-            <button onClick={startNew} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13,
-            }}>
-              <Icon name="plus" size={14} color="#fff" /> New
-            </button>
-          </div>
+          <button onClick={startNew} style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13,
+          }}>
+            <Icon name="plus" size={14} color="#fff" /> New
+          </button>
         </div>
       </div>
 
