@@ -67,6 +67,7 @@ const emptyForm = {
   paid_amount: '',
   package_tier: '' as '' | 'starter' | 'premium' | 'luxury',
   admin_notes: '',
+  enable_guest_links: true,
 }
 
 const inputStyle: React.CSSProperties = {
@@ -676,6 +677,7 @@ export default function AdminPage() {
       paid_amount: (c as any).paid_amount != null ? String((c as any).paid_amount) : '',
       package_tier: ((c as any).package_tier ?? '') as '' | 'starter' | 'premium' | 'luxury',
       admin_notes: (c as any).admin_notes ?? '',
+      enable_guest_links: (c as any).enable_guest_links ?? true,
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -729,6 +731,7 @@ export default function AdminPage() {
       paid_amount: form.paid_amount ? parseFloat(form.paid_amount) : 0,
       package_tier: form.package_tier || null,
       admin_notes: form.admin_notes || null,
+      enable_guest_links: form.enable_guest_links,
     }
 
     let error
@@ -1224,6 +1227,21 @@ export default function AdminPage() {
                     background: form.show_seating ? '#4f46e5' : '#e2e8f0', position: 'relative',
                   }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: form.show_seating ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </button>
+                </div>
+
+                <div style={{ background: '#f0fdfa', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0f766e', marginBottom: 4 }}>
+                      <Icon name="link" size={14} color="#0f766e" /> Enable Guest Personalized Links
+                    </div>
+                    <div style={{ fontSize: 11, color: '#0d9488' }}>Lets the couple generate "Dear [Name]" links per guest. Turning this off also hides the Share tab on their dashboard.</div>
+                  </div>
+                  <button type="button" onClick={() => setForm({ ...form, enable_guest_links: !form.enable_guest_links })} style={{
+                    width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                    background: form.enable_guest_links ? '#0d9488' : '#e2e8f0', position: 'relative',
+                  }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: form.enable_guest_links ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
 
