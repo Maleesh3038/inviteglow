@@ -62,7 +62,11 @@ const emptyForm = {
   intro_text: '',
   cover_badge_text: '',
   cover_background_image: '',
-  project_status: 'ongoing' as 'sample' | 'ongoing' | 'complete',
+  project_status: 'ongoing' as 'lead' | 'sample' | 'ongoing' | 'complete',
+  payment_status: 'unpaid' as 'unpaid' | 'partial' | 'paid',
+  paid_amount: '',
+  package_tier: '' as '' | 'starter' | 'premium' | 'luxury',
+  admin_notes: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -559,7 +563,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'templates' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'sample' | 'ongoing' | 'complete'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
 
   const loadCouples = async () => {
     setLoading(true)
@@ -574,6 +578,22 @@ export default function AdminPage() {
 
   const startNew = () => {
     setForm({ ...emptyForm, pin: generatePin() })
+    setEditing('new')
+    setActiveTab('couples')
+  }
+
+  // Quick lead capture — minimal required fields, full invitation details
+  // get filled in later once the client is confirmed and pays.
+  const startNewLead = () => {
+    const today = new Date()
+    today.setMonth(today.getMonth() + 6)
+    setForm({
+      ...emptyForm,
+      pin: generatePin(),
+      project_status: 'lead',
+      wedding_date: today.toISOString().slice(0, 16),
+      slug: `lead-${Date.now().toString(36)}`,
+    })
     setEditing('new')
     setActiveTab('couples')
   }
@@ -651,7 +671,11 @@ export default function AdminPage() {
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
       cover_background_image: (c as any).cover_background_image ?? '',
-      project_status: ((c as any).project_status ?? 'ongoing') as 'sample' | 'ongoing' | 'complete',
+      project_status: ((c as any).project_status ?? 'ongoing') as 'lead' | 'sample' | 'ongoing' | 'complete',
+      payment_status: ((c as any).payment_status ?? 'unpaid') as 'unpaid' | 'partial' | 'paid',
+      paid_amount: (c as any).paid_amount != null ? String((c as any).paid_amount) : '',
+      package_tier: ((c as any).package_tier ?? '') as '' | 'starter' | 'premium' | 'luxury',
+      admin_notes: (c as any).admin_notes ?? '',
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -701,6 +725,10 @@ export default function AdminPage() {
       cover_badge_text: (form as any).cover_badge_text || null,
       cover_background_image: (form as any).cover_background_image || null,
       project_status: form.project_status || 'ongoing',
+      payment_status: form.payment_status || 'unpaid',
+      paid_amount: form.paid_amount ? parseFloat(form.paid_amount) : 0,
+      package_tier: form.package_tier || null,
+      admin_notes: form.admin_notes || null,
     }
 
     let error
@@ -746,8 +774,19 @@ export default function AdminPage() {
     const sampleCount = couples.filter(c => statusOf(c) === 'sample').length
     const ongoingCount = couples.filter(c => statusOf(c) === 'ongoing').length
     const completeCount = couples.filter(c => statusOf(c) === 'complete').length
-    const realCount = ongoingCount + completeCount // real client work, excludes samples
-    return { upcoming, totalRsvps, totalGuests, templateCounts, sampleCount, ongoingCount, completeCount, realCount }
+    const leadCount = couples.filter(c => statusOf(c) === 'lead').length
+    const realCount = ongoingCount + completeCount // real client work, excludes samples and leads
+    const totalRevenue = couples.reduce((s, c) => s + (Number((c as any).paid_amount) || 0), 0)
+    const PACKAGE_PRICES: Record<string, number> = { starter: 4000, premium: 6000, luxury: 14000 }
+    const pendingRevenue = couples.reduce((s, c) => {
+      const status = (c as any).payment_status || 'unpaid'
+      if (status === 'paid') return s
+      const tier = (c as any).package_tier as string | undefined
+      const expected = tier ? PACKAGE_PRICES[tier] || 0 : 0
+      const paid = Number((c as any).paid_amount) || 0
+      return s + Math.max(0, expected - paid)
+    }, 0)
+    return { upcoming, totalRsvps, totalGuests, templateCounts, sampleCount, ongoingCount, completeCount, leadCount, realCount, totalRevenue, pendingRevenue }
   }, [couples, allRsvps])
 
   const filteredCouples = useMemo(() => {
@@ -791,13 +830,22 @@ export default function AdminPage() {
             ))}
           </div>
 
-          <button onClick={startNew} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13,
-          }}>
-            <Icon name="plus" size={14} color="#fff" /> New
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={startNewLead} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '10px 16px', borderRadius: 10, border: '1px solid #cffafe', cursor: 'pointer',
+              background: '#ecfeff', color: '#0e7490', fontWeight: 600, fontSize: 13,
+            }}>
+              <Icon name="plus" size={14} color="#0e7490" /> New Lead
+            </button>
+            <button onClick={startNew} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13,
+            }}>
+              <Icon name="plus" size={14} color="#fff" /> New
+            </button>
+          </div>
         </div>
       </div>
 
@@ -834,6 +882,30 @@ export default function AdminPage() {
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>{stats.sampleCount}</div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Sample / Demo Projects</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 20 }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#cffafe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <Icon name="users" size={16} color="#0e7490" />
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{stats.leadCount}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Open Leads / Inquiries</div>
+              </div>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <Icon name="check" size={16} color="#16a34a" />
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>LKR {stats.totalRevenue.toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Revenue Collected</div>
+              </div>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <Icon name="calendar" size={16} color="#b45309" />
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>LKR {stats.pendingRevenue.toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>Pending Payments</div>
               </div>
             </div>
 
@@ -950,6 +1022,7 @@ export default function AdminPage() {
                 <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
                   {([
                     { key: 'all', label: 'All' },
+                    { key: 'lead', label: 'Leads' },
                     { key: 'ongoing', label: 'Ongoing' },
                     { key: 'complete', label: 'Complete' },
                     { key: 'sample', label: 'Sample' },
@@ -993,22 +1066,23 @@ export default function AdminPage() {
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Project Status</label>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {([
+                        { key: 'lead', label: 'Lead', color: '#0891b2' },
                         { key: 'ongoing', label: 'Ongoing', color: '#d97706' },
                         { key: 'complete', label: 'Complete', color: '#16a34a' },
                         { key: 'sample', label: 'Sample', color: '#6366f1' },
                       ] as const).map(s => (
                         <button key={s.key} type="button" onClick={() => setForm({ ...form, project_status: s.key })}
                           style={{
-                            flex: 1, padding: '10px 4px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                            flex: 1, minWidth: 70, padding: '10px 4px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                             border: form.project_status === s.key ? 'none' : '1px solid #e2e8f0',
                             background: form.project_status === s.key ? s.color : '#fff',
                             color: form.project_status === s.key ? '#fff' : '#475569',
                           }}>{s.label}</button>
                       ))}
                     </div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Sample = template demo, not a real client.</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Lead = inquiry, not yet confirmed. Sample = template demo.</div>
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Bride's Name *</label>
@@ -1057,6 +1131,60 @@ export default function AdminPage() {
 
                 <PhotoUploader value={(form as any).cover_background_image || ''} onChange={url => setForm({ ...form, cover_background_image: url } as any)}
                   label="Cover / Envelope Background Image" hint="Full-screen background behind the opening envelope. Best results: portrait, 9:16 ratio." />
+
+                {/* Payment / Package tracking */}
+                <div style={{ background: '#ecfeff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0e7490', marginBottom: 12 }}>
+                    Payment &amp; Package
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={labelStyle}>Package</label>
+                      <select style={inputStyle} value={form.package_tier} onChange={e => setForm({ ...form, package_tier: e.target.value as any })}>
+                        <option value="">Not set</option>
+                        <option value="starter">Starter (LKR 4,000)</option>
+                        <option value="premium">Premium (LKR 6,000)</option>
+                        <option value="luxury">Luxury (LKR 14,000)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Payment Status</label>
+                      <select style={inputStyle} value={form.payment_status} onChange={e => setForm({ ...form, payment_status: e.target.value as any })}>
+                        <option value="unpaid">Unpaid</option>
+                        <option value="partial">Partial</option>
+                        <option value="paid">Paid in Full</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Amount Paid (LKR)</label>
+                      <input type="number" style={inputStyle} placeholder="0" value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Internal admin notes — never shown to the couple */}
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Internal Notes (admin-only, never shown to the couple)</label>
+                  <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="e.g. Follow up after their engagement, prefers WhatsApp over calls..." value={form.admin_notes} onChange={e => setForm({ ...form, admin_notes: e.target.value })} />
+                </div>
+
+                {/* One-click WhatsApp confirmation */}
+                {(form.bride_phone || form.groom_phone) && (
+                  <div style={fieldWrap}>
+                    <a
+                      href={`https://wa.me/${(form.groom_phone || form.bride_phone).replace(/\D/g, '')}?text=${encodeURIComponent(
+                        `Hi ${form.groom || form.bride || 'there'}! This is InviteGlow. Thank you for reaching out about your wedding invitation${form.wedding_date ? ` for ${new Date(form.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}. We'll get started on your invitation and follow up shortly with next steps!`
+                      )}`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 8,
+                        background: '#25d366', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600,
+                      }}>
+                      Send WhatsApp Confirmation
+                    </a>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Opens WhatsApp with a ready-made confirmation message to send.</div>
+                  </div>
+                )}
 
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Dashboard PIN (4-digit)</label>
@@ -1185,7 +1313,7 @@ export default function AdminPage() {
                             )}
                             {(() => {
                               const status = ((c as any).project_status as string) || 'ongoing'
-                              const statusMeta = { sample: { label: 'Sample', color: '#6366f1' }, ongoing: { label: 'Ongoing', color: '#d97706' }, complete: { label: 'Complete', color: '#16a34a' } }[status] || { label: status, color: '#64748b' }
+                              const statusMeta = { lead: { label: 'Lead', color: '#0891b2' }, sample: { label: 'Sample', color: '#6366f1' }, ongoing: { label: 'Ongoing', color: '#d97706' }, complete: { label: 'Complete', color: '#16a34a' } }[status] || { label: status, color: '#64748b' }
                               return (
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, color: statusMeta.color, background: `${statusMeta.color}1a`, padding: '3px 10px', borderRadius: 100 }}>
                                   {statusMeta.label}
