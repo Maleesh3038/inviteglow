@@ -482,6 +482,12 @@ export default function CoupleDashboard() {
   useEffect(() => { loadData() }, [slug])
 
   useEffect(() => {
+    if (couple && (couple as any).enable_guest_links === false && activeTab === 'share') {
+      setActiveTab('overview')
+    }
+  }, [couple, activeTab])
+
+  useEffect(() => {
     if (!unlocked) return
     const interval = setInterval(loadData, 30000)
     return () => clearInterval(interval)
@@ -624,7 +630,7 @@ export default function CoupleDashboard() {
           </div>
 
           <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
-            {TABS.map(tab => (
+            {TABS.filter(tab => tab.key !== 'share' || (couple as any).enable_guest_links !== false).map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
                 border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
@@ -877,7 +883,7 @@ export default function CoupleDashboard() {
           )}
 
           {/* ── SHARE TAB ── */}
-          {activeTab === 'share' && (
+          {activeTab === 'share' && (couple as any).enable_guest_links !== false && (
             <motion.div key="share" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <GuestLinkGenerator couple={couple} accent={ACCENT} />
             </motion.div>
