@@ -805,7 +805,7 @@ export default function AdminPage() {
     const leadCount = couples.filter(c => statusOf(c) === 'lead').length
     const realCount = ongoingCount + completeCount // real client work, excludes samples and leads
     const totalRevenue = couples.reduce((s, c) => s + (Number((c as any).paid_amount) || 0), 0)
-    const PACKAGE_PRICES: Record<string, number> = { starter: 4000, premium: 6000, luxury: 14000 }
+    const PACKAGE_PRICES: Record<string, number> = { starter: 3000, premium: 5000, luxury: 8000 }
     const pendingRevenue = couples.reduce((s, c) => {
       const status = (c as any).payment_status || 'unpaid'
       if (status === 'paid') return s
@@ -1200,9 +1200,9 @@ export default function AdminPage() {
                       <label style={labelStyle}>Package</label>
                       <select style={inputStyle} value={form.package_tier} onChange={e => setForm({ ...form, package_tier: e.target.value as any })}>
                         <option value="">Not set</option>
-                        <option value="starter">Starter (LKR 4,000)</option>
-                        <option value="premium">Premium (LKR 6,000)</option>
-                        <option value="luxury">Luxury (LKR 14,000)</option>
+                        <option value="starter">Starter (LKR 3,000)</option>
+                        <option value="premium">Premium (LKR 5,000)</option>
+                        <option value="luxury">Luxury (LKR 8,000)</option>
                       </select>
                     </div>
                     <div>
