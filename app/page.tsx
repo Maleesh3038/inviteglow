@@ -26,7 +26,7 @@ const PLANS = [
 ]
 
 // ── Clean line-style SVG icons — no emoji on the homepage ──
-type IconName = 'check' | 'star' | 'arrow' | 'template' | 'users' | 'chair' | 'music' | 'external' | 'whatsapp' | 'menu' | 'x' | 'heart'
+type IconName = 'check' | 'star' | 'arrow' | 'template' | 'users' | 'chair' | 'music' | 'external' | 'whatsapp' | 'menu' | 'x' | 'heart' | 'facebook' | 'tiktok' | 'mail' | 'sparkles' | 'shield' | 'clock' | 'palette'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -42,8 +42,53 @@ function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { 
     case 'menu': return <svg {...c}><path d="M4 7h16M4 12h16M4 17h16" /></svg>
     case 'x': return <svg {...c}><path d="M6 6l12 12M18 6L6 18" /></svg>
     case 'heart': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 20.5s-7-4.4-9.4-8.8C.8 8.1 2.4 4.5 6 4.5c2 0 3.4 1.2 4.2 2.3.8-1.1 2.2-2.3 4.2-2.3 3.6 0 5.2 3.6 3.4 7.2C19 16.1 12 20.5 12 20.5z" /></svg>
+    case 'facebook': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.76 8.44-4.92 8.44-9.94z" /></svg>
+    case 'tiktok': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M16.6 5.82c-1.03-.9-1.65-2.16-1.72-3.57h-3.15v13.4c0 1.53-1.24 2.77-2.77 2.77a2.77 2.77 0 01-2.77-2.77 2.77 2.77 0 012.77-2.77c.28 0 .55.04.8.12V9.6a6.09 6.09 0 00-.8-.05c-3.32 0-6 2.68-6 6s2.68 6 6 6 6-2.68 6-6V9.4a9.14 9.14 0 005.36 1.72V8a5.5 5.5 0 01-3.72-2.18z" /></svg>
+    case 'mail': return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
+    case 'sparkles': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
+    case 'shield': return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+    case 'clock': return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>
+    case 'palette': return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a9 9 0 100 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-.8.7-1.5 1.5-1.5H16a4 4 0 004-4c0-4.4-3.6-8-8-8z" /><circle cx="7.5" cy="10.5" r="1" fill={color} /><circle cx="12" cy="7.5" r="1" fill={color} /><circle cx="16.5" cy="10.5" r="1" fill={color} /></svg>
     default: return null
   }
+}
+
+function Blossom({ size = 14, color }: { size?: number; color: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <g fill={color}>
+        <ellipse cx="12" cy="6" rx="3.2" ry="4.6" />
+        <ellipse cx="12" cy="18" rx="3.2" ry="4.6" />
+        <ellipse cx="6" cy="12" rx="4.6" ry="3.2" />
+        <ellipse cx="18" cy="12" rx="4.6" ry="3.2" />
+      </g>
+      <circle cx="12" cy="12" r="2.4" fill="#fff" opacity={0.8} />
+    </svg>
+  )
+}
+
+// Gentle falling petals across the whole site — pure CSS keyframes (not
+// React state/JS animation loops), so this costs nothing on re-render.
+function FallingPetals() {
+  const petals = [
+    { left: '4%', size: 13, delay: 0, dur: 13 },
+    { left: '16%', size: 9, delay: 3.2, dur: 16 },
+    { left: '30%', size: 15, delay: 6.5, dur: 12 },
+    { left: '46%', size: 10, delay: 1.5, dur: 15 },
+    { left: '60%', size: 14, delay: 5, dur: 14 },
+    { left: '74%', size: 9, delay: 2.2, dur: 17 },
+    { left: '86%', size: 13, delay: 8, dur: 13 },
+    { left: '94%', size: 10, delay: 4.5, dur: 15 },
+  ]
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 40, overflow: 'hidden' }}>
+      {petals.map((p, i) => (
+        <span key={i} className="hp-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
+          <Blossom size={p.size} color={ACCENT_LIGHT} />
+        </span>
+      ))}
+    </div>
+  )
 }
 
 function StarRating({ value, onChange, size = 22 }: { value: number; onChange?: (v: number) => void; size?: number }) {
@@ -164,7 +209,19 @@ export default function HomePage() {
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700;800&display=swap');
         html { scroll-behavior: smooth; }
         @media (max-width: 680px) { .nav-links { display: none; } }
+        .hp-petal {
+          position: absolute; top: -20px; opacity: 0; display: block;
+          animation-name: hp-fall; animation-timing-function: linear; animation-iteration-count: infinite;
+        }
+        @keyframes hp-fall {
+          0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+          8% { opacity: 0.6; }
+          92% { opacity: 0.5; }
+          100% { transform: translateY(110vh) translateX(34px) rotate(260deg); opacity: 0; }
+        }
       `}</style>
+
+      <FallingPetals />
 
       {/* ── NAV ── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 50, background: scrolled ? 'rgba(255,255,255,0.9)' : 'transparent', backdropFilter: scrolled ? 'blur(10px)' : 'none', borderBottom: scrolled ? '1px solid #e2e8f0' : '1px solid transparent', transition: 'all 0.2s' }}>
@@ -172,8 +229,10 @@ export default function HomePage() {
           <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: ACCENT }}>InviteGlow</div>
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
             <button onClick={() => scrollTo('templates')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Templates</button>
+            <button onClick={() => scrollTo('why-us')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Why Us</button>
             <button onClick={() => scrollTo('pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Pricing</button>
             <button onClick={() => scrollTo('reviews')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Reviews</button>
+            <button onClick={() => scrollTo('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Contact</button>
             <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 100,
               background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 13.5, fontWeight: 600,
@@ -288,6 +347,33 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* ── WHY CHOOSE US ── */}
+      <div id="why-us" style={{ maxWidth: 1100, margin: '0 auto', padding: '70px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 8 }}>Why InviteGlow</div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '2rem', color: '#0f172a', marginBottom: 10 }}>What Sets Us Apart</h2>
+          <p style={{ fontSize: 14, color: '#64748b', maxWidth: 500, margin: '0 auto' }}>We're not just another template site — here's what makes InviteGlow different.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
+          {[
+            { icon: 'palette' as const, title: 'Truly Custom, Not Just Templates', desc: 'Every invitation is tailored to your colors, photos, and story — not a one-size-fits-all form.' },
+            { icon: 'users' as const, title: 'Live RSVP Dashboard', desc: 'See who\'s attending in real time, with guest counts, seating, and preferences — no spreadsheets needed.' },
+            { icon: 'clock' as const, title: 'Fast Turnaround', desc: 'Most invitations are ready within 24–48 hours, so you\'re never rushing before the big day.' },
+            { icon: 'sparkles' as const, title: 'Sri Lankan-Made Designs', desc: 'Templates built with local weddings in mind — Poruwa ceremonies, homecomings, and Kandyan traditions included.' },
+            { icon: 'shield' as const, title: 'Affordable, No Hidden Fees', desc: 'Transparent pricing from LKR 3,000 — what you see is what you pay, with real support included.' },
+            { icon: 'whatsapp' as const, title: 'Real Human Support', desc: 'Message us directly on WhatsApp anytime — no ticket systems, no bots, just a real conversation.' },
+          ].map(f => (
+            <div key={f.title} style={{ background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 4px 20px rgba(15,23,42,0.05)', border: '1px solid #f1f5f9' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Icon name={f.icon} size={20} color={ACCENT} />
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{f.title}</div>
+              <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── PRICING ── */}
       <div id="pricing" style={{ maxWidth: 1100, margin: '0 auto', padding: '70px 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -354,21 +440,53 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── FOOTER CTA ── */}
-      <div style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, padding: '60px 24px', textAlign: 'center' }}>
+      {/* ── CONTACT US ── */}
+      <div id="contact" style={{ background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, padding: '60px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', fontWeight: 700, marginBottom: 10 }}>Contact Us</div>
         <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '2rem', color: '#fff', marginBottom: 12 }}>Ready to Begin Your Story?</h2>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 26 }}>Get your digital wedding invitation ready in as little as 24 hours.</p>
-        <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 32px', borderRadius: 100,
-          background: '#fff', color: ACCENT, textDecoration: 'none', fontSize: 14, fontWeight: 700,
-        }}>
-          <Icon name="whatsapp" size={16} color={ACCENT} /> Chat With Us on WhatsApp
-        </a>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 26 }}>Get your digital wedding invitation ready in as little as 24 hours. Reach out any time — we'd love to hear from you.</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 32px', borderRadius: 100,
+            background: '#fff', color: ACCENT, textDecoration: 'none', fontSize: 14, fontWeight: 700,
+          }}>
+            <Icon name="whatsapp" size={16} color={ACCENT} /> Chat With Us on WhatsApp
+          </a>
+          <a href="https://www.facebook.com/share/19xAgQX1c4/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 26px', borderRadius: 100,
+            background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600,
+          }}>
+            <Icon name="facebook" size={16} color="#fff" /> Follow on Facebook
+          </a>
+          <a href="https://www.tiktok.com/@invitvei1w8?_r=1&_t=ZS-981V9Ar9c3w" target="_blank" rel="noopener noreferrer" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 26px', borderRadius: 100,
+            background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600,
+          }}>
+            <Icon name="tiktok" size={16} color="#fff" /> Follow on TikTok
+          </a>
+        </div>
       </div>
 
       {/* ── FOOTER ── */}
-      <div style={{ padding: '32px 24px', textAlign: 'center', background: '#0f172a' }}>
-        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.5rem', color: ACCENT_LIGHT, marginBottom: 6 }}>InviteGlow</div>
+      <div style={{ padding: '40px 24px 32px', textAlign: 'center', background: '#0f172a' }}>
+        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.6rem', color: ACCENT_LIGHT, marginBottom: 14 }}>InviteGlow</div>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 18 }}>
+          <a href="https://www.facebook.com/share/19xAgQX1c4/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{
+            width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+          }}>
+            <Icon name="facebook" size={17} color="rgba(255,255,255,0.7)" />
+          </a>
+          <a href="https://www.tiktok.com/@invitvei1w8?_r=1&_t=ZS-981V9Ar9c3w" target="_blank" rel="noopener noreferrer" aria-label="TikTok" style={{
+            width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+          }}>
+            <Icon name="tiktok" size={17} color="rgba(255,255,255,0.7)" />
+          </a>
+          <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{
+            width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+          }}>
+            <Icon name="whatsapp" size={17} color="rgba(255,255,255,0.7)" />
+          </a>
+        </div>
         <div style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Digital Wedding Invitations, Made in Sri Lanka</div>
       </div>
 
