@@ -1,5 +1,6 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
@@ -15,6 +16,70 @@ const DEFAULT_PALETTE = {
   dark: "#2d2424",
   cream: "#faf6f4",
   muted: "#a89888",
+}
+
+// ── Guest intro screen — "Dear [Name]," shown for ~5s before the cover,
+// styled to match this template's warm frosted-glass aesthetic. Only
+// appears when the invite link includes ?name=..., and can be turned off
+// entirely from admin via couple.show_guest_intro (defaults to on). ──
+function GuestIntroScreen({ guestName, onDone, primary, dark, cream }: {
+  guestName: string; onDone: () => void; primary: string; dark: string; cream: string
+}) {
+  return (
+    <motion.div
+      key="intro"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, ease: "easeInOut" }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        background: `radial-gradient(ellipse 80% 60% at 30% 20%, #2a1810 0%, #14100e 45%, #0a0807 100%)`,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "2rem", overflow: "hidden",
+      }}
+    >
+      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primary}33, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
+
+      <motion.div
+        initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }}
+        transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+        style={{
+          width: 76, height: 76, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1,
+          background: "rgba(255,255,255,0.08)", backdropFilter: "blur(6px)", border: `1.5px solid ${primary}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <span style={{ fontSize: 30 }}>💌</span>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
+        style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 300, fontSize: "clamp(1.8rem,6.5vw,2.6rem)", color: "#fff", lineHeight: 1.2 }}>
+          Dear <span style={{ color: primary, fontWeight: 500 }}>{guestName}</span>,
+        </div>
+      </motion.div>
+
+      <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }}
+        style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)`, margin: "0 auto 1rem" }} />
+
+      <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
+        style={{ fontSize: 10, textTransform: "uppercase", color: "rgba(255,255,255,0.55)", fontFamily: "'Inter',sans-serif" }}>
+        You're Invited
+      </motion.div>
+
+      <motion.div
+        style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,#d4524a,#e0a23a)`, borderRadius: 100 }}
+        initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }}
+        onAnimationComplete={onDone}
+      />
+
+      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 2 }}
+        onClick={onDone}
+        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
+        Skip →
+      </motion.button>
+    </motion.div>
+  )
 }
 
 // ── Countdown — circular style ──
@@ -110,8 +175,8 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP — name → guest count → drinking (optional) → done ──
-function RSVP({ coupleId, askDrinking, primary }: { coupleId: string; askDrinking: boolean; primary: string }) {
-  const [name, setName] = useState("")
+function RSVP({ coupleId, askDrinking, primary, guestName }: { coupleId: string; askDrinking: boolean; primary: string; guestName: string }) {
+  const [name, setName] = useState(guestName || "")
   const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes")
@@ -217,6 +282,18 @@ const sectionEyebrowStyle = (primary: string): React.CSSProperties => ({ fontSiz
 const sectionTitleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
 export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#e8ddd4" }} />}>
+      <ElegantPhotoInner couple={couple} />
+    </Suspense>
+  )
+}
+
+function ElegantPhotoInner({ couple }: { couple: Couple }) {
+  const searchParams = useSearchParams()
+  const guestName = searchParams?.get('name') || ''
+  const introEnabled = (couple as any).show_guest_intro !== false
+  const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
   const audioRef = useState<{ current: HTMLAudioElement | null }>({ current: null })[0]
 
@@ -241,9 +318,6 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
   }
 
-  // ── Derive the events list to render: prefer the new couple.events object,
-  // fall back to the legacy single wedding_date/venue columns if a couple
-  // hasn't been re-saved through the updated admin form yet. ──
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' },
     wedding: { label: 'Wedding Ceremony', icon: '👰' },
@@ -270,8 +344,6 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
         ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
         : [])
 
-  // Section visibility — defaults to showing everything for couples saved
-  // before this feature existed.
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true,
     countdown: couple.section_visibility?.countdown ?? true,
@@ -315,6 +387,13 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
         }
         input::placeholder { color: #a89888; }
       `}</style>
+
+      {/* ══ GUEST INTRO SCREEN ══ */}
+      <AnimatePresence>
+        {showIntro && guestName && (
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} dark={DARK} cream={CREAM} />
+        )}
+      </AnimatePresence>
 
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 100px rgba(0,0,0,0.12)", position: "relative", borderRadius: 0, overflow: "hidden" }}>
 
@@ -367,7 +446,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
 
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
                 style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "0.8rem" }}>
-                You Are Invited
+                {guestName ? `Dear ${guestName}` : 'You Are Invited'}
               </motion.div>
 
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.7 }}
@@ -524,7 +603,7 @@ export default function ElegantPhotoTemplate({ couple }: { couple: Couple }) {
 
             {/* RSVP */}
             <div id="rsvp" style={{ margin: "0 16px 16px", borderRadius: 22, overflow: "hidden" }}>
-              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} />
+              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} guestName={guestName} />
             </div>
 
             {/* Seat finder */}
