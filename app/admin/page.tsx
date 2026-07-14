@@ -96,7 +96,7 @@ async function uploadToStorage(file: File, folder: string): Promise<string | nul
 }
 
 // ── Clean line-style SVG icons — no emoji anywhere in this admin ──
-type IconName = 'grid' | 'users' | 'template' | 'star' | 'chart' | 'calendar' | 'check' | 'cross' | 'camera' | 'music' | 'plus' | 'trash' | 'edit' | 'link' | 'external' | 'lock' | 'chair' | 'wine' | 'search' | 'x' | 'dice'
+type IconName = 'grid' | 'users' | 'template' | 'star' | 'chart' | 'calendar' | 'check' | 'cross' | 'camera' | 'music' | 'plus' | 'trash' | 'edit' | 'link' | 'external' | 'lock' | 'chair' | 'wine' | 'search' | 'x' | 'dice' | 'tag'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -121,6 +121,7 @@ function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { 
     case 'search': return <svg {...c}><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>
     case 'x': return <svg {...c}><path d="M6 6l12 12M18 6L6 18" /></svg>
     case 'dice': return <svg {...c}><rect x="4" y="4" width="16" height="16" rx="3" /><circle cx="9" cy="9" r="1" fill={color} /><circle cx="15" cy="9" r="1" fill={color} /><circle cx="9" cy="15" r="1" fill={color} /><circle cx="15" cy="15" r="1" fill={color} /><circle cx="12" cy="12" r="1" fill={color} /></svg>
+    case 'tag': return <svg {...c}><path d="M20.5 12.5L12.5 20.5a2 2 0 01-2.8 0l-6.2-6.2a2 2 0 010-2.8l8-8H18a2.5 2.5 0 012.5 2.5v6z" /><circle cx="15" cy="8.5" r="1.4" fill={color} /></svg>
     default: return null
   }
 }
@@ -313,6 +314,140 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
 }
 
 // ── Pending Reviews Manager ──
+// ── Pricing Plans Manager — lets admin edit prices, tags, and feature
+// lists for the 3 pricing tiers shown on the public homepage. ──
+type PricingPlan = { id: string; name: string; price: number; tag: string; features: string[]; color: string; display_order: number }
+
+const DEFAULT_SEED_PLANS: Omit<PricingPlan, 'id'>[] = [
+  { name: 'Starter', price: 3000, tag: '', features: ['1 template of your choice', 'RSVP tracking & guest list', 'Couple dashboard', 'Countdown timer', 'Up to 100 guests'], color: '#94a3b8', display_order: 0 },
+  { name: 'Premium', price: 5000, tag: 'Most Popular', features: ['Everything in Starter', 'Guest personalised links ("Dear [Name]")', 'Photo gallery + background music', 'Link valid for 1 year', 'Unlimited guests'], color: '#c4607a', display_order: 1 },
+  { name: 'Luxury', price: 8000, tag: '', features: ['Everything in Premium', 'Lifetime link — never expires', 'Guest Wishes & Messages wall', 'Full custom design & colors', 'Priority support'], color: '#8a6a2a', display_order: 2 },
+]
+
+function PricingManager() {
+  const [plans, setPlans] = useState<PricingPlan[]>([])
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [seeding, setSeeding] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    const { data, error } = await supabase.from('pricing_plans').select('*').order('display_order', { ascending: true })
+    if (!error && data) setPlans(data as PricingPlan[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const seedDefaults = async () => {
+    setSeeding(true)
+    const { error } = await supabase.from('pricing_plans').insert(DEFAULT_SEED_PLANS)
+    setSeeding(false)
+    if (!error) load()
+  }
+
+  const updatePlan = (id: string, field: keyof PricingPlan, value: any) => {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+  }
+  const updateFeature = (id: string, idx: number, value: string) => {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, features: p.features.map((f, i) => i === idx ? value : f) } : p))
+  }
+  const addFeature = (id: string) => {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, features: [...p.features, ''] } : p))
+  }
+  const removeFeature = (id: string, idx: number) => {
+    setPlans(prev => prev.map(p => p.id === id ? { ...p, features: p.features.filter((_, i) => i !== idx) } : p))
+  }
+
+  const savePlan = async (plan: PricingPlan) => {
+    setSavingId(plan.id)
+    setMessage('')
+    const { error } = await supabase.from('pricing_plans').update({
+      name: plan.name, price: plan.price, tag: plan.tag || null,
+      features: plan.features.filter(f => f.trim()), color: plan.color, display_order: plan.display_order,
+    }).eq('id', plan.id)
+    setSavingId(null)
+    setMessage(error ? 'Error: ' + error.message : 'Saved! Changes are live on the homepage.')
+  }
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
+
+  if (plans.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: 60, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+        <div style={{ fontSize: 14, color: '#475569', marginBottom: 16 }}>No pricing plans set up yet.</div>
+        <button onClick={seedDefaults} disabled={seeding} style={{
+          padding: '12px 24px', borderRadius: 10, border: 'none', cursor: 'pointer',
+          background: 'linear-gradient(135deg,#6366f1,#a5b4fc)', color: '#fff', fontWeight: 600, fontSize: 14, opacity: seeding ? 0.6 : 1,
+        }}>
+          {seeding ? 'Setting up...' : 'Create Starter / Premium / Luxury'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+        Changes here update the pricing shown on the public homepage in real time.
+      </div>
+      {message && <div style={{ marginBottom: 16, fontSize: 13, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
+      <div style={{ display: 'grid', gap: 16 }}>
+        {plans.map(plan => (
+          <div key={plan.id} style={{ background: '#fff', borderRadius: 16, padding: 22, border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Plan Name</label>
+                <input value={plan.name} onChange={e => updatePlan(plan.id, 'name', e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Price (LKR)</label>
+                <input type="number" value={plan.price} onChange={e => updatePlan(plan.id, 'price', parseFloat(e.target.value) || 0)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Badge Tag (optional)</label>
+                <input value={plan.tag} onChange={e => updatePlan(plan.id, 'tag', e.target.value)} placeholder="e.g. Most Popular"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+
+            <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>Features</label>
+            <div style={{ display: 'grid', gap: 8, marginBottom: 10 }}>
+              {plan.features.map((f, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8 }}>
+                  <input value={f} onChange={e => updateFeature(plan.id, i, e.target.value)}
+                    style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                  <button onClick={() => removeFeature(plan.id, i)} aria-label="Remove feature" style={{
+                    width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#fee2e2', color: '#dc2626',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}><Icon name="x" size={13} color="#dc2626" /></button>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => addFeature(plan.id)} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: '1px solid #e2e8f0',
+              background: '#f8fafc', cursor: 'pointer', fontSize: 12.5, color: '#475569', fontWeight: 500, marginBottom: 16,
+            }}>
+              <Icon name="plus" size={12} /> Add Feature
+            </button>
+
+            <button onClick={() => savePlan(plan)} disabled={savingId === plan.id} style={{
+              padding: '10px 22px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg,#6366f1,#a5b4fc)', color: '#fff', fontWeight: 600, fontSize: 13,
+              opacity: savingId === plan.id ? 0.6 : 1,
+            }}>
+              {savingId === plan.id ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PendingReviewsManager() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
@@ -551,6 +686,7 @@ const NAV_TABS = [
   { key: 'overview', label: 'Overview', icon: 'grid' as const },
   { key: 'couples', label: 'Couples', icon: 'users' as const },
   { key: 'templates', label: 'Templates', icon: 'template' as const },
+  { key: 'pricing', label: 'Pricing', icon: 'tag' as const },
   { key: 'reviews', label: 'Reviews', icon: 'star' as const },
 ]
 
@@ -562,7 +698,7 @@ export default function AdminPage() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'templates' | 'reviews'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'templates' | 'pricing' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
 
@@ -1070,6 +1206,8 @@ export default function AdminPage() {
         )}
 
         {/* ── REVIEWS TAB ── */}
+        {activeTab === 'pricing' && <PricingManager />}
+
         {activeTab === 'reviews' && <PendingReviewsManager />}
 
         {/* ── COUPLES TAB ── */}
