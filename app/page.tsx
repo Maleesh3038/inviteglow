@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Review } from '@/lib/supabase'
 
 const ACCENT = "#c4607a"
@@ -245,6 +246,18 @@ export default function HomePage() {
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700;800&display=swap');
         html { scroll-behavior: smooth; }
         @media (max-width: 680px) { .nav-links { display: none; } }
+        .nav-mobile-toggle { display: none; }
+        @media (max-width: 680px) {
+          .nav-mobile-toggle { display: flex !important; }
+        }
+        .hero-grid { grid-template-columns: 1.1fr 0.9fr; }
+        @media (max-width: 800px) {
+          .hero-grid { grid-template-columns: 1fr !important; padding-top: 40px !important; }
+          .hero-collage { display: none; }
+        }
+        @media (max-width: 480px) {
+          #templates, #pricing, #reviews, #why-us { padding-left: 16px !important; padding-right: 16px !important; }
+        }
         .hp-petal {
           position: absolute; top: -20px; opacity: 0; display: block;
           animation-name: hp-fall; animation-timing-function: linear; animation-iteration-count: infinite;
@@ -263,7 +276,7 @@ export default function HomePage() {
       <FallingPetals />
 
       {/* ── NAV ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 50, background: scrolled ? 'rgba(255,255,255,0.9)' : 'transparent', backdropFilter: scrolled ? 'blur(10px)' : 'none', borderBottom: scrolled ? '1px solid #e2e8f0' : '1px solid transparent', transition: 'all 0.2s' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 50, background: (scrolled || menuOpen) ? 'rgba(255,255,255,0.96)' : 'transparent', backdropFilter: (scrolled || menuOpen) ? 'blur(10px)' : 'none', borderBottom: (scrolled || menuOpen) ? '1px solid #e2e8f0' : '1px solid transparent', transition: 'all 0.2s' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: ACCENT }}>InviteGlow</div>
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
@@ -277,14 +290,48 @@ export default function HomePage() {
               background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 13.5, fontWeight: 600,
             }}>Get Started</a>
           </div>
-          <button onClick={() => setMenuOpen(!menuOpen)} style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer' }} className="nav-links-mobile-toggle">
-            <Icon name={menuOpen ? 'x' : 'menu'} size={22} color="#1e293b" />
+          <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" className="nav-mobile-toggle" style={{
+            background: menuOpen ? '#fdf2f8' : 'transparent', border: 'none', cursor: 'pointer',
+            width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name={menuOpen ? 'x' : 'menu'} size={22} color={menuOpen ? ACCENT : '#1e293b'} />
           </button>
         </div>
+
+        {/* Mobile dropdown panel */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              className="nav-mobile-panel"
+              initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden', background: '#fff', borderTop: '1px solid #f1f5f9' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', padding: '8px 24px 20px' }}>
+                {[
+                  { label: 'Templates', id: 'templates' },
+                  { label: 'Why Us', id: 'why-us' },
+                  { label: 'Pricing', id: 'pricing' },
+                  { label: 'Reviews', id: 'reviews' },
+                  { label: 'Contact', id: 'contact' },
+                ].map(item => (
+                  <button key={item.id} onClick={() => scrollTo(item.id)} style={{
+                    background: 'none', border: 'none', borderBottom: '1px solid #f8fafc', cursor: 'pointer',
+                    fontSize: 15, fontWeight: 500, color: '#334155', textAlign: 'left', padding: '14px 4px',
+                  }}>{item.label}</button>
+                ))}
+                <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 20px', borderRadius: 100, marginTop: 16,
+                  background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600,
+                }}>Get Started</a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── HERO ── */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '60px 24px 40px', display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 40, alignItems: 'center' }}>
+      <div className="hero-grid" style={{ maxWidth: 1100, margin: '0 auto', padding: '60px 24px 40px', display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 40, alignItems: 'center' }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: '#fdf2f8', border: `1px solid ${ACCENT_LIGHT}`, fontSize: 12, fontWeight: 600, color: ACCENT, marginBottom: 20 }}>
             <Icon name="heart" size={12} color={ACCENT} /> Digital Wedding Invitations, Made Beautiful
@@ -330,7 +377,7 @@ export default function HomePage() {
         </div>
 
         {/* Hero collage */}
-        <div style={{ position: 'relative', height: 420 }}>
+        <div className="hero-collage" style={{ position: 'relative', height: 420 }}>
           {TEMPLATES.filter(t => t.photo).slice(0, 3).map((t, i) => (
             <div key={t.id} style={{
               position: 'absolute', width: 200, borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 50px rgba(15,23,42,0.18)',
