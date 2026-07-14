@@ -11,7 +11,7 @@ const TEMPLATES = [
   { id: 'blush-blossom', name: 'Blush Blossom', tag: 'New', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
   { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.jpg', demoSlug: 'sheneli-kevin', color: '#c9a06e' },
   { id: 'cinematic-gold', name: 'Cinematic Gold', tag: 'Premium', photo: '/images/hero-cinematic.png', demoSlug: 'imesha-pasan', color: '#c9a96e' },
-  { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', demoSlug: 'sandunika-geeth', color: '#c4956a' },
+  { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', video: '/videos/sacred-poruwa-cover.mp4', demoSlug: 'sandunika-geeth', color: '#c4956a' },
   { id: 'kandyan-heritage', name: 'Kandyan Heritage', tag: 'Sri Lankan', photo: '/images/hero-kandyan.png', demoSlug: 'irudaka-sachini', color: '#d4923f' },
   { id: 'traditional-ceylon', name: 'Traditional Ceylon', tag: 'Kandyan Culture', photo: '/images/hero-traditional-ceylon.png', demoSlug: 'maheshi-dilip', color: '#2f4a35' },
   { id: 'golden-garden', name: 'Golden Garden', tag: 'Floral Arch', photo: '/images/hero-golden-garden.png', demoSlug: 'sanjeewani-lalith', color: '#d4a857' },
@@ -166,18 +166,30 @@ function ReviewForm() {
   )
 }
 
-function TemplateCardImage({ photo, name, color }: { photo: string; name: string; color: string }) {
-  const [failed, setFailed] = useState(false)
+function TemplateCardImage({ photo, video, name, color }: { photo: string; video?: string; name: string; color: string }) {
+  const [photoFailed, setPhotoFailed] = useState(false)
+  const [videoFailed, setVideoFailed] = useState(false)
+  const showVideo = !!video && !videoFailed
+  const showPhoto = !showVideo && !!photo && !photoFailed
+  const showIcon = !showVideo && !showPhoto
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: `linear-gradient(135deg,${color}33,${color}77)` }}>
-      {(!photo || failed) && (
+      {showIcon && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="template" size={32} color={color} />
         </div>
       )}
-      {photo && !failed && (
+      {showPhoto && (
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={photo} alt={name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setFailed(true)} />
+        <img src={photo} alt={name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setPhotoFailed(true)} />
+      )}
+      {showVideo && (
+        <video
+          src={video} autoPlay muted loop playsInline
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={() => setVideoFailed(true)}
+        />
       )}
     </div>
   )
@@ -412,7 +424,7 @@ export default function HomePage() {
           {TEMPLATES.map(t => (
             <div key={t.id} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(15,23,42,0.06)', border: '1px solid #f1f5f9' }}>
               <div style={{ height: 200, position: 'relative' }}>
-                <TemplateCardImage photo={t.photo} name={t.name} color={t.color} />
+                <TemplateCardImage photo={t.photo} video={(t as any).video} name={t.name} color={t.color} />
                 <div style={{ position: 'absolute', top: 10, right: 10, background: t.color, color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: 100, zIndex: 2 }}>{t.tag}</div>
               </div>
               <div style={{ padding: '16px 18px' }}>
