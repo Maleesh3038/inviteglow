@@ -187,8 +187,14 @@ export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [plans, setPlans] = useState(DEFAULT_PLANS)
+  const [completedCount, setCompletedCount] = useState<number | null>(null)
 
   useEffect(() => {
+    const loadCompletedCount = async () => {
+      const { count } = await supabase.from('couples').select('id', { count: 'exact', head: true }).eq('project_status', 'complete')
+      if (typeof count === 'number') setCompletedCount(count)
+    }
+
     const load = async () => {
       const { data } = await supabase.from('reviews').select('*').eq('status', 'approved').order('created_at', { ascending: false }).limit(9)
       if (data) setReviews(data as Review[])
@@ -204,11 +210,26 @@ export default function HomePage() {
           color: p.color || ACCENT, display_order: p.display_order ?? 0,
         })))
       }
+
+      await loadCompletedCount()
     }
     load()
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
+
+    // Live-update the completed projects count whenever admin marks a
+    // couple as complete (or adds/removes one) — no page refresh needed.
+    const channel = supabase
+      .channel('completed-projects-count')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'couples' }, () => {
+        loadCompletedCount()
+      })
+      .subscribe()
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const scrollTo = (id: string) => {
@@ -233,6 +254,9 @@ export default function HomePage() {
           8% { opacity: 0.6; }
           92% { opacity: 0.5; }
           100% { transform: translateY(110vh) translateX(34px) rotate(260deg); opacity: 0; }
+        }
+        @keyframes live-ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
 
@@ -286,11 +310,21 @@ export default function HomePage() {
               See Pricing
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 32, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <StarRating value={5} size={16} />
               <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{avgRating}</span>
             </div>
+            {completedCount !== null && completedCount > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ position: 'relative', display: 'flex', width: 8, height: 8 }}>
+                  <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#16a34a', animation: 'live-ping 1.8s cubic-bezier(0,0,0.2,1) infinite' }} />
+                  <span style={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', background: '#16a34a' }} />
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{completedCount}+</span>
+                <span style={{ fontSize: 13, color: '#94a3b8' }}>weddings created</span>
+              </div>
+            )}
             <div style={{ fontSize: 13, color: '#94a3b8' }}>{reviews.length > 0 ? `${reviews.length}+ happy couples` : 'Loved by couples across Sri Lanka'}</div>
           </div>
         </div>
