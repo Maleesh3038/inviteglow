@@ -189,6 +189,16 @@ export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
   const [plans, setPlans] = useState(DEFAULT_PLANS)
   const [completedCount, setCompletedCount] = useState<number | null>(null)
+  // Tracked in JS (not just CSS media queries) so the mobile nav is
+  // guaranteed to work regardless of any viewport-meta or CSS caching issues.
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkWidth = () => setIsMobile(window.innerWidth <= 680)
+    checkWidth()
+    window.addEventListener('resize', checkWidth)
+    return () => window.removeEventListener('resize', checkWidth)
+  }, [])
 
   useEffect(() => {
     const loadCompletedCount = async () => {
@@ -245,11 +255,6 @@ export default function HomePage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700;800&display=swap');
         html { scroll-behavior: smooth; }
-        @media (max-width: 680px) { .nav-links { display: none; } }
-        .nav-mobile-toggle { display: none; }
-        @media (max-width: 680px) {
-          .nav-mobile-toggle { display: flex !important; }
-        }
         .hero-grid { grid-template-columns: 1.1fr 0.9fr; }
         @media (max-width: 800px) {
           .hero-grid { grid-template-columns: 1fr !important; padding-top: 40px !important; }
@@ -279,23 +284,27 @@ export default function HomePage() {
       <div style={{ position: 'sticky', top: 0, zIndex: 50, background: (scrolled || menuOpen) ? 'rgba(255,255,255,0.96)' : 'transparent', backdropFilter: (scrolled || menuOpen) ? 'blur(10px)' : 'none', borderBottom: (scrolled || menuOpen) ? '1px solid #e2e8f0' : '1px solid transparent', transition: 'all 0.2s' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: ACCENT }}>InviteGlow</div>
-          <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-            <button onClick={() => scrollTo('templates')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Templates</button>
-            <button onClick={() => scrollTo('why-us')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Why Us</button>
-            <button onClick={() => scrollTo('pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Pricing</button>
-            <button onClick={() => scrollTo('reviews')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Reviews</button>
-            <button onClick={() => scrollTo('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Contact</button>
-            <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 100,
-              background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 13.5, fontWeight: 600,
-            }}>Get Started</a>
-          </div>
-          <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" className="nav-mobile-toggle" style={{
-            background: menuOpen ? '#fdf2f8' : 'transparent', border: 'none', cursor: 'pointer',
-            width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name={menuOpen ? 'x' : 'menu'} size={22} color={menuOpen ? ACCENT : '#1e293b'} />
-          </button>
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+              <button onClick={() => scrollTo('templates')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Templates</button>
+              <button onClick={() => scrollTo('why-us')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Why Us</button>
+              <button onClick={() => scrollTo('pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Pricing</button>
+              <button onClick={() => scrollTo('reviews')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Reviews</button>
+              <button onClick={() => scrollTo('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Contact</button>
+              <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 100,
+                background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 13.5, fontWeight: 600,
+              }}>Get Started</a>
+            </div>
+          )}
+          {isMobile && (
+            <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" style={{
+              background: menuOpen ? '#fdf2f8' : 'transparent', border: 'none', cursor: 'pointer',
+              width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <Icon name={menuOpen ? 'x' : 'menu'} size={22} color={menuOpen ? ACCENT : '#1e293b'} />
+            </button>
+          )}
         </div>
 
         {/* Mobile dropdown panel */}
