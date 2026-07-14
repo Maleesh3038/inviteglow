@@ -566,6 +566,47 @@ export default function AdminPage() {
   const [coupleSearch, setCoupleSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
 
+  // ── Admin password gate ──
+  // The real password is checked server-side (app/api/admin-auth/route.ts)
+  // against process.env.ADMIN_PASSWORD, so it never ships in the client
+  // bundle. Once unlocked, we remember it for this browser tab only
+  // (sessionStorage) so a refresh doesn't force re-entry every time.
+  const [unlocked, setUnlocked] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [authChecking, setAuthChecking] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('inviteglow_admin_unlocked') === '1') {
+      setUnlocked(true)
+    }
+    setCheckingSession(false)
+  }, [])
+
+  const checkPassword = async () => {
+    if (!passwordInput.trim()) return
+    setAuthChecking(true)
+    setAuthError('')
+    try {
+      const res = await fetch('/api/admin-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setUnlocked(true)
+        sessionStorage.setItem('inviteglow_admin_unlocked', '1')
+      } else {
+        setAuthError(data.error || 'Incorrect password. Please try again.')
+      }
+    } catch {
+      setAuthError('Could not verify password — please try again.')
+    }
+    setAuthChecking(false)
+  }
+
   const loadCouples = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('couples').select('*').order('created_at', { ascending: false })
@@ -787,6 +828,45 @@ export default function AdminPage() {
     }
     return result
   }, [couples, coupleSearch, statusFilter])
+
+  if (checkingSession) {
+    return <div style={{ minHeight: '100vh', background: '#f6f7fb' }} />
+  }
+
+  if (!unlocked) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6f7fb', fontFamily: "'Inter',sans-serif", padding: 24 }}>
+        <div style={{ background: '#fff', borderRadius: 20, padding: '2.5rem 2rem', maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 8px 32px rgba(15,23,42,0.1)' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: `${ACCENT}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <Icon name="lock" size={24} color={ACCENT} />
+          </div>
+          <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: ACCENT, marginBottom: 4 }}>InviteGlow</div>
+          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24 }}>Enter the admin password to continue</div>
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={e => { setPasswordInput(e.target.value); setAuthError('') }}
+            onKeyDown={e => e.key === 'Enter' && checkPassword()}
+            placeholder="Password"
+            autoFocus
+            style={{
+              width: '100%', padding: '14px 16px', borderRadius: 12, textAlign: 'center',
+              fontSize: 15, border: `2px solid ${authError ? '#dc2626' : '#e2e8f0'}`,
+              outline: 'none', marginBottom: 12, fontFamily: "'Inter',sans-serif", color: '#1e293b', boxSizing: 'border-box',
+            }}
+          />
+          {authError && <div style={{ color: '#dc2626', fontSize: 12, marginBottom: 12 }}>{authError}</div>}
+          <button onClick={checkPassword} disabled={authChecking} style={{
+            width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 14,
+            opacity: authChecking ? 0.6 : 1,
+          }}>
+            {authChecking ? 'Checking...' : 'Unlock Admin'}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f6f7fb', fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
