@@ -11,7 +11,7 @@ const TEMPLATES = [
   { id: 'blush-blossom', name: 'Blush Blossom', tag: 'New', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
   { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.jpg', demoSlug: 'sheneli-kevin', color: '#c9a06e' },
   { id: 'cinematic-gold', name: 'Cinematic Gold', tag: 'Premium', photo: '/images/hero-cinematic.png', demoSlug: 'imesha-pasan', color: '#c9a96e' },
-  { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', video: '/videos/sacred-poruwa-cover.mp4', demoSlug: 'sandunika-geeth', color: '#c4956a' },
+  { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', video: '/videos/sacred-poruwa-cover.mp4', demoSlug: 'geeth-sandunika', color: '#c4956a' },
   { id: 'kandyan-heritage', name: 'Kandyan Heritage', tag: 'Sri Lankan', photo: '/images/hero-kandyan.png', demoSlug: 'irudaka-sachini', color: '#d4923f' },
   { id: 'traditional-ceylon', name: 'Traditional Ceylon', tag: 'Kandyan Culture', photo: '/images/hero-traditional-ceylon.png', demoSlug: 'maheshi-dilip', color: '#2f4a35' },
   { id: 'golden-garden', name: 'Golden Garden', tag: 'Floral Arch', photo: '/images/hero-golden-garden.png', demoSlug: 'sanjeewani-lalith', color: '#d4a857' },
@@ -169,9 +169,21 @@ function ReviewForm() {
 function TemplateCardImage({ photo, video, name, color }: { photo: string; video?: string; name: string; color: string }) {
   const [photoFailed, setPhotoFailed] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const showVideo = !!video && !videoFailed
   const showPhoto = !showVideo && !!photo && !photoFailed
   const showIcon = !showVideo && !showPhoto
+
+  useEffect(() => {
+    // React's `muted` JSX prop doesn't reliably set the actual DOM property
+    // in time for autoplay to be allowed — setting it imperatively via ref
+    // (the standard fix for this well-known React/video quirk) does.
+    const v = videoRef.current
+    if (v && showVideo) {
+      v.muted = true
+      v.play().catch(() => {})
+    }
+  }, [showVideo, video])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: `linear-gradient(135deg,${color}33,${color}77)` }}>
@@ -186,7 +198,8 @@ function TemplateCardImage({ photo, video, name, color }: { photo: string; video
       )}
       {showVideo && (
         <video
-          src={video} autoPlay muted loop playsInline
+          ref={videoRef}
+          src={video} autoPlay muted loop playsInline preload="auto"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           onError={() => setVideoFailed(true)}
         />
