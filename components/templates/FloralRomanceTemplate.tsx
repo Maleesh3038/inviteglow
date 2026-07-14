@@ -1,5 +1,6 @@
 "use client"
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
@@ -57,6 +58,67 @@ function LotusDecoration({ color, size = 90, opacity = 0.75 }: { color: string; 
       <line x1="64" y1="90" x2="66" y2="83" stroke="#e8c038" strokeWidth="0.7" opacity="0.8"/>
       <circle cx="66" cy="82" r="1.2" fill="#f0d050"/>
     </svg>
+  )
+}
+
+// ── Guest intro screen — "Dear [Name]," shown for ~5s before the cover,
+// styled to match this template's pink/lotus aesthetic. Only appears when
+// the invite link includes ?name=..., and can be turned off entirely from
+// admin via couple.show_guest_intro (defaults to on). ──
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+}) {
+  return (
+    <motion.div
+      key="intro"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, ease: "easeInOut" }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        background: `linear-gradient(160deg, ${cream} 0%, #fdf5f7 40%, ${cream} 100%)`,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "2rem", overflow: "hidden",
+      }}
+    >
+      <div style={{ position: "absolute", width: 280, height: 280, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}44, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
+
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0, rotate: -15 }}
+        animate={{ scale: [0.3, 1.1, 1], opacity: 1, rotate: [-15, 4, 0] }}
+        transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+        style={{ marginBottom: "1.8rem", position: "relative", zIndex: 1 }}
+      >
+        <LotusDecoration color={primary} size={100} opacity={0.9} />
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
+        style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
+        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2rem,7vw,2.8rem)", color: dark, lineHeight: 1.2 }}>
+          Dear <span style={{ color: primary }}>{guestName}</span>,
+        </div>
+      </motion.div>
+
+      <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }}
+        style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)`, margin: "0 auto 1rem" }} />
+
+      <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
+        style={{ fontSize: 11, textTransform: "uppercase", color: `${primary}bb`, fontFamily: "'Inter',sans-serif" }}>
+        You're Invited
+      </motion.div>
+
+      <motion.div
+        style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100 }}
+        initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }}
+        onAnimationComplete={onDone}
+      />
+
+      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 2 }}
+        onClick={onDone}
+        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
+        Skip →
+      </motion.button>
+    </motion.div>
   )
 }
 
@@ -157,8 +219,8 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string }) {
-  const [name, setName] = useState("")
+function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string }) {
+  const [name, setName] = useState(guestName || "")
   const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes")
@@ -269,6 +331,19 @@ function LotusCornerAccent({ flip = false }: { flip?: boolean }) {
 }
 
 export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f3e8e8" }} />}>
+      <FloralRomanceInner couple={couple} />
+    </Suspense>
+  )
+}
+
+function FloralRomanceInner({ couple }: { couple: Couple }) {
+  const searchParams = useSearchParams()
+  const guestName = searchParams?.get('name') || ''
+  // Admin can turn this off per-couple via show_guest_intro (defaults to on).
+  const introEnabled = (couple as any).show_guest_intro !== false
+  const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -344,6 +419,17 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
         input::placeholder { color: #c4a0b0; }
       `}</style>
 
+      {/* ══ GUEST INTRO SCREEN ══ */}
+      <AnimatePresence>
+        {showIntro && guestName && (
+          <GuestIntroScreen
+            guestName={guestName}
+            onDone={() => setShowIntro(false)}
+            primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM}
+          />
+        )}
+      </AnimatePresence>
+
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
 
         {/* ══ COVER — couple photo background + lotus decoration ══ */}
@@ -379,10 +465,12 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
 
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1rem", border: "1px solid rgba(255,255,255,0.25)" }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY_LIGHT, display: "inline-block" }} />
-                  Wedding Invitation
+                  {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
 
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>You Are Invited</div>
+                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                  {guestName ? `Dear ${guestName}` : 'You Are Invited'}
+                </div>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 14px rgba(0,0,0,0.4)" }}>&amp;</div>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
@@ -508,7 +596,7 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
               </div>
             )}
 
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -577,9 +665,7 @@ export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
-                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.
-                  <br /><br />
-                  Thank you for your love, your blessings, and for being part of our journey. We cannot wait to share laughter, joy, and unforgettable memories with the people who mean so much to us.
+                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.\n\nThank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: "#c4a0b0", letterSpacing: "0.1em" }}>With all our love,</div>
