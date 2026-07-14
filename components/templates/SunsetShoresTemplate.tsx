@@ -1,230 +1,169 @@
 "use client"
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 
 const DEFAULT_PHOTO = "/images/hero-sunset-shores.png"
-const DEFAULT_COVER_VIDEO = "/videos/sunset-shores-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
-// ── Default palette — overridden by couple.custom_colors ──
-// primary: coral sunset · primaryLight: soft peach/blush
-// dark: warm umber (text) · cream: soft sand/cream background
 const DEFAULT_PALETTE = {
   primary: "#e0795a",
   primaryLight: "#f4b896",
   dark: "#5a3a2e",
   cream: "#fdf3ea",
-  muted: "#a18874",
+  muted: "#b08868",
 }
 
-// ── Floating hibiscus/plumeria petals — the page's signature ambient
-// element. Distinct from Golden Garden's birds and Ocean Pearl's bubbles:
-// warm-toned flower petals drifting and gently rotating downward, evoking
-// the reference image's scattered hibiscus + plumeria blooms. ──
-function FloatingPetals({ count = 9 }: { count?: number }) {
-  const petals = ['🌺', '🌸', '🌼']
-  const [items, setItems] = useState<{ id: number; left: number; emoji: string; duration: number; delay: number; size: number }[]>([])
-  useEffect(() => {
-    setItems(Array.from({ length: count }).map((_, i) => ({
-      id: i, left: Math.random() * 100, emoji: petals[Math.floor(Math.random() * petals.length)],
-      duration: 10 + Math.random() * 8, delay: Math.random() * 10, size: 14 + Math.random() * 12,
-    })))
-  }, [count])
+// ── Guest intro screen — sunset gradient shimmer, "Dear [Name]," shown
+// for ~5s before the cover. Toggle via couple.show_guest_intro. ──
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+}) {
   return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 1 }}>
-      {items.map(p => (
-        <div key={p.id} style={{ position: "absolute", top: -40, left: `${p.left}%`, fontSize: p.size, opacity: 0.55, animation: `petal-drift ${p.duration}s linear ${p.delay}s infinite` }}>
-          {p.emoji}
+    <motion.div
+      key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        background: `linear-gradient(160deg, #fce4d0 0%, ${primaryLight}55 45%, ${cream} 100%)`,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "2rem", overflow: "hidden",
+      }}>
+      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primary}33, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
+
+      <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
+        style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}44` }}>
+        <span style={{ fontSize: 30 }}>🌅</span>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
+        style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
+          Dear <span style={{ color: primary, fontWeight: 600 }}>{guestName}</span>,
         </div>
-      ))}
-    </div>
+      </motion.div>
+
+      <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }}
+        style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)`, margin: "0 auto 1rem" }} />
+
+      <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
+        style={{ fontSize: 10, textTransform: "uppercase", color: `${primary}cc`, fontFamily: "'Inter',sans-serif" }}>
+        Golden Hour Awaits
+      </motion.div>
+
+      <motion.div style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100 }}
+        initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }} onAnimationComplete={onDone} />
+
+      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 2 }} onClick={onDone}
+        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
+        Skip →
+      </motion.button>
+    </motion.div>
   )
 }
 
-// ── Animated ocean wave — sits at the bottom edge of the cover, a soft
-// rolling SVG wave in the sunset palette. This template's signature motif,
-// echoing the reference image's "Sunset Shores" wave-and-surf imagery. ──
-function OceanWave({ color, opacity = 1 }: { color: string; opacity?: number }) {
-  return (
-    <svg viewBox="0 0 1440 120" preserveAspectRatio="none" style={{ position: "absolute", bottom: -1, left: 0, width: "100%", height: 70, zIndex: 4, opacity }}>
-      <path className="wave-path-1" fill={color} fillOpacity="0.55" d="M0,60 C220,110 420,10 720,55 C1020,100 1220,20 1440,60 L1440,120 L0,120 Z" />
-      <path className="wave-path-2" fill={color} fillOpacity="0.85" d="M0,75 C260,30 480,110 720,75 C960,40 1180,100 1440,70 L1440,120 L0,120 Z" />
-    </svg>
-  )
-}
-
-// ── Countdown ──
-function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: string; primary: string; primaryLight: string; dark: string }) {
+function Countdown({ targetDate, primary, primaryLight, dark, muted }: { targetDate: string; primary: string; primaryLight: string; dark: string; muted: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
     const tick = () => {
-      const diff = new Date(targetDate).getTime() - Date.now()
-      if (diff <= 0) return
+      const diff = new Date(targetDate).getTime() - Date.now(); if (diff <= 0) return
       setT({
-        d: String(Math.floor(diff / 86400000)).padStart(2, "0"),
-        h: String(Math.floor(diff % 86400000 / 3600000)).padStart(2, "0"),
-        m: String(Math.floor(diff % 3600000 / 60000)).padStart(2, "0"),
-        s: String(Math.floor(diff % 60000 / 1000)).padStart(2, "0"),
+        d: String(Math.floor(diff / 86400000)).padStart(2, "0"), h: String(Math.floor(diff % 86400000 / 3600000)).padStart(2, "0"),
+        m: String(Math.floor(diff % 3600000 / 60000)).padStart(2, "0"), s: String(Math.floor(diff % 60000 / 1000)).padStart(2, "0"),
       })
     }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
+    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
   }, [targetDate])
-
   return (
-    <div style={{ display: "flex", maxWidth: 380, margin: "0 auto" }}>
+    <div style={{ display: "flex", justifyContent: "center", gap: 12, maxWidth: 380, margin: "0 auto" }}>
       {[["Days", t.d], ["Hours", t.h], ["Mins", t.m], ["Secs", t.s]].map(([l, v]) => (
-        <div key={l} style={{ flex: 1, textAlign: "center", padding: "10px 6px" }}>
-          <div style={{ borderRadius: 14, background: `linear-gradient(145deg,${primaryLight}55,${primary}22)`, border: `1.5px solid ${primary}55`, padding: "10px 4px" }}>
-            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 600 }}>{v}</span>
+        <div key={l} style={{ flex: 1, textAlign: "center" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fff", border: `1.5px solid ${primaryLight}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px", boxShadow: `0 4px 16px ${primary}22` }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.3rem", color: dark, fontWeight: 600 }}>{v}</span>
           </div>
-          <span style={{ fontSize: 8, letterSpacing: "0.25em", textTransform: "uppercase", color: `${dark}99`, display: "block", marginTop: 6 }}>{l}</span>
+          <span style={{ fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", color: muted }}>{l}</span>
         </div>
       ))}
     </div>
   )
 }
 
-// ── Music Player ──
 function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string }) {
-  const [playing, setPlaying] = useState(false)
-  const [prog, setProg] = useState(0)
+  const [playing, setPlaying] = useState(false); const [prog, setProg] = useState(0)
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    const onPlay = () => setPlaying(true)
-    const onPause = () => setPlaying(false)
-    const onTime = () => { if (audio.duration) setProg((audio.currentTime / audio.duration) * 100) }
-    audio.addEventListener('play', onPlay)
-    audio.addEventListener('pause', onPause)
-    audio.addEventListener('timeupdate', onTime)
-    setPlaying(!audio.paused)
-    return () => { audio.removeEventListener('play', onPlay); audio.removeEventListener('pause', onPause); audio.removeEventListener('timeupdate', onTime) }
+    const a = audioRef.current; if (!a) return
+    const onPlay = () => setPlaying(true), onPause = () => setPlaying(false), onTime = () => { if (a.duration) setProg((a.currentTime / a.duration) * 100) }
+    a.addEventListener('play', onPlay); a.addEventListener('pause', onPause); a.addEventListener('timeupdate', onTime)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause); a.removeEventListener('timeupdate', onTime) }
   }, [audioRef])
-  const toggle = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (audio.paused) { audio.play().catch(() => {}) } else { audio.pause() }
-  }
+  const toggle = () => { const a = audioRef.current; if (!a) return; a.paused ? a.play().catch(() => {}) : a.pause() }
   return (
-    <div style={{ background: `${primaryLight}26`, borderRadius: 14, padding: "14px 18px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg,${primary},${primaryLight})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, animation: playing ? "spin 3s linear infinite" : "none" }}>🎵</div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: dark }}>{title}</div>
-            <div style={{ fontSize: 11, color: muted, marginTop: 2 }}>{artist}</div>
-          </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#fdf3ea", borderRadius: 16, padding: 16 }}>
+      <div style={{ width: 46, height: 46, borderRadius: "50%", background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: dark }}>{title}</div>
+        <div style={{ fontSize: 11, color: muted, marginTop: 2 }}>{artist}</div>
+        <div style={{ height: 3, background: `${primary}26`, borderRadius: 100, marginTop: 8 }}>
+          <div style={{ height: "100%", width: `${prog}%`, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100, transition: "width 0.3s" }} />
         </div>
-        <button onClick={toggle} style={{ width: 38, height: 38, borderRadius: "50%", background: primary, border: "none", cursor: "pointer", color: "#fff", fontSize: 14 }}>
-          {playing ? "⏸" : "▶"}
-        </button>
       </div>
-      <div style={{ height: 3, background: `${primary}26`, borderRadius: 100 }}>
-        <div style={{ height: "100%", width: `${prog}%`, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100, transition: "width 0.3s" }} />
-      </div>
+      <button onClick={toggle} style={{ width: 40, height: 40, borderRadius: "50%", background: dark, border: "none", color: "#fff", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>{playing ? "⏸" : "▶"}</button>
     </div>
   )
 }
 
-// ── RSVP (standard flow — name → accept/decline → guest count → drinking) ──
-function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string }) {
-  const [name, setName] = useState("")
-  const [guestCount, setGuestCount] = useState(1)
+function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
+  const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
-  const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes")
-  const [saving, setSaving] = useState(false)
-
+  const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
   const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
     setSaving(true)
     const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
-    setSaving(false)
-    if (!error) { setFinalResponse(response); setStep("done") }
+    setSaving(false); if (!error) { setFinalResponse(response); setStep("done") }
   }
-  const handleAccept = () => { if (name.trim()) setStep("count") }
-  const handleDecline = () => { if (name.trim()) save("no", null, 1) }
-  const handleCountNext = () => { if (askDrinking) setStep("drinking"); else save("yes", null, guestCount) }
-
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
   return (
-    <div style={{ background: `linear-gradient(135deg,${primaryLight}33,${cream})`, padding: "2.5rem 1.5rem", textAlign: "center" }}>
-      <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.2rem", color: dark, marginBottom: 6 }}>Kindly RSVP</div>
-      <div style={{ fontSize: 12, color: muted, marginBottom: 20 }}>Please enter your name and let us know — we can't wait to celebrate with you!</div>
-      <div style={{ background: "#fff", borderRadius: 16, padding: "1.5rem", maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
-
+    <div style={{ background: `linear-gradient(135deg,#f8dcc4,${cream})`, padding: "40px 1.5rem", textAlign: "center" }}>
+      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 8, fontWeight: 600 }}>Be Our Guest</div>
+      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
         {step === "form" && (
           <>
-            <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${primary}99`, marginBottom: 8, textAlign: "left" }}>Your Name</div>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name..."
-              style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${primaryLight}`, background: cream, color: dark, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif", marginBottom: 10, display: "block" }} />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={handleAccept} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1 }}>
-                {saving ? "..." : "🤍 Joyfully Accept"}
-              </button>
-              <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primaryLight}33`, color: primary, border: "none", cursor: "pointer", fontSize: 13, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1 }}>
-                {saving ? "..." : "✗ Regretfully Decline"}
-              </button>
+              <button onClick={() => name.trim() && setStep("count")} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>✓ Accept</button>
+              <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: "1px solid #f0ddc8", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Decline"}</button>
             </div>
           </>
         )}
-
         {step === "count" && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div style={{ fontSize: 14, color: dark, fontWeight: 600, marginBottom: 4 }}>Wonderful, {name}! 🎉</div>
-            <div style={{ fontSize: 12, color: muted, marginBottom: 16 }}>How many people will be coming, including yourself?</div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 18 }}>
-              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))}
-                style={{ width: 38, height: 38, borderRadius: "50%", background: `${primaryLight}33`, color: primary, border: "none", cursor: "pointer", fontSize: 18, fontWeight: 600 }}>
-                −
-              </button>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: dark, fontWeight: 600, minWidth: 50, textAlign: "center" }}>
-                {guestCount}
-              </div>
-              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))}
-                style={{ width: 38, height: 38, borderRadius: "50%", background: `${primaryLight}33`, color: primary, border: "none", cursor: "pointer", fontSize: 18, fontWeight: 600 }}>
-                +
-              </button>
+            <div style={{ fontSize: 13, color: dark, fontWeight: 600, marginBottom: 16 }}>How many people, including you?</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }}>
+              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${primary}1a`, color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>−</button>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.8rem", color: dark, minWidth: 40 }}>{guestCount}</div>
+              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${primary}1a`, color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>+</button>
             </div>
-            <button onClick={handleCountNext} disabled={saving} style={{
-              width: "100%", padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${primary},${primaryLight})`,
-              color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1,
-            }}>
-              {saving ? "..." : "Continue →"}
-            </button>
+            <button onClick={() => askDrinking ? setStep("drinking") : save("yes", null, guestCount)} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "Continue →"}</button>
           </motion.div>
         )}
-
         {step === "drinking" && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div style={{ fontSize: 12, color: muted, marginBottom: 16 }}>One last quick question before you're confirmed</div>
-            <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: `${primary}99`, marginBottom: 10, textAlign: "left" }}>Will you be having alcohol?</div>
+            <div style={{ fontSize: 12, color: muted, marginBottom: 14 }}>Will you be having alcohol?</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving}
-                style={{ padding: 13, borderRadius: 10, background: `${primaryLight}33`, color: primary, border: `1.5px solid ${primaryLight}`, cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1 }}>
-                🍹 Yes, please
-              </button>
-              <button onClick={() => save("yes", "no", guestCount)} disabled={saving}
-                style={{ padding: 13, borderRadius: 10, background: `${primaryLight}33`, color: primary, border: `1.5px solid ${primaryLight}`, cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif", opacity: saving ? 0.6 : 1 }}>
-                🥥 No, thanks
-              </button>
+              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}1a`, color: primary, border: `1px solid ${primary}44`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</button>
+              <button onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}1a`, color: primary, border: `1px solid ${primary}44`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</button>
             </div>
           </motion.div>
         )}
-
         {step === "done" && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ padding: "1rem 0", textAlign: "center" }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>{finalResponse === "yes" ? "🎉" : "🐚"}</div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.3rem", fontStyle: "italic", color: primary, marginBottom: 4 }}>
-              {finalResponse === "yes" ? `See you at the shore, ${name}!` : `We'll miss you, ${name}.`}
-            </div>
-            <div style={{ fontSize: 12, color: muted }}>
-              {finalResponse === "yes"
-                ? (guestCount > 1 ? `We've noted your party of ${guestCount} — can't wait to celebrate with you all!` : "We can't wait to celebrate with you!")
-                : "Thank you for letting us know."}
-            </div>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🎉" : "🌇"}</div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>{finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}</div>
+            <div style={{ fontSize: 12, color: muted }}>{finalResponse === "yes" ? (guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We can't wait to celebrate with you.") : "Thank you for letting us know."}</div>
           </motion.div>
         )}
       </div>
@@ -232,45 +171,42 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
   )
 }
 
-// ── Seat Finder ──
 function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<string, string>; primary: string; dark: string; cream: string; muted: string }) {
-  const [q, setQ] = useState("")
-  const [res, setRes] = useState("")
+  const [q, setQ] = useState(""); const [res, setRes] = useState("")
   const search = () => {
     const query = q.trim().toLowerCase()
     if (!query) { setRes("Please enter your name."); return }
     const found = Object.keys(seats || {}).find(k => query.includes(k) || k.includes(query))
-    setRes(found ? `🐚 You are seated at ${seats[found]}` : "Name not found. Please contact the couple.")
+    setRes(found ? `You are seated at ${seats[found]}` : "Name not found. Please contact the couple.")
   }
   return (
-    <>
-      <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()}
-          placeholder="Enter your name..."
-          style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
-        <button onClick={search} style={{ padding: "12px 18px", borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter',sans-serif" }}>Search</button>
+    <div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
+        <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: dark, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Search</button>
       </div>
-      {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("🐚") ? primary : muted, fontWeight: res.startsWith("🐚") ? 500 : 400 }}>{res}</div>}
-    </>
-  )
-}
-
-// ── Small seashell divider used between sections ──
-function ShellDivider({ primary }: { primary: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, margin: "0 0 6px" }}>
-      <div style={{ height: 1, width: 30, background: `${primary}55` }} />
-      <span style={{ fontSize: 13 }}>🐚</span>
-      <div style={{ height: 1, width: 30, background: `${primary}55` }} />
+      {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("You") ? primary : muted, fontWeight: res.startsWith("You") ? 600 : 400 }}>{res}</div>}
     </div>
   )
 }
 
-const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 24, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.07)" })
-const pretitleStyle = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6 })
-const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: dark, textAlign: "center", marginBottom: "1.5rem" })
+const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }
+const sectionEyebrow = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
+const sectionTitle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
 export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#fdf3ea" }} />}>
+      <SunsetShoresInner couple={couple} />
+    </Suspense>
+  )
+}
+
+function SunsetShoresInner({ couple }: { couple: Couple }) {
+  const searchParams = useSearchParams()
+  const guestName = searchParams?.get('name') || ''
+  const introEnabled = (couple as any).show_guest_intro !== false
+  const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -281,202 +217,124 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
   const MUTED = DEFAULT_PALETTE.muted
 
   useEffect(() => {
-    const songUrl = couple.song_url || DEFAULT_SONG_URL
-    const audio = new Audio(songUrl)
-    audio.loop = true
-    audio.volume = 0.6
-    audioRef.current = audio
+    const audio = new Audio(couple.song_url || DEFAULT_SONG_URL)
+    audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [couple])
 
-  const handleOpenInvitation = () => {
-    setOpened(true)
-    audioRef.current?.play().catch(() => {})
-  }
+  const handleOpen = () => { setOpened(true); audioRef.current?.play().catch(() => {}) }
 
-  // ── Derive the events list to render: prefer the new couple.events object,
-  // fall back to the legacy single wedding_date/venue columns if a couple
-  // hasn't been re-saved through the updated admin form yet. ──
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
-    engagement: { label: 'Engagement', icon: '💍' },
-    wedding: { label: 'Wedding Ceremony', icon: '👰' },
-    homecoming: { label: 'Homecoming', icon: '🏡' },
+    engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '👰' }, homecoming: { label: 'Homecoming', icon: '🏡' },
   }
   type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
-
   const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
   const eventsList: RenderableEvent[] = hasNewEvents
-    ? (['engagement', 'wedding', 'homecoming'] as const)
-        .map((key): RenderableEvent => {
-          const e = couple.events![key]
-          return {
-            key, ...EVENT_META[key],
-            enabled: e?.enabled ?? false,
-            venue: e?.venue ?? '',
-            venue_address: e?.venue_address ?? '',
-            date: e?.date ?? '',
-            maps_url: e?.maps_url ?? '',
-          }
-        })
-        .filter(e => e.enabled && e.date.length > 0)
-    : (couple.wedding_date
-        ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }]
-        : [])
+    ? (['engagement', 'wedding', 'homecoming'] as const).map((key): RenderableEvent => {
+        const e = couple.events![key]
+        return { key, ...EVENT_META[key], enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
+      }).filter(e => e.enabled && e.date.length > 0)
+    : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
 
-  // Section visibility — defaults to showing everything for couples saved
-  // before this feature existed.
   const sv = {
-    gallery: couple.section_visibility?.gallery ?? true,
-    countdown: couple.section_visibility?.countdown ?? true,
-    timeline: couple.section_visibility?.timeline ?? true,
-    seat_finder: couple.section_visibility?.seat_finder ?? true,
-    music: couple.section_visibility?.music ?? true,
-    thank_you: couple.section_visibility?.thank_you ?? true,
+    gallery: couple.section_visibility?.gallery ?? true, countdown: couple.section_visibility?.countdown ?? true,
+    timeline: couple.section_visibility?.timeline ?? true, seat_finder: couple.section_visibility?.seat_finder ?? true,
+    music: couple.section_visibility?.music ?? true, thank_you: couple.section_visibility?.thank_you ?? true,
   }
 
   const W = {
-    bride: couple.bride,
-    groom: couple.groom,
-    brideFamilyName: couple.bride_family || '',
-    groomFamilyName: couple.groom_family || '',
-    date: couple.wedding_date,
-    dateDisplay: new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-    venue: couple.venue || '',
-    couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
-    introText: couple.intro_text || "Two hearts, one ocean of love — join us as we say 'I do' where the sky meets the sea",
-    song: couple.song_title || DEFAULT_SONG_TITLE,
-    artist: couple.song_artist || DEFAULT_SONG_ARTIST,
-    timeline: couple.timeline || [],
-    seats: couple.seats || {},
-    gallery: couple.gallery || [],
+    bride: couple.bride, groom: couple.groom, brideFamilyName: couple.bride_family || '', groomFamilyName: couple.groom_family || '',
+    date: couple.wedding_date, couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
+    song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
+    timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#f7ece1" }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#fdf3ea" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-        @keyframes pulse-coral { 0%,100%{box-shadow:0 0 0 0 rgba(224,121,90,0.35);} 50%{box-shadow:0 0 0 14px rgba(224,121,90,0);} }
-        @keyframes petal-drift {
-          0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.55; }
-          50% { transform: translateY(50vh) translateX(-18px) rotate(160deg); }
-          90% { opacity: 0.55; }
-          100% { transform: translateY(105vh) translateX(20px) rotate(320deg); opacity: 0; }
-        }
-        @keyframes wave-shift-1 {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(-3%); }
-          100% { transform: translateX(0); }
-        }
-        @keyframes wave-shift-2 {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(3%); }
-          100% { transform: translateX(0); }
-        }
-        .wave-path-1 { animation: wave-shift-1 7s ease-in-out infinite; }
-        .wave-path-2 { animation: wave-shift-2 9s ease-in-out infinite; }
-        input::placeholder { color: #cbab95; }
+        @keyframes sun-glow { 0%,100%{opacity:0.5;} 50%{opacity:0.8;} }
+        input::placeholder { color: #d4a888; }
       `}</style>
+
+      <AnimatePresence>
+        {showIntro && guestName && (
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
+        )}
+      </AnimatePresence>
 
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
 
-        {/* ══ COVER ══ */}
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Cover background: looping video, with the photo as a poster
-                  fallback for the instant before the video starts playing
-                  (and for browsers/data-saver modes that block autoplay) */}
-              <video
-                autoPlay loop muted playsInline preload="auto"
-                poster={DEFAULT_PHOTO}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                onError={e => { (e.currentTarget as HTMLVideoElement).style.display = "none" }}
-              >
-                <source src={DEFAULT_COVER_VIDEO} type="video/mp4" />
-              </video>
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(60,30,18,0.30) 0%, rgba(60,30,18,0.10) 35%, rgba(60,30,18,0.25) 65%, rgba(60,30,18,0.6) 100%)` }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(90,58,46,0.4) 0%, rgba(90,58,46,0.1) 35%, rgba(224,121,90,0.25) 65%, rgba(90,58,46,0.7) 100%)` }} />
 
-              <OceanWave color={PRIMARY_LIGHT} opacity={0.9} />
+              {/* Sun glow */}
+              <div style={{ position: "absolute", top: "18%", left: "50%", transform: "translateX(-50%)", width: 140, height: 140, borderRadius: "50%", background: `radial-gradient(circle, ${PRIMARY_LIGHT}, transparent 70%)`, animation: "sun-glow 3.5s ease-in-out infinite" }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+
+                <div style={{ fontSize: 28, marginBottom: 10 }}>🌴</div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: PRIMARY_LIGHT, display: "inline-block" }} />
-                  Wedding Invitation
+                  {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>You Are Invited</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 14px rgba(0,0,0,0.4)" }}>&amp;</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", margin: "1.1rem 0" }}>
-                  <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
-                  <span style={{ fontSize: 11 }}>🐚</span>
-                  <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
+
+                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                  {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, marginBottom: "1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
-                  {W.introText}
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.1rem 0" }}>&amp;</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
+
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                  As the sun sets on the horizon,<br />our forever begins
                 </div>
-                <button onClick={handleOpenInvitation} style={{
-                  display: "inline-flex", alignItems: "center", gap: 10,
-                  background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
-                  border: "none", borderRadius: 100, padding: "13px 26px",
-                  fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 500,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-                  animation: "pulse-coral 2.5s ease infinite",
+
+                <button onClick={handleOpen} style={{
+                  display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
+                  border: "none", borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
+                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
                 }}>
-                  You're Invited →
+                  Open Invitation →
                 </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                  🎵 Tap to begin — with music
-                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ══ INVITATION ══ */}
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            <FloatingPetals count={9} />
-
-            {/* Hero */}
-            <div style={{ position: "relative", height: 480, overflow: "hidden" }}>
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(160deg,${PRIMARY_LIGHT},${PRIMARY})` }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              </div>
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(90,58,46,0.1) 60%,rgba(90,58,46,0.35) 100%)` }} />
-              <OceanWave color={CREAM} opacity={1} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 6 }}>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,4.2rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(90,58,46,0.3)" }}>
-                    {W.bride}
-                    <span style={{ display: "block", fontSize: "2rem", color: PRIMARY_LIGHT }}>&amp;</span>
-                    {W.groom}
-                  </div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
-                  <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                    <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif" }}>RSVP</a>
-                    <a href="#location" style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif" }}>Location</a>
-                  </div>
-                </motion.div>
+            <div style={{ position: "relative", height: 460, overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(253,243,234,1) 0%,rgba(90,58,46,0.15) 55%,rgba(90,58,46,0.4) 100%)" }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
+                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(90,58,46,0.3)" }}>
+                  {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
+                </div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
+                  <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none" }}>RSVP</a>
+                  <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
+                </div>
               </div>
             </div>
 
             {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <ShellDivider primary={PRIMARY} />
-                <div style={pretitleStyle(PRIMARY)}>With Love</div>
-                <div style={{ textAlign: "center", padding: 12, background: `${PRIMARY_LIGHT}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>With Love</div>
+                <div style={{ textAlign: "center", padding: 12, background: "#fbeadc", borderRadius: 12, fontSize: 13, color: "#5a3a2e", lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
@@ -485,32 +343,30 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Events — one card per enabled event (Engagement / Wedding / Homecoming) */}
-            {eventsList.map((ev, idx) => {
+            {eventsList.map(ev => {
               const evDate = new Date(ev.date)
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
-                <motion.div key={ev.key} id={idx === 0 ? "location" : undefined} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
-                  <div style={titleStyle(DARK)}>{ev.label}</div>
+                <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
+                  <div style={sectionTitle(DARK)}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
+                    { icon: "📅", label: "Date", val: evDateDisplay, sun: true },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
                     { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
-                  ].map(d => d.val && (
-                    <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}33` }}>
+                  ].map(d => (
+                    <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY}1a` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#cbab95" }}>{d.label}</div>
-                        <div style={{ fontSize: d.gold ? 18 : 15, color: d.gold ? PRIMARY : DARK, fontWeight: 500, marginTop: 2, fontFamily: d.gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: d.gold ? "italic" : "normal" }}>{d.val}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#d4a888" }}>{d.label}</div>
+                        <div style={{ fontSize: (d as any).sun ? 18 : 15, color: (d as any).sun ? PRIMARY : DARK, fontWeight: 600, marginTop: 2, fontFamily: (d as any).sun ? "'Cormorant Garamond',serif" : "inherit", fontStyle: (d as any).sun ? "italic" : "normal" }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
                   ))}
                   {ev.maps_url && (
-                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer"
-                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}33`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 500 }}>
+                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}33`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 600 }}>
                       📍 View Location on Maps
                     </a>
                   )}
@@ -519,58 +375,54 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
             })}
 
             {sv.countdown && (
-              <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
-                <div style={pretitleStyle(PRIMARY)}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
+              <div style={{ ...sectionCard, textAlign: "center" }}>
+                <div style={sectionEyebrow(PRIMARY)}>Counting Down to Our Big Day</div>
+                <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </div>
             )}
 
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
-                <div style={titleStyle(DARK)}>Event Timeline</div>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
+                <div style={sectionTitle(DARK)}>The Wedding Lineup</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
-                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}66` }} />
+                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}77` }} />
                   {W.timeline.map((t, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                      style={{ position: "relative", padding: "10px 0 10px 20px" }}>
+                    <div key={i} style={{ position: "relative", padding: "10px 0 10px 20px" }}>
                       <div style={{ position: "absolute", left: -14, top: 14, width: 10, height: 10, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
                       <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
                       <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </motion.div>
             )}
 
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <motion.div style={cardStyle()} id="seat" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Be Our Guest</div>
-                <div style={titleStyle(DARK)}>Find Your Table</div>
-                <div style={{ fontSize: 13, color: MUTED, marginBottom: 4 }}>Search your name to find your assigned table</div>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>Be Our Guest</div>
+                <div style={sectionTitle(DARK)}>Find Your Table</div>
+                <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
 
             {sv.music && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Song</div>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
 
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
-                <div style={titleStyle(DARK)}>Moments of Love</div>
-                <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 16, lineHeight: 1.7 }}>
-                  Holding onto the laughter, the quiet moments, and the little sparks of magic that brought us here.
-                </div>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
+                <div style={sectionTitle(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 18, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: i === 0 ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 18, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: i === 0 ? "1/2" : "1/1" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
                     </div>
@@ -580,29 +432,23 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
             )}
 
             {sv.thank_you && (
-              <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
-                <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.
-                  <br /><br />
-                  Thank you for your love, your blessings, and for being part of our journey. We cannot wait to share laughter, joy, and unforgettable memories with the people who mean so much to us.
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>A Special Note</div>
+                <div style={sectionTitle(DARK)}>To Our Lovely Guests</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: "#5a3a2e", lineHeight: 2 }}>
+                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
-                <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: "#cbab95", letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>
-                    {W.bride} &amp; {W.groom}
-                  </div>
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <div style={{ fontSize: 11, color: "#d4a888" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
             )}
 
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
-              <div style={{ fontSize: 18, marginBottom: 10, opacity: 0.5 }}>🐚 🌺 🐚</div>
-              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#cbab95" }}>inviteglow.com · Digital Wedding Invitations</div>
+            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#d4a888" }}>inviteglow.com · Digital Wedding Invitations</div>
             </div>
-
           </motion.div>
         )}
       </div>
