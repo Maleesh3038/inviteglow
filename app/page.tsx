@@ -8,16 +8,15 @@ const ACCENT_LIGHT = "#e8a0b8"
 
 const TEMPLATES = [
   { id: 'floral-romance', name: 'Floral Romance', tag: 'Most Popular', photo: '/images/hero-floral.png', demoSlug: 'kavindi-malina', color: '#c4607a' },
-  { id: 'blush-blossom', name: 'Blush Blossom', tag: 'New', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
-  { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.jpg', demoSlug: 'sheneli-kevin', color: '#c9a06e' },
+  { id: 'blush-blossom', name: 'Blush Blossom', tag: 'New', photo: '/images/blush-blossom-cover-bg.png', demoSlug: 'yesli-lakshan', color: '#c17d8a' },
+  { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.png', demoSlug: 'sheneli-kevin', color: '#c9a06e' },
   { id: 'cinematic-gold', name: 'Cinematic Gold', tag: 'Premium', photo: '/images/hero-cinematic.png', demoSlug: 'imesha-pasan', color: '#c9a96e' },
   { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', video: '/videos/sacred-poruwa-cover.mp4', demoSlug: 'geeth-sandunika', color: '#c4956a' },
   { id: 'kandyan-heritage', name: 'Kandyan Heritage', tag: 'Sri Lankan', photo: '/images/hero-kandyan.png', demoSlug: 'irudaka-sachini', color: '#d4923f' },
   { id: 'traditional-ceylon', name: 'Traditional Ceylon', tag: 'Kandyan Culture', photo: '/images/hero-traditional-ceylon.png', demoSlug: 'maheshi-dilip', color: '#2f4a35' },
   { id: 'golden-garden', name: 'Golden Garden', tag: 'Floral Arch', photo: '/images/hero-golden-garden.png', demoSlug: 'sanjeewani-lalith', color: '#d4a857' },
   { id: 'ocean-pearl', name: 'Ocean Pearl', tag: 'Beach Elegance', photo: '/images/hero-ocean-pearl.png', demoSlug: 'akila-nethmi', color: '#2f7d9e' },
-  { id: 'sunset-shores', name: 'Sunset Shores', tag: 'Bali Sunset', photo: '/images/hero-sunset-shores.png', demoSlug: 'manisha-sachin', color: '#e0795a' },
-  { id: 'twilight-picnic', name: 'Twilight Picnic', tag: 'After-Party', photo: '', demoSlug: '', color: '#f0a868' },
+  { id: 'sunset-shores', name: 'Sunset Shores', tag: 'Bali Sunset', photo: '/images/hero-sunset-shores.png', video: '/videos/sunset-shores-cover.mp4', demoSlug: 'manisha-sachin', color: '#e0795a' },
 ]
 
 // Fallback defaults — used only if the pricing_plans table is empty or
