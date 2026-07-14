@@ -118,6 +118,23 @@ function ReviewForm() {
   )
 }
 
+function TemplateCardImage({ photo, name, color }: { photo: string; name: string; color: string }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', background: `linear-gradient(135deg,${color}33,${color}77)` }}>
+      {(!photo || failed) && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="template" size={32} color={color} />
+        </div>
+      )}
+      {photo && !failed && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={photo} alt={name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setFailed(true)} />
+      )}
+    </div>
+  )
+}
+
 export default function HomePage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
@@ -230,16 +247,9 @@ export default function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 20 }}>
           {TEMPLATES.map(t => (
             <div key={t.id} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(15,23,42,0.06)', border: '1px solid #f1f5f9' }}>
-              <div style={{ height: 200, position: 'relative', background: t.photo ? undefined : `linear-gradient(135deg,${t.color}33,${t.color}77)` }}>
-                {t.photo ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={t.photo} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="template" size={32} color={t.color} />
-                  </div>
-                )}
-                <div style={{ position: 'absolute', top: 10, right: 10, background: t.color, color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: 100 }}>{t.tag}</div>
+              <div style={{ height: 200, position: 'relative' }}>
+                <TemplateCardImage photo={t.photo} name={t.name} color={t.color} />
+                <div style={{ position: 'absolute', top: 10, right: 10, background: t.color, color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: 100, zIndex: 2 }}>{t.tag}</div>
               </div>
               <div style={{ padding: '16px 18px' }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>{t.name}</div>
@@ -361,6 +371,31 @@ export default function HomePage() {
         <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.5rem', color: ACCENT_LIGHT, marginBottom: 6 }}>InviteGlow</div>
         <div style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>Digital Wedding Invitations, Made in Sri Lanka</div>
       </div>
+
+      {/* ── FLOATING WHATSAPP BUTTON ── */}
+      <a
+        href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation"
+        target="_blank" rel="noopener noreferrer"
+        aria-label="Chat on WhatsApp"
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 100,
+          width: 58, height: 58, borderRadius: '50%', background: '#25d366',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 24px rgba(37,211,102,0.5)', textDecoration: 'none',
+          animation: 'wa-pulse 2.4s ease infinite',
+        }}
+      >
+        <Icon name="whatsapp" size={28} color="#fff" />
+      </a>
+      <style>{`
+        @keyframes wa-pulse {
+          0%, 100% { box-shadow: 0 8px 24px rgba(37,211,102,0.5); }
+          50% { box-shadow: 0 8px 24px rgba(37,211,102,0.5), 0 0 0 10px rgba(37,211,102,0.15); }
+        }
+        @media (max-width: 640px) {
+          a[aria-label="Chat on WhatsApp"] { bottom: 18px; right: 18px; width: 52px; height: 52px; }
+        }
+      `}</style>
     </div>
   )
 }
