@@ -334,7 +334,12 @@ function PricingManager() {
   const load = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('pricing_plans').select('*').order('display_order', { ascending: true })
-    if (!error && data) setPlans(data as PricingPlan[])
+    if (error) {
+      setMessage('Could not load pricing plans: ' + error.message + ' — has the pricing_plans table been created in Supabase yet?')
+    } else if (data) {
+      setPlans(data as PricingPlan[])
+      setMessage('')
+    }
     setLoading(false)
   }
 
@@ -342,9 +347,14 @@ function PricingManager() {
 
   const seedDefaults = async () => {
     setSeeding(true)
+    setMessage('')
     const { error } = await supabase.from('pricing_plans').insert(DEFAULT_SEED_PLANS)
     setSeeding(false)
-    if (!error) load()
+    if (error) {
+      setMessage('Could not create plans: ' + error.message + ' — make sure the pricing_plans table exists and allows inserts.')
+    } else {
+      load()
+    }
   }
 
   const updatePlan = (id: string, field: keyof PricingPlan, value: any) => {
@@ -383,6 +393,7 @@ function PricingManager() {
         }}>
           {seeding ? 'Setting up...' : 'Create Starter / Premium / Luxury'}
         </button>
+        {message && <div style={{ marginTop: 16, fontSize: 13, color: '#dc2626', maxWidth: 400, margin: '16px auto 0' }}>{message}</div>}
       </div>
     )
   }
