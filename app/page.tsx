@@ -244,6 +244,7 @@ export default function HomePage() {
           <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: ACCENT }}>InviteGlow</div>
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
             <button onClick={() => scrollTo('templates')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Templates</button>
+            <button onClick={() => scrollTo('why-us')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Why Us</button>
             <button onClick={() => scrollTo('pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Pricing</button>
             <button onClick={() => scrollTo('reviews')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Reviews</button>
             <button onClick={() => scrollTo('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Contact</button>
@@ -355,6 +356,32 @@ export default function HomePage() {
                 <Icon name={f.icon} size={22} color={ACCENT} />
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>{f.title}</div>
+              <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── WHY CHOOSE US ── */}
+      <div id="why-us" style={{ maxWidth: 1100, margin: '0 auto', padding: '70px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 8 }}>Why InviteGlow</div>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '2rem', color: '#0f172a', marginBottom: 10 }}>What Sets Us Apart</h2>
+          <p style={{ fontSize: 14, color: '#64748b', maxWidth: 500, margin: '0 auto' }}>We're not just another template site — here's what makes InviteGlow different.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
+          {[
+            { icon: 'users' as const, title: 'Live RSVP Dashboard', desc: 'See who\'s attending in real time, with guest counts, seating, and preferences — no spreadsheets needed.' },
+            { icon: 'clock' as const, title: 'Fast Turnaround', desc: 'Most invitations are ready within 24–48 hours, so you\'re never rushing before the big day.' },
+            { icon: 'sparkles' as const, title: 'Sri Lankan-Made Designs', desc: 'Templates built with local weddings in mind — Poruwa ceremonies, homecomings, and Kandyan traditions included.' },
+            { icon: 'shield' as const, title: 'Affordable, No Hidden Fees', desc: 'Transparent pricing from LKR 3,000 — what you see is what you pay, with real support included.' },
+            { icon: 'whatsapp' as const, title: 'Real Human Support', desc: 'Message us directly on WhatsApp anytime — no ticket systems, no bots, just a real conversation.' },
+          ].map(f => (
+            <div key={f.title} style={{ background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 4px 20px rgba(15,23,42,0.05)', border: '1px solid #f1f5f9' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Icon name={f.icon} size={20} color={ACCENT} />
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{f.title}</div>
               <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>{f.desc}</div>
             </div>
           ))}
