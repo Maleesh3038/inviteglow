@@ -21,7 +21,7 @@ const DEFAULT_PALETTE = {
 // and never 404 — a saved URL missing "https://" (e.g. "maps.google.com/...")
 // gets treated by the browser as a relative path on this site, which is
 // exactly what caused the Location button to 404. ──
-function normalizeMapsUrl(url: string, venue?: string, address?: string): string {
+function normalizeMapsUrl(url: string, venue?: string | null, address?: string | null): string {
   const trimmed = (url || '').trim()
   if (trimmed) {
     if (trimmed.includes('maps.app.goo.gl') || trimmed.includes('goo.gl/maps')) {
