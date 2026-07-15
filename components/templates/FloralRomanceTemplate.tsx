@@ -583,11 +583,14 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                         onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(30,8,18,0.5) 0%, rgba(30,8,18,0.25) 40%, rgba(30,8,18,0.6) 100%)" }} />
                       <div style={{ position: "relative", zIndex: 1, padding: "2.6rem 1.6rem", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 320 }}>
-                        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-                          <LotusDecoration color={PRIMARY_LIGHT} size={46} opacity={0.95} />
-                        </div>
-                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "#fff", lineHeight: 1.85, textShadow: "0 2px 10px rgba(0,0,0,0.45)", marginBottom: 24, padding: "0 0.5rem" }}>
-                          {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                        <div style={{
+                          background: "rgba(255,255,255,0.16)", backdropFilter: "blur(6px)",
+                          border: "1px solid rgba(255,255,255,0.3)", borderRadius: 16,
+                          padding: "1.2rem 1.1rem", marginBottom: 24,
+                        }}>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "#fff", lineHeight: 1.85, textShadow: "0 2px 10px rgba(0,0,0,0.45)" }}>
+                            {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                          </div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 18 }}>
                           <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
