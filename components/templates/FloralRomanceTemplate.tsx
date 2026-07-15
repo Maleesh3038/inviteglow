@@ -398,6 +398,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
   // per couple, defaulting to on with a generic fallback line.
   const showWeddingNote = (couple as any).show_wedding_note ?? true
   const weddingNoteText = (couple as any).wedding_note_text as string | undefined
+  const weddingNoteBg = (couple as any).wedding_note_background_image as string | undefined
 
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true,
@@ -575,12 +576,32 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <div key={ev.key}>
                   {ev.key === 'wedding' && showWeddingNote && (
                     <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                      style={{ padding: "0 2rem 1.4rem", textAlign: "center" }}>
-                      <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.7 }}>
-                        <LotusDecoration color={PRIMARY_LIGHT} size={36} opacity={0.9} />
-                      </div>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: DARK, lineHeight: 1.85, opacity: 0.85 }}>
-                        {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                      style={{ margin: "0 16px 16px", borderRadius: 24, overflow: "hidden", position: "relative", minHeight: 320, boxShadow: "0 2px 20px rgba(0,0,0,0.1)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={weddingNoteBg || W.couplePhoto} alt=""
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(30,8,18,0.5) 0%, rgba(30,8,18,0.25) 40%, rgba(30,8,18,0.6) 100%)" }} />
+                      <div style={{ position: "relative", zIndex: 1, padding: "2.6rem 1.6rem", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 320 }}>
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                          <LotusDecoration color={PRIMARY_LIGHT} size={46} opacity={0.95} />
+                        </div>
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "#fff", lineHeight: 1.85, textShadow: "0 2px 10px rgba(0,0,0,0.45)", marginBottom: 24, padding: "0 0.5rem" }}>
+                          {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 18 }}>
+                          <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
+                          <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />
+                          <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
+                        </div>
+                        {guestName && (
+                          <div style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: 10, textShadow: "0 2px 8px rgba(0,0,0,0.45)" }}>
+                            Dear {guestName}
+                          </div>
+                        )}
+                        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                          {W.bride} <span style={{ color: PRIMARY_LIGHT }}>&amp;</span> {W.groom}
+                        </div>
                       </div>
                     </motion.div>
                   )}
