@@ -68,6 +68,7 @@ const emptyForm = {
   package_tier: '' as '' | 'starter' | 'premium' | 'luxury',
   admin_notes: '',
   enable_guest_links: true,
+  enable_guest_wishes: true,
 }
 
 const inputStyle: React.CSSProperties = {
@@ -865,6 +866,7 @@ export default function AdminPage() {
       package_tier: ((c as any).package_tier ?? '') as '' | 'starter' | 'premium' | 'luxury',
       admin_notes: (c as any).admin_notes ?? '',
       enable_guest_links: (c as any).enable_guest_links ?? true,
+      enable_guest_wishes: (c as any).enable_guest_wishes ?? true,
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -919,6 +921,7 @@ export default function AdminPage() {
       package_tier: form.package_tier || null,
       admin_notes: form.admin_notes || null,
       enable_guest_links: form.enable_guest_links,
+      enable_guest_wishes: form.enable_guest_wishes,
     }
 
     let error
@@ -1461,6 +1464,21 @@ export default function AdminPage() {
                     background: form.enable_guest_links ? '#0d9488' : '#e2e8f0', position: 'relative',
                   }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: form.enable_guest_links ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </button>
+                </div>
+
+                <div style={{ background: '#fdf4ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#86198f', marginBottom: 4 }}>
+                      <Icon name="star" size={13} color="#86198f" /> Enable Guest Wishes Wall
+                    </div>
+                    <div style={{ fontSize: 11, color: '#a21caf' }}>Lets guests leave a wish (with an optional photo/video) that everyone can see on the invitation page.</div>
+                  </div>
+                  <button type="button" onClick={() => setForm({ ...form, enable_guest_wishes: !(form as any).enable_guest_wishes } as any)} style={{
+                    width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                    background: (form as any).enable_guest_wishes ? '#a21caf' : '#e2e8f0', position: 'relative',
+                  }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_guest_wishes ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
 
