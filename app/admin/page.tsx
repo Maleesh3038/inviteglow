@@ -71,6 +71,7 @@ const emptyForm = {
   enable_guest_wishes: true,
   show_wedding_note: true,
   wedding_note_text: '',
+  wedding_note_background_image: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -871,6 +872,7 @@ export default function AdminPage() {
       enable_guest_wishes: (c as any).enable_guest_wishes ?? true,
       show_wedding_note: (c as any).show_wedding_note ?? true,
       wedding_note_text: (c as any).wedding_note_text ?? '',
+      wedding_note_background_image: (c as any).wedding_note_background_image ?? '',
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -928,6 +930,7 @@ export default function AdminPage() {
       enable_guest_wishes: form.enable_guest_wishes,
       show_wedding_note: (form as any).show_wedding_note,
       wedding_note_text: (form as any).wedding_note_text || null,
+      wedding_note_background_image: (form as any).wedding_note_background_image || null,
     }
 
     let error
@@ -1514,13 +1517,15 @@ export default function AdminPage() {
                   <label style={labelStyle}>Cover Badge Text</label>
                   <input style={inputStyle} placeholder="e.g. Wedding Invitation" value={(form as any).cover_badge_text || ''} onChange={e => setForm({ ...form, cover_badge_text: e.target.value } as any)} />
                 </div>
-                <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: (form as any).show_wedding_note ? 12 : 0 }}>
+                <div style={{ background: '#eff6ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #bfdbfe' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1d4ed8' }}>
-                        <Icon name="calendar" size={13} color="#1d4ed8" /> Note Above Wedding Ceremony Section
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#1d4ed8' }}>
+                        <Icon name="calendar" size={15} color="#1d4ed8" /> Wedding Note Section
                       </div>
-                      <div style={{ fontSize: 11, color: '#2563eb', marginTop: 4 }}>e.g. "15 years of love, memories, and dreams later... their wedding day has finally arrived."</div>
+                      <div style={{ fontSize: 11, color: '#2563eb', marginTop: 4 }}>
+                        A dedicated hero-style block shown right before the Wedding Ceremony details — its own background photo, a short note, "Dear [Guest Name]" if the guest link includes one, and the couple's names.
+                      </div>
                     </div>
                     <button type="button" onClick={() => setForm({ ...form, show_wedding_note: !(form as any).show_wedding_note } as any)} style={{
                       width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
@@ -1530,10 +1535,21 @@ export default function AdminPage() {
                     </button>
                   </div>
                   {(form as any).show_wedding_note && (
-                    <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical', marginBottom: 0 }}
-                      placeholder="Leave empty to use the default line"
-                      value={(form as any).wedding_note_text || ''}
-                      onChange={e => setForm({ ...form, wedding_note_text: e.target.value } as any)} />
+                    <div style={{ background: '#fff', borderRadius: 10, padding: 14 }}>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Note Text</label>
+                        <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical', marginBottom: 0 }}
+                          placeholder='e.g. "15 years of love, memories, and dreams later... their wedding day has finally arrived."'
+                          value={(form as any).wedding_note_text || ''}
+                          onChange={e => setForm({ ...form, wedding_note_text: e.target.value } as any)} />
+                      </div>
+                      <PhotoUploader
+                        value={(form as any).wedding_note_background_image || ''}
+                        onChange={url => setForm({ ...form, wedding_note_background_image: url } as any)}
+                        label="Background Photo"
+                        hint="Leave empty to reuse the main couple photo."
+                      />
+                    </div>
                   )}
                 </div>
 
