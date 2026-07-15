@@ -393,6 +393,12 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
       }).filter(e => e.enabled && e.date.length > 0)
     : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
 
+  // Optional note shown above the Wedding Ceremony card — e.g. "15 years
+  // of love, memories, and dreams later..." Toggle + text are admin-editable
+  // per couple, defaulting to on with a generic fallback line.
+  const showWeddingNote = (couple as any).show_wedding_note ?? true
+  const weddingNoteText = (couple as any).wedding_note_text as string | undefined
+
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true,
     countdown: couple.section_visibility?.countdown ?? true,
@@ -566,7 +572,19 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
-                <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div key={ev.key}>
+                  {ev.key === 'wedding' && showWeddingNote && (
+                    <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                      style={{ padding: "0 2rem 1.4rem", textAlign: "center" }}>
+                      <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.7 }}>
+                        <LotusDecoration color={PRIMARY_LIGHT} size={36} opacity={0.9} />
+                      </div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: DARK, lineHeight: 1.85, opacity: 0.85 }}>
+                        {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                      </div>
+                    </motion.div>
+                  )}
+                  <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <LotusCornerAccent />
                   <LotusCornerAccent flip />
                   <div style={pretitleStyle(PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
@@ -591,7 +609,8 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                       📍 View Location on Maps
                     </a>
                   )}
-                </motion.div>
+                  </motion.div>
+                </div>
               )
             })}
 
