@@ -290,6 +290,175 @@ function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetD
   )
 }
 
+// ── Guest Wishes Wall ──────────────────────────────────────────────
+// One row per wish in the `wishes` table. Photo/video are optional and
+// mutually exclusive — whichever one the guest attached.
+type Wish = {
+  id: string
+  couple_id: string
+  guest_name: string
+  message: string
+  photo_url: string | null
+  video_url: string | null
+  created_at: string
+}
+
+// Uploads to the Supabase Storage bucket named "wishes" (must be created
+// once in Supabase → Storage, set Public, with an insert+select policy —
+// see the setup note shared alongside this file). Returns the public URL
+// plus whether it was a video, so the caller knows which column to fill.
+async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: string; isVideo: boolean }> {
+  const isVideo = file.type.startsWith('video/')
+  const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
+  const path = `${coupleId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await supabase.storage.from('wishes').upload(path, file, { cacheControl: '3600', upsert: false })
+  if (error) throw error
+  const { data } = supabase.storage.from('wishes').getPublicUrl(path)
+  return { url: data.publicUrl, isVideo }
+}
+
+function WishesWall({ coupleId, primary, primaryLight, dark }: {
+  coupleId: string; primary: string; primaryLight: string; dark: string
+}) {
+  const [wishes, setWishes] = useState<Wish[]>([])
+  const [loading, setLoading] = useState(true)
+  const [name, setName] = useState('')
+  const [message, setMessage] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      const { data } = await supabase
+        .from('wishes')
+        .select('*')
+        .eq('couple_id', coupleId)
+        .order('created_at', { ascending: false })
+      if (active && data) setWishes(data as Wish[])
+      setLoading(false)
+    }
+    load()
+
+    // Live updates — every visitor sees new wishes appear without a
+    // refresh, same Realtime pattern already used for the homepage
+    // "X+ weddings created" counter.
+    const channel = supabase
+      .channel(`wishes-${coupleId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wishes', filter: `couple_id=eq.${coupleId}` }, () => load())
+      .subscribe()
+
+    return () => { active = false; supabase.removeChannel(channel) }
+  }, [coupleId])
+
+  const submit = async () => {
+    if (!name.trim() || !message.trim()) {
+      setError('Please add your name and a message.')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    try {
+      let photo_url: string | null = null
+      let video_url: string | null = null
+      if (file) {
+        const { url, isVideo } = await uploadWishMedia(file, coupleId)
+        if (isVideo) video_url = url
+        else photo_url = url
+      }
+      const { error: insertError } = await supabase.from('wishes').insert([{
+        couple_id: coupleId, guest_name: name.trim(), message: message.trim(), photo_url, video_url,
+      }])
+      if (insertError) throw insertError
+      setName('')
+      setMessage('')
+      setFile(null)
+      setDone(true)
+    } catch {
+      setError('Something went wrong — please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const card: React.CSSProperties = { background: PURPLE_BOX, borderRadius: 16, boxShadow: `0 4px 18px ${dark}12` }
+
+  return (
+    <div>
+      {/* Submission form */}
+      <div style={{ ...card, padding: '18px 16px', textAlign: 'left', marginBottom: 22 }}>
+        {done ? (
+          <div style={{ textAlign: 'center', padding: '8px 0' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>Thank you for your wish!</div>
+            <div style={{ fontSize: 12, color: dark, opacity: 0.6, marginTop: 4 }}>It's now on the wall below.</div>
+            <button onClick={() => setDone(false)} style={{
+              marginTop: 12, padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              background: primaryLight, color: dark, fontSize: 12, fontWeight: 700,
+            }}>Leave another wish</button>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: dark, marginBottom: 10 }}>Leave a Wish</div>
+            <input
+              value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
+              style={{ width: '100%', padding: '10px 13px', borderRadius: 10, border: `1px solid ${primaryLight}`, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif" }}
+            />
+            <textarea
+              value={message} onChange={e => setMessage(e.target.value)} placeholder="Write your wishes for the couple..." rows={3}
+              style={{ width: '100%', padding: '10px 13px', borderRadius: 10, border: `1px solid ${primaryLight}`, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif", resize: 'vertical' }}
+            />
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: dark, opacity: 0.7,
+              padding: '9px 13px', borderRadius: 10, border: `1px dashed ${primary}`, cursor: 'pointer', marginBottom: 10,
+            }}>
+              <Icon name="photo" size={15} color={primary} />
+              {file ? file.name : 'Add a photo or video (optional)'}
+              <input type="file" accept="image/*,video/*" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+            </label>
+            {error && <div style={{ fontSize: 11.5, color: primary, marginBottom: 8 }}>{error}</div>}
+            <button onClick={submit} disabled={submitting} style={{
+              width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: dark, color: '#fff', fontWeight: 700, fontSize: 13, opacity: submitting ? 0.6 : 1,
+            }}>{submitting ? 'Sending...' : 'Send Wish'}</button>
+          </>
+        )}
+      </div>
+
+      {/* The wall itself */}
+      {loading ? (
+        <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Loading wishes...</div>
+      ) : wishes.length === 0 ? (
+        <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Be the first to leave a wish!</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {wishes.map(w => (
+            <div key={w.id} style={{ ...card, padding: '14px 16px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: dark }}>{w.guest_name}</div>
+                <div style={{ fontSize: 10, color: dark, opacity: 0.45 }}>
+                  {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: dark, opacity: 0.8, lineHeight: 1.6, marginBottom: (w.photo_url || w.video_url) ? 10 : 0 }}>
+                {w.message}
+              </div>
+              {w.photo_url && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={w.photo_url} alt="" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+              )}
+              {w.video_url && (
+                <video src={w.video_url} controls style={{ width: '100%', maxHeight: 260, borderRadius: 10, display: 'block' }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const [flapOpen, setFlapOpen] = useState(false)
@@ -676,6 +845,19 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   </div>
                 ))}
               </div>
+            </Reveal>
+          )}
+
+          {/* Guest Wishes Wall — everyone can read it, everyone can add to it,
+              hidden entirely when the couple turns it off from admin */}
+          {((couple as any).enable_guest_wishes ?? true) && (
+            <Reveal wide>
+              <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Wishes for Us</div>
+              {divider}
+              <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 6, marginBottom: 20 }}>
+                Share your wishes and blessings with {couple.bride} &amp; {couple.groom}.
+              </p>
+              <WishesWall coupleId={couple.id} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} />
             </Reveal>
           )}
 
