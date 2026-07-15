@@ -228,18 +228,39 @@ function TimelinePicker({ value, onChange }: { value: TimelineItem[]; onChange: 
     const newId = Math.max(0, ...value.map(t => t.id)) + 1
     onChange([...value, { id: newId, enabled: true, time: '', event: '' }])
   }
+  const moveItem = (index: number, direction: -1 | 1) => {
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= value.length) return
+    const next = [...value]
+    ;[next[index], next[newIndex]] = [next[newIndex], next[index]]
+    onChange(next)
+  }
 
   return (
     <div style={fieldWrap}>
       <label style={labelStyle}>Wedding Timeline</label>
-      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>Tick the events that apply, adjust the time, or add a custom event.</div>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>Tick the events that apply, edit the text freely, adjust the time, add custom events, or reorder with the arrows.</div>
       <div style={{ display: 'grid', gap: 8 }}>
-        {value.map(item => (
+        {value.map((item, index) => (
           <div key={item.id} style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
             background: item.enabled ? '#eef2ff' : '#f8fafc', borderRadius: 10,
             border: `1px solid ${item.enabled ? '#c7d2fe' : '#e2e8f0'}`,
           }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+              <button type="button" onClick={() => moveItem(index, -1)} disabled={index === 0} aria-label="Move up" style={{
+                width: 20, height: 16, borderRadius: 4, border: 'none', cursor: index === 0 ? 'default' : 'pointer',
+                background: 'transparent', color: index === 0 ? '#cbd5e1' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
+              </button>
+              <button type="button" onClick={() => moveItem(index, 1)} disabled={index === value.length - 1} aria-label="Move down" style={{
+                width: 20, height: 16, borderRadius: 4, border: 'none', cursor: index === value.length - 1 ? 'default' : 'pointer',
+                background: 'transparent', color: index === value.length - 1 ? '#cbd5e1' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+            </div>
             <input type="checkbox" checked={item.enabled} onChange={() => toggle(item.id)}
               style={{ width: 18, height: 18, cursor: 'pointer', accentColor: ACCENT, flexShrink: 0 }} />
             <input value={item.time} onChange={e => updateField(item.id, 'time', e.target.value)} placeholder="9:55 AM" disabled={!item.enabled}
@@ -790,22 +811,16 @@ export default function AdminPage() {
       song_artist: c.song_artist || '',
       song_url: c.song_url || '',
       gallery: c.gallery || [],
-      timeline: (() => {
-        const defaults = [
-          { label: 'Poruwa Ceremony', time: '9:55 AM' },
-          { label: 'Lunch', time: '12:00 PM' },
-          { label: 'Dancing Floor Starts', time: '1:00 PM' },
-          { label: 'Going Away', time: '3:30 PM' },
-        ]
-        const existing = c.timeline || []
-        const merged = defaults.map((d, i) => {
-          const found = existing.find(e => e.event === d.label)
-          return { id: i + 1, enabled: !!found, time: found ? found.time : d.time, event: d.label }
-        })
-        const customEvents = existing.filter(e => !defaults.some(d => d.label === e.event))
-        const customMapped = customEvents.map((e, i) => ({ id: 100 + i, enabled: true, time: e.time, event: e.event }))
-        return [...merged, ...customMapped]
-      })(),
+      // Load the couple's actual saved timeline directly — every item is
+      // equally editable/removable, nothing is pinned to a fixed "default"
+      // label. (The old version re-merged against a hardcoded defaults
+      // list matched by event name, so renaming an item like "Poruwa
+      // Ceremony" caused it to reappear as an unchecked duplicate instead
+      // of just updating in place.)
+      timeline: (c.timeline && c.timeline.length > 0
+        ? c.timeline.map((t, i) => ({ id: i + 1, enabled: true, time: t.time, event: t.event }))
+        : emptyForm.timeline
+      ),
       seats: Object.entries(c.seats || {}).map(([k, v]) => `${k} | ${v}`).join('\n'),
       pin: c.pin || generatePin(),
       ask_drinking: c.ask_drinking || false,
