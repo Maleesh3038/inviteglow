@@ -658,11 +658,11 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 16, lineHeight: 1.7 }}>
                   Holding onto the laughter, the quiet moments, and the little sparks of magic that brought us here.
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ columnCount: 2, columnGap: 10 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ borderRadius: 18, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                    <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 18, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+                      <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
                     </div>
                   ))}
                 </div>
