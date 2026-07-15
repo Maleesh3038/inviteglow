@@ -575,38 +575,61 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
               return (
                 <div key={ev.key}>
                   {ev.key === 'wedding' && showWeddingNote && (
-                    <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                      style={{ margin: "0 16px 16px", borderRadius: 24, overflow: "hidden", position: "relative", minHeight: 320, boxShadow: "0 2px 20px rgba(0,0,0,0.1)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={weddingNoteBg || W.couplePhoto} alt=""
-                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
-                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(30,8,18,0.5) 0%, rgba(30,8,18,0.25) 40%, rgba(30,8,18,0.6) 100%)" }} />
-                      <div style={{ position: "relative", zIndex: 1, padding: "2.6rem 1.6rem", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 320 }}>
-                        <div style={{
-                          background: "rgba(255,255,255,0.16)", backdropFilter: "blur(6px)",
-                          border: "1px solid rgba(255,255,255,0.3)", borderRadius: 16,
-                          padding: "1.2rem 1.1rem", marginBottom: 24,
-                        }}>
-                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "#fff", lineHeight: 1.85, textShadow: "0 2px 10px rgba(0,0,0,0.45)" }}>
-                            {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                    weddingNoteBg ? (
+                      <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                        style={{ margin: "0 16px 16px", borderRadius: 24, overflow: "hidden", position: "relative", minHeight: 320, boxShadow: "0 2px 20px rgba(0,0,0,0.1)" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={weddingNoteBg} alt=""
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+                          onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(30,8,18,0.5) 0%, rgba(30,8,18,0.25) 40%, rgba(30,8,18,0.6) 100%)" }} />
+                        <div style={{ position: "relative", zIndex: 1, padding: "2.6rem 1.6rem", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 320 }}>
+                          <div style={{
+                            background: "rgba(255,255,255,0.16)", backdropFilter: "blur(6px)",
+                            border: "1px solid rgba(255,255,255,0.3)", borderRadius: 16,
+                            padding: "1.2rem 1.1rem", marginBottom: 24,
+                          }}>
+                            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "#fff", lineHeight: 1.85, textShadow: "0 2px 10px rgba(0,0,0,0.45)" }}>
+                              {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 18 }}>
+                            <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
+                            <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />
+                            <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
+                          </div>
+                          {guestName && (
+                            <div style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: 10, textShadow: "0 2px 8px rgba(0,0,0,0.45)" }}>
+                              Dear {guestName}
+                            </div>
+                          )}
+                          <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                            {W.bride} <span style={{ color: PRIMARY_LIGHT }}>&amp;</span> {W.groom}
                           </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 18 }}>
-                          <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
-                          <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />
-                          <div style={{ height: 1, width: 30, background: "rgba(255,255,255,0.4)" }} />
+                      </motion.div>
+                    ) : (
+                      <motion.div style={cardStyle()} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                        <LotusCornerAccent />
+                        <LotusCornerAccent flip />
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.1rem", color: DARK, lineHeight: 1.85, textAlign: "center", marginBottom: 20 }}>
+                          {weddingNoteText || "After all this time, their beautiful day has finally arrived."}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 16 }}>
+                          <div style={{ height: 1, width: 30, background: `${PRIMARY}40` }} />
+                          <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY }} />
+                          <div style={{ height: 1, width: 30, background: `${PRIMARY}40` }} />
                         </div>
                         {guestName && (
-                          <div style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: 10, textShadow: "0 2px 8px rgba(0,0,0,0.45)" }}>
+                          <div style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: `${PRIMARY}99`, textAlign: "center", marginBottom: 10 }}>
                             Dear {guestName}
                           </div>
                         )}
-                        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
-                          {W.bride} <span style={{ color: PRIMARY_LIGHT }}>&amp;</span> {W.groom}
+                        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: DARK, textAlign: "center", lineHeight: 1.15 }}>
+                          {W.bride} <span style={{ color: PRIMARY }}>&amp;</span> {W.groom}
                         </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    )
                   )}
                   <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <LotusCornerAccent />
