@@ -17,13 +17,24 @@ const DEFAULT_PALETTE = {
   muted: "#9a7080",
 }
 
-// ── Normalize Maps URLs so they always open in browser, not the Maps app ──
-function normalizeMapsUrl(url: string): string {
-  if (!url) return '#'
-  if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
-    return `https://www.google.com/maps?q=${encodeURIComponent(url)}`
+// ── Normalize Maps URLs so they always open in browser, not the Maps app,
+// and never 404 — a saved URL missing "https://" (e.g. "maps.google.com/...")
+// gets treated by the browser as a relative path on this site, which is
+// exactly what caused the Location button to 404. ──
+function normalizeMapsUrl(url: string, venue?: string, address?: string): string {
+  const trimmed = (url || '').trim()
+  if (trimmed) {
+    if (trimmed.includes('maps.app.goo.gl') || trimmed.includes('goo.gl/maps')) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(trimmed)}`
+    }
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return `https://${trimmed}`
+    }
+    return trimmed
   }
-  return url
+  const query = [venue, address].filter(Boolean).join(', ')
+  if (query) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+  return '#'
 }
 
 // ── Lotus flower SVG decoration — cover screen signature motif ──
@@ -531,7 +542,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif" }}>RSVP</a>
-                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: `1.5px solid rgba(255,255,255,0.8)`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
+                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '', eventsList[0]?.venue || couple.venue, eventsList[0]?.venue_address || couple.venue_address)} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: `1.5px solid rgba(255,255,255,0.8)`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>Location</a>
                   </div>
                 </motion.div>
               </div>
@@ -566,7 +577,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                   <div style={pretitleStyle(PRIMARY_LIGHT)}>{ev.icon} Save the Date</div>
                   <div style={titleStyle(DARK)}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, pink: true },
+                    { icon: "📅", label: "Date", val: evDateDisplay },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
                     { icon: "📍", label: "Venue", val: ev.venue || couple.venue || "", sub: ev.venue_address || couple.venue_address || "" },
                   ].map(d => (
@@ -574,13 +585,13 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#c4a0b0" }}>{d.label}</div>
-                        <div style={{ fontSize: (d as any).pink ? 18 : 15, color: (d as any).pink ? PRIMARY : DARK, fontWeight: 700, marginTop: 2, fontFamily: (d as any).pink ? "'Cormorant Garamond',serif" : "inherit", fontStyle: (d as any).pink ? "italic" : "normal" }}>{d.val}</div>
+                        <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2, fontFamily: "'Inter',sans-serif" }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
                   ))}
-                  {ev.maps_url && (
-                    <a href={normalizeMapsUrl(ev.maps_url)} target="_blank" rel="noopener noreferrer"
+                  {(ev.maps_url || ev.venue || ev.venue_address) && (
+                    <a href={normalizeMapsUrl(ev.maps_url, ev.venue, ev.venue_address)} target="_blank" rel="noopener noreferrer"
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}33`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 500 }}>
                       📍 View Location on Maps
                     </a>
