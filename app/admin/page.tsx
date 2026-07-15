@@ -69,6 +69,8 @@ const emptyForm = {
   admin_notes: '',
   enable_guest_links: true,
   enable_guest_wishes: true,
+  show_wedding_note: true,
+  wedding_note_text: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -867,6 +869,8 @@ export default function AdminPage() {
       admin_notes: (c as any).admin_notes ?? '',
       enable_guest_links: (c as any).enable_guest_links ?? true,
       enable_guest_wishes: (c as any).enable_guest_wishes ?? true,
+      show_wedding_note: (c as any).show_wedding_note ?? true,
+      wedding_note_text: (c as any).wedding_note_text ?? '',
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -922,6 +926,8 @@ export default function AdminPage() {
       admin_notes: form.admin_notes || null,
       enable_guest_links: form.enable_guest_links,
       enable_guest_wishes: form.enable_guest_wishes,
+      show_wedding_note: (form as any).show_wedding_note,
+      wedding_note_text: (form as any).wedding_note_text || null,
     }
 
     let error
@@ -1508,6 +1514,29 @@ export default function AdminPage() {
                   <label style={labelStyle}>Cover Badge Text</label>
                   <input style={inputStyle} placeholder="e.g. Wedding Invitation" value={(form as any).cover_badge_text || ''} onChange={e => setForm({ ...form, cover_badge_text: e.target.value } as any)} />
                 </div>
+                <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: (form as any).show_wedding_note ? 12 : 0 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1d4ed8' }}>
+                        <Icon name="calendar" size={13} color="#1d4ed8" /> Note Above Wedding Ceremony Section
+                      </div>
+                      <div style={{ fontSize: 11, color: '#2563eb', marginTop: 4 }}>e.g. "15 years of love, memories, and dreams later... their wedding day has finally arrived."</div>
+                    </div>
+                    <button type="button" onClick={() => setForm({ ...form, show_wedding_note: !(form as any).show_wedding_note } as any)} style={{
+                      width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                      background: (form as any).show_wedding_note ? '#2563eb' : '#e2e8f0', position: 'relative',
+                    }}>
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).show_wedding_note ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                    </button>
+                  </div>
+                  {(form as any).show_wedding_note && (
+                    <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical', marginBottom: 0 }}
+                      placeholder="Leave empty to use the default line"
+                      value={(form as any).wedding_note_text || ''}
+                      onChange={e => setForm({ ...form, wedding_note_text: e.target.value } as any)} />
+                  )}
+                </div>
+
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Cover Intro Text</label>
                   <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="Leave empty to use the theme's default line" value={form.intro_text} onChange={e => setForm({ ...form, intro_text: e.target.value })} />
