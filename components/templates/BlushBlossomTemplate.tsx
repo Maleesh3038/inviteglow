@@ -379,10 +379,11 @@ function WishLightbox({ media, index, onIndex, onClose }: {
 function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: number) => void }) {
   if (media.length === 0) return null
   const shown = media.slice(0, 4)
+  const isSingle = media.length === 1
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: media.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+      gridTemplateColumns: isSingle ? '1fr' : 'repeat(2, 1fr)',
       gap: 4, marginBottom: 6, borderRadius: 10, overflow: 'hidden',
     }}>
       {shown.map((m, idx) => {
@@ -390,19 +391,37 @@ function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: 
         return (
           <div key={idx} onClick={() => onOpen(idx)} style={{
             position: 'relative', cursor: 'pointer', overflow: 'hidden',
-            aspectRatio: media.length === 1 ? '16 / 10' : '1 / 1',
+            height: isSingle ? 140 : undefined,
+            aspectRatio: isSingle ? undefined : '1 / 1',
+            background: '#000',
           }}>
+            {/* Blurred fill behind a small single photo so the empty side
+                gutters (from keeping the full, uncropped image visible)
+                are never flat/empty — just a soft version of itself. */}
+            {isSingle && m.type === 'photo' && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                backgroundImage: `url(${m.url})`, backgroundSize: 'cover', backgroundPosition: 'center',
+                filter: 'blur(16px) brightness(0.7)', transform: 'scale(1.15)',
+              }} />
+            )}
             {m.type === 'video' ? (
-              <video src={m.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <video src={m.url} muted style={{
+                position: isSingle ? 'relative' : 'static', zIndex: 1,
+                width: '100%', height: '100%', objectFit: isSingle ? 'contain' : 'cover', display: 'block',
+              }} />
             ) : (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img src={m.url} alt="" style={{
+                position: isSingle ? 'relative' : 'static', zIndex: 1,
+                width: '100%', height: '100%', objectFit: isSingle ? 'contain' : 'cover', display: 'block',
+              }} />
             )}
             {isMoreTile && (
               <div style={{
                 position: 'absolute', inset: 0, background: 'rgba(20,8,15,0.55)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: 18, fontWeight: 700,
+                color: '#fff', fontSize: 18, fontWeight: 700, zIndex: 2,
               }}>+{media.length - 4}</div>
             )}
           </div>
