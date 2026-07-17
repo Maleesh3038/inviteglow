@@ -581,7 +581,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             {/* Full-width blessing band — deep brown, edge to edge */}
             <div style={{ background: DARK, padding: "2.6rem 2rem", textAlign: "center" }}>
               <OrnateDivider color={PRIMARY_LIGHT} />
-              <div style={{ fontSize: 13, color: "#f0e2c0", lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem" }}>
+              <div style={{ fontSize: "1.05rem", color: "#f0e2c0", lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
                   "With God's grace, and our parents' blessings, the day has come when we are taking a step forward to begin a wonderful life together!"}
               </div>
