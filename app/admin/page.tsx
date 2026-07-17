@@ -14,6 +14,7 @@ const TEMPLATES = [
   { id: 'traditional-ceylon', name: 'Traditional Ceylon', tag: 'Kandyan Culture', photo: '/images/hero-traditional-ceylon.png', demoSlug: 'maheshi-dilip', color: '#2f4a35' },
   { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', demoSlug: 'sandunika-geeth', color: '#c4956a' },
   { id: 'blush-blossom', name: 'Blush Blossom', tag: 'Cherry Blossom', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
+  { id: 'ceylon-elegance', name: 'Ceylon Elegance', tag: 'Gold & Video', photo: '', demoSlug: '', color: '#c9a227' },
 ]
 
 const BUCKET = 'wedding-photos'
@@ -72,6 +73,16 @@ const emptyForm = {
   show_wedding_note: true,
   wedding_note_text: '',
   wedding_note_background_image: '',
+  cover_video_url: '',
+  bride_photo: '',
+  groom_photo: '',
+  enable_gift_section: true,
+  bride_bank_name: '',
+  bride_bank_account_name: '',
+  bride_bank_account_number: '',
+  groom_bank_name: '',
+  groom_bank_account_name: '',
+  groom_bank_account_number: '',
 }
 
 const inputStyle: React.CSSProperties = {
@@ -656,6 +667,44 @@ function EventsPicker({ value, onChange }: { value: EventsValue; onChange: (v: E
   )
 }
 
+// ── Single video uploader (used for the Ceylon Elegance hero video) ──
+function VideoUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const fileName = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!error) {
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      onChange(data.publicUrl)
+    }
+    setUploading(false)
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: uploading ? '#f1f5f9' : '#fff', cursor: uploading ? 'default' : 'pointer', fontSize: 13, color: '#475569', fontWeight: 500 }}>
+          <Icon name="camera" size={14} />
+          {uploading ? 'Uploading...' : value ? 'Change Video' : 'Upload Video'}
+        </button>
+        {value && (
+          <>
+            <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 500 }}>Video uploaded</span>
+            <button type="button" onClick={() => onChange('')} style={{ fontSize: 12, color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+          </>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="video/mp4,video/*" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+    </div>
+  )
+}
+
 function MusicUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
   const [tab, setTab] = useState<'upload' | 'youtube'>(value.includes('youtube.com') || value.includes('youtu.be') ? 'youtube' : 'upload')
@@ -873,6 +922,16 @@ export default function AdminPage() {
       show_wedding_note: (c as any).show_wedding_note ?? true,
       wedding_note_text: (c as any).wedding_note_text ?? '',
       wedding_note_background_image: (c as any).wedding_note_background_image ?? '',
+      cover_video_url: (c as any).cover_video_url ?? '',
+      bride_photo: (c as any).bride_photo ?? '',
+      groom_photo: (c as any).groom_photo ?? '',
+      enable_gift_section: (c as any).enable_gift_section ?? true,
+      bride_bank_name: (c as any).bride_bank_name ?? '',
+      bride_bank_account_name: (c as any).bride_bank_account_name ?? '',
+      bride_bank_account_number: (c as any).bride_bank_account_number ?? '',
+      groom_bank_name: (c as any).groom_bank_name ?? '',
+      groom_bank_account_name: (c as any).groom_bank_account_name ?? '',
+      groom_bank_account_number: (c as any).groom_bank_account_number ?? '',
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -931,6 +990,16 @@ export default function AdminPage() {
       show_wedding_note: (form as any).show_wedding_note,
       wedding_note_text: (form as any).wedding_note_text || null,
       wedding_note_background_image: (form as any).wedding_note_background_image || null,
+      cover_video_url: (form as any).cover_video_url || null,
+      bride_photo: (form as any).bride_photo || null,
+      groom_photo: (form as any).groom_photo || null,
+      enable_gift_section: (form as any).enable_gift_section,
+      bride_bank_name: (form as any).bride_bank_name || null,
+      bride_bank_account_name: (form as any).bride_bank_account_name || null,
+      bride_bank_account_number: (form as any).bride_bank_account_number || null,
+      groom_bank_name: (form as any).groom_bank_name || null,
+      groom_bank_account_name: (form as any).groom_bank_account_name || null,
+      groom_bank_account_number: (form as any).groom_bank_account_number || null,
     }
 
     let error
@@ -1551,6 +1620,57 @@ export default function AdminPage() {
                       />
                     </div>
                   )}
+                </div>
+
+                <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #e8d9a0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>
+                    <Icon name="template" size={15} color="#8a6d1a" /> Ceylon Elegance — Extras
+                  </div>
+                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Only used by the "Ceylon Elegance" template — hero video, individual bride/groom photos, and gift accounts.</div>
+
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>Hero Background Video (optional)</label>
+                    <VideoUploader value={(form as any).cover_video_url || ''} onChange={url => setForm({ ...form, cover_video_url: url } as any)} />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Leave empty to use the couple photo as the hero background instead.</div>
+                  </div>
+
+                  <PhotoUploader value={(form as any).groom_photo || ''} onChange={url => setForm({ ...form, groom_photo: url } as any)}
+                    label="Groom's Individual Photo" hint="Leave empty to reuse the main couple photo." />
+                  <PhotoUploader value={(form as any).bride_photo || ''} onChange={url => setForm({ ...form, bride_photo: url } as any)}
+                    label="Bride's Individual Photo" hint="Leave empty to reuse the main couple photo." />
+
+                  <div style={{ background: '#fff', borderRadius: 12, padding: 14, marginBottom: 4 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: (form as any).enable_gift_section ? 12 : 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Send Gift / Bank Account Section</div>
+                      <button type="button" onClick={() => setForm({ ...form, enable_gift_section: !(form as any).enable_gift_section } as any)} style={{
+                        width: 44, height: 26, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                        background: (form as any).enable_gift_section ? '#8a6d1a' : '#e2e8f0', position: 'relative',
+                      }}>
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_gift_section ? 21 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                      </button>
+                    </div>
+                    {(form as any).enable_gift_section && (
+                      <div style={{ display: 'grid', gap: 14 }}>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#8a6d1a', marginBottom: 8 }}>Groom's Family Account</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                            <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Bank name" value={(form as any).groom_bank_name || ''} onChange={e => setForm({ ...form, groom_bank_name: e.target.value } as any)} />
+                            <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Account holder name" value={(form as any).groom_bank_account_name || ''} onChange={e => setForm({ ...form, groom_bank_account_name: e.target.value } as any)} />
+                          </div>
+                          <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Account number" value={(form as any).groom_bank_account_number || ''} onChange={e => setForm({ ...form, groom_bank_account_number: e.target.value } as any)} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#8a6d1a', marginBottom: 8 }}>Bride's Family Account</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                            <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Bank name" value={(form as any).bride_bank_name || ''} onChange={e => setForm({ ...form, bride_bank_name: e.target.value } as any)} />
+                            <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Account holder name" value={(form as any).bride_bank_account_name || ''} onChange={e => setForm({ ...form, bride_bank_account_name: e.target.value } as any)} />
+                          </div>
+                          <input style={{ ...inputStyle, marginBottom: 0 }} placeholder="Account number" value={(form as any).bride_bank_account_number || ''} onChange={e => setForm({ ...form, bride_bank_account_number: e.target.value } as any)} />
+                        </div>
+                        <div style={{ fontSize: 11, color: '#94a3b8' }}>The section only shows on the invitation once at least one account number is filled in.</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div style={fieldWrap}>
