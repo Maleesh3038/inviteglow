@@ -769,7 +769,7 @@ function CinematicGoldInner({ couple }: { couple: Couple }) {
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={sectionTitle()}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
+                    { icon: "📅", label: "Date", val: evDateDisplay },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
                     { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
                   ].map(d => (
@@ -777,10 +777,7 @@ function CinematicGoldInner({ couple }: { couple: Couple }) {
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY}1a`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#8a7a5a" }}>{d.label}</div>
-                        <div style={{
-                          fontSize: (d as any).gold ? 19 : 17, color: (d as any).gold ? PRIMARY : "#fdf6e3", fontWeight: 600, marginTop: 3,
-                          fontFamily: (d as any).gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: (d as any).gold ? "italic" : "normal",
-                        }}>{d.val}</div>
+                        <div style={{ fontSize: 17, color: "#fdf6e3", fontWeight: 600, marginTop: 3 }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 13, color: "#c4b088", marginTop: 3, lineHeight: 1.5 }}>{d.sub}</div>}
                       </div>
                     </div>
