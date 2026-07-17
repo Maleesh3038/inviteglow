@@ -291,8 +291,10 @@ function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetD
 }
 
 // ── Guest Wishes Wall ──────────────────────────────────────────────
-// One row per wish in the `wishes` table. Photo/video are optional and
-// mutually exclusive — whichever one the guest attached.
+// One row per wish in the `wishes` table. `media` holds every photo/video
+// the guest attached (new multi-upload flow); `photo_url`/`video_url` are
+// kept only so older single-attachment wishes still display correctly.
+type WishMedia = { url: string; type: 'photo' | 'video' }
 type Wish = {
   id: string
   couple_id: string
@@ -300,6 +302,7 @@ type Wish = {
   message: string
   photo_url: string | null
   video_url: string | null
+  media: WishMedia[] | null
   created_at: string
 }
 
@@ -317,6 +320,98 @@ async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: str
   return { url: data.publicUrl, isVideo }
 }
 
+// Resolves whichever storage a wish actually used (new `media` array, or
+// the older single photo_url/video_url) into one consistent list to render.
+function getWishMedia(w: Wish): WishMedia[] {
+  if (w.media && w.media.length > 0) return w.media
+  if (w.photo_url) return [{ url: w.photo_url, type: 'photo' }]
+  if (w.video_url) return [{ url: w.video_url, type: 'video' }]
+  return []
+}
+
+// Fullscreen viewer for browsing a wish's photos/videos at full size —
+// no cropping, with prev/next when there's more than one attachment.
+function WishLightbox({ media, index, onIndex, onClose }: {
+  media: WishMedia[]; index: number; onIndex: (i: number) => void; onClose: () => void
+}) {
+  const current = media[index]
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(20,8,15,0.92)', zIndex: 500,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: 'relative', maxWidth: '92vw', maxHeight: '86vh' }}>
+        {current.type === 'video' ? (
+          <video src={current.url} controls autoPlay style={{ maxWidth: '92vw', maxHeight: '86vh', display: 'block', borderRadius: 10 }} />
+        ) : (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={current.url} alt="" style={{ maxWidth: '92vw', maxHeight: '86vh', display: 'block', borderRadius: 10, objectFit: 'contain' }} />
+        )}
+        <button onClick={onClose} aria-label="Close" style={{
+          position: 'absolute', top: -40, right: 0, background: 'transparent', border: 'none',
+          color: '#fff', fontSize: 26, cursor: 'pointer', lineHeight: 1,
+        }}>×</button>
+        {media.length > 1 && (
+          <>
+            <button onClick={() => onIndex((index - 1 + media.length) % media.length)} aria-label="Previous" style={{
+              position: 'absolute', left: -18, top: '50%', transform: 'translate(-100%,-50%)',
+              width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', fontSize: 20, cursor: 'pointer',
+            }}>‹</button>
+            <button onClick={() => onIndex((index + 1) % media.length)} aria-label="Next" style={{
+              position: 'absolute', right: -18, top: '50%', transform: 'translate(100%,-50%)',
+              width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', fontSize: 20, cursor: 'pointer',
+            }}>›</button>
+            <div style={{ position: 'absolute', bottom: -30, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 12, opacity: 0.8 }}>
+              {index + 1} / {media.length}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Thumbnail grid for a wish's attachments — one photo fills the width
+// nicely cropped; two or more lay out in a grid, and clicking any of them
+// opens the full-size lightbox to browse the rest.
+function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: number) => void }) {
+  if (media.length === 0) return null
+  const shown = media.slice(0, 4)
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: media.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+      gap: 4, marginBottom: 6, borderRadius: 10, overflow: 'hidden',
+    }}>
+      {shown.map((m, idx) => {
+        const isMoreTile = idx === 3 && media.length > 4
+        return (
+          <div key={idx} onClick={() => onOpen(idx)} style={{
+            position: 'relative', cursor: 'pointer', overflow: 'hidden',
+            aspectRatio: media.length === 1 ? '16 / 10' : '1 / 1',
+          }}>
+            {m.type === 'video' ? (
+              <video src={m.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={m.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            )}
+            {isMoreTile && (
+              <div style={{
+                position: 'absolute', inset: 0, background: 'rgba(20,8,15,0.55)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: 18, fontWeight: 700,
+              }}>+{media.length - 4}</div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function WishesWall({ coupleId, primary, primaryLight, dark }: {
   coupleId: string; primary: string; primaryLight: string; dark: string
 }) {
@@ -324,12 +419,13 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const [page, setPage] = useState(0)
   const PER_PAGE = 3
+  const [lightbox, setLightbox] = useState<{ media: WishMedia[]; index: number } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -363,20 +459,18 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
     setSubmitting(true)
     setError('')
     try {
-      let photo_url: string | null = null
-      let video_url: string | null = null
-      if (file) {
-        const { url, isVideo } = await uploadWishMedia(file, coupleId)
-        if (isVideo) video_url = url
-        else photo_url = url
+      const media: WishMedia[] = []
+      for (const f of files) {
+        const { url, isVideo } = await uploadWishMedia(f, coupleId)
+        media.push({ url, type: isVideo ? 'video' : 'photo' })
       }
       const { error: insertError } = await supabase.from('wishes').insert([{
-        couple_id: coupleId, guest_name: name.trim(), message: message.trim(), photo_url, video_url,
+        couple_id: coupleId, guest_name: name.trim(), message: message.trim(), media,
       }])
       if (insertError) throw insertError
       setName('')
       setMessage('')
-      setFile(null)
+      setFiles([])
       setDone(true)
     } catch {
       setError('Something went wrong — please try again.')
@@ -413,12 +507,27 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
             />
             <label style={{
               display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: dark, opacity: 0.7,
-              padding: '9px 13px', borderRadius: 10, border: `1px dashed ${primary}`, cursor: 'pointer', marginBottom: 10,
+              padding: '9px 13px', borderRadius: 10, border: `1px dashed ${primary}`, cursor: 'pointer', marginBottom: files.length ? 6 : 10,
             }}>
               <Icon name="photo" size={15} color={primary} />
-              {file ? file.name : 'Add a photo or video (optional)'}
-              <input type="file" accept="image/*,video/*" onChange={e => setFile(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+              {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected — add more` : 'Add photos or a video (optional)'}
+              <input type="file" accept="image/*,video/*" multiple
+                onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])].slice(0, 6))}
+                style={{ display: 'none' }} />
             </label>
+            {files.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                {files.map((f, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: dark,
+                    background: primaryLight, borderRadius: 100, padding: '4px 9px',
+                  }}>
+                    {f.name.length > 16 ? f.name.slice(0, 14) + '…' : f.name}
+                    <span onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {error && <div style={{ fontSize: 11.5, color: primary, marginBottom: 8 }}>{error}</div>}
             <button onClick={submit} disabled={submitting} style={{
               width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -441,27 +550,24 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
             {wishes.length} {wishes.length === 1 ? 'Wish' : 'Wishes'}
           </div>
           <div>
-            {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => (
-              <div key={w.id} style={{
-                padding: '14px 0',
-                borderBottom: i < arr.length - 1 ? `1px solid ${primaryLight}55` : 'none',
-              }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: primary, marginBottom: 4 }}>{w.guest_name}</div>
-                <div style={{ fontSize: 13, color: dark, opacity: 0.85, lineHeight: 1.7, marginBottom: (w.photo_url || w.video_url) ? 10 : 6, whiteSpace: 'pre-wrap' }}>
-                  {w.message}
+            {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => {
+              const mediaList = getWishMedia(w)
+              return (
+                <div key={w.id} style={{
+                  padding: '14px 0',
+                  borderBottom: i < arr.length - 1 ? `1px solid ${primaryLight}55` : 'none',
+                }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: primary, marginBottom: 4 }}>{w.guest_name}</div>
+                  <div style={{ fontSize: 13, color: dark, opacity: 0.85, lineHeight: 1.7, marginBottom: mediaList.length ? 10 : 6, whiteSpace: 'pre-wrap' }}>
+                    {w.message}
+                  </div>
+                  <WishMediaGrid media={mediaList} onOpen={idx => setLightbox({ media: mediaList, index: idx })} />
+                  <div style={{ fontSize: 10.5, color: dark, opacity: 0.45 }}>
+                    {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
                 </div>
-                {w.photo_url && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={w.photo_url} alt="" style={{ width: '100%', height: 130, objectFit: 'contain', borderRadius: 10, display: 'block', background: `${primaryLight}55`, marginBottom: 6 }} />
-                )}
-                {w.video_url && (
-                  <video src={w.video_url} controls style={{ width: '100%', height: 130, objectFit: 'contain', borderRadius: 10, display: 'block', background: `${primaryLight}55`, marginBottom: 6 }} />
-                )}
-                <div style={{ fontSize: 10.5, color: dark, opacity: 0.45 }}>
-                  {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
           {wishes.length > PER_PAGE && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, paddingTop: 16, borderTop: `1px solid ${primaryLight}55`, flexWrap: 'wrap' }}>
@@ -486,6 +592,14 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
             </div>
           )}
         </div>
+      )}
+      {lightbox && (
+        <WishLightbox
+          media={lightbox.media}
+          index={lightbox.index}
+          onIndex={i => setLightbox(l => l && { ...l, index: i })}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </div>
   )
