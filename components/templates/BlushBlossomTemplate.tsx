@@ -328,6 +328,8 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [page, setPage] = useState(0)
+  const PER_PAGE = 5
 
   useEffect(() => {
     let active = true
@@ -432,28 +434,49 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
       ) : wishes.length === 0 ? (
         <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Be the first to leave a wish!</div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {wishes.map(w => (
-            <div key={w.id} style={{ ...card, padding: '14px 16px', textAlign: 'left' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: dark }}>{w.guest_name}</div>
-                <div style={{ fontSize: 10, color: dark, opacity: 0.45 }}>
-                  {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+        <>
+          <div style={{ fontSize: 11, color: dark, opacity: 0.5, textAlign: 'center', marginBottom: 12 }}>
+            {wishes.length} {wishes.length === 1 ? 'wish' : 'wishes'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map(w => (
+              <div key={w.id} style={{ ...card, padding: '14px 16px', textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: dark }}>{w.guest_name}</div>
+                  <div style={{ fontSize: 10, color: dark, opacity: 0.45 }}>
+                    {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                  </div>
                 </div>
+                <div style={{ fontSize: 13, color: dark, opacity: 0.8, lineHeight: 1.6, marginBottom: (w.photo_url || w.video_url) ? 10 : 0 }}>
+                  {w.message}
+                </div>
+                {w.photo_url && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={w.photo_url} alt="" style={{ width: '100%', height: 'auto', objectFit: 'contain', borderRadius: 10, display: 'block', background: primaryLight }} />
+                )}
+                {w.video_url && (
+                  <video src={w.video_url} controls style={{ width: '100%', height: 'auto', borderRadius: 10, display: 'block' }} />
+                )}
               </div>
-              <div style={{ fontSize: 13, color: dark, opacity: 0.8, lineHeight: 1.6, marginBottom: (w.photo_url || w.video_url) ? 10 : 0 }}>
-                {w.message}
+            ))}
+          </div>
+          {wishes.length > PER_PAGE && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 18 }}>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{
+                padding: '7px 16px', borderRadius: 100, border: 'none', cursor: page === 0 ? 'default' : 'pointer',
+                background: primaryLight, color: dark, fontSize: 12, fontWeight: 700, opacity: page === 0 ? 0.4 : 1,
+              }}>← Previous</button>
+              <div style={{ fontSize: 12, color: dark, opacity: 0.6 }}>
+                {page + 1} / {Math.ceil(wishes.length / PER_PAGE)}
               </div>
-              {w.photo_url && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={w.photo_url} alt="" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
-              )}
-              {w.video_url && (
-                <video src={w.video_url} controls style={{ width: '100%', maxHeight: 260, borderRadius: 10, display: 'block' }} />
-              )}
+              <button onClick={() => setPage(p => (p + 1) * PER_PAGE < wishes.length ? p + 1 : p)}
+                disabled={(page + 1) * PER_PAGE >= wishes.length} style={{
+                padding: '7px 16px', borderRadius: 100, border: 'none', cursor: (page + 1) * PER_PAGE >= wishes.length ? 'default' : 'pointer',
+                background: primaryLight, color: dark, fontSize: 12, fontWeight: 700, opacity: (page + 1) * PER_PAGE >= wishes.length ? 0.4 : 1,
+              }}>Next →</button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )
