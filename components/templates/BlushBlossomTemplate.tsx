@@ -329,7 +329,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const [page, setPage] = useState(0)
-  const PER_PAGE = 5
+  const PER_PAGE = 3
 
   useEffect(() => {
     let active = true
@@ -452,10 +452,10 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
                 </div>
                 {w.photo_url && (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={w.photo_url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 10, display: 'block', marginBottom: 6 }} />
+                  <img src={w.photo_url} alt="" style={{ width: '100%', height: 130, objectFit: 'contain', borderRadius: 10, display: 'block', background: `${primaryLight}55`, marginBottom: 6 }} />
                 )}
                 {w.video_url && (
-                  <video src={w.video_url} controls style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 10, display: 'block', marginBottom: 6 }} />
+                  <video src={w.video_url} controls style={{ width: '100%', height: 130, objectFit: 'contain', borderRadius: 10, display: 'block', background: `${primaryLight}55`, marginBottom: 6 }} />
                 )}
                 <div style={{ fontSize: 10.5, color: dark, opacity: 0.45 }}>
                   {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
