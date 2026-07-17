@@ -428,55 +428,64 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
         )}
       </div>
 
-      {/* The wall itself */}
+      {/* The wall itself — single comment-list card, matching a classic
+          "N Comments" layout: rows separated by dividers rather than each
+          wish getting its own boxed card, plus numbered pagination. */}
       {loading ? (
         <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Loading wishes...</div>
       ) : wishes.length === 0 ? (
         <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Be the first to leave a wish!</div>
       ) : (
-        <>
-          <div style={{ fontSize: 11, color: dark, opacity: 0.5, textAlign: 'center', marginBottom: 12 }}>
-            {wishes.length} {wishes.length === 1 ? 'wish' : 'wishes'}
+        <div style={{ ...card, padding: '20px 18px', textAlign: 'left' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: dark, textAlign: 'center', marginBottom: 18 }}>
+            {wishes.length} {wishes.length === 1 ? 'Wish' : 'Wishes'}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map(w => (
-              <div key={w.id} style={{ ...card, padding: '14px 16px', textAlign: 'left' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: dark }}>{w.guest_name}</div>
-                  <div style={{ fontSize: 10, color: dark, opacity: 0.45 }}>
-                    {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, color: dark, opacity: 0.8, lineHeight: 1.6, marginBottom: (w.photo_url || w.video_url) ? 10 : 0 }}>
+          <div>
+            {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => (
+              <div key={w.id} style={{
+                padding: '14px 0',
+                borderBottom: i < arr.length - 1 ? `1px solid ${primaryLight}55` : 'none',
+              }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: primary, marginBottom: 4 }}>{w.guest_name}</div>
+                <div style={{ fontSize: 13, color: dark, opacity: 0.85, lineHeight: 1.7, marginBottom: (w.photo_url || w.video_url) ? 10 : 6, whiteSpace: 'pre-wrap' }}>
                   {w.message}
                 </div>
                 {w.photo_url && (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={w.photo_url} alt="" style={{ width: '100%', height: 'auto', objectFit: 'contain', borderRadius: 10, display: 'block', background: primaryLight }} />
+                  <img src={w.photo_url} alt="" style={{ width: '100%', height: 'auto', objectFit: 'contain', borderRadius: 10, display: 'block', background: primaryLight, marginBottom: 6 }} />
                 )}
                 {w.video_url && (
-                  <video src={w.video_url} controls style={{ width: '100%', height: 'auto', borderRadius: 10, display: 'block' }} />
+                  <video src={w.video_url} controls style={{ width: '100%', height: 'auto', borderRadius: 10, display: 'block', marginBottom: 6 }} />
                 )}
+                <div style={{ fontSize: 10.5, color: dark, opacity: 0.45 }}>
+                  {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
               </div>
             ))}
           </div>
           {wishes.length > PER_PAGE && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, paddingTop: 16, borderTop: `1px solid ${primaryLight}55`, flexWrap: 'wrap' }}>
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{
-                padding: '7px 16px', borderRadius: 100, border: 'none', cursor: page === 0 ? 'default' : 'pointer',
-                background: primaryLight, color: dark, fontSize: 12, fontWeight: 700, opacity: page === 0 ? 0.4 : 1,
+                background: 'transparent', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
+                fontSize: 12, fontWeight: 700, color: primary, opacity: page === 0 ? 0.35 : 1,
               }}>← Previous</button>
-              <div style={{ fontSize: 12, color: dark, opacity: 0.6 }}>
-                {page + 1} / {Math.ceil(wishes.length / PER_PAGE)}
-              </div>
+              {Array.from({ length: Math.ceil(wishes.length / PER_PAGE) }).map((_, i) => (
+                <button key={i} onClick={() => setPage(i)} style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  fontSize: 12, fontWeight: i === page ? 800 : 600,
+                  color: i === page ? dark : primary,
+                  textDecoration: i === page ? 'underline' : 'none',
+                  padding: '2px 4px',
+                }}>{i + 1}</button>
+              ))}
               <button onClick={() => setPage(p => (p + 1) * PER_PAGE < wishes.length ? p + 1 : p)}
                 disabled={(page + 1) * PER_PAGE >= wishes.length} style={{
-                padding: '7px 16px', borderRadius: 100, border: 'none', cursor: (page + 1) * PER_PAGE >= wishes.length ? 'default' : 'pointer',
-                background: primaryLight, color: dark, fontSize: 12, fontWeight: 700, opacity: (page + 1) * PER_PAGE >= wishes.length ? 0.4 : 1,
+                background: 'transparent', border: 'none', cursor: (page + 1) * PER_PAGE >= wishes.length ? 'default' : 'pointer',
+                fontSize: 12, fontWeight: 700, color: primary, opacity: (page + 1) * PER_PAGE >= wishes.length ? 0.35 : 1,
               }}>Next →</button>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )
