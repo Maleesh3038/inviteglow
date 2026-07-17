@@ -9,13 +9,15 @@ const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
-// Warm gold-on-deep-brown palette.
+// Soft pastel palette — blush pink, sage, and a warm charcoal for text,
+// for a clean modern-western wedding look instead of the deep gold/brown
+// used before.
 const DEFAULT_PALETTE = {
-  primary: "#c9a227",
-  primaryLight: "#e8d29a",
-  dark: "#3d2a1a",
-  cream: "#faf6ee",
-  muted: "#a88f6a",
+  primary: "#c68a8f",
+  primaryLight: "#e7c9c0",
+  dark: "#3f4a45",
+  cream: "#faf6f3",
+  muted: "#a89a90",
 }
 
 // ── Decorative flourish divider — the recurring signature motif of this
@@ -23,11 +25,9 @@ const DEFAULT_PALETTE = {
 function OrnateDivider({ color, size = 22 }: { color: string; size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, margin: "0 auto" }}>
-      <svg width="46" height="2" viewBox="0 0 46 2"><line x1="0" y1="1" x2="46" y2="1" stroke={color} strokeWidth="1" opacity="0.5" /></svg>
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill={color} opacity="0.85" />
-      </svg>
-      <svg width="46" height="2" viewBox="0 0 46 2"><line x1="0" y1="1" x2="46" y2="1" stroke={color} strokeWidth="1" opacity="0.5" /></svg>
+      <div style={{ width: 36, height: 1, background: color, opacity: 0.35 }} />
+      <div style={{ width: Math.max(5, size / 4), height: Math.max(5, size / 4), borderRadius: "50%", background: color, opacity: 0.7 }} />
+      <div style={{ width: 36, height: 1, background: color, opacity: 0.35 }} />
     </div>
   )
 }
@@ -277,6 +277,7 @@ function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: 
 function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { coupleId: string; primary: string; primaryLight: string; dark: string; cream: string; muted: string }) {
   const [wishes, setWishes] = useState<Wish[]>([])
   const [loading, setLoading] = useState(true)
+  const [rsvpCounts, setRsvpCounts] = useState<{ yes: number; no: number }>({ yes: 0, no: 0 })
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
   const [files, setFiles] = useState<File[]>([])
@@ -301,6 +302,21 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
     return () => { active = false; supabase.removeChannel(channel) }
   }, [coupleId])
 
+  // RSVP attending/not-attending counts, shown as stat badges above the
+  // wish form — same "at a glance" feel as the reference layout.
+  useEffect(() => {
+    let active = true
+    const loadCounts = async () => {
+      const { data } = await supabase.from('rsvps').select('response').eq('couple_id', coupleId)
+      if (!active || !data) return
+      const yes = data.filter((r: any) => r.response === 'yes').length
+      const no = data.filter((r: any) => r.response === 'no').length
+      setRsvpCounts({ yes, no })
+    }
+    loadCounts()
+    return () => { active = false }
+  }, [coupleId])
+
   const submit = async () => {
     if (!name.trim() || !message.trim()) { setError('Please add your name and a message.'); return }
     setSubmitting(true); setError('')
@@ -316,62 +332,80 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
     } catch { setError('Something went wrong — please try again.') } finally { setSubmitting(false) }
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif" }
+  const underlineInput: React.CSSProperties = {
+    width: '100%', padding: '10px 2px', border: 'none', borderBottom: `1.5px solid ${primaryLight}`,
+    background: 'transparent', color: dark, fontSize: 13.5, outline: 'none', marginBottom: 16,
+    boxSizing: 'border-box', fontFamily: "'Inter',sans-serif",
+  }
 
   return (
-    <div>
-      <div style={{ background: "#fff", borderRadius: 16, padding: '18px 16px', textAlign: 'left', marginBottom: 18, boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        {done ? (
-          <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>Thank you for your wish!</div>
-            <div style={{ fontSize: 12, color: muted, marginTop: 4 }}>It's now on the wall below.</div>
-            <button onClick={() => setDone(false)} style={{ marginTop: 12, padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `${primary}1a`, color: dark, fontSize: 12, fontWeight: 700 }}>Leave another wish</button>
-          </div>
-        ) : (
-          <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: dark, marginBottom: 10 }}>Leave a Wish</div>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={inputStyle} />
-            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Write your wishes for the couple..." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: muted, opacity: 0.9, padding: '9px 13px', borderRadius: 10, border: `1px dashed ${primary}`, cursor: 'pointer', marginBottom: files.length ? 6 : 10 }}>
-              📷 {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected — add more` : 'Add photos or a video (optional)'}
-              <input type="file" accept="image/*,video/*" multiple onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])].slice(0, 6))} style={{ display: 'none' }} />
-            </label>
-            {files.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                {files.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: dark, background: `${primary}1a`, borderRadius: 100, padding: '4px 9px' }}>
-                    {f.name.length > 16 ? f.name.slice(0, 14) + '…' : f.name}
-                    <span onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {error && <div style={{ fontSize: 11.5, color: primary, marginBottom: 8 }}>{error}</div>}
-            <button onClick={submit} disabled={submitting} style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer', background: primary, color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: "'Inter',sans-serif", opacity: submitting ? 0.6 : 1 }}>{submitting ? 'Sending...' : 'Send Wish'}</button>
-          </>
-        )}
+    <div style={{ background: cream, borderRadius: 18, padding: '22px 18px', border: `1px solid ${primaryLight}` }}>
+      {/* Header stats — comment count + RSVP badges */}
+      <div style={{ textAlign: 'center', fontSize: 12, color: muted, marginBottom: 14 }}>
+        {wishes.length} {wishes.length === 1 ? 'Comment' : 'Comments'}
       </div>
+      {(rsvpCounts.yes > 0 || rsvpCounts.no > 0) && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 20 }}>
+          <div style={{ background: dark, color: '#fff', borderRadius: 10, padding: '10px 18px', textAlign: 'center', minWidth: 90 }}>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>{rsvpCounts.yes}</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.8, marginTop: 2 }}>I'll Be There</div>
+          </div>
+          <div style={{ background: `${dark}bb`, color: '#fff', borderRadius: 10, padding: '10px 18px', textAlign: 'center', minWidth: 90 }}>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>{rsvpCounts.no}</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.8, marginTop: 2 }}>Can't Come</div>
+          </div>
+        </div>
+      )}
 
+      {done ? (
+        <div style={{ textAlign: 'center', padding: '10px 0 20px' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>Thank you for your wish!</div>
+          <div style={{ fontSize: 12, color: muted, marginTop: 4 }}>It's now on the wall below.</div>
+          <button onClick={() => setDone(false)} style={{ marginTop: 12, padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `${primary}1a`, color: dark, fontSize: 12, fontWeight: 700 }}>Leave another wish</button>
+        </div>
+      ) : (
+        <div style={{ marginBottom: 20 }}>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Name" style={underlineInput} />
+          <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Type your wishes" rows={3} style={{ ...underlineInput, resize: 'vertical' }} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: muted, padding: '9px 2px', cursor: 'pointer', marginBottom: files.length ? 8 : 16, borderBottom: `1.5px dashed ${primaryLight}` }}>
+            📷 {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected — add more` : 'Add photos or a video (optional)'}
+            <input type="file" accept="image/*,video/*" multiple onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])].slice(0, 6))} style={{ display: 'none' }} />
+          </label>
+          {files.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+              {files.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: dark, background: `${primary}1a`, borderRadius: 100, padding: '4px 9px' }}>
+                  {f.name.length > 16 ? f.name.slice(0, 14) + '…' : f.name}
+                  <span onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {error && <div style={{ fontSize: 11.5, color: primary, marginBottom: 10 }}>{error}</div>}
+          <button onClick={submit} disabled={submitting} style={{ padding: '10px 26px', borderRadius: 8, border: 'none', cursor: 'pointer', background: dark, color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: "'Inter',sans-serif", opacity: submitting ? 0.6 : 1 }}>{submitting ? 'Sending...' : 'Submit'}</button>
+        </div>
+      )}
+
+      {/* Comment-style wall */}
       {loading ? (
         <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Loading wishes...</div>
       ) : wishes.length === 0 ? (
         <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Be the first to leave a wish!</div>
       ) : (
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: dark, textAlign: 'center', marginBottom: 14 }}>{wishes.length} {wishes.length === 1 ? 'Wish' : 'Wishes'}</div>
+        <div style={{ borderTop: `1px solid ${primaryLight}`, paddingTop: 6 }}>
           {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => {
             const mediaList = getWishMedia(w)
             return (
-              <div key={w.id} style={{ padding: '12px 0', borderBottom: i < arr.length - 1 ? `1px solid ${primary}22` : 'none', textAlign: 'left' }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: primary, marginBottom: 4 }}>{w.guest_name}</div>
-                <div style={{ fontSize: 13, color: dark, opacity: 0.85, lineHeight: 1.7, marginBottom: mediaList.length ? 10 : 6, whiteSpace: 'pre-wrap' }}>{w.message}</div>
+              <div key={w.id} style={{ padding: '16px 0', borderBottom: i < arr.length - 1 ? `1px solid ${primaryLight}` : 'none', textAlign: 'left' }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: dark, marginBottom: 5 }}>{w.guest_name}</div>
+                <div style={{ fontSize: 13, color: dark, opacity: 0.8, lineHeight: 1.7, marginBottom: mediaList.length ? 10 : 6, whiteSpace: 'pre-wrap' }}>{w.message}</div>
                 <WishMediaGrid media={mediaList} onOpen={idx => setLightbox({ media: mediaList, index: idx })} />
-                <div style={{ fontSize: 10.5, color: muted }}>{new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                <div style={{ fontSize: 10.5, color: muted, marginTop: 4 }}>{new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
               </div>
             )
           })}
           {wishes.length > PER_PAGE && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 16, paddingTop: 14, borderTop: `1px solid ${primary}22`, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${primaryLight}`, flexWrap: 'wrap' }}>
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ background: 'transparent', border: 'none', cursor: page === 0 ? 'default' : 'pointer', fontSize: 12, fontWeight: 700, color: primary, opacity: page === 0 ? 0.35 : 1 }}>← Previous</button>
               {Array.from({ length: Math.ceil(wishes.length / PER_PAGE) }).map((_, i) => (
                 <button key={i} onClick={() => setPage(i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: i === page ? 800 : 600, color: i === page ? dark : primary, textDecoration: i === page ? 'underline' : 'none', padding: '2px 4px' }}>{i + 1}</button>
@@ -515,13 +549,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(61,42,26,0.45) 0%, rgba(61,42,26,0.15) 35%, rgba(61,42,26,0.3) 65%, rgba(61,42,26,0.72) 100%)` }} />
-
-              {/* Corner frame lines */}
-              <div style={{ position: "absolute", top: 20, left: 20, width: 40, height: 40, borderTop: `1.5px solid ${PRIMARY_LIGHT}bb`, borderLeft: `1.5px solid ${PRIMARY_LIGHT}bb` }} />
-              <div style={{ position: "absolute", top: 20, right: 20, width: 40, height: 40, borderTop: `1.5px solid ${PRIMARY_LIGHT}bb`, borderRight: `1.5px solid ${PRIMARY_LIGHT}bb` }} />
-              <div style={{ position: "absolute", bottom: 20, left: 20, width: 40, height: 40, borderBottom: `1.5px solid ${PRIMARY_LIGHT}bb`, borderLeft: `1.5px solid ${PRIMARY_LIGHT}bb` }} />
-              <div style={{ position: "absolute", bottom: 20, right: 20, width: 40, height: 40, borderBottom: `1.5px solid ${PRIMARY_LIGHT}bb`, borderRight: `1.5px solid ${PRIMARY_LIGHT}bb` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(63,74,69,0.45) 0%, rgba(63,74,69,0.15) 35%, rgba(63,74,69,0.3) 65%, rgba(63,74,69,0.72) 100%)` }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
@@ -578,10 +606,10 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             </div>
 
-            {/* Full-width blessing band — deep brown, edge to edge */}
-            <div style={{ background: DARK, padding: "2.6rem 2rem", textAlign: "center" }}>
-              <OrnateDivider color={PRIMARY_LIGHT} />
-              <div style={{ fontSize: "1.05rem", color: "#f0e2c0", lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
+            {/* Full-width blessing band — soft blush, edge to edge */}
+            <div style={{ background: PRIMARY_LIGHT, padding: "2.6rem 2rem", textAlign: "center" }}>
+              <OrnateDivider color={PRIMARY} />
+              <div style={{ fontSize: "1.05rem", color: DARK, lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
                   "With God's grace, and our parents' blessings, the day has come when we are taking a step forward to begin a wonderful life together!"}
               </div>
@@ -617,8 +645,8 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
             {/* Full-width countdown band */}
             {sv.countdown && (
-              <div style={{ background: `linear-gradient(135deg,${DARK},#4a3220)`, padding: "2rem 1.5rem", textAlign: "center" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 16 }}>Save the Date</div>
+              <div style={{ background: `linear-gradient(135deg,${PRIMARY_LIGHT},#dce8e0)`, padding: "2rem 1.5rem", textAlign: "center" }}>
+                <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: DARK, marginBottom: 16 }}>Save the Date</div>
                 <Countdown targetDate={W.date} dark={DARK} />
               </div>
             )}
@@ -761,12 +789,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
             {/* Thank you */}
             {sv.thank_you && (
-              <div style={{ background: DARK, padding: "2.4rem 1.5rem", textAlign: "center" }}>
-                <OrnateDivider color={PRIMARY_LIGHT} />
-                <div style={{ fontSize: 13, color: "#f0e2c0", lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
+              <div style={{ background: PRIMARY_LIGHT, padding: "2.4rem 1.5rem", textAlign: "center" }}>
+                <OrnateDivider color={PRIMARY} />
+                <div style={{ fontSize: 13, color: DARK, lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.7rem", color: PRIMARY_LIGHT, marginTop: 16 }}>{W.bride} &amp; {W.groom}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.7rem", color: PRIMARY, marginTop: 16 }}>{W.bride} &amp; {W.groom}</div>
               </div>
             )}
 
