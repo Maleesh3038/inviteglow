@@ -13,6 +13,7 @@ import SunsetShoresTemplate from '@/components/templates/SunsetShoresTemplate'
 import SacredPoruwaTemplate from '@/components/templates/SacredPoruwaTemplate'
 import TraditionalCeylonTemplate from '@/components/templates/TraditionalCeylonTemplate'
 import BlushBlossomTemplate from '@/components/templates/BlushBlossomTemplate'
+import CeylonEleganceTemplate from '@/components/templates/CeylonEleganceTemplate'
 export default function InvitePage() {
   const params = useParams()
   const slug = params.slug as string
@@ -65,6 +66,8 @@ export default function InvitePage() {
       return <TraditionalCeylonTemplate couple={couple} />
     case 'blush-blossom':
       return <BlushBlossomTemplate couple={couple} />
+    case 'ceylon-elegance':
+      return <CeylonEleganceTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
