@@ -471,18 +471,22 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   }, [songUrl])
 
   const [videoPlaying, setVideoPlaying] = useState(false)
+  const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleOpen = () => {
     if (coverVideoUrl) {
-      // Play the cover video once; the invitation only opens once it finishes.
+      // Play the cover video for a short ~5s preview; the invitation opens
+      // once that preview finishes (or the clip itself ends, if shorter).
       setVideoPlaying(true)
       videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
+      videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
     } else {
       handleVideoEnded()
     }
   }
 
   const handleVideoEnded = () => {
+    if (videoTimerRef.current) { clearTimeout(videoTimerRef.current); videoTimerRef.current = null }
     setOpened(true)
     audioRef.current?.play().catch(() => {})
   }
@@ -539,7 +543,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
               {coverVideoUrl ? (
-                <video ref={videoRef} muted playsInline preload="auto" poster={W.couplePhoto} onEnded={handleVideoEnded}
+                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
