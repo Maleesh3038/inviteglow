@@ -84,12 +84,13 @@ function GuestIntroScreen({ guestName, onDone, primary }: { guestName: string; o
 // ── Scratch-to-reveal canvas: guest drags/taps to wipe away a gold foil
 // layer, revealing the couple's names underneath. Auto-completes once
 // enough of the canvas has been cleared, with a fallback tap button. ──
-function ScratchCard({ bride, groom, primary, onRevealed }: { bride: string; groom: string; primary: string; onRevealed: () => void }) {
+function ScratchCard({ bride, groom, primary, onRevealed, onFirstTouch }: { bride: string; groom: string; primary: string; onRevealed: () => void; onFirstTouch?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [revealPct, setRevealPct] = useState(0)
   const isDrawing = useRef(false)
   const doneRef = useRef(false)
+  const touchedRef = useRef(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -159,11 +160,11 @@ function ScratchCard({ bride, groom, primary, onRevealed }: { bride: string; gro
       </div>
       <canvas
         ref={canvasRef}
-        onMouseDown={e => { isDrawing.current = true; scratch(e) }}
+        onMouseDown={e => { isDrawing.current = true; if (!touchedRef.current) { touchedRef.current = true; onFirstTouch?.() }; scratch(e) }}
         onMouseMove={e => { if (isDrawing.current) scratch(e) }}
         onMouseUp={() => (isDrawing.current = false)}
         onMouseLeave={() => (isDrawing.current = false)}
-        onTouchStart={e => { isDrawing.current = true; scratch(e) }}
+        onTouchStart={e => { isDrawing.current = true; if (!touchedRef.current) { touchedRef.current = true; onFirstTouch?.() }; scratch(e) }}
         onTouchMove={e => { if (isDrawing.current) scratch(e) }}
         onTouchEnd={() => (isDrawing.current = false)}
         style={{ position: "absolute", inset: 0, zIndex: 2, cursor: "pointer", touchAction: "none", borderRadius: 20 }}
@@ -647,6 +648,15 @@ function CinematicGoldInner({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
   }
 
+  // Mobile browsers (notably iOS Safari) only allow audio.play() to start
+  // from within a direct user gesture like touchstart/click — NOT from a
+  // touchmove handler, which is when the scratch-card reveal threshold is
+  // usually crossed. So we start audio on the very first tap/mousedown
+  // instead of waiting for the full reveal.
+  const handleFirstTouch = () => {
+    audioRef.current?.play().catch(() => {})
+  }
+
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '👰' }, homecoming: { label: 'Homecoming', icon: '🏡' },
   }
@@ -709,7 +719,7 @@ function CinematicGoldInner({ couple }: { couple: Couple }) {
               </div>
 
               <div style={{ width: "100%", maxWidth: 340, aspectRatio: "1/1", borderRadius: 20, overflow: "hidden", boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px ${PRIMARY}33`, position: "relative" }}>
-                <ScratchCard bride={W.bride} groom={W.groom} primary={PRIMARY} onRevealed={handleRevealed} />
+                <ScratchCard bride={W.bride} groom={W.groom} primary={PRIMARY} onRevealed={handleRevealed} onFirstTouch={handleFirstTouch} />
               </div>
 
               <AnimatePresence>
