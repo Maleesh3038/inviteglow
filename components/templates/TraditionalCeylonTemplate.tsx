@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
+import FooterSocial from '@/components/shared/FooterSocial'
 
 const DEFAULT_PHOTO = "/images/hero-traditional-ceylon.png"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
@@ -445,6 +446,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
             <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#b0b898" }}>inviteglow.com · Digital Wedding Invitations</div>
+              {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
           </motion.div>
         )}
