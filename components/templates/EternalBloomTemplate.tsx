@@ -552,7 +552,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.25) 0%, rgba(20,16,8,0.05) 30%, rgba(20,16,8,0.15) 55%, rgba(20,16,8,0.6) 85%, rgba(20,16,8,0.75) 100%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.3) 0%, rgba(20,16,8,0.15) 25%, rgba(20,16,8,0.35) 50%, rgba(20,16,8,0.65) 85%, rgba(20,16,8,0.78) 100%)` }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
@@ -568,7 +568,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
                 {guestName && (
                   <>
-                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#f0d488", margin: "1.3rem 0 0.35rem", fontWeight: 700, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>Dear</div>
+                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", margin: "1.3rem 0 0.35rem", fontWeight: 700, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>Dear</div>
                     <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)", fontWeight: 600 }}>{guestName}</div>
                   </>
                 )}
