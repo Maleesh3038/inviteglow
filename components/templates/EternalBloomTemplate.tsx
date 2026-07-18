@@ -470,10 +470,21 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
 
+  const [videoPlaying, setVideoPlaying] = useState(false)
+
   const handleOpen = () => {
+    if (coverVideoUrl) {
+      // Play the cover video once; the invitation only opens once it finishes.
+      setVideoPlaying(true)
+      videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
+    } else {
+      handleVideoEnded()
+    }
+  }
+
+  const handleVideoEnded = () => {
     setOpened(true)
     audioRef.current?.play().catch(() => {})
-    videoRef.current?.play().catch(() => {})
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -528,7 +539,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
               {coverVideoUrl ? (
-                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                <video ref={videoRef} muted playsInline preload="auto" poster={W.couplePhoto} onEnded={handleVideoEnded}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
@@ -555,14 +566,17 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                   </>
                 )}
 
-                <button onClick={handleOpen} style={{
+                <button onClick={handleOpen} disabled={videoPlaying} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.35)", marginTop: guestName ? 0 : "1.4rem",
+                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.35)", marginTop: guestName ? 0 : "1.4rem",
+                  opacity: videoPlaying ? 0.7 : 1,
                 }}>
-                  Open Invitation →
+                  {videoPlaying ? "Playing..." : "Open Invitation →"}
                 </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>
+                {!videoPlaying && (
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>
+                )}
               </motion.div>
             </motion.div>
           )}
