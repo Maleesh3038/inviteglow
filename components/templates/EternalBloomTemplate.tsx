@@ -427,16 +427,6 @@ const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 1
 const pretitleStyle = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
-function LeafCornerAccent({ flip = false }: { flip?: boolean }) {
-  return (
-    <div style={{ position: "absolute", top: 10, [flip ? "left" : "right"]: 10, opacity: 0.18, transform: flip ? "scaleX(-1) rotate(-15deg)" : "rotate(15deg)", pointerEvents: "none" }}>
-      <svg width={44} height={44} viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill="#5c7a52" />
-      </svg>
-    </div>
-  )
-}
-
 export default function EternalBloomTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f8f6ee" }} />}>
@@ -625,8 +615,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
             {/* Blessing card */}
             <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <LeafCornerAccent />
-              <LeafCornerAccent flip />
               <div style={pretitleStyle(PRIMARY)}>With Love</div>
               <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
@@ -637,8 +625,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Family names */}
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>Our Families</div>
                 <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
@@ -656,8 +642,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <LeafCornerAccent />
-                  <LeafCornerAccent flip />
                   <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={titleStyle(DARK)}>{ev.label}</div>
                   {[
@@ -697,8 +681,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>The Wedding Lineup</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -718,8 +700,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>With Love</div>
                 <div style={titleStyle(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center', marginBottom: 16 }}>
@@ -732,8 +712,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Seat finder */}
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>Be Our Guest</div>
                 <div style={titleStyle(DARK)}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
@@ -744,8 +722,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Music */}
             {sv.music && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
@@ -754,8 +730,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>Our Story</div>
                 <div style={titleStyle(DARK)}>Our Moments</div>
                 <div style={{ columnCount: 2, columnGap: 10 }}>
@@ -772,8 +746,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Thank you */}
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <LeafCornerAccent />
-                <LeafCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
