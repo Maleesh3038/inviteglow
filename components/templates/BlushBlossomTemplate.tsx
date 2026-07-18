@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { supabase, Couple, CoupleColors } from '@/lib/supabase'
+import FooterSocial from '@/components/shared/FooterSocial'
 
 /**
  * BlushBlossomTemplate v5 — precisely matches the reference:
@@ -1015,7 +1016,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           {/* Guest Wishes Wall — everyone can read it, everyone can add to it,
               hidden entirely when the couple turns it off from admin */}
-          {((couple as any).enable_guest_wishes ?? true) && (
+          {((couple as any).enable_guest_wishes ?? false) && (
             <Reveal wide>
               <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Wishes for Us</div>
               {divider}
@@ -1218,6 +1219,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               <p style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 12 }}>
                 May our love bloom eternal
               </p>
+              {((couple as any).enable_footer_social ?? true) && <FooterSocial color={colors.primary} background={`${colors.primary}14`} />}
             </div>
           </div>
         </motion.div>
