@@ -626,18 +626,17 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {coverVideoUrl ? (
-                <video ref={videoRef} muted playsInline preload="auto" poster={W.couplePhoto} onEnded={handleVideoEnded}
-                  onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch { } }}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {coverVideoUrl && (
+                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
+                  onLoadedData={e => { e.currentTarget.style.opacity = "1" }}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.3) 0%, rgba(20,16,8,0.15) 25%, rgba(20,16,8,0.35) 50%, rgba(20,16,8,0.65) 85%, rgba(20,16,8,0.78) 100%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.3) 0%, rgba(20,16,8,0.15) 25%, rgba(20,16,8,0.35) 50%, rgba(20,16,8,0.65) 85%, rgba(20,16,8,0.78) 100%)`, zIndex: 3 }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
