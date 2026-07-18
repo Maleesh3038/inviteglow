@@ -23,6 +23,86 @@ const DEFAULT_PALETTE = {
 // ── Leaf divider — the signature organic motif for this template, used
 // instead of geometric dots/diamonds anywhere Ceylon Elegance-style
 // dividers would normally go. ──
+// ── Floating bottom nav bar — quick jump to key sections, plus a raised
+// music toggle button in the center. ──
+function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function BottomNavBar({ primary, dark, mapsUrl, hasWishes, audioRef }: {
+  primary: string; dark: string; mapsUrl: string; hasWishes: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+}) {
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    a.addEventListener('play', onPlay)
+    a.addEventListener('pause', onPause)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
+  }, [audioRef])
+
+  const toggleMusic = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.paused ? a.play().catch(() => {}) : a.pause()
+  }
+
+  const iconBtn = (onClick: () => void, label: string, path: JSX.Element) => (
+    <button key={label} onClick={onClick} aria-label={label} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
+      border: 'none', cursor: 'pointer', color: dark, opacity: 0.75, padding: '4px 6px',
+    }}>
+      <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+      <span style={{ fontSize: 8.5, letterSpacing: '0.02em' }}>{label}</span>
+    </button>
+  )
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+      width: '100%', maxWidth: 480, zIndex: 100,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+        background: '#fff', borderTop: `1px solid ${primary}33`, boxShadow: '0 -4px 20px rgba(45,61,40,0.1)',
+        padding: '10px 6px calc(8px + env(safe-area-inset-bottom))', position: 'relative',
+      }}>
+        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />)}
+        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>)}
+        {/* Spacer for the raised center music button */}
+        <div style={{ width: 56, flexShrink: 0 }} />
+        {iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>)}
+        {iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>)}
+
+        {/* Raised music toggle, floating above the bar */}
+        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
+          position: 'absolute', left: '50%', top: -14, transform: 'translateX(-50%)',
+          width: 50, height: 50, borderRadius: '50%', border: '3px solid #fff',
+          background: `linear-gradient(135deg,${primary},#8aa87e)`, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 6px 16px rgba(45,61,40,0.3)',
+        }}>
+          <span style={{ fontSize: 18, animation: playing ? 'spin 4s linear infinite' : 'none' }}>🎵</span>
+        </button>
+
+        {/* Location — opens external maps directly rather than scrolling */}
+        <a href={mapsUrl || '#'} target="_blank" rel="noopener noreferrer" style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: mapsUrl ? 0.75 : 0.3,
+          textDecoration: 'none', padding: '4px 6px', pointerEvents: mapsUrl ? 'auto' : 'none',
+        }}>
+          <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+          </svg>
+          <span style={{ fontSize: 8.5 }}>Location</span>
+        </a>
+      </div>
+    </div>
+  )
+}
+
 function LeafDivider({ color, size = 20 }: { color: string; size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
@@ -669,7 +749,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
             {/* Countdown — full-width bordered band, matching Floral Romance */}
             {sv.countdown && (
-              <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
+              <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
                 <div style={pretitleStyle(PRIMARY)}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} />
               </div>
@@ -699,7 +779,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="wishes" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>With Love</div>
                 <div style={titleStyle(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center', marginBottom: 16 }}>
@@ -729,7 +809,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>Our Story</div>
                 <div style={titleStyle(DARK)}>Our Moments</div>
                 <div style={{ columnCount: 2, columnGap: 10 }}>
@@ -758,7 +838,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
+            <div id="contact" style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.6 }}>
                 <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
               </div>
@@ -769,6 +849,14 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
+      {opened && (
+        <BottomNavBar
+          primary={PRIMARY} dark={DARK}
+          mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
+          hasWishes={(couple as any).enable_guest_wishes ?? false}
+          audioRef={audioRef}
+        />
+      )}
     </div>
   )
 }
