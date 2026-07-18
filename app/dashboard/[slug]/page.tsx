@@ -40,7 +40,7 @@ function findSeatForGuest(guestName: string, seats: Record<string, string>): str
 }
 
 // ── Clean line-style SVG icons — no emoji in the dashboard chrome ──
-type IconName = 'lock' | 'check' | 'cross' | 'users' | 'chair' | 'wine' | 'glass' | 'edit' | 'link' | 'overview' | 'search' | 'refresh' | 'trash' | 'copy' | 'whatsapp' | 'home' | 'car' | 'sparkles' | 'camera'
+type IconName = 'lock' | 'check' | 'cross' | 'users' | 'chair' | 'wine' | 'glass' | 'edit' | 'link' | 'overview' | 'search' | 'refresh' | 'trash' | 'copy' | 'whatsapp' | 'home' | 'car' | 'sparkles' | 'camera' | 'heart'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -63,6 +63,7 @@ function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { 
     case 'car': return <svg {...c}><path d="M4 16V11l2-4h12l2 4v5" /><path d="M4 16a1.5 1.5 0 003 0M17 16a1.5 1.5 0 003 0M4 16h16" /></svg>
     case 'sparkles': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
     case 'camera': return <svg {...c}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7l1.5-3h5L16 7" /><circle cx="12" cy="13.5" r="3.5" /></svg>
+    case 'heart': return <svg {...c}><path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" /></svg>
     default: return null
   }
 }
@@ -88,6 +89,138 @@ function RsvpDonut({ accepted, declined, accent, accentLight, size = 128 }: { ac
       <text x="50%" y="47%" textAnchor="middle" fontSize={size * 0.22} fontWeight={800} fill="#1e293b" fontFamily="'Inter',sans-serif">{total}</text>
       <text x="50%" y="63%" textAnchor="middle" fontSize={size * 0.09} fill="#94a3b8" fontFamily="'Inter',sans-serif">RSVPs</text>
     </svg>
+  )
+}
+
+// ── Guest wish moderation ──────────────────────────────────────────
+type DashWishMedia = { url: string; type: 'photo' | 'video' }
+type DashWish = {
+  id: string; couple_id: string; guest_name: string; message: string
+  photo_url: string | null; video_url: string | null; media: DashWishMedia[] | null
+  approved: boolean | null; created_at: string
+}
+
+function getDashWishMedia(w: DashWish): DashWishMedia[] {
+  if (w.media && w.media.length > 0) return w.media
+  if (w.photo_url) return [{ url: w.photo_url, type: 'photo' }]
+  if (w.video_url) return [{ url: w.video_url, type: 'video' }]
+  return []
+}
+
+function WishesManager({ coupleId, accent }: { coupleId: string; accent: string }) {
+  const [wishes, setWishes] = useState<DashWish[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'pending' | 'approved'>('pending')
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const BORDER = '#e2e8f0'
+  const TEXT_DARK = '#1e293b'
+  const TEXT_MUTED = '#64748b'
+
+  const load = async () => {
+    const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+    if (data) setWishes(data as DashWish[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [coupleId])
+
+  const setApproved = async (id: string, approved: boolean) => {
+    setBusyId(id)
+    const { error } = await supabase.from('wishes').update({ approved }).eq('id', id)
+    if (!error) setWishes(prev => prev.map(w => w.id === id ? { ...w, approved } : w))
+    setBusyId(null)
+  }
+
+  const deleteWish = async (id: string, guestName: string) => {
+    if (!confirm(`Delete ${guestName}'s wish? This cannot be undone.`)) return
+    setBusyId(id)
+    const { error } = await supabase.from('wishes').delete().eq('id', id)
+    if (!error) setWishes(prev => prev.filter(w => w.id !== id))
+    setBusyId(null)
+  }
+
+  const pending = wishes.filter(w => !w.approved)
+  const approved = wishes.filter(w => w.approved)
+  const shown = filter === 'pending' ? pending : approved
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+    border: active ? 'none' : `1px solid ${BORDER}`,
+    background: active ? accent : '#fff',
+    color: active ? '#fff' : TEXT_MUTED,
+  })
+
+  if (loading) {
+    return <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>Loading wishes...</div>
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div onClick={() => setFilter('pending')} style={pillStyle(filter === 'pending')}>Pending ({pending.length})</div>
+        <div onClick={() => setFilter('approved')} style={pillStyle(filter === 'approved')}>Approved ({approved.length})</div>
+      </div>
+
+      {shown.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>
+          {filter === 'pending' ? 'No wishes waiting for approval.' : 'No approved wishes yet.'}
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          {shown.map(w => {
+            const media = getDashWishMedia(w)
+            return (
+              <div key={w.id} style={{ background: "#fff", borderRadius: 14, padding: "14px 18px", boxShadow: "0 2px 10px rgba(15,23,42,0.05)" }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  {media.length > 0 && (
+                    <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f1f5f9' }}>
+                      {media[0].type === 'video' ? (
+                        <video src={media[0].url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={media[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{w.guest_name}</div>
+                    <div style={{ fontSize: 13, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{w.message}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      {new Date(w.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {media.length > 1 && ` · ${media.length} attachments`}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+                  {w.approved ? (
+                    <button type="button" onClick={() => setApproved(w.id, false)} disabled={busyId === w.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
+                      border: '1px solid #fde68a', cursor: 'pointer', background: '#fffbeb', color: '#b45309',
+                      fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
+                    }}>Unapprove</button>
+                  ) : (
+                    <button type="button" onClick={() => setApproved(w.id, true)} disabled={busyId === w.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
+                      border: '1px solid #bbf7d0', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a',
+                      fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
+                    }}>
+                      <Icon name="check" size={11} color="#16a34a" /> Approve
+                    </button>
+                  )}
+                  <button type="button" onClick={() => deleteWish(w.id, w.guest_name)} disabled={busyId === w.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
+                    border: '1px solid #fecaca', cursor: 'pointer', background: '#fef2f2', color: '#dc2626',
+                    fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
+                  }}>
+                    <Icon name="trash" size={11} color="#dc2626" /> Delete
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -439,6 +572,7 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
 const TABS = [
   { key: 'overview', label: 'Overview', icon: 'overview' as const },
   { key: 'guests', label: 'Guests', icon: 'users' as const },
+  { key: 'wishes', label: 'Wishes', icon: 'heart' as const },
   { key: 'edit', label: 'Edit', icon: 'edit' as const },
   { key: 'share', label: 'Share', icon: 'link' as const },
 ]
@@ -454,7 +588,7 @@ export default function CoupleDashboard() {
   const [search, setSearch] = useState("")
   const [filterResponse, setFilterResponse] = useState<'all' | 'yes' | 'no'>('all')
   const [filterDrinking, setFilterDrinking] = useState<'all' | 'yes' | 'no'>('all')
-  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'edit' | 'share'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'wishes' | 'edit' | 'share'>('overview')
 
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState("")
@@ -483,6 +617,12 @@ export default function CoupleDashboard() {
 
   useEffect(() => {
     if (couple && (couple as any).enable_guest_links === false && activeTab === 'share') {
+      setActiveTab('overview')
+    }
+  }, [couple, activeTab])
+
+  useEffect(() => {
+    if (couple && (couple as any).enable_guest_wishes !== true && activeTab === 'wishes') {
       setActiveTab('overview')
     }
   }, [couple, activeTab])
@@ -630,7 +770,10 @@ export default function CoupleDashboard() {
           </div>
 
           <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
-            {TABS.filter(tab => tab.key !== 'share' || (couple as any).enable_guest_links !== false).map(tab => (
+            {TABS.filter(tab =>
+              (tab.key !== 'share' || (couple as any).enable_guest_links !== false) &&
+              (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true)
+            ).map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
                 border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
@@ -872,6 +1015,13 @@ export default function CoupleDashboard() {
                   })}
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* ── WISHES TAB ── */}
+          {activeTab === 'wishes' && (couple as any).enable_guest_wishes === true && (
+            <motion.div key="wishes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <WishesManager coupleId={couple.id} accent={ACCENT} />
             </motion.div>
           )}
 
