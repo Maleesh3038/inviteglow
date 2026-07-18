@@ -15,6 +15,7 @@ const TEMPLATES = [
   { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', demoSlug: 'sandunika-geeth', color: '#c4956a' },
   { id: 'blush-blossom', name: 'Blush Blossom', tag: 'Cherry Blossom', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
   { id: 'ceylon-elegance', name: 'Ceylon Elegance', tag: 'Gold & Video', photo: '', demoSlug: '', color: '#c9a227' },
+  { id: 'eternal-bloom', name: 'Eternal Bloom', tag: 'Botanical & Video', photo: '', demoSlug: '', color: '#5c7a52' },
 ]
 
 const BUCKET = 'wedding-photos'
@@ -1642,9 +1643,9 @@ export default function AdminPage() {
 
                 <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #e8d9a0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>
-                    <Icon name="template" size={15} color="#8a6d1a" /> Ceylon Elegance — Extras
+                    <Icon name="template" size={15} color="#8a6d1a" /> Video &amp; Photo Extras
                   </div>
-                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Only used by the "Ceylon Elegance" template — hero video, individual bride/groom photos, and gift accounts.</div>
+                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Used by "Ceylon Elegance" and "Eternal Bloom" — hero video, individual bride/groom photos. The gift accounts below only appear on Ceylon Elegance.</div>
 
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Hero Background Video (optional)</label>
