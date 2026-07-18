@@ -624,14 +624,23 @@ function CinematicGoldInner({ couple }: { couple: Couple }) {
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
 
+  const songUrl = couple.song_url || DEFAULT_SONG_URL
+
   useEffect(() => {
-    const songUrl = couple.song_url || DEFAULT_SONG_URL
+    // Stop and fully release any previously-created audio before making a
+    // new one — prevents the old (e.g. default) track from continuing to
+    // play underneath a newly-set custom song.
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ""
+      audioRef.current = null
+    }
     const audio = new Audio(songUrl)
     audio.loop = true
     audio.volume = 0.6
     audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
-  }, [couple])
+  }, [songUrl])
 
   const handleRevealed = () => {
     setScratched(true)
