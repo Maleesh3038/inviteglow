@@ -627,7 +627,8 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
               {coverVideoUrl ? (
-                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
+                <video ref={videoRef} muted playsInline preload="auto" poster={W.couplePhoto} onEnded={handleVideoEnded}
+                  onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch { } }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
