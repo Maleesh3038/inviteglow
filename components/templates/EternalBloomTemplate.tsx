@@ -6,6 +6,7 @@ import { supabase, Couple } from '@/lib/supabase'
 import FooterSocial from '@/components/shared/FooterSocial'
 
 const DEFAULT_PHOTO = "/images/hero-floral.png"
+const DEFAULT_COVER_VIDEO = "https://eqacrwhbrfqcnlgegvtl.supabase.co/storage/v1/object/public/wedding-photos/videos/eternal-bloom-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
@@ -452,7 +453,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
 
-  const coverVideoUrl = (couple as any).cover_video_url as string | undefined
+  const coverVideoUrl = (couple as any).cover_video_url || DEFAULT_COVER_VIDEO
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
   useEffect(() => {
