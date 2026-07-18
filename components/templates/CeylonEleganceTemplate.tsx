@@ -69,7 +69,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 }
 
 // ── Countdown ──
-function Countdown({ targetDate, dark }: { targetDate: string; dark: string }) {
+function Countdown({ targetDate, dark, tint = "#f6f0ee" }: { targetDate: string; dark: string; tint?: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
     const tick = () => {
@@ -82,11 +82,11 @@ function Countdown({ targetDate, dark }: { targetDate: string; dark: string }) {
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
   }, [targetDate])
   return (
-    <div style={{ display: "flex", justifyContent: "center", gap: 10, maxWidth: 380, margin: "0 auto" }}>
+    <div style={{ display: "flex", justifyContent: "center", gap: 8, maxWidth: 340, margin: "0 auto" }}>
       {[["Days", t.d], ["Hours", t.h], ["Minutes", t.m], ["Seconds", t.s]].map(([l, v]) => (
-        <div key={l} style={{ flex: 1, textAlign: "center", background: "#fff", borderRadius: 10, padding: "12px 4px" }}>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.7rem", color: dark, fontWeight: 700, lineHeight: 1 }}>{v}</div>
-          <div style={{ fontSize: 8, letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a7355", marginTop: 6 }}>{l}</div>
+        <div key={l} style={{ flex: 1, textAlign: "center", background: tint, borderRadius: 10, padding: "10px 3px" }}>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 700, lineHeight: 1 }}>{v}</div>
+          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a7355", marginTop: 5 }}>{l}</div>
         </div>
       ))}
     </div>
@@ -430,13 +430,13 @@ function GiftAccountCard({ label, bankName, accountName, accountNumber, primary,
     navigator.clipboard?.writeText(accountNumber).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800) }).catch(() => {})
   }
   return (
-    <div style={{ background: "#fff", borderRadius: 14, padding: "20px 18px", textAlign: "center", border: `1px solid ${primary}33` }}>
-      <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${primary}1a`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 17 }}>🏦</div>
-      <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: muted, marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: dark, marginBottom: 4 }}>{bankName}</div>
-      <div style={{ fontSize: 12.5, color: muted, marginBottom: 2 }}>{accountName}</div>
-      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: primary, marginBottom: 12, letterSpacing: "0.03em" }}>{accountNumber}</div>
-      <button onClick={copy} style={{ padding: "8px 18px", borderRadius: 100, border: "none", cursor: "pointer", background: copied ? "#16a34a" : primary, color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>
+    <div style={{ background: "#fff", borderRadius: 12, padding: "16px 16px", textAlign: "center", border: `1px solid ${primary}33` }}>
+      <div style={{ width: 34, height: 34, borderRadius: "50%", background: `${primary}1a`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px", fontSize: 15 }}>🏦</div>
+      <div style={{ fontSize: 9.5, letterSpacing: "0.18em", textTransform: "uppercase", color: muted, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: dark, marginBottom: 3 }}>{bankName}</div>
+      <div style={{ fontSize: 11.5, color: muted, marginBottom: 2 }}>{accountName}</div>
+      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.1rem", color: primary, marginBottom: 10, letterSpacing: "0.03em" }}>{accountNumber}</div>
+      <button onClick={copy} style={{ padding: "7px 16px", borderRadius: 100, border: "none", cursor: "pointer", background: copied ? "#16a34a" : primary, color: "#fff", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.04em" }}>
         {copied ? "✓ Copied!" : "Copy Account Number"}
       </button>
     </div>
@@ -583,8 +583,8 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            {/* Hero — persists smaller after opening */}
-            <div style={{ position: "relative", height: 420, overflow: "hidden", zIndex: 1 }}>
+            {/* Hero — kept tall so the video/photo stays the visual focus */}
+            <div style={{ position: "relative", height: 580, overflow: "hidden", zIndex: 1 }}>
               {coverVideoUrl ? (
                 <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
@@ -606,25 +606,26 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             </div>
 
-            {/* Blessing card — rounded, shadowed, overlaps the hero photo for a modern cut-edge look */}
-            <div style={{
-              position: "relative", zIndex: 2, marginTop: -36,
-              background: `linear-gradient(160deg,${PRIMARY_LIGHT} 0%,#f3e2dc 100%)`,
-              borderRadius: "32px 32px 0 0", padding: "2.8rem 2rem 2.4rem", textAlign: "center",
-              boxShadow: "0 -12px 30px rgba(63,74,69,0.12)",
-            }}>
+            {/* Blessing card — white with a whisper of blush, overlaps the hero photo, fades in */}
+            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+              style={{
+                position: "relative", zIndex: 2, marginTop: -32,
+                background: CREAM,
+                borderRadius: "28px 28px 0 0", padding: "2.2rem 1.8rem 1.8rem", textAlign: "center",
+                boxShadow: "0 -10px 24px rgba(63,74,69,0.1)",
+              }}>
               <OrnateDivider color={PRIMARY} />
-              <div style={{ fontSize: "1.05rem", color: DARK, lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
+              <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, marginTop: 16, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 320, margin: "16px auto 0" }}>
                 {(couple as any).family_invitation_text ||
                   "With God's grace, and our parents' blessings, the day has come when we are taking a step forward to begin a wonderful life together!"}
               </div>
-            </div>
+            </motion.div>
 
             {/* Couple bios — no card box, floats on cream, ornate ring photos, heart connector */}
             <div style={{ padding: "2.4rem 1.4rem 1.6rem", position: "relative" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 108, height: 108, borderRadius: "50%", padding: 5, margin: "0 auto 14px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
+                  <div style={{ width: 92, height: 92, borderRadius: "50%", padding: 4, margin: "0 auto 12px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
                     <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", border: "3px solid #fff" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={W.groomPhoto} alt={W.groom} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
@@ -634,7 +635,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                   {W.groomFamilyName && <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.6 }}>son of<br /><strong style={{ color: DARK }}>{W.groomFamilyName}</strong></div>}
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 108, height: 108, borderRadius: "50%", padding: 5, margin: "0 auto 14px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
+                  <div style={{ width: 92, height: 92, borderRadius: "50%", padding: 4, margin: "0 auto 12px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
                     <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", border: "3px solid #fff" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={W.bridePhoto} alt={W.bride} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
@@ -648,12 +649,13 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", top: 66, left: "50%", transform: "translateX(-50%)", width: 30, height: 30, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: PRIMARY }}>♥</div>
             </div>
 
-            {/* Full-width countdown band — rounded modern card */}
+            {/* Countdown card — light, compact, fades in */}
             {sv.countdown && (
-              <div style={{ margin: "0 16px 20px", borderRadius: 24, background: `linear-gradient(135deg,${PRIMARY_LIGHT},#dce8e0)`, padding: "2rem 1.5rem", textAlign: "center", boxShadow: "0 8px 24px rgba(63,74,69,0.08)" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: DARK, marginBottom: 16 }}>Save the Date</div>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ margin: "0 16px 18px", borderRadius: 20, background: "#fff", border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.5rem 1.2rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)" }}>
+                <div style={{ fontSize: 9.5, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, marginBottom: 14 }}>Save the Date</div>
                 <Countdown targetDate={W.date} dark={DARK} />
-              </div>
+              </motion.div>
             )}
 
             {/* Events — bordered outline boxes, compact single-line detail rows */}
@@ -664,18 +666,18 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
                 return (
                   <motion.div key={ev.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    style={{ border: `1px solid ${PRIMARY}55`, borderRadius: 14, padding: "18px 18px", marginBottom: 14, background: "#fff" }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 700, fontSize: "1.25rem", color: DARK, textAlign: "center", marginBottom: 14 }}>
+                    style={{ border: `1px solid ${PRIMARY}40`, borderRadius: 12, padding: "14px 16px", marginBottom: 12, background: "#fff" }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 700, fontSize: "1.1rem", color: DARK, textAlign: "center", marginBottom: 10 }}>
                       {ev.icon} {ev.label}
                     </div>
-                    <div style={{ display: "grid", gap: 8 }}>
-                      <div style={{ fontSize: 13, color: DARK }}><span style={{ opacity: 0.6 }}>📅</span> {evDateDisplay}</div>
-                      <div style={{ fontSize: 13, color: DARK }}><span style={{ opacity: 0.6 }}>⏰</span> {evTimeDisplay}</div>
-                      <div style={{ fontSize: 13, color: DARK }}><span style={{ opacity: 0.6 }}>📍</span> {ev.venue}{ev.venue_address ? `, ${ev.venue_address}` : ''}</div>
+                    <div style={{ display: "grid", gap: 6 }}>
+                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>📅</span> {evDateDisplay}</div>
+                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>⏰</span> {evTimeDisplay}</div>
+                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>📍</span> {ev.venue}{ev.venue_address ? `, ${ev.venue_address}` : ''}</div>
                     </div>
                     {ev.maps_url && (
-                      <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", marginTop: 16, background: `${PRIMARY}1a`, borderRadius: 100, padding: "9px 20px", fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, textDecoration: "none", fontWeight: 700 }}>
-                        📍 View Location on Maps
+                      <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", marginTop: 12, background: `${PRIMARY}1a`, borderRadius: 100, padding: "8px 18px", fontSize: 10.5, letterSpacing: "0.13em", textTransform: "uppercase", color: PRIMARY, textDecoration: "none", fontWeight: 700 }}>
+                        📍 View Location
                       </a>
                     )}
                   </motion.div>
@@ -792,15 +794,16 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             )}
 
-            {/* Thank you — rounded modern card */}
+            {/* Thank you — light, compact, fades in */}
             {sv.thank_you && (
-              <div style={{ margin: "0 16px 20px", borderRadius: 24, background: `linear-gradient(160deg,${PRIMARY_LIGHT} 0%,#f3e2dc 100%)`, padding: "2.4rem 1.5rem", textAlign: "center", boxShadow: "0 8px 24px rgba(63,74,69,0.08)" }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ margin: "0 16px 20px", borderRadius: 20, background: "#fff", border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.8rem 1.4rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)" }}>
                 <OrnateDivider color={PRIMARY} />
-                <div style={{ fontSize: 13, color: DARK, lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
+                <div style={{ fontSize: 12.5, color: DARK, opacity: 0.85, lineHeight: 1.9, marginTop: 16, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 320, margin: "16px auto 0" }}>
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.7rem", color: PRIMARY, marginTop: 16 }}>{W.bride} &amp; {W.groom}</div>
-              </div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.6rem", color: PRIMARY, marginTop: 14 }}>{W.bride} &amp; {W.groom}</div>
+              </motion.div>
             )}
 
             {/* Footer — wide photo with name overlay */}
