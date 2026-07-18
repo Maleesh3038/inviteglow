@@ -94,9 +94,17 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           boxShadow: '0 6px 16px rgba(45,61,40,0.35)',
         }}>
-          <svg width={17} height={17} viewBox="0 0 24 24" fill="currentColor" style={{ animation: playing ? 'spin 4s linear infinite' : 'none' }}>
-            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
-          </svg>
+          {playing ? (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
+            </svg>
+          ) : (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9l5 6M21.5 9l-5 6" />
+            </svg>
+          )}
         </button>
       </div>
     </div>
@@ -544,6 +552,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleOpen = () => {
+    // Start audio immediately, inside this click handler — this is a real
+    // user gesture, so browsers (including strict mobile ones) will allow
+    // it. Waiting until the video-preview timer fires would lose that
+    // gesture context and silently block playback.
+    audioRef.current?.play().catch(() => {})
+
     if (coverVideoUrl) {
       // Play the cover video for a short ~5s preview; the invitation opens
       // once that preview finishes (or the clip itself ends, if shorter).
