@@ -552,37 +552,37 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.35) 0%, rgba(20,16,8,0.25) 35%, rgba(20,16,8,0.4) 65%, rgba(20,16,8,0.78) 100%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.25) 0%, rgba(20,16,8,0.05) 30%, rgba(20,16,8,0.15) 55%, rgba(20,16,8,0.6) 85%, rgba(20,16,8,0.75) 100%)` }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{ textAlign: "center", width: "88%", maxWidth: 360, position: "relative", zIndex: 10, padding: "2.2rem 1.4rem", borderRadius: 28, background: "rgba(20,16,8,0.38)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 12px 40px rgba(0,0,0,0.35)" }}>
+                style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "0.9rem" }}>Wedding Invitation</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9.5vw,3.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 3px 14px rgba(0,0,0,0.7)" }}>{W.bride}</div>
+                <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>Wedding Invitation</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
                 <div style={{ margin: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                  <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.5)" }} />
+                  <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
-                  <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.5)" }} />
+                  <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9.5vw,3.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 3px 14px rgba(0,0,0,0.7)" }}>{W.groom}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
 
                 {guestName && (
                   <>
-                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#f0d488", margin: "1.3rem 0 0.35rem", fontWeight: 700 }}>Dear</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 10px rgba(0,0,0,0.7)", fontWeight: 600 }}>{guestName}</div>
+                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#f0d488", margin: "1.3rem 0 0.35rem", fontWeight: 700, textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>Dear</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)", fontWeight: 600 }}>{guestName}</div>
                   </>
                 )}
 
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.95)", color: "#1a1408",
                   border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", marginTop: guestName ? 8 : "1.5rem",
+                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", marginTop: guestName ? 8 : "1.5rem",
                   opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
                 }}>
                   {videoPlaying ? "Playing..." : "Open Invitation →"}
                 </button>
                 {!videoPlaying && (
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", marginTop: 14, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.85)", marginTop: 14, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>🎵 Tap to begin — with music</div>
                 )}
               </motion.div>
             </motion.div>
