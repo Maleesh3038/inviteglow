@@ -845,7 +845,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c4b48a" }}>inviteglow.com · Digital Wedding Invitations</div>
-              <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />
+              {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
           </motion.div>
         )}
