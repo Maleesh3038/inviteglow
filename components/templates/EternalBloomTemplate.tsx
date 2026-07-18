@@ -36,16 +36,6 @@ function LeafDivider({ color, size = 20 }: { color: string; size?: number }) {
   )
 }
 
-// ── Small icon-badge eyebrow used to anchor each section ──
-function SectionEyebrow({ icon, label, color }: { icon: string; label: string; color: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 8 }}>
-      <span style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>
-      <span style={{ fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color, fontWeight: 700 }}>{label}</span>
-    </div>
-  )
-}
-
 // ── Guest intro screen ──
 function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
   guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
@@ -430,6 +420,23 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
   )
 }
 
+// ── Card + section styles, matching the Floral Romance layout pattern:
+// each section is its own white rounded card in a vertical stack, with a
+// small corner leaf accent (instead of Floral Romance's lotus). ──
+const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(45,61,40,0.06)", position: "relative", overflow: "hidden" })
+const pretitleStyle = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
+const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
+
+function LeafCornerAccent({ flip = false }: { flip?: boolean }) {
+  return (
+    <div style={{ position: "absolute", top: 10, [flip ? "left" : "right"]: 10, opacity: 0.18, transform: flip ? "scaleX(-1) rotate(-15deg)" : "rotate(15deg)", pointerEvents: "none" }}>
+      <svg width={44} height={44} viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill="#5c7a52" />
+      </svg>
+    </div>
+  )
+}
+
 export default function EternalBloomTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f8f6ee" }} />}>
@@ -497,7 +504,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   }
 
   const TINT_SAGE = "#eef2e6"
-  const TINT_MOSS = "#e4ebd9"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -577,206 +583,193 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(45,61,40,0.1) 60%,rgba(45,61,40,0.3) 100%)` }} />
-              <div style={{ position: "absolute", bottom: 30, left: 0, right: 0, padding: "0 1.5rem", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2rem,7vw,2.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
-                  {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
-                </div>
-                <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 12 }}>
-                  <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "9px 20px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 700 }}>RSVP</a>
-                  <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.2)", backdropFilter: "blur(8px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 100, padding: "9px 20px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
-                </div>
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(45,61,40,0.15) 60%,rgba(45,61,40,0.4) 100%)` }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
+                    {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
+                  </div>
+                  <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
+                    <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none" }}>RSVP</a>
+                    <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
+                  </div>
+                </motion.div>
               </div>
             </div>
 
-            {/* Blessing card — organic blob shape, overlaps hero */}
-            <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-              style={{ position: "relative", zIndex: 2, marginTop: -32, background: CREAM, borderRadius: "40px 40px 0 0", padding: "2.2rem 1.8rem 1.8rem", textAlign: "center", boxShadow: "0 -10px 24px rgba(45,61,40,0.1)" }}>
-              <LeafDivider color={PRIMARY} />
-              <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, marginTop: 16, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 320, margin: "16px auto 0" }}>
+            <div style={{ background: "#fff", padding: 10, display: "flex", justifyContent: "center", gap: 8, borderBottom: `1px solid ${PRIMARY_LIGHT}` }}>
+              {[1, 2, 3].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />)}
+            </div>
+
+            {/* Blessing card */}
+            <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <LeafCornerAccent />
+              <LeafCornerAccent flip />
+              <div style={pretitleStyle(PRIMARY)}>With Love</div>
+              <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
                   "Like a garden that blooms in its season, our love has grown into something beautiful. Join us as we begin this new chapter together."}
               </div>
             </motion.div>
 
-            {/* Couple bios — organic blob photo frames, sage tint band */}
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-              style={{ background: TINT_SAGE, padding: "2rem 1.4rem 1.8rem", position: "relative" }}>
-              <SectionEyebrow icon="🌸" label="Meet the Couple" color={PRIMARY} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start", marginTop: 12 }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 96, height: 96, borderRadius: "63% 37% 54% 46% / 55% 45% 55% 45%", padding: 4, margin: "0 auto 12px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
-                    <div style={{ width: "100%", height: "100%", borderRadius: "63% 37% 54% 46% / 55% 45% 55% 45%", overflow: "hidden", border: "3px solid #fff" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={W.groomPhoto} alt={W.groom} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: DARK, marginBottom: 6 }}>{W.groom}</div>
-                  {W.groomFamilyName && <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.6 }}>son of<br /><strong style={{ color: DARK }}>{W.groomFamilyName}</strong></div>}
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 96, height: 96, borderRadius: "37% 63% 46% 54% / 45% 55% 45% 55%", padding: 4, margin: "0 auto 12px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
-                    <div style={{ width: "100%", height: "100%", borderRadius: "37% 63% 46% 54% / 45% 55% 45% 55%", overflow: "hidden", border: "3px solid #fff" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={W.bridePhoto} alt={W.bride} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: DARK, marginBottom: 6 }}>{W.bride}</div>
-                  {W.brideFamilyName && <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.6 }}>daughter of<br /><strong style={{ color: DARK }}>{W.brideFamilyName}</strong></div>}
-                </div>
-              </div>
-              <div style={{ position: "absolute", top: 78, left: "50%", transform: "translateX(-50%)", width: 30, height: 30, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>🌿</div>
-            </motion.div>
-
-            {/* Countdown — moss tint band */}
-            {sv.countdown && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_MOSS, padding: "1.8rem 1.4rem" }}>
-                <SectionEyebrow icon="📅" label="Save the Date" color={PRIMARY} />
-                <div style={{ background: "#fff", borderRadius: "24px 24px 20px 20px", border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.3rem 1.1rem", textAlign: "center", boxShadow: "0 4px 16px rgba(45,61,40,0.06)", marginTop: 10 }}>
-                  <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} />
+            {/* Family names */}
+            {(W.brideFamilyName || W.groomFamilyName) && (
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>Our Families</div>
+                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
+                  {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
+                  {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
+                  {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
+                  <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
                 </div>
               </motion.div>
             )}
 
-            {/* Events — sage tint band with soft-radius outline boxes */}
-            <div style={{ background: TINT_SAGE, padding: "1.8rem 1.4rem" }}>
-              {eventsList.map(ev => {
-                const evDate = new Date(ev.date)
-                const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-                const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
-                return (
-                  <motion.div key={ev.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    style={{ border: `1px solid ${PRIMARY}40`, borderRadius: 18, padding: "16px 18px", marginBottom: 12, background: "#fff" }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 700, fontSize: "1.15rem", color: DARK, textAlign: "center", marginBottom: 10 }}>
-                      {ev.icon} {ev.label}
+            {/* Events */}
+            {eventsList.map(ev => {
+              const evDate = new Date(ev.date)
+              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
+              return (
+                <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <LeafCornerAccent />
+                  <LeafCornerAccent flip />
+                  <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
+                  <div style={titleStyle(DARK)}>{ev.label}</div>
+                  {[
+                    { icon: "📅", label: "Date", val: evDateDisplay },
+                    { icon: "⏰", label: "Time", val: evTimeDisplay },
+                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
+                  ].map(d => (
+                    <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
+                      <div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#a8b89e" }}>{d.label}</div>
+                        <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
+                        {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
+                      </div>
                     </div>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>📅</span> {evDateDisplay}</div>
-                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>⏰</span> {evTimeDisplay}</div>
-                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>📍</span> {ev.venue}{ev.venue_address ? `, ${ev.venue_address}` : ''}</div>
-                    </div>
-                    {ev.maps_url && (
-                      <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", marginTop: 12, background: `${PRIMARY}1a`, borderRadius: 100, padding: "8px 18px", fontSize: 10.5, letterSpacing: "0.13em", textTransform: "uppercase", color: PRIMARY, textDecoration: "none", fontWeight: 700 }}>
-                        📍 View Location
-                      </a>
-                    )}
-                  </motion.div>
-                )
-              })}
-            </div>
+                  ))}
+                  {ev.maps_url && (
+                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}44`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 700 }}>
+                      📍 View Location on Maps
+                    </a>
+                  )}
+                </motion.div>
+              )
+            })}
+
+            {/* Countdown — full-width bordered band, matching Floral Romance */}
+            {sv.countdown && (
+              <div style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
+                <div style={pretitleStyle(PRIMARY)}>Counting Down to Our Big Day</div>
+                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} />
+              </div>
+            )}
 
             {/* RSVP */}
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
-            {/* Family names — moss tint band */}
-            {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_MOSS, padding: "2rem 1.5rem", textAlign: "center" }}>
-                <SectionEyebrow icon="💌" label="With Love" color={PRIMARY} />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 10, color: MUTED, marginBottom: 4 }}>Groom's Family</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: DARK, fontSize: 14 }}>{W.groomFamilyName || '—'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: MUTED, marginBottom: 4 }}>Bride's Family</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: DARK, fontSize: 14 }}>{W.brideFamilyName || '—'}</div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Timeline — sage tint band */}
+            {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="🌿" label="Our Celebration" color={PRIMARY} />
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>The Wedding Lineup</div>
-                <div style={{ background: "#fff", borderRadius: 18, padding: "16px 16px 8px 26px", position: "relative", boxShadow: "0 4px 16px rgba(45,61,40,0.05)" }}>
-                  <div style={{ position: "absolute", left: 14, top: 16, bottom: 16, width: 1, background: PRIMARY_LIGHT }} />
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
+                <div style={titleStyle(DARK)}>The Wedding Lineup</div>
+                <div style={{ position: "relative", paddingLeft: 20 }}>
+                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}` }} />
                   {W.timeline.map((t, i) => (
-                    <div key={i} style={{ position: "relative", padding: "0 0 16px 6px" }}>
-                      <div style={{ position: "absolute", left: -12, top: 3, width: 9, height: 9, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
+                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                      style={{ position: "relative", padding: "10px 0 10px 20px" }}>
+                      <div style={{ position: "absolute", left: -14, top: 14, width: 10, height: 10, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
                       <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
                       <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
             )}
 
-            {/* Gallery — moss tint band, masonry */}
-            {sv.gallery && W.gallery.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_MOSS, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="📸" label="Our Story" color={PRIMARY} />
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>Our Moments</div>
-                <div style={{ columnCount: 2, columnGap: 8 }}>
-                  {W.gallery.map((src, i) => (
-                    <div key={i} style={{ breakInside: "avoid", marginBottom: 8, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33` }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => (e.currentTarget.closest('div') as HTMLElement).style.display = "none"} />
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Guest Wishes Wall — sage tint band */}
+            {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="💌" label="With Love" color={PRIMARY} />
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send Your Wishes</div>
-                <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>Share your wishes and blessings with {W.bride} &amp; {W.groom}.</div>
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>With Love</div>
+                <div style={titleStyle(DARK)}>Wishes for Us</div>
+                <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center', marginBottom: 16 }}>
+                  Share your wishes and blessings with {W.bride} &amp; {W.groom}.
+                </div>
                 <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
 
-            {/* Seat finder — moss tint band */}
+            {/* Seat finder */}
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_MOSS, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="🪑" label="Be Our Guest" color={PRIMARY} />
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 14 }}>Find Your Table</div>
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>Be Our Guest</div>
+                <div style={titleStyle(DARK)}>Find Your Table</div>
+                <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
 
-            {/* Music — sage tint band */}
+            {/* Music */}
             {sv.music && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="🎵" label="Our Song" color={PRIMARY} />
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
 
-            {/* Thank you — floating white card */}
-            {sv.thank_you && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ margin: "0 16px 20px", borderRadius: 24, background: "#fff", border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.8rem 1.4rem", textAlign: "center", boxShadow: "0 4px 16px rgba(45,61,40,0.06)", marginTop: 20 }}>
-                <LeafDivider color={PRIMARY} />
-                <div style={{ fontSize: 12.5, color: DARK, opacity: 0.85, lineHeight: 1.9, marginTop: 16, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 320, margin: "16px auto 0" }}>
-                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
+            {/* Gallery */}
+            {sv.gallery && W.gallery.length > 0 && (
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>Our Story</div>
+                <div style={titleStyle(DARK)}>Our Moments</div>
+                <div style={{ columnCount: 2, columnGap: 10 }}>
+                  {W.gallery.map((src, i) => (
+                    <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
+                    </div>
+                  ))}
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.6rem", color: PRIMARY, marginTop: 14 }}>{W.bride} &amp; {W.groom}</div>
               </motion.div>
             )}
 
-            {/* Footer — wide photo with name overlay */}
-            <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.gallery[0] || W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(45,61,40,0.55), rgba(45,61,40,0.1))" }} />
-              <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center" }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: "#fff", textShadow: "0 2px 14px rgba(0,0,0,0.5)" }}>{W.bride} &amp; {W.groom}</div>
-              </div>
-            </div>
+            {/* Thank you */}
+            {sv.thank_you && (
+              <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <LeafCornerAccent />
+                <LeafCornerAccent flip />
+                <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
+                <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
+                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
+                </div>
+                <div style={{ textAlign: "center", marginTop: 18 }}>
+                  <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                </div>
+              </motion.div>
+            )}
 
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
-              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
+            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.6 }}>
+                <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
+              </div>
+              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b89e" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
