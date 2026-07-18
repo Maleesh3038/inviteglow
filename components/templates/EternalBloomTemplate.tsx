@@ -50,7 +50,7 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, audioRef }: {
     a.paused ? a.play().catch(() => {}) : a.pause()
   }
 
-  const iconBtn = (onClick: () => void, label: string, path: JSX.Element) => (
+  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement) => (
     <button key={label} onClick={onClick} aria-label={label} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
       border: 'none', cursor: 'pointer', color: dark, opacity: 0.75, padding: '4px 6px',
