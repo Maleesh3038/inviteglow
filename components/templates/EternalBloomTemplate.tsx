@@ -135,7 +135,7 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
   }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
   return (
-    <div style={{ padding: "0 1.5rem", textAlign: "center" }}>
+    <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
       <LeafDivider color={primary} />
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
