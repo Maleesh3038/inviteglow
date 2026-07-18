@@ -584,7 +584,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
             {/* Hero — persists smaller after opening */}
-            <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
+            <div style={{ position: "relative", height: 420, overflow: "hidden", zIndex: 1 }}>
               {coverVideoUrl ? (
                 <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
@@ -595,7 +595,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${DARK} 0%,rgba(61,42,26,0.1) 60%,rgba(61,42,26,0.3) 100%)` }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 22px", textAlign: "center" }}>
+              <div style={{ position: "absolute", bottom: 40, left: 0, right: 0, padding: "0 1.5rem", textAlign: "center" }}>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2rem,7vw,2.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
                   {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
                 </div>
@@ -606,8 +606,13 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             </div>
 
-            {/* Full-width blessing band — soft blush, edge to edge */}
-            <div style={{ background: PRIMARY_LIGHT, padding: "2.6rem 2rem", textAlign: "center" }}>
+            {/* Blessing card — rounded, shadowed, overlaps the hero photo for a modern cut-edge look */}
+            <div style={{
+              position: "relative", zIndex: 2, marginTop: -36,
+              background: `linear-gradient(160deg,${PRIMARY_LIGHT} 0%,#f3e2dc 100%)`,
+              borderRadius: "32px 32px 0 0", padding: "2.8rem 2rem 2.4rem", textAlign: "center",
+              boxShadow: "0 -12px 30px rgba(63,74,69,0.12)",
+            }}>
               <OrnateDivider color={PRIMARY} />
               <div style={{ fontSize: "1.05rem", color: DARK, lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
@@ -643,9 +648,9 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", top: 66, left: "50%", transform: "translateX(-50%)", width: 30, height: 30, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: PRIMARY }}>♥</div>
             </div>
 
-            {/* Full-width countdown band */}
+            {/* Full-width countdown band — rounded modern card */}
             {sv.countdown && (
-              <div style={{ background: `linear-gradient(135deg,${PRIMARY_LIGHT},#dce8e0)`, padding: "2rem 1.5rem", textAlign: "center" }}>
+              <div style={{ margin: "0 16px 20px", borderRadius: 24, background: `linear-gradient(135deg,${PRIMARY_LIGHT},#dce8e0)`, padding: "2rem 1.5rem", textAlign: "center", boxShadow: "0 8px 24px rgba(63,74,69,0.08)" }}>
                 <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: DARK, marginBottom: 16 }}>Save the Date</div>
                 <Countdown targetDate={W.date} dark={DARK} />
               </div>
@@ -787,9 +792,9 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             )}
 
-            {/* Thank you */}
+            {/* Thank you — rounded modern card */}
             {sv.thank_you && (
-              <div style={{ background: PRIMARY_LIGHT, padding: "2.4rem 1.5rem", textAlign: "center" }}>
+              <div style={{ margin: "0 16px 20px", borderRadius: 24, background: `linear-gradient(160deg,${PRIMARY_LIGHT} 0%,#f3e2dc 100%)`, padding: "2.4rem 1.5rem", textAlign: "center", boxShadow: "0 8px 24px rgba(63,74,69,0.08)" }}>
                 <OrnateDivider color={PRIMARY} />
                 <div style={{ fontSize: 13, color: DARK, lineHeight: 2, marginTop: 18, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
