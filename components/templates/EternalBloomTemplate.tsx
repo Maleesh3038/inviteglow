@@ -550,6 +550,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
   const [videoPlaying, setVideoPlaying] = useState(false)
   const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userStartedRef = useRef(false)
 
   const handleOpen = () => {
     // Start audio immediately, inside this click handler — this is a real
@@ -557,6 +558,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     // it. Waiting until the video-preview timer fires would lose that
     // gesture context and silently block playback.
     audioRef.current?.play().catch(() => {})
+    userStartedRef.current = true
 
     if (coverVideoUrl) {
       // Play the cover video for a short ~5s preview; the invitation opens
@@ -630,8 +632,14 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               {coverVideoUrl && (
-                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
-                  onLoadedData={e => { e.currentTarget.style.opacity = "1" }}
+                <video ref={videoRef} muted autoPlay playsInline preload="auto" onEnded={handleVideoEnded}
+                  onPlaying={e => {
+                    e.currentTarget.style.opacity = "1"
+                    // If the user hasn't tapped "Open Invitation" yet, this
+                    // was just the auto-play-to-grab-a-frame trick — pause
+                    // right away so it sits still as a real thumbnail.
+                    if (!userStartedRef.current) e.currentTarget.pause()
+                  }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
