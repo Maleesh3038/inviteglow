@@ -443,6 +443,16 @@ function GiftAccountCard({ label, bankName, accountName, accountNumber, primary,
   )
 }
 
+// ── Small icon-badge eyebrow used to visually anchor each section ──
+function SectionEyebrow({ icon, label, color }: { icon: string; label: string; color: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 8 }}>
+      <span style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>
+      <span style={{ fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color, fontWeight: 700 }}>{label}</span>
+    </div>
+  )
+}
+
 export default function CeylonEleganceTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#faf6ee" }} />}>
@@ -516,6 +526,11 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   // double-photo strip — reuses the tail end of the gallery array so no
   // new upload field is required.
   const stripPhotos = W.gallery.slice(-2)
+
+  // Alternating soft tint bands — gives each section its own subtle
+  // background instead of everything blending into one long white column.
+  const TINT_SAGE = "#eef2ee"
+  const TINT_WARM = "#f7ece5"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -621,9 +636,11 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             </motion.div>
 
-            {/* Couple bios — no card box, floats on cream, ornate ring photos, heart connector */}
-            <div style={{ padding: "2.4rem 1.4rem 1.6rem", position: "relative" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }}>
+            {/* Couple bios — sage tint band, ornate ring photos, heart connector */}
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+              style={{ background: TINT_SAGE, padding: "2rem 1.4rem 1.8rem", position: "relative" }}>
+              <SectionEyebrow icon="💕" label="Meet the Couple" color={PRIMARY} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start", marginTop: 12 }}>
                 <div style={{ textAlign: "center" }}>
                   <div style={{ width: 92, height: 92, borderRadius: "50%", padding: 4, margin: "0 auto 12px", background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})` }}>
                     <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", border: "3px solid #fff" }}>
@@ -646,20 +663,22 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 </div>
               </div>
               {/* Heart connector, centered between the two circles */}
-              <div style={{ position: "absolute", top: 66, left: "50%", transform: "translateX(-50%)", width: 30, height: 30, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: PRIMARY }}>♥</div>
-            </div>
+              <div style={{ position: "absolute", top: 78, left: "50%", transform: "translateX(-50%)", width: 30, height: 30, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: PRIMARY }}>♥</div>
+            </motion.div>
 
-            {/* Countdown card — light, compact, fades in */}
+            {/* Countdown card — warm tint band behind a floating white card */}
             {sv.countdown && (
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ margin: "0 16px 18px", borderRadius: 20, background: "#fff", border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.5rem 1.2rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)" }}>
-                <div style={{ fontSize: 9.5, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, marginBottom: 14 }}>Save the Date</div>
-                <Countdown targetDate={W.date} dark={DARK} />
+                style={{ background: TINT_WARM, padding: "1.8rem 1.4rem" }}>
+                <SectionEyebrow icon="📅" label="Save the Date" color={PRIMARY} />
+                <div style={{ background: "#fff", borderRadius: 18, border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.3rem 1.1rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)", marginTop: 10 }}>
+                  <Countdown targetDate={W.date} dark={DARK} />
+                </div>
               </motion.div>
             )}
 
-            {/* Events — bordered outline boxes, compact single-line detail rows */}
-            <div style={{ padding: "1.8rem 1.4rem 0.4rem" }}>
+            {/* Events — sage tint band with bordered outline boxes */}
+            <div style={{ background: TINT_SAGE, padding: "1.8rem 1.4rem" }}>
               {eventsList.map(ev => {
                 const evDate = new Date(ev.date)
                 const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -688,12 +707,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             {/* RSVP */}
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
-            {/* Family names — divider, no card */}
+            {/* Family names — warm tint band */}
             {(W.brideFamilyName || W.groomFamilyName) && (
-              <div style={{ padding: "2rem 1.5rem", textAlign: "center" }}>
-                <OrnateDivider color={PRIMARY} />
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: MUTED, margin: "14px 0" }}>with love,</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_WARM, padding: "2rem 1.5rem", textAlign: "center" }}>
+                <SectionEyebrow icon="💌" label="With Love" color={PRIMARY} />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
                   <div>
                     <div style={{ fontSize: 10, color: MUTED, marginBottom: 4 }}>Groom's Family</div>
                     <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: DARK, fontSize: 14 }}>{W.groomFamilyName || '—'}</div>
@@ -703,32 +722,34 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                     <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: DARK, fontSize: 14 }}>{W.brideFamilyName || '—'}</div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Timeline */}
+            {/* Timeline — sage tint band */}
             {sv.timeline && W.timeline.length > 0 && (
-              <div style={{ padding: "0 1.5rem 2rem" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, textAlign: "center", marginBottom: 6, fontWeight: 700 }}>Our Celebration</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: DARK, textAlign: "center", marginBottom: 20 }}>The Wedding Lineup</div>
-                <div style={{ position: "relative", paddingLeft: 20 }}>
-                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}88` }} />
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="🕊️" label="Our Celebration" color={PRIMARY} />
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>The Wedding Lineup</div>
+                <div style={{ background: "#fff", borderRadius: 16, padding: "16px 16px 8px 26px", position: "relative", boxShadow: "0 4px 16px rgba(63,74,69,0.05)" }}>
+                  <div style={{ position: "absolute", left: 14, top: 16, bottom: 16, width: 1, background: `${PRIMARY_LIGHT}` }} />
                   {W.timeline.map((t, i) => (
-                    <div key={i} style={{ position: "relative", padding: "10px 0 10px 20px" }}>
-                      <div style={{ position: "absolute", left: -14, top: 14, width: 10, height: 10, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
+                    <div key={i} style={{ position: "relative", padding: "0 0 16px 6px" }}>
+                      <div style={{ position: "absolute", left: -12, top: 3, width: 9, height: 9, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
                       <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
                       <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Send Gift */}
+            {/* Send Gift — warm tint band */}
             {giftEnabled && hasGiftDetails && (
-              <div style={{ padding: "0 1.5rem 2rem" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, textAlign: "center", marginBottom: 6, fontWeight: 700 }}>With Gratitude</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send a Gift</div>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_WARM, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="🎁" label="With Gratitude" color={PRIMARY} />
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send a Gift</div>
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>With all due respect, you may share your gifts through the following accounts.</div>
                 <div style={{ display: "grid", gap: 12 }}>
                   {brideBank.accountNumber && (
@@ -738,14 +759,15 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                     <GiftAccountCard label={`${W.groom}'s Family`} bankName={groomBank.bank} accountName={groomBank.accountName} accountNumber={groomBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
                   )}
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Gallery — masonry */}
+            {/* Gallery — sage tint band, masonry */}
             {sv.gallery && W.gallery.length > 0 && (
-              <div style={{ padding: "0 1.5rem 1.4rem" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, textAlign: "center", marginBottom: 6, fontWeight: 700 }}>Our Story</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: DARK, textAlign: "center", marginBottom: 18 }}>Our Moments</div>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="📸" label="Our Story" color={PRIMARY} />
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>Our Moments</div>
                 <div style={{ columnCount: 2, columnGap: 8 }}>
                   {W.gallery.map((src, i) => (
                     <div key={i} style={{ breakInside: "avoid", marginBottom: 8, borderRadius: 12, overflow: "hidden", background: `${PRIMARY_LIGHT}33` }}>
@@ -754,12 +776,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Wide double-photo strip */}
             {stripPhotos.length === 2 && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, marginBottom: 24 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                 {stripPhotos.map((src, i) => (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img key={i} src={src} alt="" style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }} />
@@ -767,31 +789,34 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             )}
 
-            {/* Guest Wishes Wall */}
+            {/* Guest Wishes Wall — warm tint band */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <div style={{ padding: "0 1.5rem 2rem" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, textAlign: "center", marginBottom: 6, fontWeight: 700 }}>With Love</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send Your Wishes</div>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_WARM, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="💌" label="With Love" color={PRIMARY} />
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send Your Wishes</div>
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>Share your wishes and blessings with {W.bride} &amp; {W.groom}.</div>
                 <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
-              </div>
+              </motion.div>
             )}
 
-            {/* Seat finder */}
+            {/* Seat finder — sage tint band */}
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <div style={{ padding: "0 1.5rem 2rem" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, textAlign: "center", marginBottom: 6, fontWeight: 700 }}>Be Our Guest</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: DARK, textAlign: "center", marginBottom: 14 }}>Find Your Table</div>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="🪑" label="Be Our Guest" color={PRIMARY} />
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 14 }}>Find Your Table</div>
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
-              </div>
+              </motion.div>
             )}
 
-            {/* Music */}
+            {/* Music — warm tint band */}
             {sv.music && (
-              <div style={{ padding: "0 1.5rem 2rem" }}>
-                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: PRIMARY, textAlign: "center", marginBottom: 14, fontWeight: 700 }}>Our Song</div>
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_WARM, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="🎵" label="Our Song" color={PRIMARY} />
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
-              </div>
+              </motion.div>
             )}
 
             {/* Thank you — light, compact, fades in */}
