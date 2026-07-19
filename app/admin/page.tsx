@@ -786,6 +786,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [currentDefaultTemplate, setCurrentDefaultTemplate] = useState<string>('')
+  const [settingDefault, setSettingDefault] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'templates' | 'pricing' | 'reviews'>('overview')
@@ -846,11 +848,13 @@ export default function AdminPage() {
 
   const startNew = () => {
     setForm({ ...emptyForm, pin: generatePin() })
+    setCurrentDefaultTemplate('')
     setEditing('new')
     setActiveTab('couples')
   }
 
   const startEdit = (c: Couple) => {
+    setCurrentDefaultTemplate((c as any).default_template || '')
     setForm({
       slug: c.slug,
       template: c.template,
@@ -1017,7 +1021,10 @@ export default function AdminPage() {
 
     let error
     if (editing === 'new') {
-      const res = await supabase.from('couples').insert([payload])
+      // default_template is only ever set here, at creation — the template
+      // the couple can later "revert to" in their dashboard, regardless of
+      // how many times admin edits other fields afterwards.
+      const res = await supabase.from('couples').insert([{ ...payload, default_template: form.template }])
       error = res.error
     } else {
       const res = await supabase.from('couples').update(payload).eq('id', editing)
@@ -1327,7 +1334,7 @@ export default function AdminPage() {
                       ) : (
                         <div style={{ flex: 1, textAlign: 'center', padding: '8px', borderRadius: 8, background: '#f8fafc', fontSize: 12, color: '#94a3b8' }}>No demo yet</div>
                       )}
-                      <button onClick={() => { setForm({ ...emptyForm, template: t.id, pin: generatePin() }); setEditing('new'); setActiveTab('couples') }} style={{
+                      <button onClick={() => { setForm({ ...emptyForm, template: t.id, pin: generatePin() }); setCurrentDefaultTemplate(''); setEditing('new'); setActiveTab('couples') }} style={{
                         display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
                         background: `${t.color}1a`, color: t.color, fontSize: 12, fontWeight: 600,
                       }}>
@@ -1395,6 +1402,25 @@ export default function AdminPage() {
                     <select style={inputStyle} value={form.template} onChange={e => setForm({ ...form, template: e.target.value })}>
                       {TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
+                    {editing !== 'new' && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                          Couple's default: <strong style={{ color: '#475569' }}>{TEMPLATES.find(t => t.id === currentDefaultTemplate)?.name || 'Not set yet'}</strong>
+                        </div>
+                        <button type="button" disabled={settingDefault || form.template === currentDefaultTemplate} onClick={async () => {
+                          setSettingDefault(true)
+                          const { error } = await supabase.from('couples').update({ default_template: form.template }).eq('id', editing)
+                          setSettingDefault(false)
+                          if (!error) setCurrentDefaultTemplate(form.template)
+                        }} style={{
+                          padding: '5px 12px', borderRadius: 100, border: '1px solid #e2e8f0', cursor: 'pointer',
+                          background: '#f8fafc', color: '#475569', fontSize: 11, fontWeight: 600,
+                          opacity: (settingDefault || form.template === currentDefaultTemplate) ? 0.5 : 1,
+                        }}>
+                          {settingDefault ? 'Setting...' : `Set "${TEMPLATES.find(t => t.id === form.template)?.name}" as Default`}
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Project Status</label>
