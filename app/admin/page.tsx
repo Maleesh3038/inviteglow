@@ -79,6 +79,7 @@ const emptyForm = {
   groom_photo: '',
   enable_gift_section: true,
   enable_footer_social: true,
+  enable_budget_tracker: false,
   bride_bank_name: '',
   bride_bank_account_name: '',
   bride_bank_account_number: '',
@@ -929,6 +930,7 @@ export default function AdminPage() {
       groom_photo: (c as any).groom_photo ?? '',
       enable_gift_section: (c as any).enable_gift_section ?? true,
       enable_footer_social: (c as any).enable_footer_social ?? true,
+      enable_budget_tracker: (c as any).enable_budget_tracker ?? false,
       bride_bank_name: (c as any).bride_bank_name ?? '',
       bride_bank_account_name: (c as any).bride_bank_account_name ?? '',
       bride_bank_account_number: (c as any).bride_bank_account_number ?? '',
@@ -998,6 +1000,7 @@ export default function AdminPage() {
       groom_photo: (form as any).groom_photo || null,
       enable_gift_section: (form as any).enable_gift_section,
       enable_footer_social: (form as any).enable_footer_social,
+      enable_budget_tracker: (form as any).enable_budget_tracker,
       bride_bank_name: (form as any).bride_bank_name || null,
       bride_bank_account_name: (form as any).bride_bank_account_name || null,
       bride_bank_account_number: (form as any).bride_bank_account_number || null,
@@ -1592,6 +1595,21 @@ export default function AdminPage() {
                     background: (form as any).enable_footer_social ? '#0369a1' : '#e2e8f0', position: 'relative',
                   }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_footer_social ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </button>
+                </div>
+
+                <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#15803d', marginBottom: 4 }}>
+                      <Icon name="tag" size={13} color="#15803d" /> Wedding Budget Tracker
+                    </div>
+                    <div style={{ fontSize: 11, color: '#16a34a' }}>Adds a "Budget" tab to the couple's dashboard where they can track expenses, advance payments, and balances due — private to them, not shown on the public invitation.</div>
+                  </div>
+                  <button type="button" onClick={() => setForm({ ...form, enable_budget_tracker: !(form as any).enable_budget_tracker } as any)} style={{
+                    width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                    background: (form as any).enable_budget_tracker ? '#15803d' : '#e2e8f0', position: 'relative',
+                  }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_budget_tracker ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
 
