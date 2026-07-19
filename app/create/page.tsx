@@ -115,11 +115,14 @@ export default function CreateInvitationWizard() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#fdf2f8,#fffaf5)', fontFamily: "'Inter',sans-serif", padding: '48px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        input:focus, select:focus { border-color: ${ACCENT} !important; box-shadow: 0 0 0 3px ${ACCENT}22; }
+      `}</style>
 
       <div style={{ textAlign: 'center', marginBottom: 8 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 22, fontWeight: 800, color: '#0f172a' }}>
-          <span style={{ color: ACCENT, fontSize: 20 }}>♥</span> InviteGlow
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 23, fontWeight: 800, color: '#0f172a' }}>
+          <span style={{ color: ACCENT, fontSize: 20 }}>♥</span> Invite<span style={{ color: ACCENT }}>Glow</span>
         </div>
         <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>Let's create your wedding invitation</div>
       </div>
