@@ -604,10 +604,14 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   // Only touches the `template` column; admin controls which templates
   // are offered via enable_template_switch / allowed_templates. ──
   const allowedTemplates: string[] = Array.isArray((couple as any).allowed_templates) ? (couple as any).allowed_templates : []
-  // Floral Romance is the site's default template — always offered as a
-  // safe "go back to default" option, plus the couple's current template
-  // itself, even if admin didn't explicitly tick either of those boxes.
-  const templateOptions: string[] = Array.from(new Set([...allowedTemplates, 'floral-romance', couple.template]))
+  // The couple's "default" is whichever template the admin originally
+  // assigned them (or last explicitly set as default) — always offered as
+  // a safe "go back to default" option, plus their current template too,
+  // even if admin didn't explicitly tick either into allowed_templates.
+  // Falls back to Floral Romance only for older records saved before this
+  // feature existed (no default_template value stored yet).
+  const defaultTemplateId: string = (couple as any).default_template || 'floral-romance'
+  const templateOptions: string[] = Array.from(new Set([...allowedTemplates, defaultTemplateId, couple.template]))
   const [selectedTemplate, setSelectedTemplate] = useState(couple.template)
   const [templateSaving, setTemplateSaving] = useState(false)
   const [templateMessage, setTemplateMessage] = useState('')
@@ -855,7 +859,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
             {templateOptions.map(id => {
               const label = TEMPLATE_NAMES[id] || id
               const isCurrent = couple.template === id
-              const isDefault = id === 'floral-romance'
+              const isDefault = id === defaultTemplateId
               return (
                 <option key={id} value={id}>
                   {label}{isCurrent ? ' (Current)' : isDefault ? ' (Default)' : ''}
