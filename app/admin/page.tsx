@@ -365,6 +365,133 @@ const DEFAULT_SEED_PLANS: Omit<PricingPlan, 'id'>[] = [
   { name: 'Premium', subtitle: 'Custom design service', price: 10000, original_price: 20000, tag: '', features: ['2 invitations — one fully custom', 'Unlimited guests', 'Custom design built from scratch by our team', 'Priority support', 'Guest Gallery included · guests upload their photos & videos', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#8a6a2a', display_order: 2 },
 ]
 
+// ── Customer Signups Manager — shows every invitation created by a
+// customer directly on the public site (self-service), with their
+// contact details and bank transfer slip for admin to review. ──
+type SignupCouple = {
+  id: string; slug: string; bride: string; groom: string; wedding_date: string; template: string
+  customer_name: string | null; customer_email: string | null; customer_phone: string | null
+  package_tier: string | null; payment_slip_url: string | null; payment_slip_status: string | null
+  project_status: string; created_at: string
+}
+
+function SignupsManager() {
+  const [signups, setSignups] = useState<SignupCouple[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'pending' | 'verified' | 'rejected' | 'all'>('pending')
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  const load = async () => {
+    const { data } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, template, customer_name, customer_email, customer_phone, package_tier, payment_slip_url, payment_slip_status, project_status, created_at').not('user_id', 'is', null).order('created_at', { ascending: false })
+    if (data) setSignups(data as SignupCouple[])
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  const setSlipStatus = async (id: string, status: 'verified' | 'rejected') => {
+    setBusyId(id)
+    const payload: any = { payment_slip_status: status }
+    if (status === 'verified') payload.project_status = 'ongoing'
+    const { error } = await supabase.from('couples').update(payload).eq('id', id)
+    setBusyId(null)
+    if (!error) load()
+  }
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
+
+  const filtered = filter === 'all' ? signups : signups.filter(s => (s.payment_slip_status || 'pending') === filter)
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+    border: active ? 'none' : '1px solid #e2e8f0',
+    background: active ? '#6366f1' : '#fff', color: active ? '#fff' : '#64748b',
+  })
+
+  return (
+    <div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+        Invitations customers created directly on the website, with their bank transfer slip for you to verify.
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div onClick={() => setFilter('pending')} style={pillStyle(filter === 'pending')}>Pending ({signups.filter(s => (s.payment_slip_status || 'pending') === 'pending').length})</div>
+        <div onClick={() => setFilter('verified')} style={pillStyle(filter === 'verified')}>Verified ({signups.filter(s => s.payment_slip_status === 'verified').length})</div>
+        <div onClick={() => setFilter('rejected')} style={pillStyle(filter === 'rejected')}>Rejected ({signups.filter(s => s.payment_slip_status === 'rejected').length})</div>
+        <div onClick={() => setFilter('all')} style={pillStyle(filter === 'all')}>All ({signups.length})</div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 48, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', color: '#94a3b8', fontSize: 13 }}>
+          No signups in this category yet.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 12 }}>
+          {filtered.map(s => {
+            const status = s.payment_slip_status || 'pending'
+            return (
+              <div key={s.id} style={{ background: '#fff', borderRadius: 16, padding: 20, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{s.bride} &amp; {s.groom}</div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                      {new Date(s.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · {s.template.replace(/-/g, ' ')} · {s.package_tier || 'no package'}
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, height: 'fit-content',
+                    background: status === 'verified' ? '#dcfce7' : status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                    color: status === 'verified' ? '#16a34a' : status === 'rejected' ? '#dc2626' : '#b45309',
+                  }}>{status === 'verified' ? 'Verified' : status === 'rejected' ? 'Rejected' : 'Pending Review'}</div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5, color: '#475569', marginBottom: 14, background: '#f8fafc', borderRadius: 10, padding: 12 }}>
+                  <div><strong>Customer:</strong> {s.customer_name || '—'}</div>
+                  <div><strong>Email:</strong> {s.customer_email || '—'}</div>
+                  <div><strong>Phone:</strong> {s.customer_phone || '—'}</div>
+                  <div><strong>Slug:</strong> {s.slug}</div>
+                </div>
+
+                {s.payment_slip_url && (
+                  <div style={{ marginBottom: 14 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.payment_slip_url} alt="Payment slip" onClick={() => setPreviewUrl(s.payment_slip_url)}
+                      style={{ maxWidth: 160, borderRadius: 10, border: '1px solid #e2e8f0', cursor: 'pointer', display: 'block' }} />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <a href={`/invite/${s.slug}`} target="_blank" rel="noopener noreferrer" style={{
+                    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                    border: '1px solid #e2e8f0', color: '#475569',
+                  }}>View Invitation</a>
+                  {status !== 'verified' && (
+                    <button onClick={() => setSlipStatus(s.id, 'verified')} disabled={busyId === s.id} style={{
+                      padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', opacity: busyId === s.id ? 0.6 : 1,
+                    }}>Verify Payment</button>
+                  )}
+                  {status !== 'rejected' && (
+                    <button onClick={() => setSlipStatus(s.id, 'rejected')} disabled={busyId === s.id} style={{
+                      padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', opacity: busyId === s.id ? 0.6 : 1,
+                    }}>Reject Slip</button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {previewUrl && (
+        <div onClick={() => setPreviewUrl(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: 'pointer' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={previewUrl} alt="Payment slip" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 12 }} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PricingManager() {
   const [plans, setPlans] = useState<PricingPlan[]>([])
   const [loading, setLoading] = useState(true)
@@ -787,6 +914,7 @@ function MusicUploader({ value, onChange }: { value: string; onChange: (url: str
 const NAV_TABS = [
   { key: 'overview', label: 'Overview', icon: 'grid' as const },
   { key: 'couples', label: 'Couples', icon: 'users' as const },
+  { key: 'signups', label: 'Signups', icon: 'external' as const },
   { key: 'templates', label: 'Templates', icon: 'template' as const },
   { key: 'pricing', label: 'Pricing', icon: 'tag' as const },
   { key: 'reviews', label: 'Reviews', icon: 'star' as const },
@@ -802,7 +930,7 @@ export default function AdminPage() {
   const [settingDefault, setSettingDefault] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'templates' | 'pricing' | 'reviews'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'signups' | 'templates' | 'pricing' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
 
@@ -1361,6 +1489,7 @@ export default function AdminPage() {
         )}
 
         {/* ── REVIEWS TAB ── */}
+        {activeTab === 'signups' && <SignupsManager />}
         {activeTab === 'pricing' && <PricingManager />}
 
         {activeTab === 'reviews' && <PendingReviewsManager />}
