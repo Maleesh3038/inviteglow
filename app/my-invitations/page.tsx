@@ -50,7 +50,7 @@ async function uploadPhoto(file: File): Promise<string | null> {
 
 // ── Inline "Manage" panel — everything a self-service customer needs to
 // change lives right here, no separate dashboard link required. ──
-function ManagePanel({ couple, onSaved }: { couple: MyCouple; onSaved: () => void }) {
+function ManagePanel({ couple, onSaved, autoOpenPayment }: { couple: MyCouple; onSaved: () => void; autoOpenPayment?: boolean }) {
   const [bride, setBride] = useState(couple.bride)
   const [groom, setGroom] = useState(couple.groom)
   const [weddingDate, setWeddingDate] = useState(couple.wedding_date ? couple.wedding_date.slice(0, 10) : '')
@@ -70,7 +70,7 @@ function ManagePanel({ couple, onSaved }: { couple: MyCouple; onSaved: () => voi
 
   // ── Finalize: Ask Support (WhatsApp) + Payment slip — fully separate
   // from the details form above, own state, own save action. ──
-  const [showPayment, setShowPayment] = useState(false)
+  const [showPayment, setShowPayment] = useState(!!autoOpenPayment)
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [slipUploading, setSlipUploading] = useState(false)
   const [slipMessage, setSlipMessage] = useState('')
@@ -260,6 +260,7 @@ export default function MyInvitationsPage() {
   const [couples, setCouples] = useState<MyCouple[]>([])
   const [userEmail, setUserEmail] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [openPaymentFor, setOpenPaymentFor] = useState<string | null>(null)
 
   const load = async () => {
     const { data: userData } = await supabase.auth.getUser()
@@ -344,13 +345,19 @@ export default function MyInvitationsPage() {
                       padding: '8px 16px', borderRadius: 100, fontSize: 12.5, fontWeight: 600, textDecoration: 'none',
                       border: `1.5px solid ${ACCENT}`, color: ACCENT,
                     }}>Preview Invitation</a>
+                    {!c.payment_slip_url && (
+                      <button onClick={() => { setExpandedId(c.id); setOpenPaymentFor(c.id) }} style={{
+                        padding: '8px 16px', borderRadius: 100, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                        background: '#1e293b', color: '#fff', border: 'none',
+                      }}>Upload Payment Slip</button>
+                    )}
                     <button onClick={() => setExpandedId(isExpanded ? null : c.id)} style={{
                       padding: '8px 16px', borderRadius: 100, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                       background: isExpanded ? '#f1f5f9' : '#f8fafc', color: '#475569', border: '1px solid #e2e8f0',
                     }}>{isExpanded ? 'Close' : 'Manage Invitation'}</button>
                   </div>
 
-                  {isExpanded && <ManagePanel couple={c} onSaved={load} />}
+                  {isExpanded && <ManagePanel couple={c} onSaved={load} autoOpenPayment={openPaymentFor === c.id} />}
                 </div>
               )
             })}
