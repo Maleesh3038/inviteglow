@@ -25,7 +25,13 @@ export default function LoginPage() {
     setLoading(true)
     const { error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     setLoading(false)
-    if (loginError) { setError('Incorrect email or password.'); return }
+    if (loginError) {
+      // Show the real reason (e.g. "Email not confirmed") instead of a
+      // generic message — this makes setup issues like a pending email
+      // confirmation obvious instead of looking like a wrong password.
+      setError(loginError.message)
+      return
+    }
     router.push('/my-invitations')
   }
 
