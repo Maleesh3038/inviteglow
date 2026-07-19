@@ -40,7 +40,7 @@ function findSeatForGuest(guestName: string, seats: Record<string, string>): str
 }
 
 // ── Clean line-style SVG icons — no emoji in the dashboard chrome ──
-type IconName = 'lock' | 'check' | 'cross' | 'users' | 'chair' | 'wine' | 'glass' | 'edit' | 'link' | 'overview' | 'search' | 'refresh' | 'trash' | 'copy' | 'whatsapp' | 'home' | 'car' | 'sparkles' | 'camera' | 'heart'
+type IconName = 'lock' | 'check' | 'cross' | 'users' | 'chair' | 'wine' | 'glass' | 'edit' | 'link' | 'overview' | 'search' | 'refresh' | 'trash' | 'copy' | 'whatsapp' | 'home' | 'car' | 'sparkles' | 'camera' | 'heart' | 'wallet' | 'plus'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -64,6 +64,8 @@ function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { 
     case 'sparkles': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
     case 'camera': return <svg {...c}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7l1.5-3h5L16 7" /><circle cx="12" cy="13.5" r="3.5" /></svg>
     case 'heart': return <svg {...c}><path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" /></svg>
+    case 'wallet': return <svg {...c}><rect x="3" y="6.5" width="18" height="13" rx="2.5" /><path d="M3 10h18" /><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" /><path d="M7 6.5V5a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0117 5v1.5" /></svg>
+    case 'plus': return <svg {...c}><path d="M12 5v14M5 12h14" /></svg>
     default: return null
   }
 }
@@ -225,6 +227,297 @@ function WishesManager({ coupleId, accent }: { coupleId: string; accent: string 
 }
 
 // ── Couple-facing self-service edit panel ──
+// ── Wedding Budget Tracker ────────────────────────────────────────
+type BudgetItem = {
+  id: string
+  couple_id: string
+  category: string
+  item_name: string
+  vendor: string | null
+  estimated_cost: number
+  paid_amount: number
+  due_date: string | null
+  status: 'pending' | 'partial' | 'paid'
+  notes: string | null
+  created_at: string
+}
+
+const BUDGET_CATEGORIES = [
+  { key: 'venue', label: 'Venue', icon: '🏛️' },
+  { key: 'catering', label: 'Catering', icon: '🍽️' },
+  { key: 'photography', label: 'Photo & Video', icon: '📷' },
+  { key: 'attire', label: 'Attire', icon: '👗' },
+  { key: 'decor', label: 'Decor & Flowers', icon: '💐' },
+  { key: 'music', label: 'Music & DJ', icon: '🎵' },
+  { key: 'invitations', label: 'Invitations', icon: '💌' },
+  { key: 'transport', label: 'Transport', icon: '🚗' },
+  { key: 'beauty', label: 'Hair & Makeup', icon: '💄' },
+  { key: 'other', label: 'Other', icon: '📦' },
+]
+const categoryMeta = (key: string) => BUDGET_CATEGORIES.find(c => c.key === key) || BUDGET_CATEGORIES[BUDGET_CATEGORIES.length - 1]
+
+const emptyBudgetForm = {
+  category: 'venue', item_name: '', vendor: '', estimated_cost: '', paid_amount: '', due_date: '', status: 'pending' as BudgetItem['status'], notes: '',
+}
+
+function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string }) {
+  const [items, setItems] = useState<BudgetItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyBudgetForm)
+  const [saving, setSaving] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [totalBudgetInput, setTotalBudgetInput] = useState('')
+  const [totalBudget, setTotalBudget] = useState<number | null>(null)
+
+  const TEXT_DARK = '#1e293b'
+  const TEXT_MUTED = '#64748b'
+  const BORDER = '#e2e8f0'
+
+  const load = async () => {
+    const { data } = await supabase.from('budget_items').select('*').eq('couple_id', coupleId).order('created_at', { ascending: true })
+    if (data) setItems(data as BudgetItem[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [coupleId])
+
+  // Overall budget target is stored locally per-session via a simple
+  // prompt-free inline field — kept purely client-side comparison against
+  // the sum of estimated costs, no schema change needed for this bit.
+  useEffect(() => {
+    const saved = window.localStorage?.getItem?.(`budget-target-${coupleId}`)
+    if (saved) { setTotalBudget(parseFloat(saved)); setTotalBudgetInput(saved) }
+  }, [coupleId])
+  const saveTotalBudget = () => {
+    const val = parseFloat(totalBudgetInput)
+    if (!isNaN(val) && val > 0) {
+      setTotalBudget(val)
+      try { window.localStorage?.setItem?.(`budget-target-${coupleId}`, String(val)) } catch { }
+    }
+  }
+
+  const totalEstimated = items.reduce((s, i) => s + (i.estimated_cost || 0), 0)
+  const totalPaid = items.reduce((s, i) => s + (i.paid_amount || 0), 0)
+  const totalRemaining = totalEstimated - totalPaid
+  const budgetTarget = totalBudget ?? totalEstimated
+  const usedPct = budgetTarget > 0 ? Math.min(100, Math.round((totalEstimated / budgetTarget) * 100)) : 0
+
+  const fmt = (n: number) => `LKR ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+
+  const resetForm = () => { setForm(emptyBudgetForm); setEditingId(null); setShowForm(false) }
+
+  const startEdit = (item: BudgetItem) => {
+    setForm({
+      category: item.category, item_name: item.item_name, vendor: item.vendor || '',
+      estimated_cost: String(item.estimated_cost ?? ''), paid_amount: String(item.paid_amount ?? ''),
+      due_date: item.due_date || '', status: item.status, notes: item.notes || '',
+    })
+    setEditingId(item.id)
+    setShowForm(true)
+  }
+
+  const handleSaveItem = async () => {
+    if (!form.item_name.trim()) return
+    setSaving(true)
+    const payload = {
+      couple_id: coupleId,
+      category: form.category,
+      item_name: form.item_name.trim(),
+      vendor: form.vendor.trim() || null,
+      estimated_cost: parseFloat(form.estimated_cost) || 0,
+      paid_amount: parseFloat(form.paid_amount) || 0,
+      due_date: form.due_date || null,
+      status: form.status,
+      notes: form.notes.trim() || null,
+    }
+    const { error } = editingId
+      ? await supabase.from('budget_items').update(payload).eq('id', editingId)
+      : await supabase.from('budget_items').insert([payload])
+    setSaving(false)
+    if (!error) { resetForm(); load() }
+  }
+
+  const handleDeleteItem = async (id: string, name: string) => {
+    if (!confirm(`Remove "${name}" from your budget?`)) return
+    setBusyId(id)
+    const { error } = await supabase.from('budget_items').delete().eq('id', id)
+    setBusyId(null)
+    if (!error) setItems(prev => prev.filter(i => i.id !== id))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '10px 12px', borderRadius: 9, border: `1px solid ${BORDER}`,
+    fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", background: '#fff', color: TEXT_DARK, boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = { fontSize: 10.5, fontWeight: 600, color: TEXT_MUTED, marginBottom: 5, display: 'block' }
+
+  const statusMeta: Record<BudgetItem['status'], { label: string; bg: string; color: string }> = {
+    pending: { label: 'Pending', bg: '#fef3c7', color: '#b45309' },
+    partial: { label: 'Partially Paid', bg: '#dbeafe', color: '#1d4ed8' },
+    paid: { label: 'Paid in Full', bg: '#dcfce7', color: '#16a34a' },
+  }
+
+  if (loading) {
+    return <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>Loading budget...</div>
+  }
+
+  return (
+    <div>
+      {/* Summary cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 10.5, color: TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>TOTAL ESTIMATED</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: TEXT_DARK }}>{fmt(totalEstimated)}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 10.5, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>PAID SO FAR</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: '#16a34a' }}>{fmt(totalPaid)}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 10.5, color: totalRemaining > 0 ? '#dc2626' : TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>BALANCE DUE</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: totalRemaining > 0 ? '#dc2626' : TEXT_DARK }}>{fmt(Math.max(0, totalRemaining))}</div>
+        </div>
+      </div>
+
+      {/* Optional overall budget target + progress bar */}
+      <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT_DARK }}>Overall Budget Goal (optional)</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input value={totalBudgetInput} onChange={e => setTotalBudgetInput(e.target.value.replace(/[^\d.]/g, ''))}
+              placeholder="e.g. 1500000" style={{ ...inputStyle, width: 140, padding: '7px 10px', fontSize: 12.5 }} />
+            <button onClick={saveTotalBudget} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: accent, color: '#fff', fontSize: 12, fontWeight: 600 }}>Set</button>
+          </div>
+        </div>
+        {budgetTarget > 0 && (
+          <>
+            <div style={{ height: 8, background: '#f1f5f9', borderRadius: 100, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${usedPct}%`, background: usedPct >= 100 ? '#dc2626' : `linear-gradient(90deg,${accent},#a5b4fc)`, borderRadius: 100, transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>
+              {fmt(totalEstimated)} planned of {fmt(budgetTarget)} goal ({usedPct}%)
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Add/Edit form */}
+      {showForm ? (
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 16 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, marginBottom: 14 }}>{editingId ? 'Edit Expense' : 'Add Expense'}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Category</label>
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+                {BUDGET_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Item / Service Name</label>
+              <input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} placeholder="e.g. Wedding Cake" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={labelStyle}>Vendor (optional)</label>
+            <input value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Sweet Dreams Bakery" style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Estimated Cost (LKR)</label>
+              <input value={form.estimated_cost} onChange={e => setForm({ ...form, estimated_cost: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Paid / Advance (LKR)</label>
+              <input value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Due Date</label>
+              <input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Payment Status</label>
+              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as BudgetItem['status'] })} style={inputStyle}>
+                <option value="pending">Pending</option>
+                <option value="partial">Partially Paid</option>
+                <option value="paid">Paid in Full</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Notes (optional)</label>
+            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contract details, contact info, etc." style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleSaveItem} disabled={saving || !form.item_name.trim()} style={{
+              flex: 1, padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer', background: accent, color: '#fff',
+              fontWeight: 700, fontSize: 13, opacity: (saving || !form.item_name.trim()) ? 0.6 : 1,
+            }}>{saving ? 'Saving...' : editingId ? 'Update Expense' : 'Add Expense'}</button>
+            <button onClick={resetForm} style={{ padding: '12px 18px', borderRadius: 10, border: `1px solid ${BORDER}`, cursor: 'pointer', background: '#fff', color: TEXT_MUTED, fontWeight: 600, fontSize: 13 }}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowForm(true)} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: 13, borderRadius: 12,
+          border: `1.5px dashed ${accent}`, cursor: 'pointer', background: `${accent}0d`, color: accent, fontWeight: 700, fontSize: 13, marginBottom: 16,
+        }}>
+          <Icon name="plus" size={14} color={accent} /> Add Expense
+        </button>
+      )}
+
+      {/* Expense list */}
+      {items.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, background: "#fff", borderRadius: 16, color: TEXT_MUTED, fontSize: 13 }}>
+          No expenses added yet. Start planning your budget above!
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {items.map(item => {
+            const meta = categoryMeta(item.category)
+            const sMeta = statusMeta[item.status]
+            const balance = (item.estimated_cost || 0) - (item.paid_amount || 0)
+            return (
+              <div key={item.id} style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 10px rgba(15,23,42,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{meta.icon}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK }}>{item.item_name}</div>
+                      <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>
+                        {meta.label}{item.vendor ? ` · ${item.vendor}` : ''}{item.due_date ? ` · Due ${new Date(item.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 700, background: sMeta.bg, color: sMeta.color, whiteSpace: 'nowrap' }}>{sMeta.label}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 44 }}>
+                  <span>Est: <strong style={{ color: TEXT_DARK }}>{fmt(item.estimated_cost || 0)}</strong></span>
+                  <span>Paid: <strong style={{ color: '#16a34a' }}>{fmt(item.paid_amount || 0)}</strong></span>
+                  {balance > 0 && <span>Balance: <strong style={{ color: '#dc2626' }}>{fmt(balance)}</strong></span>}
+                </div>
+                {item.notes && <div style={{ fontSize: 11.5, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 44, fontStyle: 'italic' }}>{item.notes}</div>}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button onClick={() => startEdit(item)} style={{
+                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 100, border: `1px solid ${BORDER}`,
+                    cursor: 'pointer', background: '#f8fafc', color: TEXT_MUTED, fontSize: 11, fontWeight: 500,
+                  }}><Icon name="edit" size={11} /> Edit</button>
+                  <button onClick={() => handleDeleteItem(item.id, item.item_name)} disabled={busyId === item.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 100, border: '1px solid #fecaca',
+                    cursor: 'pointer', background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500, opacity: busyId === item.id ? 0.6 : 1,
+                  }}><Icon name="trash" size={11} color="#dc2626" /> {busyId === item.id ? 'Removing...' : 'Delete'}</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void }) {
   const panelTemplateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
   const PANEL_ACCENT = couple.custom_colors?.primary || panelTemplateDefault.primary
@@ -632,6 +925,7 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
 const TABS = [
   { key: 'overview', label: 'Overview', icon: 'overview' as const },
   { key: 'guests', label: 'Guests', icon: 'users' as const },
+  { key: 'budget', label: 'Budget', icon: 'wallet' as const },
   { key: 'wishes', label: 'Wishes', icon: 'heart' as const },
   { key: 'edit', label: 'Edit', icon: 'edit' as const },
   { key: 'share', label: 'Share', icon: 'link' as const },
@@ -648,7 +942,7 @@ export default function CoupleDashboard() {
   const [search, setSearch] = useState("")
   const [filterResponse, setFilterResponse] = useState<'all' | 'yes' | 'no'>('all')
   const [filterDrinking, setFilterDrinking] = useState<'all' | 'yes' | 'no'>('all')
-  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'wishes' | 'edit' | 'share'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'>('overview')
 
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState("")
@@ -683,6 +977,12 @@ export default function CoupleDashboard() {
 
   useEffect(() => {
     if (couple && (couple as any).enable_guest_wishes !== true && activeTab === 'wishes') {
+      setActiveTab('overview')
+    }
+  }, [couple, activeTab])
+
+  useEffect(() => {
+    if (couple && (couple as any).enable_budget_tracker !== true && activeTab === 'budget') {
       setActiveTab('overview')
     }
   }, [couple, activeTab])
@@ -832,7 +1132,8 @@ export default function CoupleDashboard() {
           <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
             {TABS.filter(tab =>
               (tab.key !== 'share' || (couple as any).enable_guest_links !== false) &&
-              (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true)
+              (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true) &&
+              (tab.key !== 'budget' || (couple as any).enable_budget_tracker === true)
             ).map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
@@ -1075,6 +1376,13 @@ export default function CoupleDashboard() {
                   })}
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* ── BUDGET TAB ── */}
+          {activeTab === 'budget' && (couple as any).enable_budget_tracker === true && (
+            <motion.div key="budget" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <BudgetManager coupleId={couple.id} accent={ACCENT} />
             </motion.div>
           )}
 
