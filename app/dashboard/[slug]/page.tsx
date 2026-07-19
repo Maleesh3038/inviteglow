@@ -1046,6 +1046,16 @@ export default function CoupleDashboard() {
     }
     setCouple(coupleData as Couple)
 
+    // If the logged-in customer's own account owns this invitation, skip
+    // the PIN screen entirely — they already proved who they are by
+    // signing in, and the auto-generated PIN was never shown to them.
+    if ((coupleData as any).user_id) {
+      const { data: authData } = await supabase.auth.getUser()
+      if (authData.user && authData.user.id === (coupleData as any).user_id) {
+        setUnlocked(true)
+      }
+    }
+
     const { data: rsvpData } = await supabase
       .from('rsvps').select('*').eq('couple_id', coupleData.id).order('created_at', { ascending: false })
 
@@ -1056,9 +1066,9 @@ export default function CoupleDashboard() {
   useEffect(() => { loadData() }, [slug])
 
   useEffect(() => {
-    if (couple && (couple as any).enable_guest_links === false && activeTab === 'share') {
-      setActiveTab('overview')
-    }
+    if (!couple || activeTab !== 'share') return
+    const shareAllowed = (couple as any).enable_guest_links !== false && (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
+    if (!shareAllowed) setActiveTab('overview')
   }, [couple, activeTab])
 
   useEffect(() => {
@@ -1217,7 +1227,13 @@ export default function CoupleDashboard() {
 
           <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
             {TABS.filter(tab =>
-              (tab.key !== 'share' || (couple as any).enable_guest_links !== false) &&
+              (tab.key !== 'share' || (
+                (couple as any).enable_guest_links !== false &&
+                // Self-service (customer-created) invitations can only share
+                // their guest link once admin has verified their payment slip.
+                // Admin-created invitations (no user_id) aren't affected.
+                (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
+              )) &&
               (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true) &&
               (tab.key !== 'budget' || (couple as any).enable_budget_tracker === true)
             ).map(tab => (
@@ -1253,6 +1269,25 @@ export default function CoupleDashboard() {
           {/* ── OVERVIEW TAB ── */}
           {activeTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              {(couple as any).user_id && (couple as any).payment_slip_status !== 'verified' && (
+                <div style={{
+                  background: (couple as any).payment_slip_status === 'rejected' ? '#fef2f2' : '#fffbeb',
+                  border: `1px solid ${(couple as any).payment_slip_status === 'rejected' ? '#fecaca' : '#fde68a'}`,
+                  borderRadius: 14, padding: '14px 16px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <Icon name="lock" size={16} color={(couple as any).payment_slip_status === 'rejected' ? '#dc2626' : '#b45309'} />
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: (couple as any).payment_slip_status === 'rejected' ? '#dc2626' : '#b45309' }}>
+                      {(couple as any).payment_slip_status === 'rejected' ? 'Payment slip rejected' : 'Payment pending verification'}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: (couple as any).payment_slip_status === 'rejected' ? '#991b1b' : '#92400e', marginTop: 2 }}>
+                      {(couple as any).payment_slip_status === 'rejected'
+                        ? 'Please contact us to resolve this — your invitation link will unlock once payment is confirmed.'
+                        : "You can preview and customise your invitation now. Sharing the guest link unlocks once we've verified your payment slip."}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="dash-overview-grid" style={{ display: 'grid', gap: 16, alignItems: 'stretch', marginBottom: 20 }}>
                 <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 2px 16px rgba(15,23,42,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <RsvpDonut accepted={accepted.length} declined={declined.length} accent={ACCENT} accentLight={ACCENT_LIGHT} />
