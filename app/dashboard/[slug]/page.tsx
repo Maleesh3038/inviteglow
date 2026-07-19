@@ -604,6 +604,10 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   // Only touches the `template` column; admin controls which templates
   // are offered via enable_template_switch / allowed_templates. ──
   const allowedTemplates: string[] = Array.isArray((couple as any).allowed_templates) ? (couple as any).allowed_templates : []
+  // Floral Romance is the site's default template — always offered as a
+  // safe "go back to default" option, plus the couple's current template
+  // itself, even if admin didn't explicitly tick either of those boxes.
+  const templateOptions: string[] = Array.from(new Set([...allowedTemplates, 'floral-romance', couple.template]))
   const [selectedTemplate, setSelectedTemplate] = useState(couple.template)
   const [templateSaving, setTemplateSaving] = useState(false)
   const [templateMessage, setTemplateMessage] = useState('')
@@ -845,27 +849,20 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           <div style={{ fontSize: 11, color: '#ea580c', marginBottom: 14 }}>
             Not feeling the current look? Pick a different template below — your photos, text, and RSVPs all stay exactly as they are.
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 8, marginBottom: 14 }}>
-            {allowedTemplates.map(id => {
-              const tColors = TEMPLATE_DEFAULTS[id] || TEMPLATE_DEFAULTS['floral-romance']
+          <label style={labelStyle}>Template</label>
+          <select value={selectedTemplate} onChange={e => { setSelectedTemplate(e.target.value); setTemplateMessage('') }}
+            style={{ ...inputStyle, marginBottom: 14 }}>
+            {templateOptions.map(id => {
               const label = TEMPLATE_NAMES[id] || id
-              const isSelected = selectedTemplate === id
               const isCurrent = couple.template === id
+              const isDefault = id === 'floral-romance'
               return (
-                <button key={id} type="button" onClick={() => { setSelectedTemplate(id); setTemplateMessage('') }} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', borderRadius: 10,
-                  border: isSelected ? `2px solid ${tColors.primary}` : '1px solid #fde8d0', cursor: 'pointer',
-                  background: isSelected ? '#fff' : '#fffaf5', position: 'relative',
-                }}>
-                  {isCurrent && (
-                    <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8.5, fontWeight: 700, color: '#fff', background: '#94a3b8', padding: '2px 6px', borderRadius: 100 }}>CURRENT</span>
-                  )}
-                  <span style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg,${tColors.primary},${tColors.primaryLight})` }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#334155', textAlign: 'center', lineHeight: 1.3 }}>{label}</span>
-                </button>
+                <option key={id} value={id}>
+                  {label}{isCurrent ? ' (Current)' : isDefault ? ' (Default)' : ''}
+                </option>
               )
             })}
-          </div>
+          </select>
           {templateMessage && (
             <div style={{ fontSize: 12.5, marginBottom: 12, color: templateMessage.startsWith('Template updated') ? '#16a34a' : '#dc2626' }}>{templateMessage}</div>
           )}
