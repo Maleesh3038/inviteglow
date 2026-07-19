@@ -23,9 +23,9 @@ const TEMPLATES = [
 // Fallback defaults — used only if the pricing_plans table is empty or
 // hasn't been seeded yet. Once admin edits pricing, the DB values take over.
 const DEFAULT_PLANS = [
-  { id: 'starter', name: 'Starter', price: 3000, tag: '', features: ['1 template of your choice', 'RSVP tracking & guest list', 'Couple dashboard', 'Countdown timer', 'Up to 100 guests'], color: '#94a3b8', display_order: 0 },
-  { id: 'premium', name: 'Premium', price: 5000, tag: 'Most Popular', features: ['Everything in Starter', 'Guest personalised links ("Dear [Name]")', 'Photo gallery + background music', 'Link valid for 1 year', 'Unlimited guests'], color: ACCENT, display_order: 1 },
-  { id: 'luxury', name: 'Luxury', price: 8000, tag: '', features: ['Everything in Premium', 'Lifetime link — never expires', 'Guest Wishes & Messages wall', 'Full custom design & colors', 'Priority support'], color: '#8a6a2a', display_order: 2 },
+  { id: 'basic', name: 'Basic', subtitle: 'Simple & elegant', price: 2500, original_price: 5000, tag: '', features: ['1 invitation', 'Up to 150 guests', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#94a3b8', display_order: 0 },
+  { id: 'standard', name: 'Standard', subtitle: 'Best for most Sri Lankan weddings', price: 5000, original_price: 10000, tag: 'Most couples pick this', features: ['2 invitations', 'Up to 600 guests', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay', 'Guest Wishes wall included'], color: ACCENT, display_order: 1 },
+  { id: 'premium', name: 'Premium', subtitle: 'Custom design service', price: 10000, original_price: 20000, tag: '', features: ['2 invitations — one fully custom', 'Unlimited guests', 'Custom design built from scratch by our team', 'Priority support', 'Guest Gallery included · guests upload their photos & videos', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#8a6a2a', display_order: 2 },
 ]
 
 // ── Clean line-style SVG icons — no emoji on the homepage ──
@@ -241,7 +241,7 @@ export default function HomePage() {
       const { data: planData, error: planError } = await supabase.from('pricing_plans').select('*').order('display_order', { ascending: true })
       if (!planError && planData && planData.length > 0) {
         setPlans(planData.map((p: any) => ({
-          id: p.id, name: p.name, price: p.price, tag: p.tag || '',
+          id: p.id, name: p.name, subtitle: p.subtitle || '', price: p.price, original_price: p.original_price || null, tag: p.tag || '',
           features: Array.isArray(p.features) ? p.features : [],
           color: p.color || ACCENT, display_order: p.display_order ?? 0,
         })))
@@ -513,38 +513,53 @@ export default function HomePage() {
           <div style={{ fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: ACCENT, fontWeight: 700, marginBottom: 8 }}>Simple Pricing</div>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '2rem', color: '#0f172a' }}>Choose Your Package</h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20 }}>
-          {plans.map(p => (
-            <div key={p.id} style={{
-              background: '#fff', borderRadius: 24, padding: 28, position: 'relative',
-              border: p.tag ? `2px solid ${ACCENT}` : '1px solid #f1f5f9',
-              boxShadow: p.tag ? `0 12px 40px ${ACCENT}22` : '0 4px 20px rgba(15,23,42,0.05)',
-              transform: p.tag ? 'scale(1.03)' : 'none',
-            }}>
-              {p.tag && (
-                <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 16px', borderRadius: 100 }}>{p.tag}</div>
-              )}
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>{p.name}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 22 }}>
-                <span style={{ fontSize: 30, fontWeight: 800, color: p.color }}>LKR {p.price.toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'grid', gap: 12, marginBottom: 24 }}>
-                {p.features.map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <Icon name="check" size={15} color={p.color} />
-                    <span style={{ fontSize: 13, color: '#475569', lineHeight: 1.4 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <a href={`https://wa.me/?text=${encodeURIComponent(`Hi! I'd like to order the ${p.name} package.`)}`} target="_blank" rel="noopener noreferrer" style={{
-                display: 'block', textAlign: 'center', padding: 13, borderRadius: 100, textDecoration: 'none', fontSize: 13.5, fontWeight: 700,
-                background: p.tag ? `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})` : '#f8fafc',
-                color: p.tag ? '#fff' : '#1e293b',
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(270px,1fr))', gap: 20, alignItems: 'start' }}>
+          {plans.map(p => {
+            const discountPct = (p as any).original_price && (p as any).original_price > p.price
+              ? Math.round(100 - (p.price / (p as any).original_price) * 100) : 0
+            return (
+              <div key={p.id} style={{
+                background: '#fff', borderRadius: 24, padding: 28, position: 'relative',
+                border: p.tag ? `2px solid ${ACCENT}` : '1px solid #f1f5f9',
+                boxShadow: p.tag ? `0 12px 40px ${ACCENT}22` : '0 4px 20px rgba(15,23,42,0.05)',
               }}>
-                Get Started
-              </a>
-            </div>
-          ))}
+                {p.tag && (
+                  <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 16px', borderRadius: 100, whiteSpace: 'nowrap' }}>{p.tag}</div>
+                )}
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 4, marginTop: p.tag ? 6 : 0 }}>{p.name}</div>
+                {(p as any).subtitle && <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 16 }}>{(p as any).subtitle}</div>}
+
+                {discountPct > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, color: '#cbd5e1', textDecoration: 'line-through' }}>Rs. {(p as any).original_price.toLocaleString()}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}18`, padding: '2px 8px', borderRadius: 100 }}>{discountPct}% OFF</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 22 }}>
+                  <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>Rs.</span>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: '#0f172a' }}>{p.price.toLocaleString()}</span>
+                  <span style={{ fontSize: 12.5, color: '#94a3b8' }}>one-time</span>
+                </div>
+
+                <div style={{ display: 'grid', gap: 11, marginBottom: 24 }}>
+                  {p.features.map((f, i) => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <Icon name="check" size={14} color={i < 4 ? p.color : '#94a3b8'} />
+                      <span style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.45, fontWeight: i < 4 ? 600 : 400 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <a href={`https://wa.me/?text=${encodeURIComponent(`Hi! I'd like to order the ${p.name} package.`)}`} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 13, borderRadius: 100, textDecoration: 'none', fontSize: 13.5, fontWeight: 700,
+                  background: p.tag ? `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})` : '#fff',
+                  color: p.tag ? '#fff' : '#1e293b',
+                  border: p.tag ? 'none' : '1.5px solid #e2e8f0',
+                }}>
+                  Get Started <Icon name="arrow" size={14} color={p.tag ? '#fff' : '#1e293b'} />
+                </a>
+              </div>
+            )
+          })}
         </div>
       </div>
 
