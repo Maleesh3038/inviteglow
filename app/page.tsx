@@ -8,6 +8,7 @@ const ACCENT_LIGHT = "#e8a0b8"
 
 const TEMPLATES = [
   { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', video: '/videos/sacred-poruwa-cover.mp4', demoSlug: 'geeth-sandunika', color: '#c4956a' },
+  { id: 'eternal-bloom', name: 'Eternal Bloom', tag: 'New', photo: '/images/hero-eternal-bloom.png', video: '/videos/eternal-bloom-cover.mp4', demoSlug: 'anusha-sadun', color: '#5c7a52' },
   { id: 'floral-romance', name: 'Floral Romance', tag: 'Most Popular', photo: '/images/hero-floral.png', demoSlug: 'kavindi-malina', color: '#c4607a' },
   { id: 'blush-blossom', name: 'Blush Blossom', tag: 'New', photo: '/images/blush-blossom-cover-bg.png', demoSlug: 'yesli-lakshan', color: '#c17d8a' },
   { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.png', demoSlug: 'sheneli-kevin', color: '#c9a06e' },
