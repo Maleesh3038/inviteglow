@@ -219,17 +219,17 @@ export default function CreateInvitationWizard() {
             <label style={labelStyle}>Email Address</label>
             <div style={fieldWrap}>
               <FieldIcon name="mail" />
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle} />
+              <input type="email" autoComplete="email" name="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle} />
             </div>
             <label style={labelStyle}>Mobile Number</label>
             <div style={fieldWrap}>
               <FieldIcon name="phone" />
-              <input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="077 123 4567" style={inputStyle} />
+              <input type="tel" autoComplete="tel" name="mobile-number" value={mobile} onChange={e => setMobile(e.target.value)} placeholder="077 123 4567" style={inputStyle} />
             </div>
             <label style={labelStyle}>Password</label>
             <div style={fieldWrap}>
               <FieldIcon name="lock" />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" style={inputStyle} />
+              <input type="password" autoComplete="new-password" name="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" style={inputStyle} />
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
               <button onClick={() => setStep(2)} disabled={submitting} style={{ flex: 1, padding: 13, borderRadius: 100, border: '1.5px solid #e2e8f0', cursor: 'pointer', background: '#fff', color: '#475569', fontWeight: 600, fontSize: 13.5 }}>← Back</button>
