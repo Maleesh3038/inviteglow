@@ -261,6 +261,32 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [message, setMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // ── Change Dashboard PIN — fully separate from the rest of this form.
+  // Its own state and its own save call, so it can never interfere with
+  // (or be blocked by) saving the other invitation fields. ──
+  const [newPin, setNewPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
+  const [pinSaving, setPinSaving] = useState(false)
+  const [pinMessage, setPinMessage] = useState('')
+
+  const handleChangePin = async () => {
+    setPinMessage('')
+    if (newPin.length !== 4) { setPinMessage('PIN must be exactly 4 digits.'); return }
+    if (newPin !== confirmPin) { setPinMessage("PINs don't match — please re-enter."); return }
+    setPinSaving(true)
+    // Only the pin column is touched — nothing else about the couple
+    // record is read or written by this call.
+    const { error } = await supabase.from('couples').update({ pin: newPin }).eq('id', couple.id)
+    setPinSaving(false)
+    if (error) {
+      setPinMessage('Could not update PIN: ' + error.message)
+    } else {
+      setPinMessage('PIN updated! Use it next time you unlock this dashboard.')
+      setNewPin('')
+      setConfirmPin('')
+    }
+  }
+
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '11px 14px', borderRadius: 10,
     border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
@@ -474,6 +500,40 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       }}>
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
+
+      {/* ── Change Dashboard PIN — separate card, separate save action ── */}
+      <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginTop: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1e40af', marginBottom: 4 }}>
+          <Icon name="lock" size={14} color="#1e40af" /> Change Dashboard PIN
+        </div>
+        <div style={{ fontSize: 11, color: '#3b5bab', marginBottom: 14 }}>
+          This is the 4-digit code you enter to unlock this dashboard. Changing it here does not affect anything else about your invitation.
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+          <div>
+            <label style={labelStyle}>New PIN</label>
+            <input type="tel" inputMode="numeric" maxLength={4} value={newPin}
+              onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••" style={{ ...inputStyle, letterSpacing: '0.3em', textAlign: 'center' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Confirm New PIN</label>
+            <input type="tel" inputMode="numeric" maxLength={4} value={confirmPin}
+              onChange={e => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••" style={{ ...inputStyle, letterSpacing: '0.3em', textAlign: 'center' }} />
+          </div>
+        </div>
+        {pinMessage && (
+          <div style={{ fontSize: 12.5, marginBottom: 12, color: pinMessage.startsWith('PIN updated') ? '#16a34a' : '#dc2626' }}>{pinMessage}</div>
+        )}
+        <button type="button" onClick={handleChangePin} disabled={pinSaving || newPin.length !== 4 || confirmPin.length !== 4} style={{
+          width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
+          background: '#1e40af', color: '#fff', fontWeight: 700, fontSize: 13,
+          opacity: (pinSaving || newPin.length !== 4 || confirmPin.length !== 4) ? 0.5 : 1,
+        }}>
+          {pinSaving ? 'Updating...' : 'Update PIN'}
+        </button>
+      </div>
     </div>
   )
 }
