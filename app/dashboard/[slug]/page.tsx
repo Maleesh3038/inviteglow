@@ -21,6 +21,26 @@ const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
   'sacred-poruwa': { primary: '#c4956a', primaryLight: '#e8c99a', dark: '#3d2510', cream: '#fdf6e9' },
   'garden-minimal': { primary: '#4a8a5a', primaryLight: '#a0d8b0', dark: '#1a2e20', cream: '#f0f7f0' },
   'blush-blossom': { primary: '#c17d8a', primaryLight: '#f3d6d6', dark: '#5c4632', cream: '#fff6f1' },
+  'ceylon-elegance': { primary: '#c68a8f', primaryLight: '#e7c9c0', dark: '#3f4a45', cream: '#faf6f3' },
+  'eternal-bloom': { primary: '#5c7a52', primaryLight: '#b9cdae', dark: '#2d3d28', cream: '#f8f6ee' },
+}
+
+// Human-readable labels for the "Change Template" picker in the couple's
+// own dashboard — purely cosmetic, doesn't affect any stored data.
+const TEMPLATE_NAMES: Record<string, string> = {
+  'floral-romance': 'Floral Romance',
+  'elegant-photo': 'Elegant Photo Hero',
+  'cinematic-gold': 'Cinematic Gold',
+  'kandyan-heritage': 'Kandyan Heritage',
+  'twilight-picnic': 'Twilight Picnic',
+  'golden-garden': 'Golden Garden',
+  'ocean-pearl': 'Ocean Pearl',
+  'sunset-shores': 'Sunset Shores',
+  'traditional-ceylon': 'Traditional Ceylon',
+  'sacred-poruwa': 'Sacred Poruwa',
+  'blush-blossom': 'Blush Blossom',
+  'ceylon-elegance': 'Ceylon Elegance',
+  'eternal-bloom': 'Eternal Bloom',
 }
 
 async function uploadToStorage(file: File, folder: string): Promise<string | null> {
@@ -580,6 +600,28 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
     }
   }
 
+  // ── Change Template — also fully separate from the rest of this form.
+  // Only touches the `template` column; admin controls which templates
+  // are offered via enable_template_switch / allowed_templates. ──
+  const allowedTemplates: string[] = Array.isArray((couple as any).allowed_templates) ? (couple as any).allowed_templates : []
+  const [selectedTemplate, setSelectedTemplate] = useState(couple.template)
+  const [templateSaving, setTemplateSaving] = useState(false)
+  const [templateMessage, setTemplateMessage] = useState('')
+
+  const handleChangeTemplate = async () => {
+    if (selectedTemplate === couple.template) { setTemplateMessage("That's already your current template."); return }
+    setTemplateMessage('')
+    setTemplateSaving(true)
+    const { error } = await supabase.from('couples').update({ template: selectedTemplate }).eq('id', couple.id)
+    setTemplateSaving(false)
+    if (error) {
+      setTemplateMessage('Could not switch template: ' + error.message)
+    } else {
+      setTemplateMessage('Template updated! Refresh your invitation link to see the new look.')
+      onSaved()
+    }
+  }
+
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '11px 14px', borderRadius: 10,
     border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
@@ -793,6 +835,49 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       }}>
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
+
+      {/* ── Change Template — separate card, separate save action ── */}
+      {(couple as any).enable_template_switch === true && allowedTemplates.length > 0 && (
+        <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, marginTop: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>
+            <Icon name="sparkles" size={14} color="#c2410c" /> Change Template
+          </div>
+          <div style={{ fontSize: 11, color: '#ea580c', marginBottom: 14 }}>
+            Not feeling the current look? Pick a different template below — your photos, text, and RSVPs all stay exactly as they are.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 8, marginBottom: 14 }}>
+            {allowedTemplates.map(id => {
+              const tColors = TEMPLATE_DEFAULTS[id] || TEMPLATE_DEFAULTS['floral-romance']
+              const label = TEMPLATE_NAMES[id] || id
+              const isSelected = selectedTemplate === id
+              const isCurrent = couple.template === id
+              return (
+                <button key={id} type="button" onClick={() => { setSelectedTemplate(id); setTemplateMessage('') }} style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', borderRadius: 10,
+                  border: isSelected ? `2px solid ${tColors.primary}` : '1px solid #fde8d0', cursor: 'pointer',
+                  background: isSelected ? '#fff' : '#fffaf5', position: 'relative',
+                }}>
+                  {isCurrent && (
+                    <span style={{ position: 'absolute', top: 6, right: 6, fontSize: 8.5, fontWeight: 700, color: '#fff', background: '#94a3b8', padding: '2px 6px', borderRadius: 100 }}>CURRENT</span>
+                  )}
+                  <span style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg,${tColors.primary},${tColors.primaryLight})` }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#334155', textAlign: 'center', lineHeight: 1.3 }}>{label}</span>
+                </button>
+              )
+            })}
+          </div>
+          {templateMessage && (
+            <div style={{ fontSize: 12.5, marginBottom: 12, color: templateMessage.startsWith('Template updated') ? '#16a34a' : '#dc2626' }}>{templateMessage}</div>
+          )}
+          <button type="button" onClick={handleChangeTemplate} disabled={templateSaving || selectedTemplate === couple.template} style={{
+            width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
+            background: '#c2410c', color: '#fff', fontWeight: 700, fontSize: 13,
+            opacity: (templateSaving || selectedTemplate === couple.template) ? 0.5 : 1,
+          }}>
+            {templateSaving ? 'Switching...' : 'Switch to This Template'}
+          </button>
+        </div>
+      )}
 
       {/* ── Change Dashboard PIN — separate card, separate save action ── */}
       <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginTop: 24 }}>
