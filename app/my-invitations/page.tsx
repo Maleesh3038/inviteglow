@@ -23,10 +23,20 @@ const TEMPLATE_OPTIONS = [
   { id: 'eternal-bloom', name: 'Eternal Bloom' },
 ]
 
+// Same number used in lib/socialLinks.ts — kept as a plain constant here
+// too since this file doesn't otherwise import that shared file.
+const ADMIN_WHATSAPP = '94770024484'
+
+const BANK_ACCOUNTS = [
+  { bank: 'Sampath Bank', accountName: 'InviteGlow (Pvt) Ltd', accountNumber: '1234 5678 9012' },
+  { bank: 'HNB', accountName: 'InviteGlow (Pvt) Ltd', accountNumber: '9876 5432 1098' },
+]
+
 type MyCouple = {
   id: string; slug: string; bride: string; groom: string; wedding_date: string; venue: string | null
   template: string; couple_photo: string | null
-  project_status: string; payment_slip_status: string
+  project_status: string; payment_slip_status: string; payment_slip_url: string | null
+  customer_email: string | null; customer_phone: string | null
 }
 
 async function uploadPhoto(file: File): Promise<string | null> {
@@ -57,6 +67,54 @@ function ManagePanel({ couple, onSaved }: { couple: MyCouple; onSaved: () => voi
     fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box', color: '#1e293b',
   }
   const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 5, display: 'block' }
+
+  // ── Finalize: Ask Support (WhatsApp) + Payment slip — fully separate
+  // from the details form above, own state, own save action. ──
+  const [showPayment, setShowPayment] = useState(false)
+  const [slipFile, setSlipFile] = useState<File | null>(null)
+  const [slipUploading, setSlipUploading] = useState(false)
+  const [slipMessage, setSlipMessage] = useState('')
+  const slipInputRef = useRef<HTMLInputElement>(null)
+
+  const askSupportUrl = () => {
+    const lines = [
+      `Hi! I need help with my InviteGlow invitation.`,
+      ``,
+      `Couple: ${bride || couple.bride} & ${groom || couple.groom}`,
+      `Wedding date: ${weddingDate || couple.wedding_date}`,
+      `Venue: ${venue || couple.venue || '—'}`,
+      `Template: ${(TEMPLATE_OPTIONS.find(t => t.id === (template || couple.template))?.name) || template || couple.template}`,
+      `Link: /invite/${couple.slug}`,
+      `Status: ${couple.project_status} · Payment: ${couple.payment_slip_status}`,
+    ]
+    return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`
+  }
+
+  const handleSlipUpload = async () => {
+    if (!slipFile) { setSlipMessage('Please choose an image of your bank slip first.'); return }
+    setSlipUploading(true)
+    setSlipMessage('')
+    const ext = slipFile.name.split('.').pop()
+    const fileName = `payment-slips/${couple.id}-${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, slipFile, { cacheControl: '3600', upsert: false })
+    if (uploadError) {
+      setSlipUploading(false)
+      setSlipMessage('Could not upload: ' + uploadError.message)
+      return
+    }
+    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+    const { error: updateError } = await supabase.from('couples').update({
+      payment_slip_url: urlData.publicUrl, payment_slip_status: 'pending',
+    }).eq('id', couple.id)
+    setSlipUploading(false)
+    if (updateError) {
+      setSlipMessage('Could not save: ' + updateError.message)
+    } else {
+      setSlipMessage('Slip uploaded! We\'ll verify it shortly.')
+      setSlipFile(null)
+      onSaved()
+    }
+  }
 
   const handlePhotoUpload = async (file: File) => {
     setUploading(true)
@@ -136,6 +194,62 @@ function ManagePanel({ couple, onSaved }: { couple: MyCouple; onSaved: () => voi
         background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 700, fontSize: 13,
         opacity: saving ? 0.6 : 1,
       }}>{saving ? 'Saving...' : 'Save Changes'}</button>
+
+      {/* ── Finalize ── */}
+      <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 20, paddingTop: 18 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1e293b', marginBottom: 12 }}>Finalize</div>
+
+        <div style={{ display: 'grid', gap: 10, marginBottom: showPayment ? 14 : 0 }}>
+          <a href={askSupportUrl()} target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 10,
+            background: '#25d366', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 12.5,
+          }}>Ask Support on WhatsApp</a>
+          <button type="button" onClick={() => setShowPayment(!showPayment)} style={{
+            padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', color: '#475569',
+            fontWeight: 600, fontSize: 12.5, cursor: 'pointer',
+          }}>{showPayment ? 'Hide Payment Details' : (couple.payment_slip_url ? 'Update Payment Slip' : 'Upload Payment Slip')}</button>
+        </div>
+
+        {showPayment && (
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 14 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', marginBottom: 8 }}>Bank Transfer Details</div>
+            <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+              {BANK_ACCOUNTS.map(b => (
+                <div key={b.bank} style={{ background: '#fff', borderRadius: 8, padding: 10, border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: '#1e293b' }}>{b.bank}</div>
+                  <div style={{ fontSize: 10.5, color: '#64748b' }}>{b.accountName}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: ACCENT, marginTop: 2 }}>{b.accountNumber}</div>
+                </div>
+              ))}
+            </div>
+
+            {couple.payment_slip_url && (
+              <div style={{ fontSize: 11, color: '#64748b', marginBottom: 10 }}>
+                Current status: <strong style={{ color: couple.payment_slip_status === 'verified' ? '#16a34a' : couple.payment_slip_status === 'rejected' ? '#dc2626' : '#b45309' }}>{couple.payment_slip_status}</strong>
+              </div>
+            )}
+
+            <div onClick={() => slipInputRef.current?.click()} style={{
+              border: `1.5px dashed ${ACCENT}`, borderRadius: 10, padding: '14px 12px', textAlign: 'center', cursor: 'pointer',
+              background: '#fff', marginBottom: 10,
+            }}>
+              {slipFile ? (
+                <div style={{ fontSize: 12, color: '#1e293b', fontWeight: 600 }}>{slipFile.name}</div>
+              ) : (
+                <div style={{ fontSize: 12, color: '#64748b' }}>Tap to select an image of your bank slip</div>
+              )}
+              <input ref={slipInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setSlipFile(e.target.files?.[0] || null)} />
+            </div>
+
+            {slipMessage && <div style={{ fontSize: 11.5, marginBottom: 10, color: slipMessage.startsWith('Slip uploaded') ? '#16a34a' : '#dc2626' }}>{slipMessage}</div>}
+
+            <button onClick={handleSlipUpload} disabled={slipUploading} style={{
+              width: '100%', padding: 11, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: '#1e293b', color: '#fff', fontWeight: 700, fontSize: 12.5, opacity: slipUploading ? 0.6 : 1,
+            }}>{slipUploading ? 'Uploading...' : 'Submit Payment Slip'}</button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -151,7 +265,7 @@ export default function MyInvitationsPage() {
     const { data: userData } = await supabase.auth.getUser()
     if (!userData.user) { router.push('/login'); return }
     setUserEmail(userData.user.email || '')
-    const { data } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, venue, template, couple_photo, project_status, payment_slip_status').eq('user_id', userData.user.id).order('created_at', { ascending: false })
+    const { data } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, venue, template, couple_photo, project_status, payment_slip_status, payment_slip_url, customer_email, customer_phone').eq('user_id', userData.user.id).order('created_at', { ascending: false })
     if (data) setCouples(data as MyCouple[])
     setLoading(false)
   }
