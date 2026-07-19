@@ -410,9 +410,14 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Hero collage */}
+        {/* Hero collage — two live video previews + one photo, pinned to
+            specific templates that we know have working assets today. */}
         <div className="hero-collage" style={{ position: 'relative', height: 420 }}>
-          {TEMPLATES.filter(t => (t as any).video).slice(0, 3).map((t, i) => (
+          {[
+            TEMPLATES.find(t => t.id === 'sacred-poruwa'),
+            TEMPLATES.find(t => t.id === 'sunset-shores'),
+            TEMPLATES.find(t => t.id === 'floral-romance'),
+          ].filter((t): t is typeof TEMPLATES[number] => !!t).map((t, i) => (
             <div key={t.id} style={{
               position: 'absolute', width: 200, aspectRatio: '3/4', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 50px rgba(15,23,42,0.18)',
               top: i === 0 ? 0 : i === 1 ? 60 : 140, left: i === 0 ? '10%' : i === 1 ? '46%' : '4%',
