@@ -357,12 +357,12 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
 // ── Pending Reviews Manager ──
 // ── Pricing Plans Manager — lets admin edit prices, tags, and feature
 // lists for the 3 pricing tiers shown on the public homepage. ──
-type PricingPlan = { id: string; name: string; price: number; tag: string; features: string[]; color: string; display_order: number }
+type PricingPlan = { id: string; name: string; subtitle: string; price: number; original_price: number | null; tag: string; features: string[]; color: string; display_order: number }
 
 const DEFAULT_SEED_PLANS: Omit<PricingPlan, 'id'>[] = [
-  { name: 'Starter', price: 3000, tag: '', features: ['1 template of your choice', 'RSVP tracking & guest list', 'Couple dashboard', 'Countdown timer', 'Up to 100 guests'], color: '#94a3b8', display_order: 0 },
-  { name: 'Premium', price: 5000, tag: 'Most Popular', features: ['Everything in Starter', 'Guest personalised links ("Dear [Name]")', 'Photo gallery + background music', 'Link valid for 1 year', 'Unlimited guests'], color: '#c4607a', display_order: 1 },
-  { name: 'Luxury', price: 8000, tag: '', features: ['Everything in Premium', 'Lifetime link — never expires', 'Guest Wishes & Messages wall', 'Full custom design & colors', 'Priority support'], color: '#8a6a2a', display_order: 2 },
+  { name: 'Basic', subtitle: 'Simple & elegant', price: 2500, original_price: 5000, tag: '', features: ['1 invitation', 'Up to 150 guests', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#94a3b8', display_order: 0 },
+  { name: 'Standard', subtitle: 'Best for most Sri Lankan weddings', price: 5000, original_price: 10000, tag: 'Most couples pick this', features: ['2 invitations', 'Up to 600 guests', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay', 'Guest Wishes wall included'], color: '#c4607a', display_order: 1 },
+  { name: 'Premium', subtitle: 'Custom design service', price: 10000, original_price: 20000, tag: '', features: ['2 invitations — one fully custom', 'Unlimited guests', 'Custom design built from scratch by our team', 'Priority support', 'Guest Gallery included · guests upload their photos & videos', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#8a6a2a', display_order: 2 },
 ]
 
 function PricingManager() {
@@ -415,7 +415,7 @@ function PricingManager() {
     setSavingId(plan.id)
     setMessage('')
     const { error } = await supabase.from('pricing_plans').update({
-      name: plan.name, price: plan.price, tag: plan.tag || null,
+      name: plan.name, subtitle: plan.subtitle || null, price: plan.price, original_price: plan.original_price || null, tag: plan.tag || null,
       features: plan.features.filter(f => f.trim()), color: plan.color, display_order: plan.display_order,
     }).eq('id', plan.id)
     setSavingId(null)
@@ -455,13 +455,25 @@ function PricingManager() {
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Price (LKR)</label>
-                <input type="number" value={plan.price} onChange={e => updatePlan(plan.id, 'price', parseFloat(e.target.value) || 0)}
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Subtitle</label>
+                <input value={plan.subtitle || ''} onChange={e => updatePlan(plan.id, 'subtitle', e.target.value)} placeholder="e.g. Simple & elegant"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Badge Tag (optional)</label>
                 <input value={plan.tag} onChange={e => updatePlan(plan.id, 'tag', e.target.value)} placeholder="e.g. Most Popular"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Price (LKR)</label>
+                <input type="number" value={plan.price} onChange={e => updatePlan(plan.id, 'price', parseFloat(e.target.value) || 0)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4, display: 'block' }}>Original Price (optional — shown crossed out)</label>
+                <input type="number" value={plan.original_price ?? ''} onChange={e => updatePlan(plan.id, 'original_price', e.target.value ? parseFloat(e.target.value) : null)} placeholder="e.g. 10000"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
               </div>
             </div>
