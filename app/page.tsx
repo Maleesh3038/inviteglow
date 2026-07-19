@@ -316,7 +316,8 @@ export default function HomePage() {
               <button onClick={() => scrollTo('pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Pricing</button>
               <button onClick={() => scrollTo('reviews')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Reviews</button>
               <button onClick={() => scrollTo('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Contact</button>
-              <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" style={{
+              <a href="/login" style={{ fontSize: 13.5, fontWeight: 500, color: '#475569', textDecoration: 'none' }}>Sign In</a>
+              <a href="/signup" style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 100,
                 background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 13.5, fontWeight: 600,
               }}>Get Started</a>
@@ -354,8 +355,11 @@ export default function HomePage() {
                     fontSize: 15, fontWeight: 500, color: '#334155', textAlign: 'left', padding: '14px 4px',
                   }}>{item.label}</button>
                 ))}
-                <a href="https://wa.me/?text=Hi!%20I%27d%20like%20to%20create%20a%20wedding%20invitation" target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 20px', borderRadius: 100, marginTop: 16,
+                <a href="/login" onClick={() => setMenuOpen(false)} style={{
+                  display: 'block', textAlign: 'center', padding: '12px 4px', fontSize: 14, fontWeight: 500, color: '#475569', textDecoration: 'none',
+                }}>Sign In</a>
+                <a href="/signup" onClick={() => setMenuOpen(false)} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 20px', borderRadius: 100, marginTop: 8,
                   background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600,
                 }}>Get Started</a>
               </div>
@@ -377,21 +381,22 @@ export default function HomePage() {
             Create a stunning digital wedding invitation in minutes. Choose from {TEMPLATES.length} elegant templates, track RSVPs in real time, and share a link your guests will love.
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button onClick={() => scrollTo('templates')} style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 100, border: 'none', cursor: 'pointer',
+            <a href="/signup" style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 100, textDecoration: 'none',
               background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontSize: 14, fontWeight: 700,
               boxShadow: `0 8px 24px ${ACCENT}44`,
             }}>
-              Browse Templates <Icon name="arrow" size={15} color="#fff" />
-            </button>
-            <button onClick={() => scrollTo('pricing')} style={{
+              Start Free — Preview Before Paying <Icon name="arrow" size={15} color="#fff" />
+            </a>
+            <button onClick={() => scrollTo('templates')} style={{
               padding: '14px 28px', borderRadius: 100, border: '1.5px solid #e2e8f0', cursor: 'pointer',
               background: '#fff', color: '#1e293b', fontSize: 14, fontWeight: 600,
             }}>
-              See Pricing
+              Browse Templates
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 32, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 11.5, color: '#94a3b8', marginTop: 10 }}>No credit card required · Pay only when you publish</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 22, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <StarRating value={5} size={16} />
               <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{avgRating}</span>
