@@ -1031,6 +1031,22 @@ export default function AdminPage() {
     loadCouples()
   }
 
+  const [resettingPinId, setResettingPinId] = useState<string | null>(null)
+  const handleResetPin = async (id: string, coupleLabel: string) => {
+    if (!confirm(`Reset the dashboard PIN for ${coupleLabel}? Their old PIN will stop working immediately.`)) return
+    const newPin = generatePin()
+    setResettingPinId(id)
+    // Only the pin field is touched — nothing else about the couple record changes.
+    const { error } = await supabase.from('couples').update({ pin: newPin }).eq('id', id)
+    setResettingPinId(null)
+    if (!error) {
+      loadCouples()
+      alert(`New PIN for ${coupleLabel}: ${newPin}\n\nShare this with the couple — their dashboard link stays the same.`)
+    } else {
+      alert('Could not reset PIN: ' + error.message)
+    }
+  }
+
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
   // ── Platform-wide stats ──
@@ -1770,6 +1786,12 @@ export default function AdminPage() {
                             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>
                               <Icon name="lock" size={11} color="#94a3b8" /> {c.pin || '----'}
                             </span>
+                            <button onClick={() => handleResetPin(c.id, `${c.bride} & ${c.groom}`)} disabled={resettingPinId === c.id} style={{
+                              display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#d97706', background: 'transparent',
+                              border: 'none', cursor: 'pointer', fontWeight: 500, padding: 0, opacity: resettingPinId === c.id ? 0.5 : 1,
+                            }}>
+                              <Icon name="dice" size={11} color="#d97706" /> {resettingPinId === c.id ? 'Resetting...' : 'Reset PIN'}
+                            </button>
                           </div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button onClick={() => startEdit(c)} style={{
