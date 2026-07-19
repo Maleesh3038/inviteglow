@@ -80,6 +80,8 @@ const emptyForm = {
   enable_gift_section: true,
   enable_footer_social: true,
   enable_budget_tracker: false,
+  enable_template_switch: false,
+  allowed_templates: [] as string[],
   bride_bank_name: '',
   bride_bank_account_name: '',
   bride_bank_account_number: '',
@@ -931,6 +933,8 @@ export default function AdminPage() {
       enable_gift_section: (c as any).enable_gift_section ?? true,
       enable_footer_social: (c as any).enable_footer_social ?? true,
       enable_budget_tracker: (c as any).enable_budget_tracker ?? false,
+      enable_template_switch: (c as any).enable_template_switch ?? false,
+      allowed_templates: Array.isArray((c as any).allowed_templates) ? (c as any).allowed_templates : [],
       bride_bank_name: (c as any).bride_bank_name ?? '',
       bride_bank_account_name: (c as any).bride_bank_account_name ?? '',
       bride_bank_account_number: (c as any).bride_bank_account_number ?? '',
@@ -1001,6 +1005,8 @@ export default function AdminPage() {
       enable_gift_section: (form as any).enable_gift_section,
       enable_footer_social: (form as any).enable_footer_social,
       enable_budget_tracker: (form as any).enable_budget_tracker,
+      enable_template_switch: (form as any).enable_template_switch,
+      allowed_templates: (form as any).allowed_templates,
       bride_bank_name: (form as any).bride_bank_name || null,
       bride_bank_account_name: (form as any).bride_bank_account_name || null,
       bride_bank_account_number: (form as any).bride_bank_account_number || null,
@@ -1611,6 +1617,47 @@ export default function AdminPage() {
                   }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_budget_tracker ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
+                </div>
+
+                <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: (form as any).enable_template_switch ? 14 : 0 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>
+                        <Icon name="template" size={13} color="#c2410c" /> Let Couple Change Template
+                      </div>
+                      <div style={{ fontSize: 11, color: '#ea580c' }}>Adds a "Template" section to their dashboard where they can switch between the templates you approve below.</div>
+                    </div>
+                    <button type="button" onClick={() => setForm({ ...form, enable_template_switch: !(form as any).enable_template_switch } as any)} style={{
+                      width: 48, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                      background: (form as any).enable_template_switch ? '#c2410c' : '#e2e8f0', position: 'relative',
+                    }}>
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_template_switch ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                    </button>
+                  </div>
+                  {(form as any).enable_template_switch && (
+                    <div>
+                      <div style={{ fontSize: 10.5, fontWeight: 600, color: '#c2410c', marginBottom: 8 }}>Templates this couple can switch between:</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8 }}>
+                        {TEMPLATES.map(t => {
+                          const allowed: string[] = (form as any).allowed_templates || []
+                          const checked = allowed.includes(t.id)
+                          return (
+                            <label key={t.id} style={{
+                              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                              background: checked ? '#ffedd5' : '#fff', border: `1px solid ${checked ? '#fb923c' : '#e2e8f0'}`,
+                            }}>
+                              <input type="checkbox" checked={checked} onChange={() => {
+                                const next = checked ? allowed.filter(id => id !== t.id) : [...allowed, t.id]
+                                setForm({ ...form, allowed_templates: next } as any)
+                              }} style={{ margin: 0, accentColor: '#c2410c' }} />
+                              <span style={{ width: 12, height: 12, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                              <span style={{ fontSize: 12, color: '#334155', fontWeight: 500 }}>{t.name}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ background: '#fdf2f8', borderRadius: 12, padding: 16, marginBottom: 16 }}>
