@@ -67,10 +67,12 @@ export default function MyInvitationsPage() {
             <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Your Invitations</div>
             <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>Manage and preview your wedding invitations here.</div>
           </div>
-          <a href="/create" style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '11px 20px', borderRadius: 100, textDecoration: 'none',
-            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 700, fontSize: 13,
-          }}>+ New Invitation</a>
+          {couples.length === 0 && (
+            <a href="/create" style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '11px 20px', borderRadius: 100, textDecoration: 'none',
+              background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 700, fontSize: 13,
+            }}>+ New Invitation</a>
+          )}
         </div>
 
         {couples.length === 0 ? (
