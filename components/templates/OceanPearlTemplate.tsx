@@ -541,6 +541,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
 
               {coverVideoUrl ? (
                 <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                  onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
@@ -559,7 +560,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ fontSize: 28, marginBottom: 10 }}>🐚</div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
@@ -594,6 +594,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
             <div style={{ position: "relative", height: 460, overflow: "hidden" }}>
               {coverVideoUrl ? (
                 <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                  onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
