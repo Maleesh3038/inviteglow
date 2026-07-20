@@ -542,7 +542,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
               {coverVideoUrl ? (
                 <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
                   onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
-                  onTimeUpdate={e => { const v = e.currentTarget; if (v.duration && v.currentTime >= v.duration - 0.15) v.currentTime = 2 }}
+                  onEnded={e => { const v = e.currentTarget; v.currentTime = 2; v.play().catch(() => {}) }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
@@ -596,7 +596,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
               {coverVideoUrl ? (
                 <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
                   onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
-                  onTimeUpdate={e => { const v = e.currentTarget; if (v.duration && v.currentTime >= v.duration - 0.15) v.currentTime = 2 }}
+                  onEnded={e => { const v = e.currentTarget; v.currentTime = 2; v.play().catch(() => {}) }}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
