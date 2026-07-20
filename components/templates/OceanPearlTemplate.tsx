@@ -540,8 +540,9 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
               {coverVideoUrl ? (
-                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
                   onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
+                  onTimeUpdate={e => { const v = e.currentTarget; if (v.duration && v.currentTime >= v.duration - 0.15) v.currentTime = 2 }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
@@ -593,8 +594,9 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
 
             <div style={{ position: "relative", height: 460, overflow: "hidden" }}>
               {coverVideoUrl ? (
-                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
                   onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
+                  onTimeUpdate={e => { const v = e.currentTarget; if (v.duration && v.currentTime >= v.duration - 0.15) v.currentTime = 2 }}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
