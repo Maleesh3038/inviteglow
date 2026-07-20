@@ -6,6 +6,7 @@ import { supabase, Couple } from '@/lib/supabase'
 import FooterSocial from '@/components/shared/FooterSocial'
 
 const DEFAULT_PHOTO = "/images/hero-ocean-pearl.png"
+const DEFAULT_COVER_VIDEO = "https://eqacrwhbrfqcnlgegvtl.supabase.co/storage/v1/object/public/wedding-photos/videos/ocean-pearl-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
@@ -481,6 +482,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
+  const coverVideoUrl = (couple as any).cover_video_url || DEFAULT_COVER_VIDEO
 
   useEffect(() => {
     const audio = new Audio(couple.song_url || DEFAULT_SONG_URL)
@@ -537,9 +539,16 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
-                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {coverVideoUrl ? (
+                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+                  <source src={coverVideoUrl} type="video/mp4" />
+                </video>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(13,46,58,0.45) 0%, rgba(13,46,58,0.15) 35%, rgba(13,46,58,0.3) 65%, rgba(13,46,58,0.7) 100%)` }} />
 
               {/* Wave decoration at bottom */}
@@ -583,9 +592,16 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
             <div style={{ position: "relative", height: 460, overflow: "hidden" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
-                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {coverVideoUrl ? (
+                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}>
+                  <source src={coverVideoUrl} type="video/mp4" />
+                </video>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              )}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(240,249,251,1) 0%,rgba(13,46,58,0.15) 55%,rgba(13,46,58,0.4) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
                 <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
