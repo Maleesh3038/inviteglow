@@ -597,7 +597,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
                   onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
                   onEnded={e => { const v = e.currentTarget; v.currentTime = 2; v.play().catch(() => {}) }}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}>
+                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 70%" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
               ) : (
