@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple, RSVP, CoupleColors } from '@/lib/supabase'
 
@@ -303,9 +303,6 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
 
   useEffect(() => { load() }, [coupleId])
 
-  // Overall budget target is stored locally per-session via a simple
-  // prompt-free inline field — kept purely client-side comparison against
-  // the sum of estimated costs, no schema change needed for this bit.
   useEffect(() => {
     const saved = window.localStorage?.getItem?.(`budget-target-${coupleId}`)
     if (saved) { setTotalBudget(parseFloat(saved)); setTotalBudgetInput(saved) }
@@ -385,7 +382,6 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
 
   return (
     <div>
-      {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
         <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
           <div style={{ fontSize: 10.5, color: TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>TOTAL ESTIMATED</div>
@@ -401,7 +397,6 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
         </div>
       </div>
 
-      {/* Optional overall budget target + progress bar */}
       <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT_DARK }}>Overall Budget Goal (optional)</div>
@@ -423,7 +418,6 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
         )}
       </div>
 
-      {/* Add/Edit form */}
       {showForm ? (
         <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 16 }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, marginBottom: 14 }}>{editingId ? 'Edit Expense' : 'Add Expense'}</div>
@@ -488,7 +482,6 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
         </button>
       )}
 
-      {/* Expense list */}
       {items.length === 0 ? (
         <div style={{ textAlign: "center", padding: 40, background: "#fff", borderRadius: 16, color: TEXT_MUTED, fontSize: 13 }}>
           No expenses added yet. Start planning your budget above!
@@ -574,9 +567,6 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [message, setMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Change Dashboard PIN — fully separate from the rest of this form.
-  // Its own state and its own save call, so it can never interfere with
-  // (or be blocked by) saving the other invitation fields. ──
   const [newPin, setNewPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [pinSaving, setPinSaving] = useState(false)
@@ -587,8 +577,6 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
     if (newPin.length !== 4) { setPinMessage('PIN must be exactly 4 digits.'); return }
     if (newPin !== confirmPin) { setPinMessage("PINs don't match — please re-enter."); return }
     setPinSaving(true)
-    // Only the pin column is touched — nothing else about the couple
-    // record is read or written by this call.
     const { error } = await supabase.from('couples').update({ pin: newPin }).eq('id', couple.id)
     setPinSaving(false)
     if (error) {
@@ -600,16 +588,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
     }
   }
 
-  // ── Change Template — also fully separate from the rest of this form.
-  // Only touches the `template` column; admin controls which templates
-  // are offered via enable_template_switch / allowed_templates. ──
   const allowedTemplates: string[] = Array.isArray((couple as any).allowed_templates) ? (couple as any).allowed_templates : []
-  // The couple's "default" is whichever template the admin originally
-  // assigned them (or last explicitly set as default) — always offered as
-  // a safe "go back to default" option, plus their current template too,
-  // even if admin didn't explicitly tick either into allowed_templates.
-  // Falls back to Floral Romance only for older records saved before this
-  // feature existed (no default_template value stored yet).
   const defaultTemplateId: string = (couple as any).default_template || 'floral-romance'
   const templateOptions: string[] = Array.from(new Set([...allowedTemplates, defaultTemplateId, couple.template]))
   const [selectedTemplate, setSelectedTemplate] = useState(couple.template)
@@ -844,7 +823,6 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
 
-      {/* ── Change Template — separate card, separate save action ── */}
       {(couple as any).enable_template_switch === true && allowedTemplates.length > 0 && (
         <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, marginTop: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>
@@ -880,7 +858,6 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         </div>
       )}
 
-      {/* ── Change Dashboard PIN — separate card, separate save action ── */}
       <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginTop: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1e40af', marginBottom: 4 }}>
           <Icon name="lock" size={14} color="#1e40af" /> Change Dashboard PIN
@@ -917,7 +894,6 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   )
 }
 
-// ── Guest Link Generator ──
 function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string }) {
   const [guestName, setGuestName] = useState("")
   const [copied, setCopied] = useState(false)
@@ -1019,6 +995,7 @@ const TABS = [
 
 export default function CoupleDashboard() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const slug = params.slug as string
 
   const [couple, setCouple] = useState<Couple | null>(null)
@@ -1028,7 +1005,15 @@ export default function CoupleDashboard() {
   const [search, setSearch] = useState("")
   const [filterResponse, setFilterResponse] = useState<'all' | 'yes' | 'no'>('all')
   const [filterDrinking, setFilterDrinking] = useState<'all' | 'yes' | 'no'>('all')
-  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'>('overview')
+
+  // Deep-linking: /dashboard/[slug]?tab=guests etc. jumps straight to that
+  // tab. Falls back to 'overview' for anything unrecognised. This only
+  // sets the *initial* tab — after that the tab strip behaves as before.
+  const initialTab = (() => {
+    const t = searchParams?.get('tab')
+    return (TABS.some(tab => tab.key === t) ? t : 'overview') as typeof TABS[number]['key']
+  })()
+  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'>(initialTab)
 
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState("")
@@ -1046,9 +1031,6 @@ export default function CoupleDashboard() {
     }
     setCouple(coupleData as Couple)
 
-    // If the logged-in customer's own account owns this invitation, skip
-    // the PIN screen entirely — they already proved who they are by
-    // signing in, and the auto-generated PIN was never shown to them.
     if ((coupleData as any).user_id) {
       const { data: authData } = await supabase.auth.getUser()
       if (authData.user && authData.user.id === (coupleData as any).user_id) {
@@ -1130,7 +1112,6 @@ export default function CoupleDashboard() {
   const BORDER = '#e2e8f0'
   const PAGE_BG = '#f6f7fb'
 
-  // ── PIN LOCK SCREEN ──
   if (!unlocked) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: PAGE_BG, fontFamily: "'Inter',sans-serif", padding: 24 }}>
@@ -1170,7 +1151,6 @@ export default function CoupleDashboard() {
     )
   }
 
-  // ── DASHBOARD ──
   const accepted = rsvps.filter(r => r.response === 'yes')
   const declined = rsvps.filter(r => r.response === 'no')
   const drinkingYes = accepted.filter(r => r.drinking === 'yes').length
@@ -1207,7 +1187,6 @@ export default function CoupleDashboard() {
     <div style={{ minHeight: "100vh", background: PAGE_BG, fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`}</style>
 
-      {/* ── NAV BAR ── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -1229,9 +1208,6 @@ export default function CoupleDashboard() {
             {TABS.filter(tab =>
               (tab.key !== 'share' || (
                 (couple as any).enable_guest_links !== false &&
-                // Self-service (customer-created) invitations can only share
-                // their guest link once admin has verified their payment slip.
-                // Admin-created invitations (no user_id) aren't affected.
                 (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
               )) &&
               (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true) &&
@@ -1266,7 +1242,6 @@ export default function CoupleDashboard() {
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 20px 60px" }}>
 
         <AnimatePresence mode="wait">
-          {/* ── OVERVIEW TAB ── */}
           {activeTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               {(couple as any).user_id && (couple as any).payment_slip_status !== 'verified' && (
@@ -1375,7 +1350,6 @@ export default function CoupleDashboard() {
             </motion.div>
           )}
 
-          {/* ── GUESTS TAB ── */}
           {activeTab === 'guests' && (
             <motion.div key="guests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <div style={{ position: 'relative', marginBottom: 14 }}>
@@ -1500,28 +1474,24 @@ export default function CoupleDashboard() {
             </motion.div>
           )}
 
-          {/* ── BUDGET TAB ── */}
           {activeTab === 'budget' && (couple as any).enable_budget_tracker === true && (
             <motion.div key="budget" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <BudgetManager coupleId={couple.id} accent={ACCENT} />
             </motion.div>
           )}
 
-          {/* ── WISHES TAB ── */}
           {activeTab === 'wishes' && (couple as any).enable_guest_wishes === true && (
             <motion.div key="wishes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <WishesManager coupleId={couple.id} accent={ACCENT} />
             </motion.div>
           )}
 
-          {/* ── EDIT TAB ── */}
           {activeTab === 'edit' && (
             <motion.div key="edit" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <EditPanel couple={couple} onSaved={loadData} />
             </motion.div>
           )}
 
-          {/* ── SHARE TAB ── */}
           {activeTab === 'share' && (couple as any).enable_guest_links !== false && (
             <motion.div key="share" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <GuestLinkGenerator couple={couple} accent={ACCENT} />
