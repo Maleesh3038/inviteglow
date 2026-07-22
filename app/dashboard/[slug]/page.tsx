@@ -984,13 +984,14 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
   )
 }
 
-const TABS = [
-  { key: 'overview', label: 'Overview', icon: 'overview' as const },
-  { key: 'guests', label: 'Guests', icon: 'users' as const },
-  { key: 'budget', label: 'Budget', icon: 'wallet' as const },
-  { key: 'wishes', label: 'Wishes', icon: 'heart' as const },
-  { key: 'edit', label: 'Edit', icon: 'edit' as const },
-  { key: 'share', label: 'Share', icon: 'link' as const },
+type DashTabKey = 'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'
+const TABS: { key: DashTabKey; label: string; icon: IconName }[] = [
+  { key: 'overview', label: 'Overview', icon: 'overview' },
+  { key: 'guests', label: 'Guests', icon: 'users' },
+  { key: 'budget', label: 'Budget', icon: 'wallet' },
+  { key: 'wishes', label: 'Wishes', icon: 'heart' },
+  { key: 'edit', label: 'Edit', icon: 'edit' },
+  { key: 'share', label: 'Share', icon: 'link' },
 ]
 
 export default function CoupleDashboard() {
@@ -1009,11 +1010,12 @@ export default function CoupleDashboard() {
   // Deep-linking: /dashboard/[slug]?tab=guests etc. jumps straight to that
   // tab. Falls back to 'overview' for anything unrecognised. This only
   // sets the *initial* tab — after that the tab strip behaves as before.
-  const initialTab = (() => {
+  const initialTab: DashTabKey = (() => {
     const t = searchParams?.get('tab')
-    return (TABS.some(tab => tab.key === t) ? t : 'overview') as typeof TABS[number]['key']
+    const match = TABS.find(tab => tab.key === t)
+    return match ? match.key : 'overview'
   })()
-  const [activeTab, setActiveTab] = useState<'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'>(initialTab)
+  const [activeTab, setActiveTab] = useState<DashTabKey>(initialTab)
 
   const [unlocked, setUnlocked] = useState(false)
   const [pinInput, setPinInput] = useState("")
