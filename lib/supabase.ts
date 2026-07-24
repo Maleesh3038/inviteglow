@@ -23,6 +23,7 @@ export type EventDetails = {
   venue_address: string
   date: string
   maps_url: string
+  dress_code?: string
 }
 export type CoupleEvents = {
   engagement?: EventDetails
