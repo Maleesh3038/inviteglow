@@ -16,6 +16,7 @@ const TEMPLATES = [
   { id: 'blush-blossom', name: 'Blush Blossom', tag: 'Cherry Blossom', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
   { id: 'ceylon-elegance', name: 'Ceylon Elegance', tag: 'Gold & Video', photo: '', demoSlug: '', color: '#c9a227' },
   { id: 'eternal-bloom', name: 'Eternal Bloom', tag: 'Botanical & Video', photo: '', demoSlug: '', color: '#5c7a52' },
+  { id: 'noble-salute', name: 'Noble Salute', tag: 'Military Honor', photo: '', demoSlug: '', color: '#3f5233' },
 ]
 
 const BUCKET = 'wedding-photos'
@@ -1893,12 +1894,12 @@ export default function AdminPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>
                     <Icon name="template" size={15} color="#8a6d1a" /> Video &amp; Photo Extras
                   </div>
-                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Used by "Ceylon Elegance" and "Eternal Bloom" — hero video, individual bride/groom photos. The gift accounts below only appear on Ceylon Elegance.</div>
+                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Used by "Ceylon Elegance", "Eternal Bloom", and "Noble Salute" — hero video, individual bride/groom photos. The gift accounts below only appear on Ceylon Elegance.</div>
 
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Hero Background Video (optional)</label>
                     <VideoUploader value={(form as any).cover_video_url || ''} onChange={url => setForm({ ...form, cover_video_url: url } as any)} />
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Leave empty to use the couple photo as the hero background instead.</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Leave empty to use the couple photo (or, for Noble Salute, the template's default video) as the hero background instead.</div>
                   </div>
 
                   <PhotoUploader value={(form as any).groom_photo || ''} onChange={url => setForm({ ...form, groom_photo: url } as any)}
