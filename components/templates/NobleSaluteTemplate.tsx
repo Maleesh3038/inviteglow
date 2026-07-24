@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 import FooterSocial from '@/components/shared/FooterSocial'
 
-const DEFAULT_PHOTO = "/images/hero-floral.png"
+// No default photo fallback for Noble Salute — if a couple has no photo
+// of their own, we don't want to silently show another template's stock
+// image. The dark background plus (if set) the demo video is enough.
 // Upload the provided video to your Supabase "wedding-photos" bucket at
 // this exact path (videos/noble-salute-cover.mp4) so this default resolves.
 // Admins can still override per-couple via the "Cover Video URL" field.
@@ -656,7 +658,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
 
   const W = {
     bride: couple.bride, groom: couple.groom, brideFamilyName: couple.bride_family || '', groomFamilyName: couple.groom_family || '',
-    date: couple.wedding_date, couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
+    date: couple.wedding_date, couplePhoto: couple.couple_photo || '',
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
     bridePhone: (couple as any).bride_phone || '', groomPhone: (couple as any).groom_phone || '',
@@ -686,9 +688,11 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
-                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {W.couplePhoto && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+              )}
               {coverVideoUrl && (
                 <video ref={videoRef} muted autoPlay playsInline preload="auto" onEnded={handleVideoEnded}
                   onPlaying={e => {
@@ -771,7 +775,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               ) : (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(26,33,22,0.18) 60%,rgba(26,33,22,0.42) 100%)` }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
