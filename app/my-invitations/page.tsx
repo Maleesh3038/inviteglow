@@ -189,25 +189,33 @@ export default function CustomerDashboard() {
   const daysToWedding = Math.max(0, Math.ceil((new Date(couple.wedding_date).getTime() - Date.now()) / 86400000))
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f6f7fb', fontFamily: "'Inter',sans-serif", display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: '#fdf7f8', fontFamily: "'Inter',sans-serif", display: 'flex' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital@1&family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
 
       {/* ── SIDEBAR ── */}
       <div style={{
-        width: 244, flexShrink: 0, background: '#fff', borderRight: '1px solid #eef0f3',
+        width: 244, flexShrink: 0, background: '#241a1f', borderRight: 'none',
         display: sidebarOpen ? 'flex' : undefined, flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 40,
         transform: sidebarOpen ? 'translateX(0)' : undefined,
       }} className="ig-sidebar">
-        <div style={{ padding: '20px 18px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+        <div style={{ padding: '22px 18px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
             <span style={{ color: PINK, fontSize: 18 }}>♥</span>
-            <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 22, color: PINK, lineHeight: 1 }}>InviteGlow</span>
+            <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 24, color: '#fff', lineHeight: 1 }}>InviteGlow</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: `${PINK}0d`, borderRadius: 12, padding: '10px 12px' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: PINK, lineHeight: 1 }}>{daysToWedding}</div>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: PINK, letterSpacing: '0.05em' }}>DAYS UNTIL</div>
-              <div style={{ fontSize: 10.5, color: '#64748b' }}>{new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}{couple.venue ? ` · ${couple.venue.slice(0, 14)}${couple.venue.length > 14 ? '…' : ''}` : ''}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 14px', border: `1px solid ${PINK}33` }}>
+            <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
+              <svg width={40} height={40} viewBox="0 0 40 40">
+                <circle cx={20} cy={20} r={17} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={4} />
+                <circle cx={20} cy={20} r={17} fill="none" stroke={PINK} strokeWidth={4} strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 17}`} strokeDashoffset={2 * Math.PI * 17 * Math.max(0, 1 - Math.min(daysToWedding, 90) / 90)}
+                  transform="rotate(-90 20 20)" />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff' }}>{daysToWedding}</div>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: PINK, letterSpacing: '0.08em' }}>DAYS TO GO</div>
+              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
             </div>
           </div>
         </div>
@@ -215,15 +223,16 @@ export default function CustomerDashboard() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px' }}>
           {NAV_GROUPS.map(group => (
             <div key={group.title} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#b0b7c3', letterSpacing: '0.08em', padding: '8px 10px 4px' }}>{group.title.toUpperCase()}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', padding: '8px 10px 4px' }}>{group.title.toUpperCase()}</div>
               {group.items.map(item => (
                 <button key={item.key} onClick={() => { setSection(item.key); setSidebarOpen(false) }} style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 9,
                   border: 'none', cursor: 'pointer', marginBottom: 2,
-                  background: section === item.key ? `${PINK}14` : 'transparent',
-                  color: section === item.key ? PINK : '#475569', fontWeight: section === item.key ? 700 : 500, fontSize: 13,
+                  background: section === item.key ? PINK : 'transparent',
+                  color: section === item.key ? '#fff' : 'rgba(255,255,255,0.7)', fontWeight: section === item.key ? 700 : 500, fontSize: 13,
+                  boxShadow: section === item.key ? `0 4px 14px ${PINK}55` : 'none',
                 }}>
-                  <Icon name={item.icon} size={16} color={section === item.key ? PINK : '#94a3b8'} />
+                  <Icon name={item.icon} size={16} color={section === item.key ? '#fff' : 'rgba(255,255,255,0.4)'} />
                   {item.label}
                 </button>
               ))}
@@ -231,15 +240,15 @@ export default function CustomerDashboard() {
           ))}
         </div>
 
-        <div style={{ padding: 14, borderTop: '1px solid #eef0f3' }}>
+        <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{initials}</div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{couple.bride} &amp; {couple.groom}</div>
-              <div style={{ fontSize: 10.5, color: '#94a3b8' }}>{couple.payment_slip_status === 'verified' ? 'Live Plan' : 'Free Plan'}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{couple.bride} &amp; {couple.groom}</div>
+              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>{couple.payment_slip_status === 'verified' ? 'Live Plan' : 'Free Plan'}</div>
             </div>
           </div>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 12.5, fontWeight: 600, padding: '4px 2px' }}>
+          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.45)', fontSize: 12.5, fontWeight: 600, padding: '4px 2px' }}>
             <Icon name="signout" size={14} /> Sign Out
           </button>
         </div>
@@ -343,8 +352,8 @@ function OverviewSection({ couple, guests, rsvps, daysToWedding, onNavigate }: {
       <div style={{ background: `linear-gradient(135deg,${PINK},${RED})`, borderRadius: 20, padding: 26, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginBottom: 22, boxShadow: `0 10px 30px ${PINK}40` }}>
         <div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-            <span style={{ padding: '3px 10px', borderRadius: 100, background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{(couple.project_status || 'DRAFT').toUpperCase()}</span>
-            <span style={{ padding: '3px 10px', borderRadius: 100, background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{isPublished ? 'LIVE' : 'FREE'}</span>
+            <span style={{ padding: '3px 10px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{(couple.project_status || 'DRAFT').toUpperCase()}</span>
+            <span style={{ padding: '3px 10px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{isPublished ? 'LIVE' : 'FREE'}</span>
           </div>
           <div style={{ fontSize: 21, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
             Your invitation is <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic' }}>{isPublished ? 'live!' : 'almost ready.'}</span>
@@ -359,43 +368,60 @@ function OverviewSection({ couple, guests, rsvps, daysToWedding, onNavigate }: {
             <button onClick={() => onNavigate('billing')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#fff', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>Upgrade <Icon name="chevron" size={13} color="#fff" /></button>
           </div>
         </div>
-        <div style={{ background: '#fdf6ee', borderRadius: 14, padding: '16px 22px', textAlign: 'center', transform: 'rotate(2deg)', boxShadow: '0 8px 24px rgba(0,0,0,0.25)', minWidth: 150 }}>
-          <div style={{ fontSize: 8.5, letterSpacing: '0.15em', color: '#a8895a', fontWeight: 700 }}>WITH OUR FAMILIES</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 17, color: '#3d2b1f', margin: '4px 0' }}>{couple.bride}</div>
-          <div style={{ fontSize: 10, color: '#a8895a' }}>&amp;</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 17, color: '#3d2b1f', margin: '4px 0' }}>{couple.groom}</div>
-          <div style={{ fontSize: 9, color: '#a8895a', fontWeight: 700, marginTop: 6 }}>{new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+        <div style={{ width: 118, height: 140, borderRadius: 16, overflow: 'hidden', border: '3px solid rgba(255,255,255,0.5)', boxShadow: '0 8px 24px rgba(0,0,0,0.25)', flexShrink: 0, position: 'relative', background: '#fdf6ee' }}>
+          {couple.couple_photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={couple.couple_photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: '#a8895a' }}>{couple.bride}</span>
+              <span style={{ fontSize: 9, color: '#a8895a' }}>&amp;</span>
+              <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: '#a8895a' }}>{couple.groom}</span>
+            </div>
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '5px 4px', textAlign: 'center', background: 'rgba(36,26,31,0.75)', fontSize: 9, color: '#fff', fontWeight: 700 }}>
+            {new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          </div>
         </div>
       </div>
 
-      {/* Getting started */}
+      {/* Getting started — connected horizontal timeline */}
       <div style={{ ...cardStyle, marginBottom: 22 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Getting started</div>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: '#16a34a', background: '#f0fdf4', padding: '3px 10px', borderRadius: 100 }}>{progressPct}%</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: PINK, background: `${PINK}14`, padding: '3px 10px', borderRadius: 100 }}>{progressPct}%</div>
         </div>
-        <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 14 }}>{nextStep ? `Next: ${nextStep.label}` : 'All steps complete!'}</div>
-        <div style={{ height: 6, background: '#f1f5f9', borderRadius: 100, overflow: 'hidden', marginBottom: 18 }}>
-          <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg,${PINK},${RED})`, borderRadius: 100 }} />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: 10 }}>
+        <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 24 }}>{nextStep ? `Next: ${nextStep.label}` : 'All steps complete!'}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 12, left: '10%', right: '10%', height: 2, background: '#f1f5f9', zIndex: 0 }} />
+          <div style={{ position: 'absolute', top: 12, left: '10%', height: 2, width: `${Math.max(0, (doneCount - 1)) / (steps.length - 1) * 80}%`, background: PINK, zIndex: 0, transition: 'width 0.3s' }} />
           {steps.map((s, i) => (
-            <div key={s.label} style={{ border: `1px solid ${s.done ? '#bbf7d0' : '#e2e8f0'}`, background: s.done ? '#f0fdf4' : '#fff', borderRadius: 10, padding: '12px 10px', textAlign: 'center' }}>
-              <div style={{ width: 24, height: 24, borderRadius: '50%', background: s.done ? '#16a34a' : '#e2e8f0', color: s.done ? '#fff' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 11, fontWeight: 700 }}>
+            <div key={s.label} style={{ flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: s.done ? PINK : '#fff', border: `2px solid ${s.done ? PINK : '#e2e8f0'}`, color: s.done ? '#fff' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 11, fontWeight: 700 }}>
                 {s.done ? <Icon name="check" size={12} color="#fff" /> : i + 1}
               </div>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: '#334155' }}>{s.label}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: s.done ? '#334155' : '#94a3b8', padding: '0 4px' }}>{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 22 }}>
-        <StatCard label="Total Guests" value={totalInvited} icon="users" iconBg={`${PINK}1a`} iconColor={PINK} sub={totalInvited === 0 ? 'no activity yet' : 'invited'} />
-        <StatCard label="Page Views" value={couple.page_views ?? 0} icon="gallery" iconBg="#e0f2fe" iconColor="#0369a1" sub="all-time" />
-        <StatCard label="Attending" value={totalAttending} icon="check" iconBg="#f0fdf4" iconColor="#16a34a" sub={totalAttending === 0 ? 'no guests yet' : `${accepted.length} responses`} />
-        <StatCard label="Days to Wedding" value={daysToWedding} icon="home" iconBg="#fef3c7" iconColor="#b45309" sub={new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+      {/* Stats — unified strip instead of separate cards */}
+      <div style={{ ...cardStyle, display: 'flex', flexWrap: 'wrap', marginBottom: 22, padding: 0, overflow: 'hidden' }}>
+        {[
+          { label: 'Total Guests', value: totalInvited, icon: 'users' as IconName, color: PINK },
+          { label: 'Page Views', value: couple.page_views ?? 0, icon: 'gallery' as IconName, color: '#0369a1' },
+          { label: 'Attending', value: totalAttending, icon: 'check' as IconName, color: '#16a34a' },
+          { label: 'Days to Wedding', value: daysToWedding, icon: 'home' as IconName, color: '#b45309' },
+        ].map((s, i) => (
+          <div key={s.label} style={{ flex: '1 1 140px', padding: '18px 20px', borderLeft: i > 0 ? '1px solid #f1f5f9' : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Icon name={s.icon} size={14} color={s.color} />
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em' }}>{s.label.toUpperCase()}</span>
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{s.value}</div>
+          </div>
+        ))}
       </div>
 
       {/* Guest responses */}
@@ -407,23 +433,27 @@ function OverviewSection({ couple, guests, rsvps, daysToWedding, onNavigate }: {
           </div>
           <button onClick={() => onNavigate('rsvp')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: PINK, fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>Details <Icon name="chevron" size={12} color={PINK} /></button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginTop: 16, flexWrap: 'wrap' }}>
-          <RsvpDonut accepted={accepted.length} declined={declined.length} awaiting={awaiting.length} accent={PINK} />
-          <div style={{ flex: 1, minWidth: 200 }}>
-            {[
-              { label: 'Attending', color: '#16a34a', n: accepted.length },
-              { label: 'Declined', color: '#f59e0b', n: declined.length },
-              { label: 'Awaiting', color: '#94a3b8', n: awaiting.length },
-            ].map(r => (
-              <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.color, display: 'inline-block' }} />
-                  <span style={{ fontSize: 13, color: '#334155' }}>{r.label}</span>
-                </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{r.n} / {totalInvited}</span>
-              </div>
-            ))}
+        <div style={{ marginTop: 18 }}>
+          <div style={{ display: 'flex', height: 14, borderRadius: 100, overflow: 'hidden', background: '#f1f5f9', marginBottom: 16 }}>
+            {totalInvited > 0 && <>
+              <div style={{ width: `${accepted.length / totalInvited * 100}%`, background: '#16a34a' }} />
+              <div style={{ width: `${declined.length / totalInvited * 100}%`, background: '#f59e0b' }} />
+              <div style={{ width: `${awaiting.length / totalInvited * 100}%`, background: '#e2e8f0' }} />
+            </>}
           </div>
+          {[
+            { label: 'Attending', color: '#16a34a', n: accepted.length },
+            { label: 'Declined', color: '#f59e0b', n: declined.length },
+            { label: 'Awaiting', color: '#cbd5e1', n: awaiting.length },
+          ].map(r => (
+            <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.color, display: 'inline-block' }} />
+                <span style={{ fontSize: 13, color: '#334155' }}>{r.label}</span>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{r.n} / {totalInvited}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -485,26 +515,6 @@ function OverviewSection({ couple, guests, rsvps, daysToWedding, onNavigate }: {
         ))}
       </div>
     </div>
-  )
-}
-
-function RsvpDonut({ accepted, declined, awaiting, accent, size = 108 }: { accepted: number; declined: number; awaiting: number; accent: string; size?: number }) {
-  const total = accepted + declined + awaiting
-  const r = size / 2 - 11
-  const circumference = 2 * Math.PI * r
-  const acceptedLen = total > 0 ? circumference * (accepted / total) : 0
-  const declinedLen = total > 0 ? circumference * (declined / total) : 0
-  const respondedPct = total > 0 ? Math.round(((accepted + declined) / total) * 100) : 0
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={11} />
-      {total > 0 && <>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#16a34a" strokeWidth={11} strokeDasharray={`${acceptedLen} ${circumference - acceptedLen}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f59e0b" strokeWidth={11} strokeDasharray={`${declinedLen} ${circumference - declinedLen}`} strokeDashoffset={-acceptedLen} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      </>}
-      <text x="50%" y="46%" textAnchor="middle" fontSize={size * 0.22} fontWeight={800} fill="#1e293b" fontFamily="'Inter',sans-serif">{respondedPct}%</text>
-      <text x="50%" y="63%" textAnchor="middle" fontSize={size * 0.1} fill="#94a3b8" fontFamily="'Inter',sans-serif">REPLIED</text>
-    </svg>
   )
 }
 
