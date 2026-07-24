@@ -820,7 +820,8 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
+              const use24h = (couple as any).time_format === '24h'
+              const evTimeDisplay = evDate.toLocaleTimeString('en-GB', use24h ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit', hour12: true }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <CornerBrackets color={GOLD} />
