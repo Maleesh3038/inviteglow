@@ -664,7 +664,18 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: GOLD, marginBottom: "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)", fontFamily: "'Oswald',sans-serif", fontWeight: 500 }}>Wedding Invitation</div>
+                {/* Badge pill — admin-editable via "Cover Badge Text", falls back to Wedding Invitation */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", padding: "7px 20px", borderRadius: 100,
+                  background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.45)",
+                  fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "#fff", fontFamily: "'Oswald',sans-serif",
+                  fontWeight: 500, marginBottom: "1.1rem", textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+                }}>
+                  {((couple as any).cover_badge_text || "Wedding Invitation")}
+                </div>
+
+                <div style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: GOLD, marginBottom: "1rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)", fontFamily: "'Oswald',sans-serif", fontWeight: 500 }}>You Are Invited</div>
+
                 <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
                 <div style={{ margin: "10px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
@@ -675,15 +686,24 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
 
                 {guestName && (
                   <>
-                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", margin: "1.3rem 0 0.35rem", fontWeight: 600, fontFamily: "'Oswald',sans-serif", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>Dear</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)", fontWeight: 600 }}>{guestName}</div>
+                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", margin: "1.2rem 0 0.35rem", fontWeight: 600, fontFamily: "'Oswald',sans-serif", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>Dear</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "0.5rem", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)", fontWeight: 600 }}>{guestName}</div>
                   </>
                 )}
 
+                {/* Tagline — admin-editable via "Cover Intro Text", falls back to a themed line */}
+                <div style={{
+                  fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(255,255,255,0.92)",
+                  lineHeight: 1.5, margin: guestName ? "0.6rem 0 1.4rem" : "1rem 0 1.6rem", textShadow: "0 2px 6px rgba(0,0,0,0.8), 0 4px 14px rgba(0,0,0,0.55)",
+                }}>
+                  {couple.intro_text || "Standing guard over forever, we begin our vow."}
+                </div>
+
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
-                  display: "inline-flex", alignItems: "center", gap: 10, background: CREAM, color: DARK,
-                  border: `1.5px solid ${GOLD}`, borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Oswald',sans-serif", fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", marginTop: guestName ? 8 : "1.5rem",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%",
+                  background: `linear-gradient(135deg,${PRIMARY},${GOLD})`, color: "#fff",
+                  border: "none", borderRadius: 100, padding: "15px 24px", fontSize: 12, letterSpacing: "0.24em", textTransform: "uppercase",
+                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Oswald',sans-serif", fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                   opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
                 }}>
                   {videoPlaying ? "Playing..." : "Open Invitation →"}
