@@ -31,6 +31,7 @@ const emptyForm = {
   bride_phone: '',
   groom_phone: '',
   wedding_date: '',
+  time_format: '12h' as '12h' | '24h',
   venue: '',
   venue_address: '',
   maps_url: '',
@@ -1020,6 +1021,7 @@ export default function AdminPage() {
       bride_phone: (c as any).bride_phone || '',
       groom_phone: (c as any).groom_phone || '',
       wedding_date: c.wedding_date ? c.wedding_date.slice(0, 16) : '',
+      time_format: ((c as any).time_format === '24h' ? '24h' : '12h') as '12h' | '24h',
       venue: c.venue || '',
       venue_address: c.venue_address || '',
       maps_url: c.maps_url || '',
@@ -1130,6 +1132,7 @@ export default function AdminPage() {
       bride_phone: (form as any).bride_phone || null,
       groom_phone: (form as any).groom_phone || null,
       wedding_date: form.wedding_date,
+      time_format: form.time_format || '12h',
       venue: form.venue || null,
       venue_address: form.venue_address || null,
       maps_url: form.maps_url || null,
@@ -1625,6 +1628,24 @@ export default function AdminPage() {
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Wedding Date &amp; Time *</label>
                     <input type="datetime-local" style={inputStyle} value={form.wedding_date} onChange={e => setForm({ ...form, wedding_date: e.target.value })} />
+                  </div>
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>Time Format</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button type="button" onClick={() => setForm({ ...form, time_format: '12h' } as any)} style={{
+                        flex: 1, padding: '10px 4px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        border: (form as any).time_format === '24h' ? '1px solid #e2e8f0' : 'none',
+                        background: (form as any).time_format === '24h' ? '#fff' : ACCENT,
+                        color: (form as any).time_format === '24h' ? '#475569' : '#fff',
+                      }}>12-Hour (2:30 PM)</button>
+                      <button type="button" onClick={() => setForm({ ...form, time_format: '24h' } as any)} style={{
+                        flex: 1, padding: '10px 4px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        border: (form as any).time_format === '24h' ? 'none' : '1px solid #e2e8f0',
+                        background: (form as any).time_format === '24h' ? ACCENT : '#fff',
+                        color: (form as any).time_format === '24h' ? '#fff' : '#475569',
+                      }}>24-Hour (14:30)</button>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Controls how times display on the invitation (event times, etc).</div>
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Venue Name</label>
