@@ -701,7 +701,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               )}
               {/* thin gold honor-line at the very top of the cover */}
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg,${PRIMARY},${GOLD},${PRIMARY})`, zIndex: 4 }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(16,20,13,0.32) 0%, rgba(16,20,13,0.15) 25%, rgba(16,20,13,0.38) 50%, rgba(16,20,13,0.68) 85%, rgba(16,20,13,0.8) 100%)`, zIndex: 3 }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(10,13,8,0.45) 0%, rgba(10,13,8,0.4) 25%, rgba(10,13,8,0.55) 50%, rgba(10,13,8,0.75) 85%, rgba(10,13,8,0.85) 100%)`, zIndex: 3 }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
@@ -709,7 +709,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                 {/* Badge pill — admin-editable via "Cover Badge Text", falls back to Wedding Invitation */}
                 <div style={{
                   display: "inline-flex", alignItems: "center", padding: "7px 20px", borderRadius: 100,
-                  background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.45)",
+                  background: "rgba(10,13,8,0.4)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.45)",
                   fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "#fff", fontFamily: "'Oswald',sans-serif",
                   fontWeight: 500, marginBottom: "1.1rem", textShadow: "0 1px 4px rgba(0,0,0,0.6)",
                 }}>
