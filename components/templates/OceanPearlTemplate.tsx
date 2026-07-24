@@ -570,7 +570,14 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
-  const coverVideoUrl = (couple as any).cover_video_url || DEFAULT_COVER_VIDEO
+  // Priority: an explicit cover_video_url from the admin always wins. If
+  // that's empty, only fall back to the default demo video when the couple
+  // hasn't uploaded their own photo yet — once they add a real couple photo
+  // (via the dashboard), that photo becomes the intro instead of the stock
+  // ocean video quietly overriding it.
+  const hasCustomPhoto = !!couple.couple_photo
+  const explicitCoverVideo = (couple as any).cover_video_url || ''
+  const coverVideoUrl = explicitCoverVideo || (hasCustomPhoto ? '' : DEFAULT_COVER_VIDEO)
 
   useEffect(() => {
     const audio = new Audio(couple.song_url || DEFAULT_SONG_URL)
