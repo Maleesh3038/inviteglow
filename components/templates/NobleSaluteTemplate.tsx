@@ -662,6 +662,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
     bridePhone: (couple as any).bride_phone || '', groomPhone: (couple as any).groom_phone || '',
+    groomRank: (couple as any).groom_rank || '',
   }
 
   const TINT = "#f0ede2"
@@ -729,6 +730,9 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
                 <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
+                {W.groomRank && (
+                  <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>{W.groomRank}</div>
+                )}
 
                 {guestName && (
                   <>
