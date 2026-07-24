@@ -532,6 +532,40 @@ function WishesWall({ coupleId, primary, gold, dark, cream, muted }: { coupleId:
 
 // ── Card + section styles — white cards with gold corner brackets, the
 // signature honor-guard motif in place of a botanical/geometric accent. ──
+// ── Contact Numbers — click-to-call and WhatsApp buttons per person.
+// Only rendered for whichever of bride/groom phone the admin has filled
+// in; either can be present without the other. ──
+function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
+  const digitsOnly = phone.replace(/\D/g, '')
+  const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#f8f7f2', borderRadius: 12, padding: '12px 16px' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#1a2116' }}>{name}</div>
+        <div style={{ fontSize: 12.5, color: '#6b7361', marginTop: 2 }}>{phone}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <a href={`tel:${digitsOnly}`} aria-label={`Call ${name}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill={primary}>
+            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
+          </svg>
+        </a>
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${name}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="#fff">
+            <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  )
+}
+
 const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 18, padding: "1.8rem", boxShadow: "0 2px 20px rgba(26,33,22,0.07)", position: "relative", overflow: "hidden" })
 const pretitleStyle = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 600, fontFamily: "'Oswald',sans-serif" })
 const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
@@ -618,6 +652,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
     date: couple.wedding_date, couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
+    bridePhone: (couple as any).bride_phone || '', groomPhone: (couple as any).groom_phone || '',
   }
 
   const TINT = "#f0ede2"
@@ -888,6 +923,19 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
+            {/* Contact Numbers */}
+            {(W.bridePhone || W.groomPhone) && (
+              <motion.div id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <CornerBrackets color={GOLD} />
+                <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
+                <div style={titleStyle(DARK)}>Contact Numbers</div>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {W.groomPhone && <ContactRow name={W.groom} phone={W.groomPhone} primary={PRIMARY} />}
+                  {W.bridePhone && <ContactRow name={W.bride} phone={W.bridePhone} primary={PRIMARY} />}
+                </div>
+              </motion.div>
+            )}
+
             {/* Thank you */}
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 22 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -904,7 +952,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <div id="contact" style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
+            <div id={(W.bridePhone || W.groomPhone) ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
                 <svg width={30} height={30} viewBox="0 0 24 24" fill={GOLD}><path d="M12 2l2.4 6.9H22l-6 4.4 2.3 7-6.3-4.4L5.7 20.3l2.3-7-6-4.4h7.6z" /></svg>
               </div>
