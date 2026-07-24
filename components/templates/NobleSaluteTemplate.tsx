@@ -641,14 +641,14 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '🎖️' }, homecoming: { label: 'Homecoming', icon: '🏡' },
   }
-  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dressCode: string }
   const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
   const eventsList: RenderableEvent[] = hasNewEvents
     ? (['engagement', 'wedding', 'homecoming'] as const).map((key): RenderableEvent => {
         const e = couple.events![key]
-        return { key, ...EVENT_META[key], enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
+        return { key, ...EVENT_META[key], enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '', dressCode: (e as any)?.dress_code ?? '' }
       }).filter(e => e.enabled && e.date.length > 0)
-    : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
+    : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '', dressCode: '' }] : [])
 
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true, countdown: couple.section_visibility?.countdown ?? true,
@@ -835,6 +835,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                     { icon: "📅", label: "Date", val: evDateDisplay },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
                     { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
+                    ...(ev.dressCode ? [{ icon: "🎖️", label: "Dress Code", val: ev.dressCode }] : []),
                   ].map(d => (
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${GOLD}33` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${GOLD}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
