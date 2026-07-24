@@ -26,6 +26,7 @@ const emptyForm = {
   template: 'floral-romance',
   bride: '',
   groom: '',
+  groom_rank: '',
   bride_family: '',
   groom_family: '',
   bride_phone: '',
@@ -1017,6 +1018,7 @@ export default function AdminPage() {
       template: c.template,
       bride: c.bride,
       groom: c.groom,
+      groom_rank: (c as any).groom_rank || '',
       bride_family: c.bride_family || '',
       groom_family: c.groom_family || '',
       bride_phone: (c as any).bride_phone || '',
@@ -1131,6 +1133,7 @@ export default function AdminPage() {
       template: form.template,
       bride: form.bride,
       groom: form.groom,
+      groom_rank: (form as any).groom_rank || null,
       bride_family: form.bride_family || null,
       groom_family: form.groom_family || null,
       bride_phone: (form as any).bride_phone || null,
@@ -1612,6 +1615,10 @@ export default function AdminPage() {
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Groom's Name *</label>
                     <input style={inputStyle} placeholder="Roshan" value={form.groom} onChange={e => setForm({ ...form, groom: e.target.value })} />
+                  </div>
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>Groom's Rank (optional — shown under his name on Noble Salute)</label>
+                    <input style={inputStyle} placeholder="e.g. Lieutenant, Sri Lanka Army" value={(form as any).groom_rank || ''} onChange={e => setForm({ ...form, groom_rank: e.target.value } as any)} />
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Bride's Family Name</label>
