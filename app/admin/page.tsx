@@ -59,10 +59,10 @@ const emptyForm = {
     thank_you: true,
   },
   events: {
-    engagement: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '' },
-    wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '' },
-    homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '' },
-  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }>,
+    engagement: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
+    wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
+    homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
+  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string }>,
   intro_text: '',
   cover_badge_text: '',
   cover_background_image: '',
@@ -772,7 +772,7 @@ function SectionTogglesPicker({ value, onChange }: { value: SectionVisibilityVal
   )
 }
 
-type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
+type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string }
 type EventsValue = Record<'engagement' | 'wedding' | 'homecoming', EventValue>
 const EVENT_LABELS: { key: keyof EventsValue; label: string }[] = [
   { key: 'engagement', label: 'Engagement' }, { key: 'wedding', label: 'Wedding' }, { key: 'homecoming', label: 'Homecoming' },
@@ -803,6 +803,7 @@ function EventsPicker({ value, onChange }: { value: EventsValue; onChange: (v: E
                   </div>
                   <input placeholder="Venue address" value={e.venue_address} onChange={ev2 => updateEvent(ev.key, 'venue_address', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                   <input placeholder="Google Maps URL" value={e.maps_url} onChange={ev2 => updateEvent(ev.key, 'maps_url', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
+                  <input placeholder="Dress code (optional) — e.g. No. 1 Ceremonial Dress" value={e.dress_code || ''} onChange={ev2 => updateEvent(ev.key, 'dress_code', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                 </div>
               )}
             </div>
@@ -1059,6 +1060,7 @@ export default function AdminPage() {
           venue_address: c.events?.engagement?.venue_address ?? '',
           date: c.events?.engagement?.date ? c.events.engagement.date.slice(0, 16) : '',
           maps_url: c.events?.engagement?.maps_url ?? '',
+          dress_code: c.events?.engagement?.dress_code ?? '',
         },
         wedding: {
           enabled: c.events?.wedding?.enabled ?? true,
@@ -1066,6 +1068,7 @@ export default function AdminPage() {
           venue_address: c.events?.wedding?.venue_address ?? c.venue_address ?? '',
           date: c.events?.wedding?.date ? c.events.wedding.date.slice(0, 16) : (c.wedding_date ? c.wedding_date.slice(0, 16) : ''),
           maps_url: c.events?.wedding?.maps_url ?? c.maps_url ?? '',
+          dress_code: c.events?.wedding?.dress_code ?? '',
         },
         homecoming: {
           enabled: c.events?.homecoming?.enabled ?? false,
@@ -1073,6 +1076,7 @@ export default function AdminPage() {
           venue_address: c.events?.homecoming?.venue_address ?? '',
           date: c.events?.homecoming?.date ? c.events.homecoming.date.slice(0, 16) : '',
           maps_url: c.events?.homecoming?.maps_url ?? '',
+          dress_code: c.events?.homecoming?.dress_code ?? '',
         },
       },
       intro_text: c.intro_text ?? '',
