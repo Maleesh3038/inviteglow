@@ -199,9 +199,9 @@ export default function CustomerDashboard() {
         transform: sidebarOpen ? 'translateX(0)' : undefined,
       }} className="ig-sidebar">
         <div style={{ padding: '20px 18px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
             <span style={{ color: PINK, fontSize: 18 }}>♥</span>
-            <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.02em', color: '#0f172a' }}>INVITATION<span style={{ color: PINK }}>.LK</span></span>
+            <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 22, color: PINK, lineHeight: 1 }}>InviteGlow</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: `${PINK}0d`, borderRadius: 12, padding: '10px 12px' }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: PINK, lineHeight: 1 }}>{daysToWedding}</div>
