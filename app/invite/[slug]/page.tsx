@@ -25,7 +25,13 @@ export default function InvitePage() {
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase.from('couples').select('*').eq('slug', slug).single()
-      if (error || !data) { setNotFound(true) } else { setCouple(data as Couple) }
+      if (error || !data) { setNotFound(true) } else {
+        setCouple(data as Couple)
+        // Fire-and-forget page view counter — never blocks rendering, and a
+        // failure here (e.g. missing column before the migration runs)
+        // should never break the invitation page itself.
+        supabase.from('couples').update({ page_views: ((data as any).page_views || 0) + 1 }).eq('id', data.id).then(() => {}, () => {})
+      }
       setLoading(false)
     }
     load()
