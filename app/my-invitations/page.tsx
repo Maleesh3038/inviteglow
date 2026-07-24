@@ -95,7 +95,7 @@ type SectionKey =
   | 'overview' | 'my-invitations' | 'edit-invitation' | 'custom-design'
   | 'add-guests' | 'guest-links' | 'rsvp' | 'table' | 'gallery'
   | 'checklist' | 'budget' | 'vendors' | 'liquor'
-  | 'support' | 'members' | 'billing'
+  | 'support' | 'profile' | 'members' | 'billing'
 
 const NAV_GROUPS: { title: string; items: { key: SectionKey; label: string; icon: IconName }[] }[] = [
   { title: 'Invitation', items: [
@@ -118,7 +118,10 @@ const NAV_GROUPS: { title: string; items: { key: SectionKey; label: string; icon
     { key: 'liquor', label: 'Liquor Planner', icon: 'liquor' },
   ]},
   { title: 'Help', items: [{ key: 'support', label: 'Support', icon: 'support' }] },
-  { title: 'Account', items: [{ key: 'members', label: 'Members', icon: 'membersIcon' }] },
+  { title: 'Account', items: [
+    { key: 'profile', label: 'My Profile', icon: 'membersIcon' },
+    { key: 'members', label: 'Members', icon: 'users' },
+  ]},
   { title: 'Billing', items: [{ key: 'billing', label: 'Upgrade Plan', icon: 'card' }] },
 ]
 
@@ -126,6 +129,8 @@ export default function CustomerDashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [emailConfirmed, setEmailConfirmed] = useState(true)
   const [couples, setCouples] = useState<MyCouple[]>([])
   const [activeCoupleId, setActiveCoupleId] = useState('')
@@ -140,6 +145,8 @@ export default function CustomerDashboard() {
     const { data: userData } = await supabase.auth.getUser()
     if (!userData.user) { router.push('/login'); return }
     setUserEmail(userData.user.email || '')
+    setAvatarUrl((userData.user.user_metadata as any)?.avatar_url || '')
+    setDisplayName((userData.user.user_metadata as any)?.full_name || '')
     setEmailConfirmed(!!userData.user.email_confirmed_at)
     const { data: cData } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, venue, template, couple_photo, project_status, payment_slip_status, payment_slip_url, page_views').eq('user_id', userData.user.id).order('created_at', { ascending: false })
     if (cData) {
@@ -194,7 +201,7 @@ export default function CustomerDashboard() {
 
       {/* ── SIDEBAR ── */}
       <div style={{
-        width: 244, flexShrink: 0, background: '#241a1f', borderRight: 'none',
+        width: 244, flexShrink: 0, background: '#3d2530', borderRight: 'none',
         display: sidebarOpen ? 'flex' : undefined, flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 40,
         transform: sidebarOpen ? 'translateX(0)' : undefined,
       }} className="ig-sidebar">
@@ -241,13 +248,18 @@ export default function CustomerDashboard() {
         </div>
 
         <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{initials}</div>
+          <button onClick={() => { setSection('profile'); setSidebarOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left' }}>
+            {avatarUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={avatarUrl} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${PINK}` }} />
+            ) : (
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{initials}</div>
+            )}
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{couple.bride} &amp; {couple.groom}</div>
               <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>{couple.payment_slip_status === 'verified' ? 'Live Plan' : 'Free Plan'}</div>
             </div>
-          </div>
+          </button>
           <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.45)', fontSize: 12.5, fontWeight: 600, padding: '4px 2px' }}>
             <Icon name="signout" size={14} /> Sign Out
           </button>
@@ -305,6 +317,7 @@ export default function CustomerDashboard() {
           {section === 'vendors' && <VendorsSection couple={couple} />}
           {section === 'liquor' && <LiquorSection couple={couple} />}
           {section === 'support' && <SupportSection couple={couple} />}
+          {section === 'profile' && <ProfileSection userEmail={userEmail} avatarUrl={avatarUrl} displayName={displayName} onChanged={loadAll} />}
           {section === 'members' && <MembersSection userEmail={userEmail} />}
           {section === 'billing' && <BillingSection couple={couple} />}
         </div>
@@ -1294,6 +1307,100 @@ function SupportSection({ couple }: { couple: MyCouple }) {
         <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>Chat with us on WhatsApp</div>
         <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 18 }}>Fastest way to get help — we usually reply within a few hours.</div>
         <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', padding: '11px 22px', borderRadius: 100, background: '#25d366', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>Message Support</a>
+      </div>
+    </div>
+  )
+}
+
+function ProfileSection({ userEmail, avatarUrl, displayName, onChanged }: { userEmail: string; avatarUrl: string; displayName: string; onChanged: () => void }) {
+  const [name, setName] = useState(displayName)
+  const [photo, setPhoto] = useState(avatarUrl)
+  const [uploading, setUploading] = useState(false)
+  const [savingName, setSavingName] = useState(false)
+  const [nameMessage, setNameMessage] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const uploadAvatar = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const fileName = `profile/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!error) {
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      setPhoto(data.publicUrl)
+      await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl } })
+      onChanged()
+    }
+    setUploading(false)
+  }
+
+  const saveName = async () => {
+    setSavingName(true); setNameMessage('')
+    const { error } = await supabase.auth.updateUser({ data: { full_name: name.trim() } })
+    setSavingName(false)
+    setNameMessage(error ? 'Could not save: ' + error.message : 'Saved!')
+    if (!error) onChanged()
+  }
+
+  const changePassword = async () => {
+    setPasswordMessage('')
+    if (newPassword.length < 6) { setPasswordMessage('Password must be at least 6 characters.'); return }
+    if (newPassword !== confirmPassword) { setPasswordMessage("Passwords don't match — please re-enter."); return }
+    setSavingPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setSavingPassword(false)
+    if (error) setPasswordMessage('Could not update password: ' + error.message)
+    else { setPasswordMessage('Password updated!'); setNewPassword(''); setConfirmPassword('') }
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>My Profile</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Your personal account details — separate from your invitation's details.</div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Profile Picture</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={photo} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${PINK}` }} />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22 }}>{userEmail[0]?.toUpperCase()}</div>
+          )}
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12.5, color: '#475569', fontWeight: 500 }}>
+            {uploading ? 'Uploading...' : photo ? 'Change Photo' : 'Upload Photo'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f) }} />
+        </div>
+      </div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Account Details</div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={labelStyle}>Email</label>
+          <input value={userEmail} disabled style={{ ...inputStyle, background: '#f8fafc', color: '#94a3b8' }} />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Display Name</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Erandi Perera" style={inputStyle} />
+        </div>
+        {nameMessage && <div style={{ fontSize: 12, marginBottom: 10, color: nameMessage.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{nameMessage}</div>}
+        <button onClick={saveName} disabled={savingName} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13, opacity: savingName ? 0.6 : 1 }}>{savingName ? 'Saving...' : 'Save Name'}</button>
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Change Password</div>
+        <div style={{ fontSize: 11.5, color: '#94a3b8', marginBottom: 14 }}>Use this to update the password you sign in with.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <div><label style={labelStyle}>New Password</label><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 6 characters" style={inputStyle} /></div>
+          <div><label style={labelStyle}>Confirm New Password</label><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat password" style={inputStyle} /></div>
+        </div>
+        {passwordMessage && <div style={{ fontSize: 12, marginBottom: 10, color: passwordMessage.startsWith('Password updated') ? '#16a34a' : '#dc2626' }}>{passwordMessage}</div>}
+        <button onClick={changePassword} disabled={savingPassword || newPassword.length < 6} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13, opacity: (savingPassword || newPassword.length < 6) ? 0.6 : 1 }}>{savingPassword ? 'Updating...' : 'Update Password'}</button>
       </div>
     </div>
   )
