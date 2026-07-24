@@ -1640,8 +1640,19 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <PhotoUploader value={form.couple_photo} onChange={url => setForm({ ...form, couple_photo: url })}
-                  label="Couple Photo (Hero Image)" hint="Leave empty to use the default AI-generated photo." />
+                <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 16, border: '1px solid #e8d9a0' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>Cover / Intro Media</div>
+                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14, lineHeight: 1.5 }}>
+                    Upload a photo, a video, or both together. If a video is uploaded, it plays as the intro/hero background and the photo is used as its poster frame (shown while the video loads). If only a photo is uploaded, that photo becomes the intro directly — no video needed. Leave both empty to use this template's default look.
+                  </div>
+                  <PhotoUploader value={form.couple_photo} onChange={url => setForm({ ...form, couple_photo: url })}
+                    label="Couple Photo (Hero Image)" hint="Leave empty to use the default AI-generated photo." />
+                  <div style={fieldWrap}>
+                    <label style={labelStyle}>Hero Background Video (optional)</label>
+                    <VideoUploader value={(form as any).cover_video_url || ''} onChange={url => setForm({ ...form, cover_video_url: url } as any)} />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Used by video-hero templates (Ceylon Elegance, Eternal Bloom, Noble Salute, Ocean Pearl). Other templates just use the photo above and ignore this.</div>
+                  </div>
+                </div>
 
                 <PhotoUploader value={(form as any).cover_background_image || ''} onChange={url => setForm({ ...form, cover_background_image: url } as any)}
                   label="Cover / Envelope Background Image" hint="Full-screen background behind the opening envelope. Best results: portrait, 9:16 ratio." />
@@ -1906,15 +1917,9 @@ export default function AdminPage() {
 
                 <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #e8d9a0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>
-                    <Icon name="template" size={15} color="#8a6d1a" /> Video &amp; Photo Extras
+                    <Icon name="template" size={15} color="#8a6d1a" /> Individual Photos &amp; Gift Section
                   </div>
-                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Used by "Ceylon Elegance", "Eternal Bloom", and "Noble Salute" — hero video, individual bride/groom photos. The gift accounts below only appear on Ceylon Elegance.</div>
-
-                  <div style={fieldWrap}>
-                    <label style={labelStyle}>Hero Background Video (optional)</label>
-                    <VideoUploader value={(form as any).cover_video_url || ''} onChange={url => setForm({ ...form, cover_video_url: url } as any)} />
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Leave empty to use the couple photo (or, for Noble Salute, the template's default video) as the hero background instead.</div>
-                  </div>
+                  <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Individual bride/groom photos, used by "Ceylon Elegance", "Eternal Bloom", and "Noble Salute". The hero photo/video is set above, in "Cover / Intro Media". The gift accounts below only appear on Ceylon Elegance.</div>
 
                   <PhotoUploader value={(form as any).groom_photo || ''} onChange={url => setForm({ ...form, groom_photo: url } as any)}
                     label="Groom's Individual Photo" hint="Leave empty to reuse the main couple photo." />
