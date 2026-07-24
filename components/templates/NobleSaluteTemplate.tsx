@@ -596,7 +596,14 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
   // couple-overridable, same way MUTED is treated in sibling templates.
   const GOLD = DEFAULT_PALETTE.gold
 
-  const coverVideoUrl = (couple as any).cover_video_url || DEFAULT_COVER_VIDEO
+  // Priority: an explicit cover_video_url from the admin always wins. If
+  // that's empty, only fall back to the default demo video when the couple
+  // hasn't uploaded their own photo yet — once they add a real couple photo
+  // (via the dashboard), that photo becomes the intro instead of the stock
+  // Noble Salute video quietly overriding it.
+  const hasCustomPhoto = !!couple.couple_photo
+  const explicitCoverVideo = (couple as any).cover_video_url || ''
+  const coverVideoUrl = explicitCoverVideo || (hasCustomPhoto ? '' : DEFAULT_COVER_VIDEO)
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
   useEffect(() => {
