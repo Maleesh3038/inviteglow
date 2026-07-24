@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import EditInvitationEditor from './EditInvitationEditor'
 
 const PINK = "#c4607a"
 const RED = "#e0355c"
@@ -305,7 +306,8 @@ export default function CustomerDashboard() {
 
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 60px' }}>
           {section === 'overview' && <OverviewSection couple={couple} guests={guests} rsvps={rsvps} daysToWedding={daysToWedding} onNavigate={setSection} />}
-          {(section === 'my-invitations' || section === 'edit-invitation') && <MyInvitationSection couple={couple} onSaved={() => loadAll()} focusEdit={section === 'edit-invitation'} />}
+          {section === 'my-invitations' && <MyInvitationSection couple={couple} onSaved={() => loadAll()} focusEdit={false} />}
+          {section === 'edit-invitation' && <EditInvitationEditor coupleId={couple.id} />}
           {section === 'custom-design' && <CustomDesignSection couple={couple} />}
           {section === 'add-guests' && <AddGuestsSection couple={couple} guests={guests} onChanged={() => loadGuestsAndRsvps(couple.id)} />}
           {section === 'guest-links' && <GuestLinksSection couple={couple} guests={guests} />}
