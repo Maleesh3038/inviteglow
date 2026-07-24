@@ -815,14 +815,27 @@ function EventsPicker({ value, onChange }: { value: EventsValue; onChange: (v: E
 // ── Single video uploader (used for the Ceylon Elegance hero video) ──
 function VideoUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (file: File) => {
     setUploading(true)
+    setError('')
+    // Videos are much larger than photos — Supabase's default bucket limit
+    // is 50MB unless raised in Project Settings > Storage. Flag this
+    // upfront instead of letting the upload fail silently.
+    if (file.size > 50 * 1024 * 1024) {
+      setUploading(false)
+      setError(`This video is ${(file.size / 1024 / 1024).toFixed(1)}MB — Supabase's default limit is 50MB. Compress the video or raise the bucket's file size limit in Supabase (Storage → wedding-photos → Settings).`)
+      return
+    }
     const ext = file.name.split('.').pop()
     const fileName = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
-    if (!error) {
+    const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'video/mp4' })
+    if (uploadError) {
+      console.error('Video upload error:', uploadError)
+      setError(uploadError.message || 'Upload failed — please try again.')
+    } else {
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
       onChange(data.publicUrl)
     }
@@ -844,8 +857,9 @@ function VideoUploader({ value, onChange }: { value: string; onChange: (url: str
           </>
         )}
       </div>
+      {error && <div style={{ fontSize: 11.5, color: '#dc2626', marginTop: 8, lineHeight: 1.5 }}>{error}</div>}
       <input ref={inputRef} type="file" accept="video/mp4,video/*" style={{ display: 'none' }}
-        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
     </div>
   )
 }
