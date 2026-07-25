@@ -395,22 +395,33 @@ function LocationAutocomplete({ value, onChange, onPick, placeholder }: {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
+  const mapFeatures = (data: any, query: string): LocationSuggestion[] => (data.features || []).map((f: any) => {
+    const p = f.properties || {}
+    const parts = [p.name, p.street && p.housenumber ? `${p.housenumber} ${p.street}` : p.street, p.city, p.state, p.country].filter(Boolean)
+    const label = p.name || parts[0] || query
+    const address = parts.filter((x: string) => x !== p.name).join(', ')
+    const [lon, lat] = f.geometry?.coordinates || [0, 0]
+    return { label, address, lat, lon }
+  })
+
   const search = (query: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (query.trim().length < 3) { setSuggestions([]); return }
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=en`)
+        // Restrict to Sri Lanka first — bbox is minLon,minLat,maxLon,maxLat.
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=en&bbox=79.5,5.7,82.0,10.0`)
         const data = await res.json()
-        const items: LocationSuggestion[] = (data.features || []).map((f: any) => {
-          const p = f.properties || {}
-          const parts = [p.name, p.street && p.housenumber ? `${p.housenumber} ${p.street}` : p.street, p.city, p.state, p.country].filter(Boolean)
-          const label = p.name || parts[0] || query
-          const address = parts.filter((x: string) => x !== p.name).join(', ')
-          const [lon, lat] = f.geometry?.coordinates || [0, 0]
-          return { label, address, lat, lon }
-        })
+        let items = mapFeatures(data, query)
+        // Fallback: if nothing matched inside Sri Lanka (e.g. a very generic
+        // or misspelled name), widen the search but still bias toward it —
+        // better to show something than nothing.
+        if (items.length === 0) {
+          const fallbackRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=en&lat=7.8731&lon=80.7718&zoom=7`)
+          const fallbackData = await fallbackRes.json()
+          items = mapFeatures(fallbackData, query)
+        }
         setSuggestions(items)
         setOpen(items.length > 0)
       } catch { setSuggestions([]) }
@@ -443,8 +454,13 @@ function LocationAutocomplete({ value, onChange, onPick, placeholder }: {
               display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none',
               borderBottom: i < suggestions.length - 1 ? '1px solid #f1f5f9' : 'none', cursor: 'pointer',
             }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>📍 {s.label}</div>
-              {s.address && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{s.address}</div>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={PINK} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+                </svg>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>{s.label}</span>
+              </div>
+              {s.address && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, paddingLeft: 22 }}>{s.address}</div>}
             </button>
           ))}
         </div>
