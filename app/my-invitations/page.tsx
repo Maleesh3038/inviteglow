@@ -655,17 +655,47 @@ function MyInvitationSection({ couple, onSaved, focusEdit }: { couple: MyCouple;
 }
 
 function CustomDesignSection({ couple }: { couple: MyCouple }) {
+  const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`Hi! I'd like a custom design for my InviteGlow invitation.\n\nCouple: ${couple.bride} & ${couple.groom}\nLink: /invite/${couple.slug}`)}`
+  const benefits = [
+    'A one-of-a-kind layout built around your story — not a shared template',
+    'Direct back-and-forth with our design team until it feels right',
+    'Your own color palette, fonts, and section layout',
+  ]
   return (
     <div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>PREMIUM</div>
       <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Custom Design</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Personalize colors, fonts, and layout for your invitation.</div>
-      <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: `${PINK}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-          <Icon name="sparkles" size={22} color={PINK} />
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Want something entirely your own? Our team can hand-build it with you.</div>
+
+      <div style={{ background: '#3d2530', borderRadius: 20, padding: 32, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: `${PINK}22` }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: `linear-gradient(135deg,${PINK},${RED})`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <Icon name="sparkles" size={20} color="#fff" />
+          </div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Bespoke design, built with you</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginBottom: 20, maxWidth: 440 }}>
+            Every template on InviteGlow is fully editable already — but if you want a design made from scratch, our team can craft one entirely around your vision.
+          </div>
+          <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+            {benefits.map(b => (
+              <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', background: `${PINK}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <Icon name="check" size={10} color={PINK} />
+                </div>
+                <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>{b}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 100, background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>
+              <Icon name="whatsapp" size={14} color="#fff" /> Chat with our design team
+            </a>
+            <a href={`/dashboard/${couple.slug}?tab=edit`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', padding: '11px 22px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.25)', color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>
+              Or self-edit colors →
+            </a>
+          </div>
         </div>
-        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>Advanced styling lives in your invitation dashboard</div>
-        <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 18, maxWidth: 360, margin: '0 auto 18px' }}>Colors, PIN, seating layout, and template switching (if enabled) are all in your dedicated invitation dashboard.</div>
-        <a href={`/dashboard/${couple.slug}?tab=edit`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', padding: '11px 22px', borderRadius: 100, background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>Open Custom Design →</a>
       </div>
     </div>
   )
