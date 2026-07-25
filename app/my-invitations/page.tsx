@@ -26,7 +26,8 @@ type MyCouple = {
   project_status: string; payment_slip_status: string; payment_slip_url: string | null
   page_views: number | null
 }
-type GuestRow = { id: string; couple_id: string; name: string; phone: string | null; created_at: string }
+type GuestRow = { id: string; couple_id: string; name: string; phone: string | null; heads: number; category: string; side: string; table_id: string | null; created_at: string }
+type SeatingTable = { id: string; couple_id: string; name: string; created_at: string }
 type RsvpRow = { id: string; couple_id: string; guest_name: string; response: 'yes' | 'no'; guest_count: number; created_at: string }
 type ChecklistItem = { id: string; couple_id: string; task_name: string; category: string; due_date: string | null; done: boolean; created_at: string }
 type Vendor = { id: string; couple_id: string; category: string; vendor_name: string; contact_name: string | null; phone: string | null; email: string | null; cost: number; status: 'contacted' | 'booked' | 'paid'; notes: string | null; created_at: string }
@@ -91,7 +92,41 @@ function StatCard({ label, value, icon, iconBg, iconColor, sub }: { label: strin
   )
 }
 
-// ── Navigation structure ──
+// ── Guest management shared bits ──
+const GUEST_CATEGORIES = [
+  { key: 'family', label: 'Family' }, { key: 'friends', label: 'Friends' }, { key: 'office', label: 'Office' },
+  { key: 'vip', label: 'VIP' }, { key: 'neighbors', label: 'Neighbors' }, { key: 'other', label: 'Other' },
+]
+const GUEST_SIDES = [{ key: 'bride', label: 'Bride' }, { key: 'groom', label: 'Groom' }, { key: 'both', label: 'Both' }]
+const categoryLabel = (k: string) => GUEST_CATEGORIES.find(c => c.key === k)?.label || k
+const sideLabel = (k: string) => GUEST_SIDES.find(s => s.key === k)?.label || k
+
+const GUEST_TABS: { key: SectionKey; label: string; icon: IconName }[] = [
+  { key: 'add-guests', label: 'Add Guests', icon: 'userPlus' },
+  { key: 'guest-links', label: 'Guest List & Links', icon: 'users' },
+  { key: 'rsvp', label: 'RSVP Management', icon: 'mail' },
+  { key: 'table', label: 'Table Arrangement', icon: 'grid2' },
+  { key: 'gallery', label: 'Wishes Wall', icon: 'gallery' },
+]
+
+function GuestManagementTabs({ active, onNavigate }: { active: SectionKey; onNavigate: (s: SectionKey) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+      {GUEST_TABS.map(t => (
+        <button key={t.key} onClick={() => onNavigate(t.key)} style={{
+          display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
+          background: active === t.key ? `linear-gradient(135deg,${PINK},${RED})` : '#fff',
+          color: active === t.key ? '#fff' : '#475569', fontWeight: active === t.key ? 700 : 600, fontSize: 12.5,
+          boxShadow: active === t.key ? `0 4px 14px ${PINK}40` : '0 1px 3px rgba(0,0,0,0.04)',
+        }}>
+          <Icon name={t.icon} size={14} color={active === t.key ? '#fff' : '#94a3b8'} /> {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+
 type SectionKey =
   | 'overview' | 'my-invitations' | 'edit-invitation' | 'custom-design'
   | 'add-guests' | 'guest-links' | 'rsvp' | 'table' | 'gallery'
@@ -110,7 +145,7 @@ const NAV_GROUPS: { title: string; items: { key: SectionKey; label: string; icon
     { key: 'guest-links', label: 'Guest List & Links', icon: 'users' },
     { key: 'rsvp', label: 'RSVP Management', icon: 'mail' },
     { key: 'table', label: 'Table Arrangement', icon: 'grid2' },
-    { key: 'gallery', label: 'Guest Gallery', icon: 'gallery' },
+    { key: 'gallery', label: 'Wishes Wall', icon: 'gallery' },
   ]},
   { title: 'Wedding Plan Tools', items: [
     { key: 'checklist', label: 'Task Checklist', icon: 'checklist' },
@@ -309,11 +344,11 @@ export default function CustomerDashboard() {
           {section === 'my-invitations' && <MyInvitationSection couple={couple} onSaved={() => loadAll()} focusEdit={false} />}
           {section === 'edit-invitation' && <EditInvitationEditor coupleId={couple.id} />}
           {section === 'custom-design' && <CustomDesignSection couple={couple} />}
-          {section === 'add-guests' && <AddGuestsSection couple={couple} guests={guests} onChanged={() => loadGuestsAndRsvps(couple.id)} />}
-          {section === 'guest-links' && <GuestLinksSection couple={couple} guests={guests} />}
-          {section === 'rsvp' && <RsvpManagementSection couple={couple} guests={guests} rsvps={rsvps} onChanged={() => loadGuestsAndRsvps(couple.id)} />}
-          {section === 'table' && <TableArrangementSection couple={couple} />}
-          {section === 'gallery' && <GuestGallerySection couple={couple} />}
+          {section === 'add-guests' && <AddGuestsSection couple={couple} guests={guests} onChanged={() => loadGuestsAndRsvps(couple.id)} onNavigate={setSection} />}
+          {section === 'guest-links' && <GuestLinksSection couple={couple} guests={guests} rsvps={rsvps} onNavigate={setSection} />}
+          {section === 'rsvp' && <RsvpManagementSection couple={couple} guests={guests} rsvps={rsvps} onChanged={() => loadGuestsAndRsvps(couple.id)} onNavigate={setSection} />}
+          {section === 'table' && <TableArrangementSection couple={couple} guests={guests} onChanged={() => loadGuestsAndRsvps(couple.id)} onNavigate={setSection} />}
+          {section === 'gallery' && <WishesWallSection couple={couple} onNavigate={setSection} />}
           {section === 'checklist' && <ChecklistSection couple={couple} />}
           {section === 'budget' && <BudgetSection couple={couple} />}
           {section === 'vendors' && <VendorsSection couple={couple} />}
@@ -698,32 +733,29 @@ function CustomDesignSection({ couple }: { couple: MyCouple }) {
 }
 
 // ══════════════════════════════ ADD GUESTS ══════════════════════════════
-function AddGuestsSection({ couple, guests, onChanged }: { couple: MyCouple; guests: GuestRow[]; onChanged: () => void }) {
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [bulk, setBulk] = useState('')
+type NewGuestRow = { name: string; phone: string; heads: number; category: string; side: string }
+const emptyGuestRow = (): NewGuestRow => ({ name: '', phone: '', heads: 1, category: 'friends', side: 'both' })
+
+function AddGuestsSection({ couple, guests, onChanged, onNavigate }: { couple: MyCouple; guests: GuestRow[]; onChanged: () => void; onNavigate: (s: SectionKey) => void }) {
+  const [rows, setRows] = useState<NewGuestRow[]>([emptyGuestRow()])
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
-  const addOne = async () => {
-    if (!name.trim()) return
-    setSaving(true)
-    const { error } = await supabase.from('guests').insert([{ couple_id: couple.id, name: name.trim(), phone: phone.trim() || null }])
-    setSaving(false)
-    if (!error) { setName(''); setPhone(''); onChanged() } else setMessage('Could not add: ' + error.message)
-  }
+  const updateRow = (i: number, patch: Partial<NewGuestRow>) => setRows(prev => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r))
+  const addRow = () => setRows(prev => [...prev, emptyGuestRow()])
+  const removeRow = (i: number) => setRows(prev => prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev)
 
-  const addBulk = async () => {
-    const lines = bulk.split('\n').map(l => l.trim()).filter(Boolean)
-    if (lines.length === 0) return
-    setSaving(true)
-    const rows = lines.map(line => {
-      const [n, p] = line.split('|').map(s => s.trim())
-      return { couple_id: couple.id, name: n, phone: p || null }
-    }).filter(r => r.name)
-    const { error } = await supabase.from('guests').insert(rows)
+  const validRows = rows.filter(r => r.name.trim())
+
+  const saveGuests = async () => {
+    if (validRows.length === 0) { setMessage('Enter at least one name.'); return }
+    setSaving(true); setMessage('')
+    const payload = validRows.map(r => ({
+      couple_id: couple.id, name: r.name.trim(), phone: r.phone.trim() || null, heads: r.heads, category: r.category, side: r.side,
+    }))
+    const { error } = await supabase.from('guests').insert(payload)
     setSaving(false)
-    if (!error) { setBulk(''); onChanged() } else setMessage('Could not add: ' + error.message)
+    if (!error) { setRows([emptyGuestRow()]); onChanged() } else setMessage('Could not save: ' + error.message)
   }
 
   const removeGuest = async (id: string, gname: string) => {
@@ -732,29 +764,66 @@ function AddGuestsSection({ couple, guests, onChanged }: { couple: MyCouple; gue
     if (!error) onChanged()
   }
 
+  const colStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em', padding: '0 4px 8px' }
+  const cellInput: React.CSSProperties = { ...inputStyle, padding: '9px 12px', fontSize: 12.5 }
+
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Add Guests</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Build your guest list one at a time, or paste a whole list at once.</div>
+      <GuestManagementTabs active="add-guests" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Add guests</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Add guests to your invitation list — fill in as many rows as you need.</div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <div style={cardStyle}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Add One Guest</div>
-          <div style={{ marginBottom: 10 }}><label style={labelStyle}>Name</label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Amara Perera" style={inputStyle} /></div>
-          <div style={{ marginBottom: 14 }}><label style={labelStyle}>Phone (optional)</label><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="07XXXXXXXX" style={inputStyle} /></div>
-          <button onClick={addOne} disabled={saving || !name.trim()} style={{ width: '100%', padding: 11, borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13, opacity: (saving || !name.trim()) ? 0.6 : 1 }}>
-            <Icon name="plus" size={13} color="#fff" /> Add Guest
-          </button>
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 760, padding: '18px 20px 8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '24px 2fr 1.6fr 1fr 0.9fr 1fr 1fr 32px', gap: 10 }}>
+              <div style={colStyle}>#</div>
+              <div style={colStyle}>NAME *</div>
+              <div style={colStyle}>WHATSAPP</div>
+              <div style={colStyle}>HEADS</div>
+              <div style={colStyle}></div>
+              <div style={colStyle}>CATEGORY</div>
+              <div style={colStyle}>SIDE</div>
+              <div />
+            </div>
+            {rows.map((row, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '24px 2fr 1.6fr 1fr 0.9fr 1fr 1fr 32px', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{i + 1}</div>
+                <input value={row.name} onChange={e => updateRow(i, { name: e.target.value })} placeholder="Full name" style={cellInput} />
+                <input value={row.phone} onChange={e => updateRow(i, { phone: e.target.value })} placeholder="071 234 5678" style={cellInput} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button onClick={() => updateRow(i, { heads: Math.max(1, row.heads - 1) })} style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b' }}>−</button>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, width: 16, textAlign: 'center' }}>{row.heads}</span>
+                  <button onClick={() => updateRow(i, { heads: row.heads + 1 })} style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b' }}>+</button>
+                </div>
+                <div />
+                <select value={row.category} onChange={e => updateRow(i, { category: e.target.value })} style={cellInput}>
+                  {GUEST_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+                <select value={row.side} onChange={e => updateRow(i, { side: e.target.value })} style={cellInput}>
+                  {GUEST_SIDES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+                <button onClick={() => removeRow(i)} aria-label="Remove row" style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', color: '#cbd5e1', cursor: 'pointer' }}><Icon name="cross" size={13} color="#cbd5e1" /></button>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={cardStyle}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Bulk Import</div>
-          <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>One guest per line: Name | Phone (phone optional)</div>
-          <textarea value={bulk} onChange={e => setBulk(e.target.value)} placeholder={'Amara Perera | 0771234567\nSilva Fernando'} style={{ ...inputStyle, minHeight: 90, resize: 'vertical', marginBottom: 12 }} />
-          <button onClick={addBulk} disabled={saving || !bulk.trim()} style={{ width: '100%', padding: 11, borderRadius: 10, border: `1.5px solid ${PINK}`, cursor: 'pointer', background: '#fff', color: PINK, fontWeight: 700, fontSize: 13, opacity: (saving || !bulk.trim()) ? 0.6 : 1 }}>Import List</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            {message && <div style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>{message}</div>}
+            <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{rows.length} row{rows.length > 1 ? 's' : ''} total</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={addRow} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 16px', borderRadius: 100, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: '#475569' }}>
+              <Icon name="plus" size={12} /> Row
+            </button>
+            <button onClick={saveGuests} disabled={saving || validRows.length === 0} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 12.5, opacity: (saving || validRows.length === 0) ? 0.6 : 1 }}>
+              <Icon name="userPlus" size={13} color="#fff" /> {saving ? 'Saving...' : 'Save guests'}
+            </button>
+          </div>
         </div>
       </div>
-
-      {message && <div style={{ fontSize: 12.5, color: '#dc2626', marginBottom: 14 }}>{message}</div>}
 
       <div style={cardStyle}>
         <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Guest List ({guests.length})</div>
@@ -763,8 +832,11 @@ function AddGuestsSection({ couple, guests, onChanged }: { couple: MyCouple; gue
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>
             {guests.map(g => (
-              <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: '#f8fafc' }}>
-                <div><div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{g.name}</div>{g.phone && <div style={{ fontSize: 11, color: '#94a3b8' }}>{g.phone}</div>}</div>
+              <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: '#f8fafc', flexWrap: 'wrap', gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{g.name} {g.heads > 1 && <span style={{ fontSize: 11, color: '#94a3b8' }}>× {g.heads}</span>}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8' }}>{g.phone || 'No phone'} · {categoryLabel(g.category)} · {sideLabel(g.side)}</div>
+                </div>
                 <button onClick={() => removeGuest(g.id, g.name)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={13} color="#dc2626" /></button>
               </div>
             ))}
@@ -776,26 +848,100 @@ function AddGuestsSection({ couple, guests, onChanged }: { couple: MyCouple; gue
 }
 
 // ══════════════════════════════ GUEST LIST & LINKS ══════════════════════════════
-function GuestLinksSection({ couple, guests }: { couple: MyCouple; guests: GuestRow[] }) {
+function GuestLinksSection({ couple, guests, rsvps, onNavigate }: { couple: MyCouple; guests: GuestRow[]; rsvps: RsvpRow[]; onNavigate: (s: SectionKey) => void }) {
   const [copiedId, setCopiedId] = useState('')
-  const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
+  const [template, setTemplate] = useState((couple as any).whatsapp_invite_message || "You're invited! Join us for our wedding 💍")
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [search, setSearch] = useState('')
+  const [rsvpFilter, setRsvpFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [sideFilter, setSideFilter] = useState('all')
 
+  const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
   const linkFor = (name: string) => `${baseUrl}?name=${encodeURIComponent(name)}`
+  const respondedNames = new Set(rsvps.map(r => r.guest_name.trim().toLowerCase()))
+  const rsvpStatusOf = (name: string) => {
+    const q = name.trim().toLowerCase()
+    const match = rsvps.find(r => r.guest_name.trim().toLowerCase() === q || r.guest_name.trim().toLowerCase().includes(q) || q.includes(r.guest_name.trim().toLowerCase()))
+    return match ? match.response : 'pending'
+  }
+
   const copy = async (id: string, name: string) => {
     await navigator.clipboard.writeText(linkFor(name))
     setCopiedId(id)
     setTimeout(() => setCopiedId(''), 2000)
   }
 
+  const saveTemplate = async () => {
+    setSavingTemplate(true)
+    await supabase.from('couples').update({ whatsapp_invite_message: template }).eq('id', couple.id)
+    setSavingTemplate(false)
+  }
+
+  const filtered = guests.filter(g => {
+    if (search && !g.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (categoryFilter !== 'all' && g.category !== categoryFilter) return false
+    if (sideFilter !== 'all' && g.side !== sideFilter) return false
+    if (rsvpFilter !== 'all' && rsvpStatusOf(g.name) !== rsvpFilter) return false
+    return true
+  })
+
+  const totalHeads = guests.reduce((s, g) => s + (g.heads || 1), 0)
+  const selectStyle: React.CSSProperties = { ...inputStyle, padding: '9px 12px', fontSize: 12.5 }
+
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Guest List &amp; Links</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Personalised "Dear [Name]" links for each guest — share via WhatsApp or copy directly.</div>
-      {guests.length === 0 ? (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: 40, color: '#94a3b8', fontSize: 13 }}>Add guests first to generate personalised links.</div>
+      <GuestManagementTabs active="guest-links" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Guest list &amp; links</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>{guests.length} guests · {totalHeads} total head count</div>
+
+      <div style={{ ...cardStyle, marginBottom: 14 }}>
+        <button onClick={() => setTemplateOpen(!templateOpen)} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+          <Icon name="sparkles" size={14} color={PINK} />
+          <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>WhatsApp message template</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', background: '#f1f5f9', padding: '2px 10px', borderRadius: 100 }}>{(couple as any).whatsapp_invite_message ? 'Custom' : 'Default'}</span>
+          <Icon name="chevron" size={14} color="#cbd5e1" />
+        </button>
+        {templateOpen && (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+            <textarea value={template} onChange={e => setTemplate(e.target.value)} style={{ ...inputStyle, borderRadius: 14, minHeight: 70, resize: 'vertical' as const, marginBottom: 10 }} />
+            <button onClick={saveTemplate} disabled={savingTemplate} style={{ padding: '9px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 12.5, opacity: savingTemplate ? 0.6 : 1 }}>{savingTemplate ? 'Saving...' : 'Save template'}</button>
+          </div>
+        )}
+      </div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="grid2" size={12} color="#94a3b8" /> REFINE
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 12 }}>
+          <select value={rsvpFilter} onChange={e => setRsvpFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All RSVP</option><option value="yes">Attending</option><option value="no">Declined</option><option value="pending">Pending</option>
+          </select>
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All groups</option>{GUEST_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+          <select value={sideFilter} onChange={e => setSideFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All sides</option>{GUEST_SIDES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={15} color="#94a3b8" /></div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search guests..." style={{ ...inputStyle, paddingLeft: 38 }} />
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+          <Icon name="users" size={28} color="#e2e8f0" />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No guests match</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{guests.length === 0 ? 'Add guests from the Add Guests page to start sharing invitations.' : 'Try a different search or filter.'}</div>
+        </div>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {guests.map(g => (
+          {filtered.map(g => (
             <div key={g.id} style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{g.name}</div>
@@ -805,7 +951,7 @@ function GuestLinksSection({ couple, guests }: { couple: MyCouple; guests: Guest
                 <button onClick={() => copy(g.id, g.name)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: copiedId === g.id ? '#16a34a' : PINK, color: '#fff', fontSize: 11.5, fontWeight: 600 }}>
                   <Icon name={copiedId === g.id ? 'check' : 'copy'} size={12} color="#fff" /> {copiedId === g.id ? 'Copied' : 'Copy'}
                 </button>
-                <a href={`https://wa.me/${g.phone ? g.phone.replace(/\D/g, '').replace(/^0/, '94') : ''}?text=${encodeURIComponent(`You're invited! ${linkFor(g.name)}`)}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: '#25d366', color: '#fff', fontSize: 11.5, fontWeight: 600, textDecoration: 'none' }}>
+                <a href={`https://wa.me/${g.phone ? g.phone.replace(/\D/g, '').replace(/^0/, '94') : ''}?text=${encodeURIComponent(`${template}\n${linkFor(g.name)}`)}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: '#25d366', color: '#fff', fontSize: 11.5, fontWeight: 600, textDecoration: 'none' }}>
                   <Icon name="whatsapp" size={12} color="#fff" /> Share
                 </a>
               </div>
@@ -818,15 +964,19 @@ function GuestLinksSection({ couple, guests }: { couple: MyCouple; guests: Guest
 }
 
 // ══════════════════════════════ RSVP MANAGEMENT ══════════════════════════════
-function RsvpManagementSection({ couple, guests, rsvps, onChanged }: { couple: MyCouple; guests: GuestRow[]; rsvps: RsvpRow[]; onChanged: () => void }) {
+function RsvpManagementSection({ couple, guests, rsvps, onChanged, onNavigate }: { couple: MyCouple; guests: GuestRow[]; rsvps: RsvpRow[]; onChanged: () => void; onNavigate: (s: SectionKey) => void }) {
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<'all' | 'yes' | 'no' | 'awaiting'>('all')
+  const [filter, setFilter] = useState<'all' | 'yes' | 'no' | 'pending'>('all')
 
   const respondedNames = new Set(rsvps.map(r => r.guest_name.trim().toLowerCase()))
-  const awaitingGuests = guests.filter(g => {
+  const pendingGuests = guests.filter(g => {
     const q = g.name.trim().toLowerCase()
     return !Array.from(respondedNames).some(n => n.includes(q) || q.includes(n))
   })
+  const attending = rsvps.filter(r => r.response === 'yes')
+  const declined = rsvps.filter(r => r.response === 'no')
+  const totalInvited = Math.max(guests.length, rsvps.length)
+  const responseRate = totalInvited > 0 ? Math.round((rsvps.length / totalInvited) * 100) : 0
 
   const removeRsvp = async (id: string, name: string) => {
     if (!confirm(`Remove ${name}'s RSVP?`)) return
@@ -840,38 +990,70 @@ function RsvpManagementSection({ couple, guests, rsvps, onChanged }: { couple: M
     if (filter === 'no' && r.response !== 'no') return false
     return true
   })
+  const filteredPending = pendingGuests.filter(g => !search || g.name.toLowerCase().includes(search.toLowerCase()))
 
-  const pill = (active: boolean): React.CSSProperties => ({ padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? PINK : '#fff', color: active ? '#fff' : '#64748b' })
+  const pill = (active: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#64748b' })
+  const countBadge = (active: boolean, n: number): React.CSSProperties => ({ fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: active ? 'rgba(255,255,255,0.2)' : '#f1f5f9', color: active ? '#fff' : '#64748b' })
 
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>RSVP Management</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Track who's coming, and follow up with guests who haven't replied.</div>
+      <GuestManagementTabs active="rsvp" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>RSVP management</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Responses, head counts, and notes from your guests.</div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 18 }}>
+        <div style={{ ...cardStyle, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 700, color: '#16a34a', marginBottom: 10 }}><Icon name="users" size={12} color="#16a34a" /> ATTENDING</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{attending.length}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>of {totalInvited} invited</div>
+        </div>
+        <div style={{ ...cardStyle, background: '#fef2f2', border: '1px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 700, color: '#dc2626', marginBottom: 10 }}><Icon name="cross" size={12} color="#dc2626" /> DECLINED</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{declined.length}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>responses</div>
+        </div>
+        <div style={{ ...cardStyle, background: '#fffbeb', border: '1px solid #fde68a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 700, color: '#b45309', marginBottom: 10 }}><Icon name="mail" size={12} color="#b45309" /> PENDING</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{pendingGuests.length}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>{responseRate}% response rate</div>
+        </div>
+      </div>
 
       <div style={{ position: 'relative', marginBottom: 12 }}>
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={15} color="#94a3b8" /></div>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search guest..." style={{ ...inputStyle, paddingLeft: 38 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name..." style={{ ...inputStyle, paddingLeft: 38 }} />
       </div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <div onClick={() => setFilter('all')} style={pill(filter === 'all')}>All ({rsvps.length})</div>
-        <div onClick={() => setFilter('yes')} style={pill(filter === 'yes')}>Attending ({rsvps.filter(r => r.response === 'yes').length})</div>
-        <div onClick={() => setFilter('no')} style={pill(filter === 'no')}>Declined ({rsvps.filter(r => r.response === 'no').length})</div>
-        <div onClick={() => setFilter('awaiting')} style={pill(filter === 'awaiting')}>Awaiting ({awaitingGuests.length})</div>
+        <div onClick={() => setFilter('all')} style={pill(filter === 'all')}>All <span style={countBadge(filter === 'all', rsvps.length)}>{rsvps.length}</span></div>
+        <div onClick={() => setFilter('yes')} style={pill(filter === 'yes')}>Accepted <span style={countBadge(filter === 'yes', attending.length)}>{attending.length}</span></div>
+        <div onClick={() => setFilter('pending')} style={pill(filter === 'pending')}>Pending <span style={countBadge(filter === 'pending', pendingGuests.length)}>{pendingGuests.length}</span></div>
+        <div onClick={() => setFilter('no')} style={pill(filter === 'no')}>Declined <span style={countBadge(filter === 'no', declined.length)}>{declined.length}</span></div>
       </div>
 
-      {filter === 'awaiting' ? (
-        awaitingGuests.length === 0 ? <div style={{ ...cardStyle, textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No pending guests.</div> : (
+      {filter === 'pending' ? (
+        filteredPending.length === 0 ? (
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+            <Icon name="mail" size={28} color="#e2e8f0" />
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No responses match this view</div>
+            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>No guests are pending for this event yet.</div>
+          </div>
+        ) : (
           <div style={{ display: 'grid', gap: 8 }}>
-            {awaitingGuests.map(g => (
+            {filteredPending.map(g => (
               <div key={g.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{g.name}</div>
-                <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: '#f1f5f9', color: '#64748b' }}>Awaiting</span>
+                <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: '#fef3c7', color: '#b45309' }}>Pending</span>
               </div>
             ))}
           </div>
         )
       ) : filteredRsvps.length === 0 ? (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No RSVPs match.</div>
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+          <Icon name="mail" size={28} color="#e2e8f0" />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No responses match this view</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>No guests are linked to this event yet.</div>
+        </div>
       ) : (
         <div style={{ display: 'grid', gap: 8 }}>
           {filteredRsvps.map(r => (
@@ -893,45 +1075,155 @@ function RsvpManagementSection({ couple, guests, rsvps, onChanged }: { couple: M
 }
 
 // ══════════════════════════════ TABLE ARRANGEMENT ══════════════════════════════
-function TableArrangementSection({ couple }: { couple: MyCouple }) {
-  const [seatsText, setSeatsText] = useState('')
+function TableArrangementSection({ couple, guests, onChanged, onNavigate }: { couple: MyCouple; guests: GuestRow[]; onChanged: () => void; onNavigate: (s: SectionKey) => void }) {
+  const [tables, setTables] = useState<SeatingTable[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
+  const [search, setSearch] = useState('')
+  const [sideFilter, setSideFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [newTableName, setNewTableName] = useState('')
+  const [selectedGuestId, setSelectedGuestId] = useState('')
 
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from('couples').select('seats').eq('id', couple.id).single()
-      if (data?.seats) setSeatsText(Object.entries(data.seats).map(([k, v]) => `${k} | ${v}`).join('\n'))
-      setLoading(false)
-    }
-    load()
-  }, [couple.id])
-
-  const save = async () => {
-    setSaving(true); setMessage('')
-    const seatsObj: Record<string, string> = {}
-    seatsText.split('\n').forEach(line => {
-      const [name, table] = line.split('|').map(s => s?.trim())
-      if (name && table) seatsObj[name.toLowerCase()] = table
-    })
-    const { error } = await supabase.from('couples').update({ seats: seatsObj, show_seating: true }).eq('id', couple.id)
-    setSaving(false)
-    setMessage(error ? 'Could not save: ' + error.message : 'Saved! Guests can now search their name to find their table.')
+  const load = async () => {
+    const { data } = await supabase.from('seating_tables').select('*').eq('couple_id', couple.id).order('created_at', { ascending: true })
+    if (data) setTables(data as SeatingTable[])
+    setLoading(false)
   }
+  useEffect(() => { load() }, [couple.id])
+
+  // Keep the public invitation's "Find Your Table" search in sync — it
+  // reads couple.seats as a flat { guestNameLower: tableName } map.
+  const syncSeatsMap = async (updatedGuests: GuestRow[], tableList: SeatingTable[]) => {
+    const seatsObj: Record<string, string> = {}
+    updatedGuests.forEach(g => {
+      if (g.table_id) {
+        const t = tableList.find(tb => tb.id === g.table_id)
+        if (t) seatsObj[g.name.trim().toLowerCase()] = t.name
+      }
+    })
+    await supabase.from('couples').update({ seats: seatsObj, show_seating: true }).eq('id', couple.id)
+  }
+
+  const addTable = async () => {
+    const name = newTableName.trim() || `Table ${tables.length + 1}`
+    const { data, error } = await supabase.from('seating_tables').insert([{ couple_id: couple.id, name }]).select().single()
+    if (!error && data) { setTables(prev => [...prev, data as SeatingTable]); setNewTableName('') }
+  }
+
+  const removeTable = async (id: string) => {
+    if (!confirm('Delete this table? Guests seated here will become unassigned.')) return
+    await supabase.from('guests').update({ table_id: null }).eq('table_id', id)
+    await supabase.from('seating_tables').delete().eq('id', id)
+    load(); onChanged()
+  }
+
+  const assignGuest = async (guestId: string, tableId: string | null) => {
+    await supabase.from('guests').update({ table_id: tableId }).eq('id', guestId)
+    const updated = guests.map(g => g.id === guestId ? { ...g, table_id: tableId } : g)
+    await syncSeatsMap(updated, tables)
+    setSelectedGuestId('')
+    onChanged()
+  }
+
+  const unassigned = guests.filter(g => !g.table_id).filter(g => {
+    if (search && !g.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (sideFilter !== 'all' && g.side !== sideFilter) return false
+    if (categoryFilter !== 'all' && g.category !== categoryFilter) return false
+    return true
+  })
+
+  const totalHeadsSeated = guests.filter(g => g.table_id).reduce((s, g) => s + (g.heads || 1), 0)
+  const totalHeads = guests.reduce((s, g) => s + (g.heads || 1), 0)
+
+  const pillSm = (active: boolean): React.CSSProperties => ({ padding: '4px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#64748b' })
 
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Table Arrangement</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Assign guests to tables — they can search their name on your invitation to find their seat.</div>
-      <div style={cardStyle}>
-        <label style={labelStyle}>Guest Seat Assignments (one per line: Name | Table)</label>
-        {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : (
-          <>
-            <textarea value={seatsText} onChange={e => setSeatsText(e.target.value)} placeholder={'amara | Table 3\nsilva | Table 7'} style={{ ...inputStyle, minHeight: 220, resize: 'vertical', marginBottom: 14 }} />
-            {message && <div style={{ fontSize: 12.5, marginBottom: 12, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
-            <button onClick={save} disabled={saving} style={{ padding: '11px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13, opacity: saving ? 0.6 : 1 }}>{saving ? 'Saving...' : 'Save Seating'}</button>
-          </>
+      <GuestManagementTabs active="table" onNavigate={onNavigate} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Table arrangement</div>
+          <div style={{ fontSize: 13, color: '#64748b' }}>{tables.length} tables · {totalHeadsSeated}/{totalHeads} heads seated</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input value={newTableName} onChange={e => setNewTableName(e.target.value)} placeholder="New table name" style={{ ...inputStyle, width: 160 }} />
+          <button onClick={addTable} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 12.5, whiteSpace: 'nowrap' }}>
+            <Icon name="plus" size={13} color="#fff" /> Add table
+          </button>
+        </div>
+      </div>
+
+      {selectedGuestId && (
+        <div style={{ background: `${PINK}14`, border: `1px solid ${PINK}44`, borderRadius: 12, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span style={{ fontSize: 12.5, color: '#3d2530' }}><strong>{guests.find(g => g.id === selectedGuestId)?.name}</strong> selected — tap a table below to seat them.</span>
+          <button onClick={() => setSelectedGuestId('')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: PINK, fontSize: 12, fontWeight: 700 }}>Cancel</button>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16 }} className="ig-table-grid">
+        <style>{`@media (max-width: 800px) { .ig-table-grid { grid-template-columns: 1fr !important; } }`}</style>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Unassigned guests ({unassigned.length})</div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search guests..." style={{ ...inputStyle, marginBottom: 10, fontSize: 12.5 }} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
+            <span onClick={() => setSideFilter('all')} style={pillSm(sideFilter === 'all')}>All sides</span>
+            {GUEST_SIDES.map(s => <span key={s.key} onClick={() => setSideFilter(s.key)} style={pillSm(sideFilter === s.key)}>{s.label}</span>)}
+          </div>
+          <div style={{ display: 'grid', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
+            {unassigned.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8', fontSize: 12 }}>No unassigned guests.</div>
+            ) : unassigned.map(g => (
+              <button key={g.id} onClick={() => setSelectedGuestId(g.id === selectedGuestId ? '' : g.id)} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 9,
+                border: selectedGuestId === g.id ? `1.5px solid ${PINK}` : '1px solid #f1f5f9', background: selectedGuestId === g.id ? `${PINK}0d` : '#f8fafc', cursor: 'pointer',
+              }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>{g.name}</span>
+                <span style={{ fontSize: 10, color: '#94a3b8' }}>× {g.heads}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tables.length === 0 ? (
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 50 }}>
+            <Icon name="grid2" size={30} color="#e2e8f0" />
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 12 }}>No tables yet</div>
+            <div style={{ fontSize: 12.5, color: '#94a3b8', marginTop: 4, marginBottom: 18 }}>Create your first table to start seating guests.</div>
+            <button onClick={addTable} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 22px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 13 }}>
+              <Icon name="plus" size={14} color="#fff" /> Add your first table
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12, alignContent: 'start' }}>
+            {tables.map(t => {
+              const seated = guests.filter(g => g.table_id === t.id)
+              return (
+                <div key={t.id} onClick={() => selectedGuestId && assignGuest(selectedGuestId, t.id)} style={{
+                  ...cardStyle, cursor: selectedGuestId ? 'pointer' : 'default',
+                  border: selectedGuestId ? `1.5px dashed ${PINK}` : '1px solid #eef0f3',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{t.name}</div>
+                    <button onClick={e => { e.stopPropagation(); removeTable(t.id) }} style={{ width: 24, height: 24, borderRadius: 7, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={11} color="#dc2626" /></button>
+                  </div>
+                  {seated.length === 0 ? (
+                    <div style={{ fontSize: 11.5, color: '#cbd5e1', fontStyle: 'italic' }}>No guests seated</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 5 }}>
+                      {seated.map(g => (
+                        <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', borderRadius: 8, padding: '5px 8px' }}>
+                          <span style={{ fontSize: 11.5, color: '#334155' }}>{g.name}</span>
+                          <button onClick={e => { e.stopPropagation(); assignGuest(g.id, null) }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 12 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -939,10 +1231,11 @@ function TableArrangementSection({ couple }: { couple: MyCouple }) {
 }
 
 // ══════════════════════════════ GUEST GALLERY ══════════════════════════════
-function GuestGallerySection({ couple }: { couple: MyCouple }) {
+function WishesWallSection({ couple, onNavigate }: { couple: MyCouple; onNavigate: (s: SectionKey) => void }) {
   const [wishes, setWishes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
+  const [filter, setFilter] = useState<'pending' | 'approved'>('pending')
 
   const load = async () => {
     const { data } = await supabase.from('wishes').select('*').eq('couple_id', couple.id).order('created_at', { ascending: false })
@@ -950,6 +1243,13 @@ function GuestGallerySection({ couple }: { couple: MyCouple }) {
     setLoading(false)
   }
   useEffect(() => { load() }, [couple.id])
+
+  const setApproved = async (id: string, approved: boolean) => {
+    setBusyId(id)
+    const { error } = await supabase.from('wishes').update({ approved }).eq('id', id)
+    setBusyId('')
+    if (!error) setWishes(prev => prev.map(w => w.id === id ? { ...w, approved } : w))
+  }
 
   const del = async (id: string) => {
     if (!confirm('Delete this wish?')) return
@@ -959,19 +1259,36 @@ function GuestGallerySection({ couple }: { couple: MyCouple }) {
     if (!error) setWishes(prev => prev.filter(w => w.id !== id))
   }
 
+  const pending = wishes.filter(w => !w.approved)
+  const approved = wishes.filter(w => w.approved)
+  const shown = filter === 'pending' ? pending : approved
+  const pill = (active: boolean): React.CSSProperties => ({ padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? PINK : '#fff', color: active ? '#fff' : '#64748b' })
+
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Guest Gallery</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Photos, videos, and wishes your guests have shared.</div>
-      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : wishes.length === 0 ? (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: 40, color: '#94a3b8', fontSize: 13 }}>No wishes yet. Once your invitation is live and guests visit, their wishes will appear here.</div>
+      <GuestManagementTabs active="gallery" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Wishes wall</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Approve guest wishes, photos, and videos before they appear on your invitation.</div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div onClick={() => setFilter('pending')} style={pill(filter === 'pending')}>Pending ({pending.length})</div>
+        <div onClick={() => setFilter('approved')} style={pill(filter === 'approved')}>Approved ({approved.length})</div>
+      </div>
+
+      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : shown.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+          <Icon name="gallery" size={28} color="#e2e8f0" />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>{filter === 'pending' ? 'No wishes waiting for approval' : 'No approved wishes yet'}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Once your invitation is live and guests visit, their wishes will appear here.</div>
+        </div>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {wishes.map(w => {
+          {shown.map(w => {
             const media: { url: string; type: string }[] = w.media?.length ? w.media : (w.photo_url ? [{ url: w.photo_url, type: 'photo' }] : w.video_url ? [{ url: w.video_url, type: 'video' }] : [])
             return (
               <div key={w.id} style={{ ...cardStyle, padding: 16 }}>
-                <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                   {media[0] && (
                     <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f1f5f9' }}>
                       {media[0].type === 'video' ? <video src={media[0].url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
@@ -983,7 +1300,18 @@ function GuestGallerySection({ couple }: { couple: MyCouple }) {
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{w.guest_name}</div>
                     <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 2 }}>{w.message}</div>
                   </div>
-                  <button onClick={() => del(w.id)} disabled={busyId === w.id} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={13} color="#dc2626" /></button>
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  {w.approved ? (
+                    <button onClick={() => setApproved(w.id, false)} disabled={busyId === w.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 100, border: '1px solid #fde68a', background: '#fffbeb', color: '#b45309', cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}>Unapprove</button>
+                  ) : (
+                    <button onClick={() => setApproved(w.id, true)} disabled={busyId === w.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 100, border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}>
+                      <Icon name="check" size={11} color="#16a34a" /> Accept
+                    </button>
+                  )}
+                  <button onClick={() => del(w.id)} disabled={busyId === w.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 100, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}>
+                    <Icon name="cross" size={11} color="#dc2626" /> Decline
+                  </button>
                 </div>
               </div>
             )
