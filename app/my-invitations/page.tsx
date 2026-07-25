@@ -202,28 +202,28 @@ export default function CustomerDashboard() {
 
       {/* ── SIDEBAR ── */}
       <div style={{
-        width: 244, flexShrink: 0, background: '#3d2530', borderRight: 'none',
+        width: 244, flexShrink: 0, background: '#fffaf9', borderRight: '1px solid #f6e1e6',
         display: sidebarOpen ? 'flex' : undefined, flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 40,
         transform: sidebarOpen ? 'translateX(0)' : undefined,
       }} className="ig-sidebar">
         <div style={{ padding: '22px 18px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
             <span style={{ color: PINK, fontSize: 18 }}>♥</span>
-            <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 24, color: '#fff', lineHeight: 1 }}>InviteGlow</span>
+            <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 24, color: PINK, lineHeight: 1 }}>InviteGlow</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 14px', border: `1px solid ${PINK}33` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: `${PINK}0d`, borderRadius: 14, padding: '12px 14px', border: `1px solid ${PINK}33` }}>
             <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
               <svg width={40} height={40} viewBox="0 0 40 40">
-                <circle cx={20} cy={20} r={17} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={4} />
+                <circle cx={20} cy={20} r={17} fill="none" stroke="#f1dde1" strokeWidth={4} />
                 <circle cx={20} cy={20} r={17} fill="none" stroke={PINK} strokeWidth={4} strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 17}`} strokeDashoffset={2 * Math.PI * 17 * Math.max(0, 1 - Math.min(daysToWedding, 90) / 90)}
                   transform="rotate(-90 20 20)" />
               </svg>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff' }}>{daysToWedding}</div>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{daysToWedding}</div>
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 9, fontWeight: 700, color: PINK, letterSpacing: '0.08em' }}>DAYS TO GO</div>
-              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+              <div style={{ fontSize: 10.5, color: '#8a7478', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
             </div>
           </div>
         </div>
@@ -231,16 +231,16 @@ export default function CustomerDashboard() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px' }}>
           {NAV_GROUPS.map(group => (
             <div key={group.title} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', padding: '8px 10px 4px' }}>{group.title.toUpperCase()}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#c9a9b1', letterSpacing: '0.1em', padding: '8px 10px 4px' }}>{group.title.toUpperCase()}</div>
               {group.items.map(item => (
                 <button key={item.key} onClick={() => { setSection(item.key); setSidebarOpen(false) }} style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 9,
                   border: 'none', cursor: 'pointer', marginBottom: 2,
                   background: section === item.key ? PINK : 'transparent',
-                  color: section === item.key ? '#fff' : 'rgba(255,255,255,0.7)', fontWeight: section === item.key ? 700 : 500, fontSize: 13,
-                  boxShadow: section === item.key ? `0 4px 14px ${PINK}55` : 'none',
+                  color: section === item.key ? '#fff' : '#6b5a5f', fontWeight: section === item.key ? 700 : 500, fontSize: 13,
+                  boxShadow: section === item.key ? `0 4px 14px ${PINK}45` : 'none',
                 }}>
-                  <Icon name={item.icon} size={16} color={section === item.key ? '#fff' : 'rgba(255,255,255,0.4)'} />
+                  <Icon name={item.icon} size={16} color={section === item.key ? '#fff' : '#c9a9b1'} />
                   {item.label}
                 </button>
               ))}
@@ -248,7 +248,7 @@ export default function CustomerDashboard() {
           ))}
         </div>
 
-        <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ padding: 14, borderTop: '1px solid #f6e1e6' }}>
           <button onClick={() => { setSection('profile'); setSidebarOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left' }}>
             {avatarUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
@@ -257,11 +257,11 @@ export default function CustomerDashboard() {
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{initials}</div>
             )}
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{couple.bride} &amp; {couple.groom}</div>
-              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>{couple.payment_slip_status === 'verified' ? 'Live Plan' : 'Free Plan'}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{couple.bride} &amp; {couple.groom}</div>
+              <div style={{ fontSize: 10.5, color: '#94a3b8' }}>{couple.payment_slip_status === 'verified' ? 'Live Plan' : 'Free Plan'}</div>
             </div>
           </button>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.45)', fontSize: 12.5, fontWeight: 600, padding: '4px 2px' }}>
+          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 12.5, fontWeight: 600, padding: '4px 2px' }}>
             <Icon name="signout" size={14} /> Sign Out
           </button>
         </div>
@@ -688,7 +688,7 @@ function CustomDesignSection({ couple }: { couple: MyCouple }) {
               </div>
             ))}
           </div>
-          <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 100, background: 'linear-gradient(135deg,#f4b48c,#e0355c)', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13, boxShadow: '0 6px 18px rgba(224,53,92,0.25)' }}>
+          <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 100, background: '#25d366', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13, boxShadow: '0 6px 18px rgba(37,211,102,0.3)' }}>
             <Icon name="whatsapp" size={14} color="#fff" /> Chat with our design team
           </a>
         </div>
