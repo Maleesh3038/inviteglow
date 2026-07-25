@@ -234,10 +234,18 @@ export default function EditInvitationEditor({ coupleId, onClose }: { coupleId: 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', cursor: 'grab' }}>
                   <span style={{ color: '#cbd5e1', fontSize: 13, cursor: 'grab', userSelect: 'none' }}>⠿</span>
                   <span style={{ fontSize: 15, width: 20, textAlign: 'center', flexShrink: 0 }}>{def.icon}</span>
-                  <button onClick={() => setExpandedKey(expanded ? null : key)} style={{ flex: 1, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <button onClick={() => setExpandedKey(expanded ? null : key)} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: on ? '#0f172a' : '#94a3b8' }}>{def.label}</div>
                   </button>
-                  <span style={{ color: '#cbd5e1', fontSize: 11, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+                  <button onClick={() => setExpandedKey(expanded ? null : key)} aria-label={expanded ? 'Collapse' : 'Expand'} style={{
+                    width: 26, height: 26, borderRadius: 8, border: 'none', background: expanded ? `${PINK}14` : '#f8fafc', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={expanded ? PINK : '#94a3b8'} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"
+                      style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
                   <Toggle on={on} onClick={() => setOn(key, !on)} />
                 </div>
                 {expanded && (
@@ -268,7 +276,11 @@ export default function EditInvitationEditor({ coupleId, onClose }: { coupleId: 
           <style>{`@media (max-width: 900px) { .ig-preview-col { position: static !important; margin-top: 20px; } }`}</style>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: 300, borderRadius: 40, border: '10px solid #1a1a1a', background: '#1a1a1a', boxShadow: '0 20px 50px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
-              <div style={{ height: 640, overflowY: 'auto', background: '#fff', position: 'relative' }}>
+              <div className="ig-phone-scroll" style={{ height: 640, overflowY: 'auto', overflowX: 'hidden', background: '#fff', position: 'relative', scrollbarWidth: 'none' } as React.CSSProperties}>
+                <style>{`
+                  .ig-phone-scroll::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+                  .ig-phone-scroll { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+                `}</style>
                 <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 120, height: 22, background: '#1a1a1a', borderRadius: '0 0 14px 14px', zIndex: 50 }} />
                 <div style={{ transform: 'scale(1)', transformOrigin: 'top' }}>
                   {renderTemplate(form)}
@@ -308,7 +320,15 @@ function CollapsibleUtility({ label, icon, expanded, onToggle, children }: { lab
       <button onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
         <span style={{ fontSize: 15, width: 20, textAlign: 'center' }}>{icon}</span>
         <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{label}</span>
-        <span style={{ color: '#cbd5e1', fontSize: 11, transform: expanded ? 'rotate(180deg)' : 'none' }}>▾</span>
+        <span style={{
+          width: 26, height: 26, borderRadius: 8, background: expanded ? `${PINK}14` : '#f8fafc',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={expanded ? PINK : '#94a3b8'} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
       </button>
       {expanded && <div style={{ padding: '4px 16px 16px', borderTop: '1px solid #f1f5f9' }}>{children}</div>}
     </div>
