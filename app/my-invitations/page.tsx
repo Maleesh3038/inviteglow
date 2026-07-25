@@ -6,6 +6,7 @@ import EditInvitationEditor from './EditInvitationEditor'
 
 const PINK = "#c4607a"
 const RED = "#e0355c"
+const GOLD = "#e0a458"
 const BUCKET = 'wedding-photos'
 const ADMIN_WHATSAPP = '94770024484'
 
@@ -75,19 +76,27 @@ const inputStyle: React.CSSProperties = {
   fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box', color: '#1e293b', background: '#fff',
 }
 const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 5, display: 'block' }
-const cardStyle: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: 22, border: '1px solid #eef0f3' }
+const cardStyle: React.CSSProperties = { background: '#fff', borderRadius: 18, padding: 22, border: '1px solid #f3e6ea', boxShadow: '0 4px 18px rgba(196,96,122,0.06)' }
 
 function StatCard({ label, value, icon, iconBg, iconColor, sub }: { label: string; value: string | number; icon: IconName; iconBg: string; iconColor: string; sub?: string }) {
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-        <div style={{ fontSize: 10.5, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>{label.toUpperCase()}</div>
-        <div style={{ width: 30, height: 30, borderRadius: 8, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={icon} size={15} color={iconColor} />
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: '#a89298', letterSpacing: '0.06em' }}>{label.toUpperCase()}</div>
+        <div style={{ width: 34, height: 34, borderRadius: 11, background: `linear-gradient(150deg, ${iconBg}, ${iconColor}22)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={16} color={iconColor} />
         </div>
       </div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{sub}</div>}
+      <div style={{ fontSize: 27, fontWeight: 800, color: '#2a1f22' }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: '#a89298', marginTop: 4 }}>{sub}</div>}
+    </div>
+  )
+}
+
+function EmptyIcon({ name }: { name: IconName }) {
+  return (
+    <div style={{ width: 52, height: 52, borderRadius: '50%', background: `${PINK}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+      <Icon name={name} size={22} color={PINK} />
     </div>
   )
 }
@@ -111,15 +120,18 @@ const GUEST_TABS: { key: SectionKey; label: string; icon: IconName }[] = [
 
 function GuestManagementTabs({ active, onNavigate }: { active: SectionKey; onNavigate: (s: SectionKey) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+    <div style={{
+      display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 24, background: '#fdf1f3', borderRadius: 100, padding: 4,
+      border: '1px solid #f6dfe4', boxShadow: 'inset 0 1px 2px rgba(196,96,122,0.06)',
+    }}>
       {GUEST_TABS.map(t => (
         <button key={t.key} onClick={() => onNavigate(t.key)} style={{
-          display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
-          background: active === t.key ? `linear-gradient(135deg,${PINK},${RED})` : '#fff',
-          color: active === t.key ? '#fff' : '#475569', fontWeight: active === t.key ? 700 : 600, fontSize: 12.5,
-          boxShadow: active === t.key ? `0 4px 14px ${PINK}40` : '0 1px 3px rgba(0,0,0,0.04)',
+          display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', borderRadius: 100, border: 'none', cursor: 'pointer',
+          background: active === t.key ? '#fff' : 'transparent',
+          color: active === t.key ? PINK : '#a8828a', fontWeight: active === t.key ? 700 : 600, fontSize: 12.5,
+          boxShadow: active === t.key ? '0 3px 10px rgba(196,96,122,0.18)' : 'none', transition: 'all 0.15s',
         }}>
-          <Icon name={t.icon} size={14} color={active === t.key ? '#fff' : '#94a3b8'} /> {t.label}
+          <Icon name={t.icon} size={14} color={active === t.key ? PINK : '#c9a9b1'} /> {t.label}
         </button>
       ))}
     </div>
@@ -935,7 +947,7 @@ function GuestLinksSection({ couple, guests, rsvps, onNavigate }: { couple: MyCo
 
       {filtered.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
-          <Icon name="users" size={28} color="#e2e8f0" />
+          <EmptyIcon name="users" />
           <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No guests match</div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{guests.length === 0 ? 'Add guests from the Add Guests page to start sharing invitations.' : 'Try a different search or filter.'}</div>
         </div>
@@ -992,8 +1004,8 @@ function RsvpManagementSection({ couple, guests, rsvps, onChanged, onNavigate }:
   })
   const filteredPending = pendingGuests.filter(g => !search || g.name.toLowerCase().includes(search.toLowerCase()))
 
-  const pill = (active: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#64748b' })
-  const countBadge = (active: boolean, n: number): React.CSSProperties => ({ fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: active ? 'rgba(255,255,255,0.2)' : '#f1f5f9', color: active ? '#fff' : '#64748b' })
+  const pill = (active: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #f3e6ea', background: active ? `linear-gradient(135deg,${PINK},${RED})` : '#fff', color: active ? '#fff' : '#8a7478', boxShadow: active ? `0 4px 12px ${PINK}35` : 'none' })
+  const countBadge = (active: boolean, n: number): React.CSSProperties => ({ fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: active ? 'rgba(255,255,255,0.25)' : '#fdeef1', color: active ? '#fff' : '#c4607a' })
 
   return (
     <div>
@@ -1034,7 +1046,7 @@ function RsvpManagementSection({ couple, guests, rsvps, onChanged, onNavigate }:
       {filter === 'pending' ? (
         filteredPending.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
-            <Icon name="mail" size={28} color="#e2e8f0" />
+            <EmptyIcon name="mail" />
             <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No responses match this view</div>
             <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>No guests are pending for this event yet.</div>
           </div>
@@ -1050,7 +1062,7 @@ function RsvpManagementSection({ couple, guests, rsvps, onChanged, onNavigate }:
         )
       ) : filteredRsvps.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
-          <Icon name="mail" size={28} color="#e2e8f0" />
+          <EmptyIcon name="mail" />
           <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No responses match this view</div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>No guests are linked to this event yet.</div>
         </div>
@@ -1135,7 +1147,7 @@ function TableArrangementSection({ couple, guests, onChanged, onNavigate }: { co
   const totalHeadsSeated = guests.filter(g => g.table_id).reduce((s, g) => s + (g.heads || 1), 0)
   const totalHeads = guests.reduce((s, g) => s + (g.heads || 1), 0)
 
-  const pillSm = (active: boolean): React.CSSProperties => ({ padding: '4px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#64748b' })
+  const pillSm = (active: boolean): React.CSSProperties => ({ padding: '4px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #f3e6ea', background: active ? `linear-gradient(135deg,${PINK},${RED})` : '#fff', color: active ? '#fff' : '#8a7478' })
 
   return (
     <div>
@@ -1188,7 +1200,7 @@ function TableArrangementSection({ couple, guests, onChanged, onNavigate }: { co
 
         {tables.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: 50 }}>
-            <Icon name="grid2" size={30} color="#e2e8f0" />
+            <EmptyIcon name="grid2" />
             <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 12 }}>No tables yet</div>
             <div style={{ fontSize: 12.5, color: '#94a3b8', marginTop: 4, marginBottom: 18 }}>Create your first table to start seating guests.</div>
             <button onClick={addTable} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 22px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 13 }}>
@@ -1202,10 +1214,15 @@ function TableArrangementSection({ couple, guests, onChanged, onNavigate }: { co
               return (
                 <div key={t.id} onClick={() => selectedGuestId && assignGuest(selectedGuestId, t.id)} style={{
                   ...cardStyle, cursor: selectedGuestId ? 'pointer' : 'default',
-                  border: selectedGuestId ? `1.5px dashed ${PINK}` : '1px solid #eef0f3',
+                  border: selectedGuestId ? `1.5px dashed ${PINK}` : '1px solid #f3e6ea', borderTop: `3px solid ${PINK}`,
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{t.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 26, height: 26, borderRadius: 8, background: `${PINK}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon name="grid2" size={12} color={PINK} />
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#2a1f22' }}>{t.name}</div>
+                    </div>
                     <button onClick={e => { e.stopPropagation(); removeTable(t.id) }} style={{ width: 24, height: 24, borderRadius: 7, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={11} color="#dc2626" /></button>
                   </div>
                   {seated.length === 0 ? (
@@ -1278,7 +1295,7 @@ function WishesWallSection({ couple, onNavigate }: { couple: MyCouple; onNavigat
 
       {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : shown.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
-          <Icon name="gallery" size={28} color="#e2e8f0" />
+          <EmptyIcon name="gallery" />
           <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>{filter === 'pending' ? 'No wishes waiting for approval' : 'No approved wishes yet'}</div>
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Once your invitation is live and guests visit, their wishes will appear here.</div>
         </div>
