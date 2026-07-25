@@ -375,6 +375,84 @@ function HeroFields({ form, update }: { form: any; update: (p: any) => void }) {
   )
 }
 
+// ── Location autocomplete — free, no API key needed (Photon/OpenStreetMap).
+// Type a venue name or address, pick a suggestion, and venue/address/maps
+// link all auto-fill together. ──
+type LocationSuggestion = { label: string; address: string; lat: number; lon: number }
+
+function LocationAutocomplete({ value, onChange, onPick, placeholder }: {
+  value: string; onChange: (val: string) => void; onPick: (loc: LocationSuggestion) => void; placeholder?: string
+}) {
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([])
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  const search = (query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (query.trim().length < 3) { setSuggestions([]); return }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=en`)
+        const data = await res.json()
+        const items: LocationSuggestion[] = (data.features || []).map((f: any) => {
+          const p = f.properties || {}
+          const parts = [p.name, p.street && p.housenumber ? `${p.housenumber} ${p.street}` : p.street, p.city, p.state, p.country].filter(Boolean)
+          const label = p.name || parts[0] || query
+          const address = parts.filter((x: string) => x !== p.name).join(', ')
+          const [lon, lat] = f.geometry?.coordinates || [0, 0]
+          return { label, address, lat, lon }
+        })
+        setSuggestions(items)
+        setOpen(items.length > 0)
+      } catch { setSuggestions([]) }
+      setLoading(false)
+    }, 400)
+  }
+
+  return (
+    <div ref={boxRef} style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
+        <input
+          value={value}
+          onChange={e => { onChange(e.target.value); search(e.target.value) }}
+          onFocus={() => { if (suggestions.length) setOpen(true) }}
+          placeholder={placeholder || 'Search for a venue or address...'}
+          style={{ ...inputStyle, paddingRight: 34 }}
+        />
+        <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+          {loading ? (
+            <span style={{ fontSize: 10, color: '#cbd5e1' }}>…</span>
+          ) : (
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth={2}><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>
+          )}
+        </div>
+      </div>
+      {open && suggestions.length > 0 && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', borderRadius: 14, border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 200, overflow: 'hidden', maxHeight: 240, overflowY: 'auto' }}>
+          {suggestions.map((s, i) => (
+            <button key={i} type="button" onClick={() => { onPick(s); setOpen(false); setSuggestions([]) }} style={{
+              display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none',
+              borderBottom: i < suggestions.length - 1 ? '1px solid #f1f5f9' : 'none', cursor: 'pointer',
+            }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>📍 {s.label}</div>
+              {s.address && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{s.address}</div>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EventsFields({ form, update }: { form: any; update: (p: any) => void }) {
   const events = form.events || {}
   const upd = (key: 'engagement' | 'wedding' | 'homecoming', field: string, val: any) => {
@@ -392,7 +470,15 @@ function EventsFields({ form, update }: { form: any; update: (p: any) => void })
             </div>
             {e.enabled && (
               <div style={{ display: 'grid', gap: 8 }}>
-                <input value={e.venue || ''} onChange={ev => upd(key, 'venue', ev.target.value)} placeholder="Venue name" style={inputStyle} />
+                <LocationAutocomplete
+                  value={e.venue || ''}
+                  onChange={val => upd(key, 'venue', val)}
+                  placeholder="Search venue name or address..."
+                  onPick={loc => update({ events: { ...events, [key]: {
+                    ...(events[key] || {}), venue: loc.label, venue_address: loc.address,
+                    maps_url: `https://www.google.com/maps?q=${loc.lat},${loc.lon}`,
+                  } } })}
+                />
                 <input value={e.venue_address || ''} onChange={ev => upd(key, 'venue_address', ev.target.value)} placeholder="Venue address" style={inputStyle} />
                 <input type="datetime-local" value={e.date ? e.date.slice(0, 16) : ''} onChange={ev => upd(key, 'date', ev.target.value)} style={inputStyle} />
                 <input value={e.maps_url || ''} onChange={ev => upd(key, 'maps_url', ev.target.value)} placeholder="Google Maps URL" style={inputStyle} />
@@ -451,7 +537,15 @@ function GalleryFields({ form, update }: { form: any; update: (p: any) => void }
 function VenueMapFields({ form, update }: { form: any; update: (p: any) => void }) {
   return (
     <div style={{ display: 'grid', gap: 10, paddingTop: 10 }}>
-      <div><label style={labelStyle}>VENUE NAME</label><input value={form.venue || ''} onChange={e => update({ venue: e.target.value })} style={inputStyle} /></div>
+      <div>
+        <label style={labelStyle}>VENUE NAME</label>
+        <LocationAutocomplete
+          value={form.venue || ''}
+          onChange={val => update({ venue: val })}
+          placeholder="Search venue name or address..."
+          onPick={loc => update({ venue: loc.label, venue_address: loc.address, maps_url: `https://www.google.com/maps?q=${loc.lat},${loc.lon}` })}
+        />
+      </div>
       <div><label style={labelStyle}>VENUE ADDRESS</label><input value={form.venue_address || ''} onChange={e => update({ venue_address: e.target.value })} style={inputStyle} /></div>
       <div><label style={labelStyle}>GOOGLE MAPS URL</label><input value={form.maps_url || ''} onChange={e => update({ maps_url: e.target.value })} placeholder="https://maps.google.com/?q=..." style={inputStyle} /></div>
     </div>
