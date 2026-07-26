@@ -31,6 +31,7 @@ const emptyForm = {
   groom_family: '',
   bride_phone: '',
   groom_phone: '',
+  contacts: [] as { name: string; phone: string }[],
   wedding_date: '',
   time_format: '12h' as '12h' | '24h',
   venue: '',
@@ -1024,6 +1025,7 @@ export default function AdminPage() {
       groom_family: c.groom_family || '',
       bride_phone: (c as any).bride_phone || '',
       groom_phone: (c as any).groom_phone || '',
+      contacts: Array.isArray((c as any).contacts) ? (c as any).contacts : [],
       wedding_date: c.wedding_date ? c.wedding_date.slice(0, 16) : '',
       time_format: ((c as any).time_format === '24h' ? '24h' : '12h') as '12h' | '24h',
       venue: c.venue || '',
@@ -1140,6 +1142,7 @@ export default function AdminPage() {
       groom_family: form.groom_family || null,
       bride_phone: (form as any).bride_phone || null,
       groom_phone: (form as any).groom_phone || null,
+      contacts: ((form as any).contacts || []).filter((c: any) => c.name?.trim() && c.phone?.trim()),
       wedding_date: form.wedding_date,
       time_format: form.time_format || '12h',
       venue: form.venue || null,
@@ -1638,6 +1641,44 @@ export default function AdminPage() {
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Bride's Phone Number</label>
                     <input style={inputStyle} placeholder="0766128546" value={(form as any).bride_phone || ''} onChange={e => setForm({ ...form, bride_phone: e.target.value } as any)} />
+                  </div>
+                  <div style={{ ...fieldWrap, gridColumn: '1 / -1', background: '#f0fdfa', borderRadius: 14, padding: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0f766e', marginBottom: 4 }}>
+                      <Icon name="link" size={14} color="#0f766e" /> Additional Contact Numbers
+                    </div>
+                    <div style={{ fontSize: 11, color: '#0d9488', marginBottom: 12 }}>
+                      Add any number of contacts with a custom name — e.g. "Groom's Father", "Wedding Coordinator". These show alongside the Bride/Groom phone numbers above; nothing here replaces them.
+                    </div>
+                    {((form as any).contacts || []).map((contact: { name: string; phone: string }, i: number) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input
+                          value={contact.name}
+                          onChange={e => {
+                            const next = [...(form as any).contacts]; next[i] = { ...next[i], name: e.target.value }
+                            setForm({ ...form, contacts: next } as any)
+                          }}
+                          placeholder="Name / relation" style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }}
+                        />
+                        <input
+                          value={contact.phone}
+                          onChange={e => {
+                            const next = [...(form as any).contacts]; next[i] = { ...next[i], phone: e.target.value }
+                            setForm({ ...form, contacts: next } as any)
+                          }}
+                          placeholder="07XXXXXXXX" style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }}
+                        />
+                        <button type="button" onClick={() => {
+                          const next = ((form as any).contacts || []).filter((_: any, idx: number) => idx !== i)
+                          setForm({ ...form, contacts: next } as any)
+                        }} aria-label="Remove contact" style={{
+                          width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer', flexShrink: 0,
+                          background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}><Icon name="cross" size={13} color="#dc2626" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setForm({ ...form, contacts: [...((form as any).contacts || []), { name: '', phone: '' }] } as any)} style={{
+                      padding: '8px 16px', borderRadius: 8, border: '1px solid #99f6e4', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#0f766e', fontWeight: 500,
+                    }}>+ Add Contact</button>
                   </div>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Wedding Date &amp; Time *</label>
