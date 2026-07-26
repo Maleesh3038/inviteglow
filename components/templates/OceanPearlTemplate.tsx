@@ -125,7 +125,20 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 
       <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
         style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}33` }}>
-        <span style={{ fontSize: 30 }}>🐚</span>
+        <svg width={44} height={44} viewBox="0 0 44 44" fill="none">
+          {[
+            { cx: 22, cy: 22 }, { cx: 13, cy: 16 }, { cx: 30, cy: 14 },
+            { cx: 31, cy: 27 }, { cx: 18, cy: 30 }, { cx: 9, cy: 25 }, { cx: 24, cy: 8 },
+          ].map((f, i) => (
+            <g key={i} transform={`translate(${f.cx},${f.cy})`}>
+              <circle cx="-2.6" cy="0" r="2.6" fill="#ffffff" opacity="0.95" />
+              <circle cx="2.6" cy="0" r="2.6" fill="#ffffff" opacity="0.95" />
+              <circle cx="0" cy="-2.6" r="2.6" fill="#ffffff" opacity="0.95" />
+              <circle cx="0" cy="2.6" r="2.6" fill="#ffffff" opacity="0.95" />
+              <circle cx="0" cy="0" r="1.5" fill="#f0c9a0" />
+            </g>
+          ))}
+        </svg>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
@@ -728,7 +741,8 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
+              const use24h = (couple as any).time_format === '24h'
+              const evTimeDisplay = evDate.toLocaleTimeString('en-GB', use24h ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit', hour12: true }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
