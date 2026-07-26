@@ -66,6 +66,7 @@ const emptyForm = {
   } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string }>,
   intro_text: '',
   cover_badge_text: '',
+  intro_badge_image: '',
   cover_background_image: '',
   project_status: 'lead' as 'lead' | 'sample' | 'ongoing' | 'complete',
   payment_status: 'unpaid' as 'unpaid' | 'partial' | 'paid',
@@ -1083,6 +1084,7 @@ export default function AdminPage() {
       },
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
+      intro_badge_image: (c as any).intro_badge_image ?? '',
       cover_background_image: (c as any).cover_background_image ?? '',
       project_status: ((c as any).project_status ?? 'ongoing') as 'lead' | 'sample' | 'ongoing' | 'complete',
       payment_status: ((c as any).payment_status ?? 'unpaid') as 'unpaid' | 'partial' | 'paid',
@@ -1157,6 +1159,7 @@ export default function AdminPage() {
       events: form.events,
       intro_text: form.intro_text || null,
       cover_badge_text: (form as any).cover_badge_text || null,
+      intro_badge_image: (form as any).intro_badge_image || null,
       cover_background_image: (form as any).cover_background_image || null,
       project_status: form.project_status || 'ongoing',
       payment_status: form.payment_status || 'unpaid',
@@ -1911,6 +1914,13 @@ export default function AdminPage() {
                   <label style={labelStyle}>Cover Badge Text</label>
                   <input style={inputStyle} placeholder="e.g. Wedding Invitation" value={(form as any).cover_badge_text || ''} onChange={e => setForm({ ...form, cover_badge_text: e.target.value } as any)} />
                 </div>
+
+                <PhotoUploader
+                  value={(form as any).intro_badge_image || ''}
+                  onChange={url => setForm({ ...form, intro_badge_image: url } as any)}
+                  label="Guest Intro Badge Photo (optional)"
+                  hint={'Small round icon shown on the "Dear [Guest Name]" welcome screen. Currently used by Ocean Pearl — leave empty to use its default flower icon.'}
+                />
                 <div style={{ background: '#eff6ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #bfdbfe' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14 }}>
                     <div>
