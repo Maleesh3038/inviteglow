@@ -109,8 +109,8 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
   )
 }
 
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, badgeImage }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; badgeImage: string
 }) {
   return (
     <motion.div
@@ -124,21 +124,26 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
       <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}33, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
 
       <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
-        style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}33` }}>
-        <svg width={44} height={44} viewBox="0 0 44 44" fill="none">
-          {[
-            { cx: 22, cy: 22 }, { cx: 13, cy: 16 }, { cx: 30, cy: 14 },
-            { cx: 31, cy: 27 }, { cx: 18, cy: 30 }, { cx: 9, cy: 25 }, { cx: 24, cy: 8 },
-          ].map((f, i) => (
-            <g key={i} transform={`translate(${f.cx},${f.cy})`}>
-              <circle cx="-2.6" cy="0" r="2.6" fill="#ffffff" opacity="0.95" />
-              <circle cx="2.6" cy="0" r="2.6" fill="#ffffff" opacity="0.95" />
-              <circle cx="0" cy="-2.6" r="2.6" fill="#ffffff" opacity="0.95" />
-              <circle cx="0" cy="2.6" r="2.6" fill="#ffffff" opacity="0.95" />
-              <circle cx="0" cy="0" r="1.5" fill="#f0c9a0" />
-            </g>
-          ))}
-        </svg>
+        style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}33`, overflow: "hidden" }}>
+        {badgeImage ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={badgeImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <svg width={44} height={44} viewBox="0 0 44 44" fill="none">
+            {[
+              { cx: 22, cy: 22 }, { cx: 13, cy: 16 }, { cx: 30, cy: 14 },
+              { cx: 31, cy: 27 }, { cx: 18, cy: 30 }, { cx: 9, cy: 25 }, { cx: 24, cy: 8 },
+            ].map((f, i) => (
+              <g key={i} transform={`translate(${f.cx},${f.cy})`}>
+                <circle cx="-2.6" cy="0" r="2.6" fill="#ffffff" opacity="0.95" />
+                <circle cx="2.6" cy="0" r="2.6" fill="#ffffff" opacity="0.95" />
+                <circle cx="0" cy="-2.6" r="2.6" fill="#ffffff" opacity="0.95" />
+                <circle cx="0" cy="2.6" r="2.6" fill="#ffffff" opacity="0.95" />
+                <circle cx="0" cy="0" r="1.5" fill="#f0c9a0" />
+              </g>
+            ))}
+          </svg>
+        )}
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
@@ -636,7 +641,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
 
       <AnimatePresence>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} badgeImage={(couple as any).intro_badge_image || ''} />
         )}
       </AnimatePresence>
 
