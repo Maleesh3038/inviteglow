@@ -17,7 +17,7 @@ const TEMPLATE_OPTIONS = [
   { id: 'ocean-pearl', name: 'Ocean Pearl' }, { id: 'sunset-shores', name: 'Sunset Shores' },
   { id: 'traditional-ceylon', name: 'Traditional Ceylon' }, { id: 'sacred-poruwa', name: 'Sacred Poruwa' },
   { id: 'blush-blossom', name: 'Blush Blossom' }, { id: 'ceylon-elegance', name: 'Ceylon Elegance' },
-  { id: 'eternal-bloom', name: 'Eternal Bloom' }, { id: 'noble-salute', name: 'Noble Salute' },
+  { id: 'eternal-bloom', name: 'Eternal Bloom' }, { id: 'noble-salute', name: 'Noble Salute' }, { id: 'crimson-royale', name: 'Crimson Royale' },
 ]
 const templateName = (id: string) => TEMPLATE_OPTIONS.find(t => t.id === id)?.name || (id || '').replace(/-/g, ' ')
 
