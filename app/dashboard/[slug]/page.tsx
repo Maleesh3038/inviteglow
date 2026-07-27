@@ -24,6 +24,7 @@ const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
   'ceylon-elegance': { primary: '#c68a8f', primaryLight: '#e7c9c0', dark: '#3f4a45', cream: '#faf6f3' },
   'eternal-bloom': { primary: '#5c7a52', primaryLight: '#b9cdae', dark: '#2d3d28', cream: '#f8f6ee' },
   'noble-salute': { primary: '#3f5233', primaryLight: '#9aa87f', dark: '#1a2116', cream: '#faf8f2' },
+  'crimson-royale': { primary: '#8b1a2b', primaryLight: '#c96b78', dark: '#1a1214', cream: '#faf5f0' },
 }
 
 // Human-readable labels for the "Change Template" picker in the couple's
@@ -43,6 +44,7 @@ const TEMPLATE_NAMES: Record<string, string> = {
   'ceylon-elegance': 'Ceylon Elegance',
   'eternal-bloom': 'Eternal Bloom',
   'noble-salute': 'Noble Salute',
+  'crimson-royale': 'Crimson Royale',
 }
 
 async function uploadToStorage(file: File, folder: string): Promise<string | null> {
