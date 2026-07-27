@@ -16,6 +16,7 @@ import BlushBlossomTemplate from '@/components/templates/BlushBlossomTemplate'
 import CeylonEleganceTemplate from '@/components/templates/CeylonEleganceTemplate'
 import EternalBloomTemplate from '@/components/templates/EternalBloomTemplate'
 import NobleSaluteTemplate from '@/components/templates/NobleSaluteTemplate'
+import CrimsonRoyaleTemplate from '@/components/templates/CrimsonRoyaleTemplate'
 export default function InvitePage() {
   const params = useParams()
   const slug = params.slug as string
@@ -80,6 +81,8 @@ export default function InvitePage() {
       return <EternalBloomTemplate couple={couple} />
     case 'noble-salute':
       return <NobleSaluteTemplate couple={couple} />
+    case 'crimson-royale':
+      return <CrimsonRoyaleTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
