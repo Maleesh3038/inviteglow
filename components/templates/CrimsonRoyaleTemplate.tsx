@@ -796,16 +796,18 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            {(couple as any).bible_verse && (
-              <div style={{ background: DARK, padding: "1.4rem 1.5rem", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.7, maxWidth: 340, margin: "0 auto" }}>
-                  {(couple as any).bible_verse}
-                </div>
-              </div>
-            )}
-
             {/* Hero */}
             <div style={{ position: "relative", height: 560, overflow: "hidden" }}>
+              {(couple as any).bible_verse && (
+                <>
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 140, background: "linear-gradient(to bottom, rgba(10,13,8,0.55), transparent)", zIndex: 4 }} />
+                  <div style={{ position: "absolute", top: "1.4rem", left: "1.5rem", right: "1.5rem", textAlign: "center", zIndex: 5 }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.9rem", color: "#fff", lineHeight: 1.7, maxWidth: 340, margin: "0 auto", textShadow: "0 2px 8px rgba(0,0,0,0.85), 0 4px 16px rgba(0,0,0,0.6)" }}>
+                      {(couple as any).bible_verse}
+                    </div>
+                  </div>
+                </>
+              )}
               {coverVideoUrl ? (
                 <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
