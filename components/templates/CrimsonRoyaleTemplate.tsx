@@ -728,6 +728,15 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
+                {(couple as any).bible_verse && (
+                  <div style={{
+                    fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.85rem", color: "rgba(255,255,255,0.88)",
+                    lineHeight: 1.6, marginBottom: "1.3rem", textShadow: "0 2px 8px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6)",
+                  }}>
+                    {(couple as any).bible_verse}
+                  </div>
+                )}
+
                 {/* Badge pill — admin-editable via "Cover Badge Text", falls back to Wedding Invitation */}
                 <div style={{
                   display: "inline-flex", alignItems: "center", padding: "7px 20px", borderRadius: 100,
@@ -786,6 +795,14 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
         {/* ══ INVITATION ══ */}
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+
+            {(couple as any).bible_verse && (
+              <div style={{ background: DARK, padding: "1.4rem 1.5rem", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.7, maxWidth: 340, margin: "0 auto" }}>
+                  {(couple as any).bible_verse}
+                </div>
+              </div>
+            )}
 
             {/* Hero */}
             <div style={{ position: "relative", height: 560, overflow: "hidden" }}>
