@@ -668,6 +668,17 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
     groomRank: (couple as any).groom_rank || '',
   }
 
+  // Flexible named contacts list first (admin's "Additional Contact Numbers"
+  // editor); falls back to the classic bride/groom phone fields so nothing
+  // already saved is ever lost.
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.name && c?.phone) : []
+  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
+    ? flexContacts
+    : [
+        ...(W.groom && W.groomPhone ? [{ name: W.groom, phone: W.groomPhone }] : []),
+        ...(W.bride && W.bridePhone ? [{ name: W.bride, phone: W.bridePhone }] : []),
+      ]
+
   const TINT = "#f0ede2"
 
   return (
@@ -943,14 +954,13 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
             )}
 
             {/* Contact Numbers */}
-            {(W.bridePhone || W.groomPhone) && (
+            {contactList.length > 0 && (
               <motion.div id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <CornerBrackets color={GOLD} />
                 <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
                 <div style={titleStyle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {W.groomPhone && <ContactRow name={W.groom} phone={W.groomPhone} primary={PRIMARY} />}
-                  {W.bridePhone && <ContactRow name={W.bride} phone={W.bridePhone} primary={PRIMARY} />}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
                 </div>
               </motion.div>
             )}
@@ -971,7 +981,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <div id={(W.bridePhone || W.groomPhone) ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
+            <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
                 <svg width={30} height={30} viewBox="0 0 24 24" fill={GOLD}><path d="M4.5 17L3 8l4.6 3.4L12 5l4.4 6.4L21 8l-1.5 9z" /></svg>
               </div>
