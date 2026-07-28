@@ -726,7 +726,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(10,13,8,0.45) 0%, rgba(10,13,8,0.4) 25%, rgba(10,13,8,0.55) 50%, rgba(10,13,8,0.75) 85%, rgba(10,13,8,0.85) 100%)`, zIndex: 3 }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+                style={{ textAlign: "center", width: "92%", maxWidth: 380, position: "relative", zIndex: 10, padding: "0 0.5rem" }}>
 
                 {(couple as any).bible_verse && (
                   <div style={{
@@ -749,13 +749,13 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
 
                 <div style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: GOLD, marginBottom: "1rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)", fontFamily: "'Oswald',sans-serif", fontWeight: 500 }}>You Are Invited</div>
 
-                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, letterSpacing: "0.03em", fontSize: "clamp(1.5rem,6vw,2.15rem)", color: "#fff", lineHeight: 1.25, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, letterSpacing: "0.015em", fontSize: "clamp(1.1rem,4.6vw,1.55rem)", color: "#fff", lineHeight: 1.3, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
                 <div style={{ margin: "10px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                   <svg width={13} height={13} viewBox="0 0 24 24" fill={GOLD}><path d="M4.5 17L3 8l4.6 3.4L12 5l4.4 6.4L21 8l-1.5 9z" /></svg>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, letterSpacing: "0.03em", fontSize: "clamp(1.5rem,6vw,2.15rem)", color: "#fff", lineHeight: 1.25, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
+                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, letterSpacing: "0.015em", fontSize: "clamp(1.1rem,4.6vw,1.55rem)", color: "#fff", lineHeight: 1.3, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
                 {W.groomRank && (
                   <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>{W.groomRank}</div>
                 )}
