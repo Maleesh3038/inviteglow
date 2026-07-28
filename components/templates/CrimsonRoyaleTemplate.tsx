@@ -910,7 +910,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <CornerBrackets color={GOLD} />
                 <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
-                <div style={titleStyle(DARK)}>The Wedding Lineup</div>
+                <div style={titleStyle(DARK)}>Wedding Reception &amp; Fellowship Lunch</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
                   <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${GOLD}66` }} />
                   {W.timeline.map((t, i) => (
