@@ -795,6 +795,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
                     <div style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>{W.groomRank}</div>
                   )}
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
+                    <a href="#contact" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Oswald',sans-serif" }}>Contact</a>
                     <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: `1.5px solid ${GOLD}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 500, fontFamily: "'Oswald',sans-serif" }}>Location</a>
                   </div>
                 </motion.div>
