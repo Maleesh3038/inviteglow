@@ -69,6 +69,7 @@ const emptyForm = {
   intro_text: '',
   cover_badge_text: '',
   intro_badge_image: '',
+  bible_verse: '',
   cover_background_image: '',
   project_status: 'lead' as 'lead' | 'sample' | 'ongoing' | 'complete',
   payment_status: 'unpaid' as 'unpaid' | 'partial' | 'paid',
@@ -1088,6 +1089,7 @@ export default function AdminPage() {
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
       intro_badge_image: (c as any).intro_badge_image ?? '',
+      bible_verse: (c as any).bible_verse ?? '',
       cover_background_image: (c as any).cover_background_image ?? '',
       project_status: ((c as any).project_status ?? 'ongoing') as 'lead' | 'sample' | 'ongoing' | 'complete',
       payment_status: ((c as any).payment_status ?? 'unpaid') as 'unpaid' | 'partial' | 'paid',
@@ -1164,6 +1166,7 @@ export default function AdminPage() {
       intro_text: form.intro_text || null,
       cover_badge_text: (form as any).cover_badge_text || null,
       intro_badge_image: (form as any).intro_badge_image || null,
+      bible_verse: (form as any).bible_verse || null,
       cover_background_image: (form as any).cover_background_image || null,
       project_status: form.project_status || 'ongoing',
       payment_status: form.payment_status || 'unpaid',
@@ -1951,6 +1954,12 @@ export default function AdminPage() {
                 <TimelinePicker value={form.timeline} onChange={items => setForm({ ...form, timeline: items })} />
                 <EventsPicker value={form.events} onChange={v => setForm({ ...form, events: v })} />
                 <SectionTogglesPicker value={form.section_visibility} onChange={v => setForm({ ...form, section_visibility: v })} />
+
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Bible Verse (optional)</label>
+                  <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' as const }} placeholder={'e.g. "So, they are no longer two, but one flesh. Therefore, what God has joined together, let no man separate." — Matthew 19:6'} value={(form as any).bible_verse || ''} onChange={e => setForm({ ...form, bible_verse: e.target.value } as any)} />
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Shown at the very top of the invitation, above the couple's names — matches the verse on a traditional printed card.</div>
+                </div>
 
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Cover Badge Text</label>
