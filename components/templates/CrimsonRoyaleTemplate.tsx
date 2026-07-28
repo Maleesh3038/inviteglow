@@ -645,7 +645,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
-    engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '👑' }, homecoming: { label: 'Homecoming', icon: '🏡' },
+    engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Reception', icon: '👑' }, homecoming: { label: 'Homecoming', icon: '🏡' },
   }
   type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dressCode: string }
   const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
