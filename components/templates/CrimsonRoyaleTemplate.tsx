@@ -997,8 +997,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so honored to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for standing with us on this journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif", marginBottom: 6 }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, fontSize: "1.05rem", color: PRIMARY, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.4 }}>{W.bride} &amp; {W.groom}</div>
+                  <div style={{ fontSize: 11, color: "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif" }}>With love, both families</div>
                 </div>
               </motion.div>
             )}
