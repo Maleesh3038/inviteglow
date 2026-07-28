@@ -629,7 +629,10 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
     if (coverVideoUrl) {
       setVideoPlaying(true)
       videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
-      videoTimerRef.current = setTimeout(handleVideoEnded, 10000)
+      // No fixed cutoff — the video's own onEnded event (below) is what
+      // triggers the transition, so the full clip always plays through.
+      // This is only a safety net in case playback ever stalls silently.
+      videoTimerRef.current = setTimeout(handleVideoEnded, 45000)
     } else {
       handleVideoEnded()
     }
