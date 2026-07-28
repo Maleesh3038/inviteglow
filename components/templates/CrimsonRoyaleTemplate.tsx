@@ -629,7 +629,7 @@ function CrimsonRoyaleInner({ couple }: { couple: Couple }) {
     if (coverVideoUrl) {
       setVideoPlaying(true)
       videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
-      videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
+      videoTimerRef.current = setTimeout(handleVideoEnded, 10000)
     } else {
       handleVideoEnded()
     }
