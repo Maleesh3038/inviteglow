@@ -851,7 +851,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 </div>
               )}
               <div style={{ background: PURPLE_BOX, padding: '15px 12px 13px', textAlign: 'center' }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
                   {couple.bride} &amp; {couple.groom}
                 </div>
                 <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, color: colors.dark, opacity: 0.6, marginTop: 5 }}>{badgeText}</div>
