@@ -20,6 +20,7 @@ import CeylonEleganceTemplate from '@/components/templates/CeylonEleganceTemplat
 import EternalBloomTemplate from '@/components/templates/EternalBloomTemplate'
 import NobleSaluteTemplate from '@/components/templates/NobleSaluteTemplate'
 import CrimsonRoyaleTemplate from '@/components/templates/CrimsonRoyaleTemplate'
+import KanchiVivahaTemplate from '@/components/templates/KanchiVivahaTemplate'
 
 function renderTemplate(couple: any) {
   switch (couple.template) {
@@ -37,6 +38,7 @@ function renderTemplate(couple: any) {
     case 'eternal-bloom': return <EternalBloomTemplate couple={couple} />
     case 'noble-salute': return <NobleSaluteTemplate couple={couple} />
     case 'crimson-royale': return <CrimsonRoyaleTemplate couple={couple} />
+    case 'kanchi-vivaha': return <KanchiVivahaTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
     default: return <FloralRomanceTemplate couple={couple} />
@@ -56,6 +58,7 @@ const TEMPLATE_OPTIONS = [
   { id: 'blush-blossom', name: 'Blush Blossom', color: '#c17d8a' }, { id: 'ceylon-elegance', name: 'Ceylon Elegance', color: '#c9a227' },
   { id: 'eternal-bloom', name: 'Eternal Bloom', color: '#5c7a52' }, { id: 'noble-salute', name: 'Noble Salute', color: '#3f5233' },
   { id: 'crimson-royale', name: 'Crimson Royale', color: '#8b1a2b' },
+  { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', color: '#9b2c2c' },
 ]
 
 type SectionKey = 'hero' | 'countdown' | 'love_story' | 'events' | 'gallery' | 'venue_map' | 'rsvp' | 'guest_gallery' | 'mobile_numbers'
