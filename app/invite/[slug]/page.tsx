@@ -17,6 +17,7 @@ import CeylonEleganceTemplate from '@/components/templates/CeylonEleganceTemplat
 import EternalBloomTemplate from '@/components/templates/EternalBloomTemplate'
 import NobleSaluteTemplate from '@/components/templates/NobleSaluteTemplate'
 import CrimsonRoyaleTemplate from '@/components/templates/CrimsonRoyaleTemplate'
+import KanchiVivahaTemplate from '@/components/templates/KanchiVivahaTemplate'
 export default function InvitePage() {
   const params = useParams()
   const slug = params.slug as string
@@ -83,6 +84,8 @@ export default function InvitePage() {
       return <NobleSaluteTemplate couple={couple} />
     case 'crimson-royale':
       return <CrimsonRoyaleTemplate couple={couple} />
+    case 'kanchi-vivaha':
+      return <KanchiVivahaTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
