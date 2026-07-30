@@ -1010,6 +1010,13 @@ export default function CoupleDashboard() {
   const [search, setSearch] = useState("")
   const [filterResponse, setFilterResponse] = useState<'all' | 'yes' | 'no'>('all')
   const [filterDrinking, setFilterDrinking] = useState<'all' | 'yes' | 'no'>('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name-az' | 'name-za' | 'guests'>('newest')
+  const [showAddGuest, setShowAddGuest] = useState(false)
+  const [addGuestForm, setAddGuestForm] = useState({ name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
+  const [addingGuest, setAddingGuest] = useState(false)
+  const [editingRsvpId, setEditingRsvpId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ guest_name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
+  const [savingEdit, setSavingEdit] = useState(false)
 
   // Deep-linking: /dashboard/[slug]?tab=guests etc. jumps straight to that
   // tab. Falls back to 'overview' for anything unrecognised. This only
@@ -1180,7 +1187,49 @@ export default function CoupleDashboard() {
     if (filterResponse !== 'all' && r.response !== filterResponse) return false
     if (filterDrinking !== 'all' && r.drinking !== filterDrinking) return false
     return true
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      case 'name-az': return a.guest_name.localeCompare(b.guest_name)
+      case 'name-za': return b.guest_name.localeCompare(a.guest_name)
+      case 'guests': return (b.guest_count || 1) - (a.guest_count || 1)
+      case 'newest':
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }
   })
+
+  const addGuestManually = async () => {
+    if (!addGuestForm.name.trim()) return
+    setAddingGuest(true)
+    const { error } = await supabase.from('rsvps').insert([{
+      couple_id: couple.id, guest_name: addGuestForm.name.trim(), response: addGuestForm.response,
+      guest_count: addGuestForm.response === 'yes' ? (parseInt(addGuestForm.guest_count) || 1) : 1,
+      drinking: addGuestForm.response === 'yes' ? (addGuestForm.drinking || null) : null,
+    }])
+    setAddingGuest(false)
+    if (!error) {
+      setAddGuestForm({ name: '', response: 'yes', guest_count: '1', drinking: '' })
+      setShowAddGuest(false)
+      loadData()
+    }
+  }
+
+  const startEditRsvp = (r: RSVP) => {
+    setEditingRsvpId(r.id)
+    setEditForm({ guest_name: r.guest_name, response: r.response, guest_count: String(r.guest_count || 1), drinking: (r.drinking as any) || '' })
+  }
+
+  const saveEditRsvp = async (id: string) => {
+    if (!editForm.guest_name.trim()) return
+    setSavingEdit(true)
+    const { error } = await supabase.from('rsvps').update({
+      guest_name: editForm.guest_name.trim(), response: editForm.response,
+      guest_count: editForm.response === 'yes' ? (parseInt(editForm.guest_count) || 1) : 1,
+      drinking: editForm.response === 'yes' ? (editForm.drinking || null) : null,
+    }).eq('id', id)
+    setSavingEdit(false)
+    if (!error) { setEditingRsvpId(null); loadData() }
+  }
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
@@ -1358,20 +1407,76 @@ export default function CoupleDashboard() {
 
           {activeTab === 'guests' && (
             <motion.div key="guests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <div style={{ position: 'relative', marginBottom: 14 }}>
-                <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                  <Icon name="search" size={16} color="#94a3b8" />
+              <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+                  <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <Icon name="search" size={16} color="#94a3b8" />
+                  </div>
+                  <input
+                    value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Search guest by name..."
+                    style={{
+                      width: "100%", padding: "12px 18px 12px 42px", borderRadius: 12, boxSizing: 'border-box',
+                      border: `1px solid ${BORDER}`, background: "#fff", color: TEXT_DARK,
+                      fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif",
+                    }}
+                  />
                 </div>
-                <input
-                  value={search} onChange={e => setSearch(e.target.value)}
-                  placeholder="Search guest by name..."
-                  style={{
-                    width: "100%", padding: "12px 18px 12px 42px", borderRadius: 12, boxSizing: 'border-box',
-                    border: `1px solid ${BORDER}`, background: "#fff", color: TEXT_DARK,
-                    fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif",
-                  }}
-                />
+                <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} style={{
+                  padding: '0 14px', borderRadius: 12, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK,
+                  fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", cursor: 'pointer',
+                }}>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="name-az">Name A–Z</option>
+                  <option value="name-za">Name Z–A</option>
+                  <option value="guests">Most guests</option>
+                </select>
+                <button type="button" onClick={() => setShowAddGuest(!showAddGuest)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 18px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                  background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
+                }}>
+                  <Icon name="plus" size={13} color="#fff" /> Add Guest
+                </button>
               </div>
+
+              {showAddGuest && (
+                <div style={{ background: '#fff', borderRadius: 14, padding: 18, marginBottom: 16, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 12 }}>Add Guest Manually</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <input value={addGuestForm.name} onChange={e => setAddGuestForm({ ...addGuestForm, name: e.target.value })} placeholder="Guest name"
+                      style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                    <select value={addGuestForm.response} onChange={e => setAddGuestForm({ ...addGuestForm, response: e.target.value as 'yes' | 'no' })}
+                      style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                      <option value="yes">Attending</option>
+                      <option value="no">Not Attending</option>
+                    </select>
+                  </div>
+                  {addGuestForm.response === 'yes' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: !isTwilightPicnic ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 14 }}>
+                      <input type="number" min={1} value={addGuestForm.guest_count} onChange={e => setAddGuestForm({ ...addGuestForm, guest_count: e.target.value })} placeholder="Guest count"
+                        style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                      {!isTwilightPicnic && (
+                        <select value={addGuestForm.drinking} onChange={e => setAddGuestForm({ ...addGuestForm, drinking: e.target.value as any })}
+                          style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                          <option value="">Drinks — no preference</option>
+                          <option value="yes">Drinks alcohol</option>
+                          <option value="no">Non-alcoholic</option>
+                        </select>
+                      )}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={addGuestManually} disabled={addingGuest || !addGuestForm.name.trim()} style={{
+                      padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                      background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 13, opacity: (addingGuest || !addGuestForm.name.trim()) ? 0.6 : 1,
+                    }}>{addingGuest ? 'Saving...' : 'Save Guest'}</button>
+                    <button type="button" onClick={() => setShowAddGuest(false)} style={{
+                      padding: '10px 20px', borderRadius: 10, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 13,
+                    }}>Cancel</button>
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                 <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Status:</span>
@@ -1396,82 +1501,129 @@ export default function CoupleDashboard() {
                 <div style={{ display: "grid", gap: 10 }}>
                   {filteredRsvps.map((r, i) => {
                     const seatTable = r.response === 'yes' ? findSeatForGuest(r.guest_name, couple.seats) : null
+                    const isEditing = editingRsvpId === r.id
                     return (
                       <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}
                         style={{
                           background: "#fff", borderRadius: 14, padding: "14px 18px",
-                          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10,
                           boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
                         }}>
-                        <div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{r.guest_name}</div>
-                            {r.response === 'yes' && r.guest_count > 1 && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
-                                <Icon name="users" size={11} color="#7c3aed" /> {r.guest_count}
+                        {isEditing ? (
+                          <div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
+                              <input value={editForm.guest_name} onChange={e => setEditForm({ ...editForm, guest_name: e.target.value })}
+                                style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                              <select value={editForm.response} onChange={e => setEditForm({ ...editForm, response: e.target.value as 'yes' | 'no' })}
+                                style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                                <option value="yes">Attending</option>
+                                <option value="no">Not Attending</option>
+                              </select>
+                            </div>
+                            {editForm.response === 'yes' && (
+                              <div style={{ display: 'grid', gridTemplateColumns: !isTwilightPicnic ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 12 }}>
+                                <input type="number" min={1} value={editForm.guest_count} onChange={e => setEditForm({ ...editForm, guest_count: e.target.value })} placeholder="Guest count"
+                                  style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                                {!isTwilightPicnic && (
+                                  <select value={editForm.drinking} onChange={e => setEditForm({ ...editForm, drinking: e.target.value as any })}
+                                    style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                                    <option value="">No preference</option>
+                                    <option value="yes">Drinks alcohol</option>
+                                    <option value="no">Non-alcoholic</option>
+                                  </select>
+                                )}
                               </div>
                             )}
-                            {seatTable && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#eef2ff", color: "#4f46e5" }}>
-                                <Icon name="chair" size={11} color="#4f46e5" /> {seatTable}
-                              </div>
-                            )}
-                          </div>
-                          <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
-                            {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
-                            {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            {isTwilightPicnic ? (
-                              <>
-                                {r.response === 'yes' && r.drinking && (
-                                  <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
-                                    {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
-                                  </div>
-                                )}
-                                {r.response === 'yes' && r.accommodation && (
-                                  <div style={{
-                                    padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                                    background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
-                                    color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
-                                  }}>
-                                    {r.accommodation === 'needed' ? 'Needs Stay' : 'Sorted'}
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              r.response === 'yes' && r.drinking && (
-                                <div style={{
-                                  padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                                  background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
-                                  color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
-                                }}>
-                                  {r.drinking === 'yes' ? 'Drinks' : 'No Drinks'}
-                                </div>
-                              )
-                            )}
-                            <div style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
-                              background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
-                              color: r.response === 'yes' ? '#16a34a' : '#dc2626',
-                            }}>
-                              <Icon name={r.response === 'yes' ? 'check' : 'cross'} size={11} color={r.response === 'yes' ? '#16a34a' : '#dc2626'} />
-                              {r.response === 'yes' ? 'Attending' : 'Not Attending'}
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button type="button" onClick={() => saveEditRsvp(r.id)} disabled={savingEdit} style={{
+                                padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer', background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 12.5, opacity: savingEdit ? 0.6 : 1,
+                              }}>{savingEdit ? 'Saving...' : 'Save'}</button>
+                              <button type="button" onClick={() => setEditingRsvpId(null)} style={{
+                                padding: '8px 18px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12.5,
+                              }}>Cancel</button>
                             </div>
                           </div>
-                          <button type="button" onClick={() => handleDeleteRsvp(r.id, r.guest_name)} disabled={deletingRsvpId === r.id} style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            padding: '4px 12px', borderRadius: 100, border: '1px solid #fecaca', cursor: 'pointer',
-                            background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500,
-                            opacity: deletingRsvpId === r.id ? 0.6 : 1,
-                          }}>
-                            <Icon name="trash" size={11} color="#dc2626" />
-                            {deletingRsvpId === r.id ? 'Removing...' : 'Remove'}
-                          </button>
-                        </div>
+                        ) : (
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{r.guest_name}</div>
+                                {r.response === 'yes' && r.guest_count > 1 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
+                                    <Icon name="users" size={11} color="#7c3aed" /> {r.guest_count}
+                                  </div>
+                                )}
+                                {seatTable && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#eef2ff", color: "#4f46e5" }}>
+                                    <Icon name="chair" size={11} color="#4f46e5" /> {seatTable}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
+                                {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
+                                {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                {isTwilightPicnic ? (
+                                  <>
+                                    {r.response === 'yes' && r.drinking && (
+                                      <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
+                                        {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
+                                      </div>
+                                    )}
+                                    {r.response === 'yes' && r.accommodation && (
+                                      <div style={{
+                                        padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                                        background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
+                                        color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
+                                      }}>
+                                        {r.accommodation === 'needed' ? 'Needs Stay' : 'Sorted'}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  r.response === 'yes' && r.drinking && (
+                                    <div style={{
+                                      padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                                      background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
+                                      color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
+                                    }}>
+                                      {r.drinking === 'yes' ? 'Drinks' : 'No Drinks'}
+                                    </div>
+                                  )
+                                )}
+                                <div style={{
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
+                                  background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
+                                  color: r.response === 'yes' ? '#16a34a' : '#dc2626',
+                                }}>
+                                  <Icon name={r.response === 'yes' ? 'check' : 'cross'} size={11} color={r.response === 'yes' ? '#16a34a' : '#dc2626'} />
+                                  {r.response === 'yes' ? 'Attending' : 'Not Attending'}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button type="button" onClick={() => startEditRsvp(r)} style={{
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: '4px 12px', borderRadius: 100, border: '1px solid #c7d2fe', cursor: 'pointer',
+                                  background: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 500,
+                                }}>
+                                  <Icon name="edit" size={11} color="#4f46e5" /> Edit
+                                </button>
+                                <button type="button" onClick={() => handleDeleteRsvp(r.id, r.guest_name)} disabled={deletingRsvpId === r.id} style={{
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: '4px 12px', borderRadius: 100, border: '1px solid #fecaca', cursor: 'pointer',
+                                  background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500,
+                                  opacity: deletingRsvpId === r.id ? 0.6 : 1,
+                                }}>
+                                  <Icon name="trash" size={11} color="#dc2626" />
+                                  {deletingRsvpId === r.id ? 'Removing...' : 'Remove'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )
                   })}
