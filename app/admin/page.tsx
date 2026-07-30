@@ -18,6 +18,7 @@ const TEMPLATES = [
   { id: 'eternal-bloom', name: 'Eternal Bloom', tag: 'Botanical & Video', photo: '', demoSlug: '', color: '#5c7a52' },
   { id: 'noble-salute', name: 'Noble Salute', tag: 'Military Honor', photo: '', demoSlug: '', color: '#3f5233' },
   { id: 'crimson-royale', name: 'Crimson Royale', tag: 'Regal & Bold', photo: '', demoSlug: '', color: '#8b1a2b' },
+  { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', tag: 'Tamil Wedding', photo: '', demoSlug: '', color: '#9b2c2c' },
 ]
 
 const BUCKET = 'wedding-photos'
