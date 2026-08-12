@@ -1027,6 +1027,19 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     }, 0)
   }, [couples, range])
 
+  // Individual income entries (one per invitation link that has a
+  // payment recorded), shown as a green list next to the red expense list.
+  const incomeEntriesInPeriod = useMemo(() => {
+    return couples
+      .filter(c => {
+        const created = new Date(c.created_at)
+        const paid = Number((c as any).paid_amount) || 0
+        return created >= range.start && created < range.end && paid > 0
+      })
+      .map(c => ({ id: c.id, label: `${c.bride} & ${c.groom}`, slug: c.slug, amount: Number((c as any).paid_amount) || 0, date: c.created_at }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [couples, range])
+
   // ── Expenses: every expense (recurring or one-time) only counts in the
   // period its own date falls into — nothing is auto-projected into past
   // or future periods. A recurring subscription is just a label; each
@@ -1195,6 +1208,34 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
         Income is based on each invitation's Amount Paid, counted in the period it was created. Expenses only count in the period their own date falls in — nothing is projected into other months. For a recurring subscription, use "Log for [period]" on its row each time it's actually paid. If every active subscription were billed this month, it'd total <strong style={{ color: '#475569' }}>LKR {monthlyRecurringTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong> — just an estimate, not counted in Expenses above unless logged.
       </div>
 
+      {/* Income list — one row per invitation link with a payment, green */}
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Income</div>
+      {incomeEntriesInPeriod.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 28, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', color: '#94a3b8', fontSize: 13, marginBottom: 24 }}>
+          No payments recorded for this period yet.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+          {incomeEntriesInPeriod.map(entry => (
+            <div key={entry.id} style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12,
+              background: '#fff', border: '1px solid #bbf7d0',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{entry.label}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                  {new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · /invite/{entry.slug}
+                </div>
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#16a34a', flexShrink: 0 }}>+ LKR {entry.amount.toLocaleString()}</div>
+              <a href={`/invite/${entry.slug}`} target="_blank" rel="noopener noreferrer" style={{
+                width: 30, height: 30, borderRadius: 8, border: '1px solid #bbf7d0', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}><Icon name="external" size={13} color="#16a34a" /></a>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Add expense button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Expenses</div>
@@ -1285,7 +1326,7 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
             return (
             <div key={e.id} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12,
-              background: e.is_active ? '#fff' : '#f8fafc', border: '1px solid #e2e8f0', opacity: e.is_active ? 1 : 0.6,
+              background: e.is_active ? '#fff' : '#f8fafc', border: `1px solid ${e.is_active ? '#fecaca' : '#e2e8f0'}`, opacity: e.is_active ? 1 : 0.6,
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -1303,7 +1344,7 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
                   {e.notes ? ` · ${e.notes}` : ''}
                 </div>
               </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', flexShrink: 0 }}>LKR {e.amount.toLocaleString()}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#dc2626', flexShrink: 0 }}>− LKR {e.amount.toLocaleString()}</div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 {showLogButton && (
                   <button onClick={() => logThisPeriod(e)} disabled={loggingId === e.id} style={{
