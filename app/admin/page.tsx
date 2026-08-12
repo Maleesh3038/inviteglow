@@ -1027,31 +1027,44 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     }, 0)
   }, [couples, range])
 
-  // ── Expenses: one-time expenses count if their date falls in the period.
-  // Recurring expenses are prorated: a monthly subscription contributes
-  // its amount×(period length / ~30.44 days) — so it shows its full
-  // amount for a monthly view, ~4.3x for a yearly view, ~0.23x for weekly. ──
-  const activeRecurring = useMemo(() => expenses.filter(e => e.is_recurring && e.is_active && new Date(e.expense_date) < range.end), [expenses, range])
-  const oneTimeInPeriod = useMemo(() => expenses.filter(e => !e.is_recurring && new Date(e.expense_date) >= range.start && new Date(e.expense_date) < range.end), [expenses, range])
+  // ── Expenses: every expense (recurring or one-time) only counts in the
+  // period its own date falls into — nothing is auto-projected into past
+  // or future periods. A recurring subscription is just a label; each
+  // month's actual payment needs its own dated entry (see "Log this
+  // month" button below) so the numbers reflect what was really paid. ──
+  const expensesInPeriod = useMemo(() => expenses.filter(e => {
+    const d = new Date(e.expense_date)
+    return d >= range.start && d < range.end
+  }), [expenses, range])
 
-  const recurringCostInPeriod = useMemo(() => {
-    return activeRecurring.reduce((sum, e) => {
-      const freqDays = FREQ_AVG_DAYS[e.frequency || 'monthly']
-      return sum + e.amount * (PERIOD_AVG_DAYS[period] / freqDays)
-    }, 0)
-  }, [activeRecurring, period])
-
-  const oneTimeCostInPeriod = useMemo(() => oneTimeInPeriod.reduce((s, e) => s + e.amount, 0), [oneTimeInPeriod])
-  const totalExpensesInPeriod = recurringCostInPeriod + oneTimeCostInPeriod
+  const totalExpensesInPeriod = useMemo(() => expensesInPeriod.reduce((s, e) => s + e.amount, 0), [expensesInPeriod])
   const profitInPeriod = incomeInPeriod - totalExpensesInPeriod
 
-  // Monthly recurring total — the "subscription burn rate", shown regardless of selected period, since it's the number owners usually want at a glance.
+  // Informational only — "if every active recurring subscription gets paid
+  // this month, this is what it'll cost." Doesn't feed into the period
+  // totals above; those only count entries actually dated in the period.
   const monthlyRecurringTotal = useMemo(() => {
     return expenses.filter(e => e.is_recurring && e.is_active).reduce((sum, e) => {
       const freqDays = FREQ_AVG_DAYS[e.frequency || 'monthly']
       return sum + e.amount * (30.44 / freqDays)
     }, 0)
   }, [expenses])
+
+  // Quick "log this month's payment" — duplicates a recurring expense as
+  // a fresh dated entry for the currently-viewed period, instead of the
+  // admin having to fill the whole form again each month.
+  const [loggingId, setLoggingId] = useState<string | null>(null)
+  const logThisPeriod = async (e: Expense) => {
+    setLoggingId(e.id)
+    const dateForPeriod = range.start > new Date() ? range.start.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
+    await supabase.from('expenses').insert([{
+      name: e.name, amount: e.amount, category: e.category, is_recurring: true,
+      frequency: e.frequency, expense_date: dateForPeriod, is_active: true, notes: e.notes,
+    }])
+    setLoggingId(null)
+    loadExpenses()
+  }
+  const alreadyLoggedThisPeriod = (e: Expense) => expensesInPeriod.some(x => x.name === e.name && x.is_recurring)
 
   const openNewForm = () => {
     setEditingExpense(null)
@@ -1179,7 +1192,7 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       </div>
 
       <div style={{ fontSize: 11.5, color: '#94a3b8', marginBottom: 20, lineHeight: 1.5 }}>
-        Income is based on each invitation's Amount Paid, counted in the period it was created. Recurring expenses are spread across the period (e.g. a monthly subscription shows its full amount for a month, ~4.3× for a year, ~23% for a week). Current subscription burn rate: <strong style={{ color: '#475569' }}>LKR {monthlyRecurringTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}/month</strong>.
+        Income is based on each invitation's Amount Paid, counted in the period it was created. Expenses only count in the period their own date falls in — nothing is projected into other months. For a recurring subscription, use "Log for [period]" on its row each time it's actually paid. If every active subscription were billed this month, it'd total <strong style={{ color: '#475569' }}>LKR {monthlyRecurringTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong> — just an estimate, not counted in Expenses above unless logged.
       </div>
 
       {/* Add expense button */}
@@ -1250,13 +1263,26 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       )}
 
       {/* Expense list */}
-      {expenses.length === 0 ? (
+      {(() => {
+        // Only show "Log this month" on the most recent row per
+        // subscription name, so a repeated subscription doesn't show the
+        // button on every past month's row.
+        const latestByName: Record<string, string> = {}
+        expenses.forEach(e => {
+          if (!e.is_recurring) return
+          if (!latestByName[e.name] || new Date(e.expense_date) > new Date(expenses.find(x => x.id === latestByName[e.name])!.expense_date)) {
+            latestByName[e.name] = e.id
+          }
+        })
+        return expenses.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', color: '#94a3b8', fontSize: 13 }}>
           No expenses added yet — add your Supabase Pro subscription, domain renewal, or any other cost.
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {expenses.map(e => (
+          {expenses.map(e => {
+            const showLogButton = e.is_recurring && e.is_active && latestByName[e.name] === e.id && !alreadyLoggedThisPeriod(e)
+            return (
             <div key={e.id} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12,
               background: e.is_active ? '#fff' : '#f8fafc', border: '1px solid #e2e8f0', opacity: e.is_active ? 1 : 0.6,
@@ -1279,6 +1305,12 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', flexShrink: 0 }}>LKR {e.amount.toLocaleString()}</div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {showLogButton && (
+                  <button onClick={() => logThisPeriod(e)} disabled={loggingId === e.id} style={{
+                    padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: `${ACCENT}1a`,
+                    color: ACCENT, fontSize: 11, fontWeight: 700, opacity: loggingId === e.id ? 0.6 : 1,
+                  }}>{loggingId === e.id ? 'Logging...' : `+ Log for ${formatPeriodLabel(period, range)}`}</button>
+                )}
                 {e.is_recurring && (
                   <button onClick={() => toggleActive(e)} style={{
                     padding: '6px 10px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#f8fafc',
@@ -1293,9 +1325,10 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
-      )}
+      )
+      })()}
     </div>
   )
 }
