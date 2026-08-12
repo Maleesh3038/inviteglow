@@ -934,12 +934,379 @@ function MusicUploader({ value, onChange }: { value: string; onChange: (url: str
   )
 }
 
+// ── Finance Manager — Income (from couples' paid_amount) vs Expenses
+// (a new `expenses` table, one-time or recurring) vs Profit, filterable
+// by week / month / year. Doesn't touch any existing table's data. ──
+type Expense = {
+  id: string
+  name: string
+  amount: number
+  category: string | null
+  is_recurring: boolean
+  frequency: 'weekly' | 'monthly' | 'yearly' | null
+  expense_date: string
+  is_active: boolean
+  notes: string | null
+  created_at: string
+}
+type FinancePeriod = 'week' | 'month' | 'year'
+const PERIOD_AVG_DAYS: Record<FinancePeriod, number> = { week: 7, month: 30.44, year: 365.25 }
+const FREQ_AVG_DAYS: Record<'weekly' | 'monthly' | 'yearly', number> = { weekly: 7, monthly: 30.44, yearly: 365.25 }
+
+function getPeriodRange(period: FinancePeriod, ref: Date): { start: Date; end: Date } {
+  const d = new Date(ref)
+  if (period === 'week') {
+    const day = d.getDay()
+    const diffToMonday = (day + 6) % 7
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - diffToMonday)
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7)
+    return { start, end }
+  }
+  if (period === 'month') {
+    const start = new Date(d.getFullYear(), d.getMonth(), 1)
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 1)
+    return { start, end }
+  }
+  const start = new Date(d.getFullYear(), 0, 1)
+  const end = new Date(d.getFullYear() + 1, 0, 1)
+  return { start, end }
+}
+
+function formatPeriodLabel(period: FinancePeriod, range: { start: Date; end: Date }): string {
+  if (period === 'week') {
+    const endInclusive = new Date(range.end.getTime() - 86400000)
+    return `${range.start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${endInclusive.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
+  }
+  if (period === 'month') return range.start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  return String(range.start.getFullYear())
+}
+
+const EXPENSE_CATEGORIES = ['Hosting / Subscription', 'Marketing', 'Software / Tools', 'Domain', 'Design Assets', 'Payment Fees', 'Other']
+
+function FinanceManager({ couples }: { couples: Couple[] }) {
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tableMissing, setTableMissing] = useState(false)
+  const [period, setPeriod] = useState<FinancePeriod>('month')
+  const [refDate, setRefDate] = useState(new Date())
+  const [showForm, setShowForm] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const [savingExpense, setSavingExpense] = useState(false)
+  const [expForm, setExpForm] = useState({
+    name: '', amount: '', category: EXPENSE_CATEGORIES[0], is_recurring: true,
+    frequency: 'monthly' as 'weekly' | 'monthly' | 'yearly', expense_date: new Date().toISOString().slice(0, 10), notes: '',
+  })
+
+  const loadExpenses = async () => {
+    setLoading(true)
+    const { data, error } = await supabase.from('expenses').select('*').order('is_recurring', { ascending: false }).order('expense_date', { ascending: false })
+    if (error) {
+      setTableMissing(true)
+    } else if (data) {
+      setExpenses(data as Expense[])
+      setTableMissing(false)
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { loadExpenses() }, [])
+
+  const range = useMemo(() => getPeriodRange(period, refDate), [period, refDate])
+
+  // ── Income: sum of couples.paid_amount whose created_at falls inside
+  // the selected period. (There's no separate "payment date" field yet,
+  // so this uses the invitation's creation date as the closest proxy —
+  // accurate as long as payments are recorded around when the project starts.) ──
+  const incomeInPeriod = useMemo(() => {
+    return couples.reduce((sum, c) => {
+      const created = new Date(c.created_at)
+      if (created >= range.start && created < range.end) {
+        return sum + (Number((c as any).paid_amount) || 0)
+      }
+      return sum
+    }, 0)
+  }, [couples, range])
+
+  // ── Expenses: one-time expenses count if their date falls in the period.
+  // Recurring expenses are prorated: a monthly subscription contributes
+  // its amount×(period length / ~30.44 days) — so it shows its full
+  // amount for a monthly view, ~4.3x for a yearly view, ~0.23x for weekly. ──
+  const activeRecurring = useMemo(() => expenses.filter(e => e.is_recurring && e.is_active && new Date(e.expense_date) < range.end), [expenses, range])
+  const oneTimeInPeriod = useMemo(() => expenses.filter(e => !e.is_recurring && new Date(e.expense_date) >= range.start && new Date(e.expense_date) < range.end), [expenses, range])
+
+  const recurringCostInPeriod = useMemo(() => {
+    return activeRecurring.reduce((sum, e) => {
+      const freqDays = FREQ_AVG_DAYS[e.frequency || 'monthly']
+      return sum + e.amount * (PERIOD_AVG_DAYS[period] / freqDays)
+    }, 0)
+  }, [activeRecurring, period])
+
+  const oneTimeCostInPeriod = useMemo(() => oneTimeInPeriod.reduce((s, e) => s + e.amount, 0), [oneTimeInPeriod])
+  const totalExpensesInPeriod = recurringCostInPeriod + oneTimeCostInPeriod
+  const profitInPeriod = incomeInPeriod - totalExpensesInPeriod
+
+  // Monthly recurring total — the "subscription burn rate", shown regardless of selected period, since it's the number owners usually want at a glance.
+  const monthlyRecurringTotal = useMemo(() => {
+    return expenses.filter(e => e.is_recurring && e.is_active).reduce((sum, e) => {
+      const freqDays = FREQ_AVG_DAYS[e.frequency || 'monthly']
+      return sum + e.amount * (30.44 / freqDays)
+    }, 0)
+  }, [expenses])
+
+  const openNewForm = () => {
+    setEditingExpense(null)
+    setExpForm({ name: '', amount: '', category: EXPENSE_CATEGORIES[0], is_recurring: true, frequency: 'monthly', expense_date: new Date().toISOString().slice(0, 10), notes: '' })
+    setShowForm(true)
+  }
+  const openEditForm = (e: Expense) => {
+    setEditingExpense(e)
+    setExpForm({
+      name: e.name, amount: String(e.amount), category: e.category || EXPENSE_CATEGORIES[0],
+      is_recurring: e.is_recurring, frequency: e.frequency || 'monthly', expense_date: e.expense_date, notes: e.notes || '',
+    })
+    setShowForm(true)
+  }
+
+  const saveExpense = async () => {
+    if (!expForm.name.trim() || !expForm.amount) return
+    setSavingExpense(true)
+    const payload = {
+      name: expForm.name.trim(),
+      amount: parseFloat(expForm.amount) || 0,
+      category: expForm.category || null,
+      is_recurring: expForm.is_recurring,
+      frequency: expForm.is_recurring ? expForm.frequency : null,
+      expense_date: expForm.expense_date,
+      notes: expForm.notes.trim() || null,
+    }
+    const { error } = editingExpense
+      ? await supabase.from('expenses').update(payload).eq('id', editingExpense.id)
+      : await supabase.from('expenses').insert([{ ...payload, is_active: true }])
+    setSavingExpense(false)
+    if (!error) {
+      setShowForm(false)
+      loadExpenses()
+    }
+  }
+
+  const toggleActive = async (e: Expense) => {
+    await supabase.from('expenses').update({ is_active: !e.is_active }).eq('id', e.id)
+    loadExpenses()
+  }
+
+  const deleteExpense = async (e: Expense) => {
+    if (!confirm(`Delete "${e.name}"? This cannot be undone.`)) return
+    await supabase.from('expenses').delete().eq('id', e.id)
+    loadExpenses()
+  }
+
+  const shiftPeriod = (dir: -1 | 1) => {
+    const d = new Date(refDate)
+    if (period === 'week') d.setDate(d.getDate() + dir * 7)
+    else if (period === 'month') d.setMonth(d.getMonth() + dir)
+    else d.setFullYear(d.getFullYear() + dir)
+    setRefDate(d)
+  }
+
+  if (tableMissing) {
+    return (
+      <div style={{ textAlign: 'center', padding: 60, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 10 }}>Finance tracking needs one new table</div>
+        <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16, maxWidth: 480, margin: '0 auto 16px' }}>
+          Run this once in Supabase → SQL Editor. It only creates a brand-new <code>expenses</code> table — nothing else is touched.
+        </div>
+        <pre style={{ textAlign: 'left', background: '#0f172a', color: '#e2e8f0', borderRadius: 12, padding: 18, fontSize: 12, maxWidth: 560, margin: '0 auto', overflowX: 'auto' }}>
+{`create table public.expenses (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  amount numeric not null,
+  category text,
+  is_recurring boolean not null default false,
+  frequency text check (frequency in ('weekly','monthly','yearly')),
+  expense_date date not null default current_date,
+  is_active boolean not null default true,
+  notes text,
+  created_at timestamptz not null default now()
+);`}
+        </pre>
+        <button onClick={loadExpenses} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 600 }}>
+          I've run it — Reload
+        </button>
+      </div>
+    )
+  }
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
+
+  return (
+    <div>
+      {/* Period switcher */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
+          {(['week', 'month', 'year'] as const).map(p => (
+            <button key={p} onClick={() => { setPeriod(p); setRefDate(new Date()) }} style={{
+              padding: '7px 16px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+              background: period === p ? '#fff' : 'transparent', color: period === p ? ACCENT : '#64748b',
+              boxShadow: period === p ? '0 2px 8px rgba(15,23,42,0.08)' : 'none',
+            }}>{p.charAt(0).toUpperCase() + p.slice(1)}ly</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => shiftPeriod(-1)} aria-label="Previous period" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', minWidth: 150, textAlign: 'center' }}>{formatPeriodLabel(period, range)}</div>
+          <button onClick={() => shiftPeriod(1)} aria-label="Next period" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>Income</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a' }}>LKR {incomeInPeriod.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>Expenses</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#dc2626' }}>LKR {totalExpensesInPeriod.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+        </div>
+        <div style={{ background: profitInPeriod >= 0 ? `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})` : 'linear-gradient(135deg,#dc2626,#f87171)', borderRadius: 16, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginBottom: 6 }}>Profit</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>LKR {profitInPeriod.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 11.5, color: '#94a3b8', marginBottom: 20, lineHeight: 1.5 }}>
+        Income is based on each invitation's Amount Paid, counted in the period it was created. Recurring expenses are spread across the period (e.g. a monthly subscription shows its full amount for a month, ~4.3× for a year, ~23% for a week). Current subscription burn rate: <strong style={{ color: '#475569' }}>LKR {monthlyRecurringTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}/month</strong>.
+      </div>
+
+      {/* Add expense button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Expenses</div>
+        <button onClick={openNewForm} style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+          background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 12.5,
+        }}><Icon name="plus" size={13} color="#fff" /> Add Expense</button>
+      </div>
+
+      {/* Expense form */}
+      {showForm && (
+        <div style={{ background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={labelStyle}>Name</label>
+              <input style={inputStyle} placeholder="e.g. Supabase Pro" value={expForm.name} onChange={e => setExpForm({ ...expForm, name: e.target.value })} />
+            </div>
+            <div>
+              <label style={labelStyle}>Amount (LKR)</label>
+              <input type="number" style={inputStyle} placeholder="0" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={labelStyle}>Category</label>
+              <select style={inputStyle} value={expForm.category} onChange={e => setExpForm({ ...expForm, category: e.target.value })}>
+                {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>{expForm.is_recurring ? 'Started On' : 'Date'}</label>
+              <input type="date" style={inputStyle} value={expForm.expense_date} onChange={e => setExpForm({ ...expForm, expense_date: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button type="button" onClick={() => setExpForm({ ...expForm, is_recurring: !expForm.is_recurring })} style={{
+                width: 44, height: 26, borderRadius: 100, border: 'none', cursor: 'pointer', flexShrink: 0,
+                background: expForm.is_recurring ? ACCENT : '#e2e8f0', position: 'relative',
+              }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: expForm.is_recurring ? 21 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+              </button>
+              <span style={{ fontSize: 13, color: '#334155' }}>Recurring subscription</span>
+            </div>
+            {expForm.is_recurring && (
+              <select style={{ ...inputStyle, width: 'auto', marginBottom: 0 }} value={expForm.frequency} onChange={e => setExpForm({ ...expForm, frequency: e.target.value as any })}>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            )}
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Notes (optional)</label>
+            <input style={inputStyle} placeholder="e.g. auto-renews on the 17th" value={expForm.notes} onChange={e => setExpForm({ ...expForm, notes: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={saveExpense} disabled={savingExpense || !expForm.name.trim() || !expForm.amount} style={{
+              padding: '10px 22px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13,
+              opacity: (savingExpense || !expForm.name.trim() || !expForm.amount) ? 0.6 : 1,
+            }}>{savingExpense ? 'Saving...' : editingExpense ? 'Save Changes' : 'Add Expense'}</button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '10px 22px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', color: '#475569', fontWeight: 500, fontSize: 13 }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Expense list */}
+      {expenses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', color: '#94a3b8', fontSize: 13 }}>
+          No expenses added yet — add your Supabase Pro subscription, domain renewal, or any other cost.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {expenses.map(e => (
+            <div key={e.id} style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12,
+              background: e.is_active ? '#fff' : '#f8fafc', border: '1px solid #e2e8f0', opacity: e.is_active ? 1 : 0.6,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{e.name}</span>
+                  {e.is_recurring && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: ACCENT, background: `${ACCENT}1a`, padding: '2px 8px', borderRadius: 100 }}>
+                      {e.frequency}
+                    </span>
+                  )}
+                  {e.category && <span style={{ fontSize: 10, color: '#94a3b8' }}>{e.category}</span>}
+                  {!e.is_active && <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626' }}>Paused</span>}
+                </div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                  {e.is_recurring ? `Since ${new Date(e.expense_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : new Date(e.expense_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {e.notes ? ` · ${e.notes}` : ''}
+                </div>
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', flexShrink: 0 }}>LKR {e.amount.toLocaleString()}</div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {e.is_recurring && (
+                  <button onClick={() => toggleActive(e)} style={{
+                    padding: '6px 10px', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#f8fafc',
+                    color: e.is_active ? '#d97706' : '#16a34a', fontSize: 11, fontWeight: 600,
+                  }}>{e.is_active ? 'Pause' : 'Resume'}</button>
+                )}
+                <button onClick={() => openEditForm(e)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="edit" size={13} color="#475569" />
+                </button>
+                <button onClick={() => deleteExpense(e)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fecaca', cursor: 'pointer', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="trash" size={13} color="#dc2626" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const NAV_TABS = [
   { key: 'overview', label: 'Overview', icon: 'grid' as const },
   { key: 'couples', label: 'Couples', icon: 'users' as const },
   { key: 'signups', label: 'Signups', icon: 'external' as const },
   { key: 'templates', label: 'Templates', icon: 'template' as const },
   { key: 'pricing', label: 'Pricing', icon: 'tag' as const },
+  { key: 'finance', label: 'Finance', icon: 'chart' as const },
   { key: 'reviews', label: 'Reviews', icon: 'star' as const },
 ]
 
@@ -953,7 +1320,7 @@ export default function AdminPage() {
   const [settingDefault, setSettingDefault] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'signups' | 'templates' | 'pricing' | 'reviews'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'signups' | 'templates' | 'pricing' | 'finance' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
 
@@ -1039,12 +1406,6 @@ export default function AdminPage() {
       song_artist: c.song_artist || '',
       song_url: c.song_url || '',
       gallery: c.gallery || [],
-      // Load the couple's actual saved timeline directly — every item is
-      // equally editable/removable, nothing is pinned to a fixed "default"
-      // label. (The old version re-merged against a hardcoded defaults
-      // list matched by event name, so renaming an item like "Poruwa
-      // Ceremony" caused it to reappear as an unchecked duplicate instead
-      // of just updating in place.)
       timeline: (c.timeline && c.timeline.length > 0
         ? c.timeline.map((t, i) => ({ id: i + 1, enabled: true, time: t.time, event: t.event }))
         : emptyForm.timeline
@@ -1197,9 +1558,6 @@ export default function AdminPage() {
 
     let error
     if (editing === 'new') {
-      // default_template is only ever set here, at creation — the template
-      // the couple can later "revert to" in their dashboard, regardless of
-      // how many times admin edits other fields afterwards.
       const res = await supabase.from('couples').insert([{ ...payload, default_template: form.template }])
       error = res.error
     } else {
@@ -1228,7 +1586,6 @@ export default function AdminPage() {
     if (!confirm(`Reset the dashboard PIN for ${coupleLabel}? Their old PIN will stop working immediately.`)) return
     const newPin = generatePin()
     setResettingPinId(id)
-    // Only the pin field is touched — nothing else about the couple record changes.
     const { error } = await supabase.from('couples').update({ pin: newPin }).eq('id', id)
     setResettingPinId(null)
     if (!error) {
@@ -1258,7 +1615,7 @@ export default function AdminPage() {
     const ongoingCount = couples.filter(c => statusOf(c) === 'ongoing').length
     const completeCount = couples.filter(c => statusOf(c) === 'complete').length
     const leadCount = couples.filter(c => statusOf(c) === 'lead').length
-    const realCount = ongoingCount + completeCount // real client work, excludes samples and leads
+    const realCount = ongoingCount + completeCount
     const totalRevenue = couples.reduce((s, c) => s + (Number((c as any).paid_amount) || 0), 0)
     const PACKAGE_PRICES: Record<string, number> = { starter: 3000, premium: 5000, luxury: 8000 }
     const pendingRevenue = couples.reduce((s, c) => {
@@ -1337,7 +1694,7 @@ export default function AdminPage() {
             <div style={{ fontSize: 10, color: '#64748b' }}>Admin Dashboard</div>
           </div>
 
-          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
+          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4, flexWrap: 'wrap' }}>
             {NAV_TABS.map(tab => (
               <button key={tab.key} onClick={() => { setActiveTab(tab.key as typeof activeTab); if (tab.key !== 'couples') setEditing(null) }} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
@@ -1420,6 +1777,14 @@ export default function AdminPage() {
                 <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>LKR {stats.pendingRevenue.toLocaleString()}</div>
                 <div style={{ fontSize: 11, color: '#64748b' }}>Pending Payments</div>
               </div>
+            </div>
+
+            <div style={{ background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Finance</div>
+                <button onClick={() => setActiveTab('finance')} style={{ fontSize: 12, color: ACCENT, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Open full view →</button>
+              </div>
+              <div style={{ fontSize: 12.5, color: '#64748b' }}>Track income, subscription/expense costs, and profit — weekly, monthly, or yearly.</div>
             </div>
 
             <div style={{ background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
@@ -1527,6 +1892,7 @@ export default function AdminPage() {
         {/* ── REVIEWS TAB ── */}
         {activeTab === 'signups' && <SignupsManager />}
         {activeTab === 'pricing' && <PricingManager />}
+        {activeTab === 'finance' && <FinanceManager couples={couples} />}
 
         {activeTab === 'reviews' && <PendingReviewsManager />}
 
