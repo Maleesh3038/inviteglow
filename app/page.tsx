@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Review } from '@/lib/supabase'
+import PolicyNavItem from '@/components/shared/PolicyNavItem'
 
 const ACCENT = "#c4607a"
 const ACCENT_LIGHT = "#e8a0b8"
@@ -316,6 +317,7 @@ export default function HomePage() {
               <button onClick={() => scrollTo('pricing')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Pricing</button>
               <button onClick={() => scrollTo('reviews')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Reviews</button>
               <button onClick={() => scrollTo('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: '#475569' }}>Contact</button>
+              <PolicyNavItem />
               <a href="/login" style={{ fontSize: 13.5, fontWeight: 500, color: '#475569', textDecoration: 'none' }}>Sign In</a>
               <a href="/signup" style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 100,
@@ -355,6 +357,7 @@ export default function HomePage() {
                     fontSize: 15, fontWeight: 500, color: '#334155', textAlign: 'left', padding: '14px 4px',
                   }}>{item.label}</button>
                 ))}
+                <PolicyNavItem />
                 <a href="/login" onClick={() => setMenuOpen(false)} style={{
                   display: 'block', textAlign: 'center', padding: '12px 4px', fontSize: 14, fontWeight: 500, color: '#475569', textDecoration: 'none',
                 }}>Sign In</a>
