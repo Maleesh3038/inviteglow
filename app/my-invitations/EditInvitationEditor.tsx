@@ -75,6 +75,39 @@ const SECTION_DEFS: { key: SectionKey; label: string; icon: string; desc: string
 ]
 const DEFAULT_ORDER: SectionKey[] = ['hero', 'countdown', 'love_story', 'events', 'gallery', 'venue_map', 'rsvp', 'guest_gallery', 'mobile_numbers']
 
+// ── Fonts available for per-element text styling. Loaded globally in
+// the phone-preview iframe below via a <style> @import so the preview
+// matches what guests will actually see once templates read text_styles. ──
+const FONT_OPTIONS = [
+  { key: 'inherit', label: 'Template Default' },
+  { key: "'Inter',sans-serif", label: 'Inter (Clean Sans)' },
+  { key: "'Cormorant Garamond',serif", label: 'Cormorant Garamond (Elegant Serif)' },
+  { key: "'Great Vibes',cursive", label: 'Great Vibes (Script)' },
+  { key: "'Playfair Display',serif", label: 'Playfair Display (Classic Serif)' },
+  { key: "'Dancing Script',cursive", label: 'Dancing Script (Casual Script)' },
+  { key: "'Montserrat',sans-serif", label: 'Montserrat (Modern Sans)' },
+  { key: "'Lora',serif", label: 'Lora (Soft Serif)' },
+  { key: "'EB Garamond',serif", label: 'EB Garamond (Traditional Serif)' },
+]
+
+// ── Which text elements can be individually styled, grouped by the
+// section they live in. Each key maps to a property inside
+// couple.text_styles = { [key]: { color, font } }. Templates read this
+// object (falling back to their own default styling when a key is
+// absent) so nothing breaks for invitations that never touch this panel. ──
+const TEXT_STYLE_TARGETS: { key: string; label: string; group: string }[] = [
+  { key: 'groom_name', label: "Groom's Name", group: 'Hero' },
+  { key: 'bride_name', label: "Bride's Name", group: 'Hero' },
+  { key: 'subtitle', label: 'Subtitle', group: 'Hero' },
+  { key: 'tagline', label: 'Tagline', group: 'Hero' },
+  { key: 'message', label: 'Message', group: 'Hero' },
+  { key: 'love_story', label: 'Love Story Text', group: 'Love Story' },
+  { key: 'venue_name', label: 'Venue Name', group: 'Venue & Map' },
+  { key: 'venue_address', label: 'Venue Address', group: 'Venue & Map' },
+  { key: 'dress_code', label: 'Dress Code', group: 'Wedding Events' },
+  { key: 'countdown_label', label: 'Countdown Label', group: 'Countdown' },
+]
+
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 13px', borderRadius: 100, border: '1px solid #e2e8f0',
   fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box', color: '#1e293b', background: '#f8fafc',
@@ -193,6 +226,11 @@ export default function EditInvitationEditor({ coupleId, onClose }: { coupleId: 
 
   return (
     <div>
+      {/* Fonts used by the Text & Fonts panel — also loaded here so the
+          live phone preview on the right can render them once templates
+          start reading text_styles. */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');`}</style>
+
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <div>
@@ -269,6 +307,9 @@ export default function EditInvitationEditor({ coupleId, onClose }: { coupleId: 
           </CollapsibleUtility>
           <CollapsibleUtility label="Style & Colors" icon="🎨" expanded={expandedKey === ('style' as any)} onToggle={() => setExpandedKey(expandedKey === ('style' as any) ? null : ('style' as any))}>
             <StyleFields form={form} update={update} />
+          </CollapsibleUtility>
+          <CollapsibleUtility label="Text & Fonts" icon="Aa" expanded={expandedKey === ('textstyle' as any)} onToggle={() => setExpandedKey(expandedKey === ('textstyle' as any) ? null : ('textstyle' as any))}>
+            <TextStyleFields form={form} update={update} />
           </CollapsibleUtility>
 
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #eef0f3', padding: 16, marginTop: 14 }}>
@@ -644,6 +685,73 @@ function StyleFields({ form, update }: { form: any; update: (p: any) => void }) 
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ── Text & Fonts — per-element color + font override. Stored under
+// couple.text_styles = { [targetKey]: { color, font } }. A target with
+// no entry (or with font: 'inherit' and no color) simply uses the
+// template's own default styling — nothing breaks for invitations that
+// never open this panel. ──
+function TextStyleFields({ form, update }: { form: any; update: (p: any) => void }) {
+  const styles: Record<string, { color?: string; font?: string }> = form.text_styles || {}
+  const setStyle = (key: string, patch: { color?: string; font?: string }) => {
+    update({ text_styles: { ...styles, [key]: { ...(styles[key] || {}), ...patch } } })
+  }
+  const resetStyle = (key: string) => {
+    const next = { ...styles }
+    delete next[key]
+    update({ text_styles: next })
+  }
+
+  // Group targets so the panel reads top-to-bottom by section, matching
+  // the section list above rather than one long flat list.
+  const groups = Array.from(new Set(TEXT_STYLE_TARGETS.map(t => t.group)))
+
+  return (
+    <div style={{ paddingTop: 10 }}>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 14, lineHeight: 1.5 }}>
+        Pick a color and font for each text element individually. Leave a field on "Template Default" to keep the theme's original look.
+      </div>
+      <div style={{ display: 'grid', gap: 16 }}>
+        {groups.map(group => (
+          <div key={group}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 8 }}>{group.toUpperCase()}</div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {TEXT_STYLE_TARGETS.filter(t => t.group === group).map(t => {
+                const s = styles[t.key] || {}
+                const hasOverride = !!s.color || (!!s.font && s.font !== 'inherit')
+                return (
+                  <div key={t.key} style={{ background: '#f8fafc', borderRadius: 12, padding: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{t.label}</span>
+                      {hasOverride && (
+                        <button onClick={() => resetStyle(t.key)} style={{ fontSize: 10.5, color: '#94a3b8', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Reset</button>
+                      )}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="color"
+                        value={s.color || '#1e293b'}
+                        onChange={e => setStyle(t.key, { color: e.target.value })}
+                        style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0', padding: 0, cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <select
+                        value={s.font || 'inherit'}
+                        onChange={e => setStyle(t.key, { font: e.target.value })}
+                        style={{ ...inputStyle, background: '#fff', padding: '8px 12px', fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif" }}
+                      >
+                        {FONT_OPTIONS.map(f => <option key={f.key} value={f.key} style={{ fontFamily: f.key !== 'inherit' ? f.key : undefined }}>{f.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
