@@ -25,7 +25,7 @@ const DEFAULT_PALETTE = {
 // A missing key or a font of 'inherit' simply falls back to the
 // template default — nothing breaks for invitations that never touch
 // that panel. ──
-type TextStyleEntry = { color?: string; font?: string }
+type TextStyleEntry = { color?: string; font?: string; bold?: boolean }
 function useTextStyles(couple: any) {
   const map: Record<string, TextStyleEntry> = couple?.text_styles || {}
   return (key: string, fallback: React.CSSProperties = {}): React.CSSProperties => {
@@ -35,6 +35,7 @@ function useTextStyles(couple: any) {
       ...fallback,
       ...(s.color ? { color: s.color } : {}),
       ...(s.font && s.font !== 'inherit' ? { fontFamily: s.font } : {}),
+      ...(s.bold ? { fontWeight: 700 } : {}),
     }
   }
 }
@@ -784,7 +785,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
               )}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(240,249,251,1) 0%,rgba(13,46,58,0.15) 55%,rgba(13,46,58,0.4) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
+                <div style={{ ...ts('together_label'), fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(13,46,58,0.3)" }}>
                   <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                 </div>
