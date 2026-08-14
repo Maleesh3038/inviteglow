@@ -49,6 +49,36 @@ const TEMPLATE_NAMES: Record<string, string> = {
   'kanchi-vivaha': 'Kanchi Vivaha',
 }
 
+// ── Fonts available for per-element text styling. ──
+const FONT_OPTIONS = [
+  { key: 'inherit', label: 'Template Default' },
+  { key: "'Inter',sans-serif", label: 'Inter (Clean Sans)' },
+  { key: "'Cormorant Garamond',serif", label: 'Cormorant Garamond (Elegant Serif)' },
+  { key: "'Great Vibes',cursive", label: 'Great Vibes (Script)' },
+  { key: "'Playfair Display',serif", label: 'Playfair Display (Classic Serif)' },
+  { key: "'Dancing Script',cursive", label: 'Dancing Script (Casual Script)' },
+  { key: "'Montserrat',sans-serif", label: 'Montserrat (Modern Sans)' },
+  { key: "'Lora',serif", label: 'Lora (Soft Serif)' },
+  { key: "'EB Garamond',serif", label: 'EB Garamond (Traditional Serif)' },
+]
+
+// ── Which text elements can be individually styled. Stored as
+// couple.text_styles = { [key]: { color, font } }. Templates read this
+// object and fall back to their own default styling when a key is
+// absent — nothing breaks for invitations that never touch this panel. ──
+const TEXT_STYLE_TARGETS: { key: string; label: string }[] = [
+  { key: 'groom_name', label: "Groom's Name" },
+  { key: 'bride_name', label: "Bride's Name" },
+  { key: 'subtitle', label: 'Subtitle' },
+  { key: 'tagline', label: 'Tagline' },
+  { key: 'message', label: 'Family Invitation Message' },
+  { key: 'love_story', label: 'Love Story Text' },
+  { key: 'venue_name', label: 'Venue Name' },
+  { key: 'venue_address', label: 'Venue Address' },
+  { key: 'dress_code', label: 'Dress Code' },
+  { key: 'countdown_label', label: 'Countdown Label' },
+]
+
 async function uploadToStorage(file: File, folder: string): Promise<string | null> {
   const ext = file.name.split('.').pop()
   const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
@@ -537,6 +567,64 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
   )
 }
 
+// ── Text & Fonts — per-element color + font override. Stored under
+// couple.text_styles = { [targetKey]: { color, font } }. A target with
+// no entry (or with font: 'inherit' and no color) simply uses the
+// template's own default styling — nothing breaks for invitations that
+// never open this panel. ──
+function TextStyleFields({ styles, onChange, accent, border, textMuted, inputStyle, labelStyle }: {
+  styles: Record<string, { color?: string; font?: string }>
+  onChange: (next: Record<string, { color?: string; font?: string }>) => void
+  accent: string
+  border: string
+  textMuted: string
+  inputStyle: React.CSSProperties
+  labelStyle: React.CSSProperties
+}) {
+  const setStyle = (key: string, patch: { color?: string; font?: string }) => {
+    onChange({ ...styles, [key]: { ...(styles[key] || {}), ...patch } })
+  }
+  const resetStyle = (key: string) => {
+    const next = { ...styles }
+    delete next[key]
+    onChange(next)
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {TEXT_STYLE_TARGETS.map(t => {
+        const s = styles[t.key] || {}
+        const hasOverride = !!s.color || (!!s.font && s.font !== 'inherit')
+        return (
+          <div key={t.key} style={{ background: '#fff', borderRadius: 10, padding: 10, border: `1px solid ${border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{t.label}</span>
+              {hasOverride && (
+                <button type="button" onClick={() => resetStyle(t.key)} style={{ fontSize: 10.5, color: textMuted, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Reset</button>
+              )}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 8, alignItems: 'center' }}>
+              <input
+                type="color"
+                value={s.color || '#1e293b'}
+                onChange={e => setStyle(t.key, { color: e.target.value })}
+                style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${border}`, padding: 0, cursor: 'pointer', flexShrink: 0 }}
+              />
+              <select
+                value={s.font || 'inherit'}
+                onChange={e => setStyle(t.key, { font: e.target.value })}
+                style={{ ...inputStyle, padding: '8px 10px', fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif" }}
+              >
+                {FONT_OPTIONS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+              </select>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void }) {
   const panelTemplateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
   const PANEL_ACCENT = couple.custom_colors?.primary || panelTemplateDefault.primary
@@ -555,6 +643,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
   const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
   const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text || '')
+  const [textStyles, setTextStyles] = useState<Record<string, { color?: string; font?: string }>>((couple as any).text_styles || {})
 
   const [seatRows, setSeatRows] = useState<{ id: number; name: string; table: string }[]>(
     Object.entries(couple.seats || {}).map(([name, table], i) => ({ id: i, name, table }))
@@ -668,6 +757,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       groom_family: groomFamilyName || null,
       together_with_text: togetherWithText || null,
       family_invitation_text: familyInvitationText || null,
+      text_styles: textStyles,
     }).eq('id', couple.id)
 
     setSaving(false)
@@ -683,6 +773,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 
   return (
     <div style={{ background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 2px 20px rgba(15,23,42,0.06)' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');`}</style>
       <div style={{ fontSize: 16, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 4 }}>Edit Your Invitation</div>
       <div style={{ fontSize: 12, color: PANEL_TEXT_MUTED, marginBottom: 20 }}>Changes apply instantly to your live invitation link.</div>
 
@@ -817,6 +908,22 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           <label style={labelStyle}>Thank You Message</label>
           <textarea value={thankYouText} onChange={e => setThankYouText(e.target.value)} placeholder="Leave empty to use the default thank you message..." style={{ ...inputStyle, minHeight: 90, resize: 'vertical' as const }} />
         </div>
+      </div>
+
+      <div style={{ background: '#f5f3ff', borderRadius: 12, padding: 16, marginTop: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 4 }}>Customise Fonts</div>
+        <div style={{ fontSize: 11, color: '#6d28d9', marginBottom: 14, lineHeight: 1.5 }}>
+          Pick a color and font for each text element individually. Leave a field on "Template Default" to keep the theme's original look.
+        </div>
+        <TextStyleFields
+          styles={textStyles}
+          onChange={setTextStyles}
+          accent={PANEL_ACCENT}
+          border={PANEL_BORDER}
+          textMuted={PANEL_TEXT_MUTED}
+          inputStyle={inputStyle}
+          labelStyle={labelStyle}
+        />
       </div>
 
       {message && <div style={{ marginTop: 16, fontSize: 13, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
