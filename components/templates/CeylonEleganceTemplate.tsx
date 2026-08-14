@@ -544,11 +544,6 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const groomBank = { bank: (couple as any).groom_bank_name || '', accountName: (couple as any).groom_bank_account_name || '', accountNumber: (couple as any).groom_bank_account_number || '' }
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
 
-  // Two extra landscape photos (beyond the main gallery grid) for the wide
-  // double-photo strip — reuses the tail end of the gallery array so no
-  // new upload field is required.
-  const stripPhotos = W.gallery.slice(-2)
-
   // Alternating soft tint bands — gives each section its own subtle
   // background instead of everything blending into one long white column.
   const TINT_SAGE = "#eef2ee"
@@ -801,16 +796,6 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                   ))}
                 </div>
               </motion.div>
-            )}
-
-            {/* Wide double-photo strip */}
-            {stripPhotos.length === 2 && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                {stripPhotos.map((src, i) => (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={i} src={src} alt="" style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }} />
-                ))}
-              </div>
             )}
 
             {/* Guest Wishes Wall — warm tint band */}
