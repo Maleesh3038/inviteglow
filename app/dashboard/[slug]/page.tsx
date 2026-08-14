@@ -63,20 +63,22 @@ const FONT_OPTIONS = [
 ]
 
 // ── Which text elements can be individually styled. Stored as
-// couple.text_styles = { [key]: { color, font } }. Templates read this
-// object and fall back to their own default styling when a key is
-// absent — nothing breaks for invitations that never touch this panel. ──
-const TEXT_STYLE_TARGETS: { key: string; label: string }[] = [
-  { key: 'groom_name', label: "Groom's Name" },
-  { key: 'bride_name', label: "Bride's Name" },
-  { key: 'subtitle', label: 'Subtitle' },
-  { key: 'tagline', label: 'Tagline' },
-  { key: 'message', label: 'Family Invitation Message' },
-  { key: 'love_story', label: 'Love Story Text' },
-  { key: 'venue_name', label: 'Venue Name' },
-  { key: 'venue_address', label: 'Venue Address' },
-  { key: 'dress_code', label: 'Dress Code' },
-  { key: 'countdown_label', label: 'Countdown Label' },
+// couple.text_styles = { [key]: { color, font, bold } }. Templates read
+// this object and fall back to their own default styling when a key is
+// absent — nothing breaks for invitations that never touch this panel.
+// Labels + example text are written in plain terms (not template jargon)
+// so it's clear what each one actually controls. ──
+const TEXT_STYLE_TARGETS: { key: string; label: string; example: (c: { bride: string; groom: string; venue: string; venue_address: string }) => string }[] = [
+  { key: 'groom_name', label: "Groom's Name", example: c => c.groom || 'Roshan' },
+  { key: 'bride_name', label: "Bride's Name", example: c => c.bride || 'Amara' },
+  { key: 'subtitle', label: 'Welcome Line (shown above the names, e.g. "You Are Invited")', example: () => 'You Are Invited' },
+  { key: 'tagline', label: 'Short Quote Under the Names', example: () => 'Where the tide meets eternity, we begin our forever' },
+  { key: 'message', label: 'Family Invitation Message', example: () => 'With the blessings of our families, we joyfully invite you to celebrate...' },
+  { key: 'love_story', label: 'Love Story Text', example: () => 'Our journey began on a rainy afternoon in Colombo...' },
+  { key: 'venue_name', label: 'Venue Name', example: c => c.venue || 'Hotel Green Court' },
+  { key: 'venue_address', label: 'Venue Address', example: c => c.venue_address || 'Janadhipathi Mawatha, Colombo' },
+  { key: 'dress_code', label: 'Dress Code Text', example: () => 'Formal / No. 1 Ceremonial Dress' },
+  { key: 'countdown_label', label: 'Countdown Heading', example: () => 'Counting Down to Our Big Day' },
 ]
 
 async function uploadToStorage(file: File, folder: string): Promise<string | null> {
@@ -567,21 +569,19 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
   )
 }
 
-// ── Text & Fonts — per-element color + font override. Stored under
-// couple.text_styles = { [targetKey]: { color, font } }. A target with
-// no entry (or with font: 'inherit' and no color) simply uses the
-// template's own default styling — nothing breaks for invitations that
-// never open this panel. ──
-function TextStyleFields({ styles, onChange, accent, border, textMuted, inputStyle, labelStyle }: {
-  styles: Record<string, { color?: string; font?: string }>
-  onChange: (next: Record<string, { color?: string; font?: string }>) => void
-  accent: string
+// ── Text & Fonts — per-element color + font + bold override. Stored
+// under couple.text_styles = { [targetKey]: { color, font, bold } }. A
+// target with no entry simply uses the template's own default styling —
+// nothing breaks for invitations that never open this panel. ──
+function TextStyleFields({ styles, onChange, border, textMuted, inputStyle, previewData }: {
+  styles: Record<string, { color?: string; font?: string; bold?: boolean }>
+  onChange: (next: Record<string, { color?: string; font?: string; bold?: boolean }>) => void
   border: string
   textMuted: string
   inputStyle: React.CSSProperties
-  labelStyle: React.CSSProperties
+  previewData: { bride: string; groom: string; venue: string; venue_address: string }
 }) {
-  const setStyle = (key: string, patch: { color?: string; font?: string }) => {
+  const setStyle = (key: string, patch: { color?: string; font?: string; bold?: boolean }) => {
     onChange({ ...styles, [key]: { ...(styles[key] || {}), ...patch } })
   }
   const resetStyle = (key: string) => {
@@ -591,33 +591,65 @@ function TextStyleFields({ styles, onChange, accent, border, textMuted, inputSty
   }
 
   return (
-    <div style={{ display: 'grid', gap: 10 }}>
+    <div style={{ display: 'grid', gap: 12 }}>
       {TEXT_STYLE_TARGETS.map(t => {
         const s = styles[t.key] || {}
-        const hasOverride = !!s.color || (!!s.font && s.font !== 'inherit')
+        const hasOverride = !!s.color || (!!s.font && s.font !== 'inherit') || !!s.bold
+        const previewStyle: React.CSSProperties = {
+          fontSize: 13.5,
+          color: s.color || '#334155',
+          fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif",
+          fontWeight: s.bold ? 700 : 400,
+        }
         return (
-          <div key={t.key} style={{ background: '#fff', borderRadius: 10, padding: 10, border: `1px solid ${border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>{t.label}</span>
+          <div key={t.key} style={{ background: '#fff', borderRadius: 12, padding: 12, border: `1px solid ${border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#334155', lineHeight: 1.4 }}>{t.label}</span>
               {hasOverride && (
-                <button type="button" onClick={() => resetStyle(t.key)} style={{ fontSize: 10.5, color: textMuted, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Reset</button>
+                <button type="button" onClick={() => resetStyle(t.key)} style={{ fontSize: 10.5, color: textMuted, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline', whiteSpace: 'nowrap', flexShrink: 0 }}>Reset</button>
               )}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 8, alignItems: 'center' }}>
-              <input
-                type="color"
-                value={s.color || '#1e293b'}
-                onChange={e => setStyle(t.key, { color: e.target.value })}
-                style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${border}`, padding: 0, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <select
-                value={s.font || 'inherit'}
-                onChange={e => setStyle(t.key, { font: e.target.value })}
-                style={{ ...inputStyle, padding: '8px 10px', fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif" }}
-              >
-                {FONT_OPTIONS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
-              </select>
+
+            {/* Live preview so it's obvious what you're changing */}
+            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+              <div style={previewStyle}>{t.example(previewData)}</div>
             </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: textMuted, marginBottom: 4 }}>COLOR</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    type="color"
+                    value={s.color || '#1e293b'}
+                    onChange={e => setStyle(t.key, { color: e.target.value })}
+                    style={{ width: 38, height: 38, borderRadius: 8, border: `1px solid ${border}`, padding: 0, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <input
+                    value={s.color || ''}
+                    onChange={e => setStyle(t.key, { color: e.target.value })}
+                    placeholder="Default"
+                    style={{ ...inputStyle, padding: '8px 10px', fontSize: 12 }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: textMuted, marginBottom: 4 }}>FONT</div>
+                <select
+                  value={s.font || 'inherit'}
+                  onChange={e => setStyle(t.key, { font: e.target.value })}
+                  style={{ ...inputStyle, padding: '8px 10px', height: 38, fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif" }}
+                >
+                  {FONT_OPTIONS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: 'fit-content' }}>
+              <input type="checkbox" checked={!!s.bold} onChange={e => setStyle(t.key, { bold: e.target.checked })}
+                style={{ width: 16, height: 16, cursor: 'pointer' }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Bold</span>
+            </label>
           </div>
         )
       })}
@@ -643,7 +675,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
   const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
   const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text || '')
-  const [textStyles, setTextStyles] = useState<Record<string, { color?: string; font?: string }>>((couple as any).text_styles || {})
+  const [textStyles, setTextStyles] = useState<Record<string, { color?: string; font?: string; bold?: boolean }>>((couple as any).text_styles || {})
 
   const [seatRows, setSeatRows] = useState<{ id: number; name: string; table: string }[]>(
     Object.entries(couple.seats || {}).map(([name, table], i) => ({ id: i, name, table }))
@@ -913,16 +945,15 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       <div style={{ background: '#f5f3ff', borderRadius: 12, padding: 16, marginTop: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 4 }}>Customise Fonts</div>
         <div style={{ fontSize: 11, color: '#6d28d9', marginBottom: 14, lineHeight: 1.5 }}>
-          Pick a color and font for each text element individually. Leave a field on "Template Default" to keep the theme's original look.
+          For each part of your invitation below: pick a color, pick a font, or make it bold. Each box shows a live preview so you can see exactly what changes. Leave anything untouched to keep the template's original look.
         </div>
         <TextStyleFields
           styles={textStyles}
           onChange={setTextStyles}
-          accent={PANEL_ACCENT}
           border={PANEL_BORDER}
           textMuted={PANEL_TEXT_MUTED}
           inputStyle={inputStyle}
-          labelStyle={labelStyle}
+          previewData={{ bride: couple.bride, groom: couple.groom, venue: venue, venue_address: venueAddress }}
         />
       </div>
 
