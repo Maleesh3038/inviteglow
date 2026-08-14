@@ -937,10 +937,10 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>With all due respect, you may share your gifts through the following accounts.</div>
                 <div style={{ display: "grid", gap: 12 }}>
                   {brideBank.accountNumber && (
-                    <GiftAccountCard label={`${W.bride}'s Family`} bankName={brideBank.bank} accountName={brideBank.accountName} accountNumber={brideBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
+                    <GiftAccountCard label={W.bride} bankName={brideBank.bank} accountName={brideBank.accountName} accountNumber={brideBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
                   )}
                   {groomBank.accountNumber && (
-                    <GiftAccountCard label={`${W.groom}'s Family`} bankName={groomBank.bank} accountName={groomBank.accountName} accountNumber={groomBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
+                    <GiftAccountCard label={W.groom} bankName={groomBank.bank} accountName={groomBank.accountName} accountNumber={groomBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
                   )}
                 </div>
               </motion.div>
