@@ -503,6 +503,87 @@ function EventIconBadge({ children, primary, primaryLight }: { children: React.R
   )
 }
 
+// ── Floating bottom nav bar — quick jump to key sections, plus a raised
+// music toggle on the right. Fixed to the bottom of the phone viewport. ──
+function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
+  primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+}) {
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    a.addEventListener('play', onPlay)
+    a.addEventListener('pause', onPause)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
+  }, [audioRef])
+
+  const toggleMusic = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.paused ? a.play().catch(() => {}) : a.pause()
+  }
+
+  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
+    <button key={key} onClick={onClick} aria-label={label} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
+      border: 'none', cursor: 'pointer', color: dark, opacity: 0.8, padding: '2px 4px',
+    }}>
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+      <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
+    </button>
+  )
+
+  return (
+    <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
+        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(63,74,69,0.08)',
+        boxShadow: '0 10px 30px rgba(63,74,69,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
+      }}>
+        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {iconBtn(() => scrollToId('rsvp'), 'RSVP', <><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" /></>, 'rsvp')}
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8, textDecoration: 'none', padding: '2px 4px' }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span style={{ fontSize: 8 }}>Location</span>
+          </a>
+        )}
+
+        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
+          position: 'absolute', right: 4, top: -16,
+          width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
+          background: `linear-gradient(135deg,${primary},${primaryLight})`, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 6px 16px rgba(63,74,69,0.35)',
+        }}>
+          {playing ? (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
+            </svg>
+          ) : (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9l5 6M21.5 9l-5 6" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function CeylonEleganceTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#faf6ee" }} />}>
@@ -719,7 +800,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
             {/* Countdown card — warm tint band behind a floating white card */}
             {sv.countdown && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+              <motion.div id="savethedate" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
                 style={{ background: TINT_WARM, padding: "1.8rem 1.4rem" }}>
                 <SectionEyebrow icon="📅" label="Save the Date" color={PRIMARY} labelStyle={ts('countdown_label')} />
                 <div style={{ background: "#fff", borderRadius: 18, border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.3rem 1.1rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)", marginTop: 10 }}>
@@ -847,25 +928,6 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Timeline — sage tint band */}
-            {sv.timeline && W.timeline.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="🕊️" label="Our Celebration" color={PRIMARY} />
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>The Wedding Lineup</div>
-                <div style={{ background: "#fff", borderRadius: 16, padding: "16px 16px 8px 26px", position: "relative", boxShadow: "0 4px 16px rgba(63,74,69,0.05)" }}>
-                  <div style={{ position: "absolute", left: 14, top: 16, bottom: 16, width: 1, background: `${PRIMARY_LIGHT}` }} />
-                  {W.timeline.map((t, i) => (
-                    <div key={i} style={{ position: "relative", padding: "0 0 16px 6px" }}>
-                      <div style={{ position: "absolute", left: -12, top: 3, width: 9, height: 9, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
-                      <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
-                      <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
             {/* Send Gift — warm tint band */}
             {giftEnabled && hasGiftDetails && (
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
@@ -886,7 +948,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
             {/* Gallery — sage tint band, masonry */}
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+              <motion.div id="gallery" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
                 style={{ background: TINT_SAGE, padding: "2rem 1.5rem" }}>
                 <SectionEyebrow icon="📸" label="Our Story" color={PRIMARY} />
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>Our Moments</div>
@@ -903,7 +965,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
             {/* Guest Wishes Wall — warm tint band */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+              <motion.div id="wishes" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
                 style={{ background: TINT_WARM, padding: "2rem 1.5rem" }}>
                 <SectionEyebrow icon="💌" label="With Love" color={PRIMARY} />
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send Your Wishes</div>
@@ -953,7 +1015,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </div>
             </div>
 
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
+            <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c4b48a" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
@@ -961,6 +1023,15 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
+      {opened && (
+        <BottomNavBar
+          primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK}
+          mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
+          hasWishes={(couple as any).enable_guest_wishes ?? false}
+          hasGallery={sv.gallery && W.gallery.length > 0}
+          audioRef={audioRef}
+        />
+      )}
     </div>
   )
 }
