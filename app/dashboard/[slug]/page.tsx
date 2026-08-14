@@ -77,6 +77,7 @@ const TEXT_STYLE_TARGETS: { key: string; label: string; example: (c: { bride: st
   { key: 'love_story', label: 'Love Story Text', example: () => 'Our journey began on a rainy afternoon in Colombo...' },
   { key: 'venue_name', label: 'Venue Name', example: c => c.venue || 'Hotel Green Court' },
   { key: 'venue_address', label: 'Venue Address', example: c => c.venue_address || 'Janadhipathi Mawatha, Colombo' },
+  { key: 'together_label', label: '"Together With Their Families" Line (shown above the names once the invitation is opened)', example: () => 'Together with their families' },
   { key: 'dress_code', label: 'Dress Code Text', example: () => 'Formal / No. 1 Ceremonial Dress' },
   { key: 'countdown_label', label: 'Countdown Heading', example: () => 'Counting Down to Our Big Day' },
 ]
