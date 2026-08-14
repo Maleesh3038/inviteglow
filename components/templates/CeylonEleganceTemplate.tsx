@@ -474,6 +474,35 @@ function SectionEyebrow({ icon, label, color, labelStyle }: { icon: string; labe
   )
 }
 
+// ── Subtle orchid silhouette — a small nod to Singapore (home of the
+// Vanda Miss Joaquim, the national flower), used as a soft corner motif
+// rather than anything literal or touristy. ──
+function OrchidMotif({ color, size = 80 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <g stroke={color} strokeWidth="1.4" opacity="0.9">
+        <path d="M50 50 C40 30, 20 25, 15 10 C30 15, 40 30, 50 50Z" />
+        <path d="M50 50 C60 30, 80 25, 85 10 C70 15, 60 30, 50 50Z" />
+        <path d="M50 50 C35 55, 20 65, 10 80 C25 78, 40 68, 50 50Z" />
+        <path d="M50 50 C65 55, 80 65, 90 80 C75 78, 60 68, 50 50Z" />
+        <path d="M50 50 C48 66, 48 85, 50 96 C55 85, 55 66, 50 50Z" />
+      </g>
+      <circle cx="50" cy="50" r="4.5" fill={color} opacity="0.75" />
+    </svg>
+  )
+}
+
+// ── Small icon-badge used inside the modern wedding ceremony card ──
+function EventIconBadge({ children, primary, primaryLight }: { children: React.ReactNode; primary: string; primaryLight: string }) {
+  return (
+    <div style={{
+      width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+      background: `linear-gradient(135deg,${primary}1f,${primaryLight}33)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
+    }}>{children}</div>
+  )
+}
+
 export default function CeylonEleganceTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#faf6ee" }} />}>
@@ -543,6 +572,11 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const brideBank = { bank: (couple as any).bride_bank_name || '', accountName: (couple as any).bride_bank_account_name || '', accountNumber: (couple as any).bride_bank_account_number || '' }
   const groomBank = { bank: (couple as any).groom_bank_name || '', accountName: (couple as any).groom_bank_account_name || '', accountNumber: (couple as any).groom_bank_account_number || '' }
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
+
+  // If the couple's timeline includes a "Poruwa" item, fold its time into
+  // the Wedding Ceremony card below instead of only showing it separately
+  // in the Wedding Lineup section further down.
+  const poruwaItem = W.timeline.find(t => t.event.toLowerCase().includes('poruwa'))
 
   // Alternating soft tint bands — gives each section its own subtle
   // background instead of everything blending into one long white column.
@@ -700,6 +734,85 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 const evDate = new Date(ev.date)
                 const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
                 const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
+
+                if (ev.key === 'wedding') {
+                  return (
+                    <motion.div key={ev.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                      style={{
+                        position: 'relative', overflow: 'hidden', borderRadius: 20, padding: "24px 20px", marginBottom: 12,
+                        background: `linear-gradient(165deg, #fff 0%, ${PRIMARY_LIGHT}14 100%)`,
+                        border: `1px solid ${PRIMARY_LIGHT}`, boxShadow: `0 8px 26px ${PRIMARY}1f`,
+                      }}>
+                      <div style={{ position: 'absolute', top: -12, right: -12, opacity: 0.14, pointerEvents: 'none' }}>
+                        <OrchidMotif color={PRIMARY} size={92} />
+                      </div>
+
+                      <div style={{ position: 'relative', textAlign: 'center', marginBottom: 16 }}>
+                        <div style={{
+                          width: 46, height: 46, borderRadius: '50%', margin: '0 auto 10px',
+                          background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
+                          boxShadow: `0 6px 16px ${PRIMARY}44`,
+                        }}>👰</div>
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.25rem', color: DARK }}>{ev.label}</div>
+                        {poruwaItem && (
+                          <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8,
+                            padding: '4px 14px', borderRadius: 100, background: `${PRIMARY}14`,
+                            fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: PRIMARY, fontWeight: 700,
+                          }}>✦ Traditional Poruwa Ceremony</div>
+                        )}
+                      </div>
+
+                      <div style={{ position: 'relative', display: 'grid', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <EventIconBadge primary={PRIMARY} primaryLight={PRIMARY_LIGHT}>📅</EventIconBadge>
+                          <div>
+                            <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>Date</div>
+                            <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>{evDateDisplay}</div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <EventIconBadge primary={PRIMARY} primaryLight={PRIMARY_LIGHT}>⏰</EventIconBadge>
+                          <div>
+                            <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>Time</div>
+                            <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>{evTimeDisplay}</div>
+                          </div>
+                        </div>
+
+                        {poruwaItem && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 42, marginTop: -4 }}>
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: PRIMARY, flexShrink: 0 }} />
+                            <div style={{ fontSize: 11.5, color: MUTED }}>Poruwa rites begin at <strong style={{ color: DARK }}>{poruwaItem.time}</strong></div>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <EventIconBadge primary={PRIMARY} primaryLight={PRIMARY_LIGHT}>📍</EventIconBadge>
+                          <div>
+                            <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>Venue</div>
+                            <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>
+                              <span style={ts('venue_name')}>{ev.venue}</span>{ev.venue_address ? <span style={{ ...ts('venue_address'), fontWeight: 400, color: MUTED }}>{`, ${ev.venue_address}`}</span> : null}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {ev.maps_url && (
+                        <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{
+                          position: 'relative', display: 'block', textAlign: 'center', marginTop: 18,
+                          background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: '#fff',
+                          borderRadius: 100, padding: '10px 18px', fontSize: 10.5, letterSpacing: '0.13em',
+                          textTransform: 'uppercase', textDecoration: 'none', fontWeight: 700, boxShadow: `0 6px 16px ${PRIMARY}33`,
+                        }}>
+                          📍 View Location
+                        </a>
+                      )}
+                    </motion.div>
+                  )
+                }
+
                 return (
                   <motion.div key={ev.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                     style={{ border: `1px solid ${PRIMARY}40`, borderRadius: 12, padding: "14px 16px", marginBottom: 12, background: "#fff" }}>
