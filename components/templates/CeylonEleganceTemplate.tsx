@@ -749,12 +749,6 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
                       <div style={{ position: 'relative', textAlign: 'center', marginBottom: 18 }}>
                         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.25rem', color: DARK }}>{ev.label}</div>
-                        {poruwaItem && (
-                          <>
-                            <div style={{ width: 26, height: 1, background: PRIMARY_LIGHT, margin: '10px auto' }} />
-                            <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: PRIMARY, lineHeight: 1 }}>Poruwa Ceremony</div>
-                          </>
-                        )}
                       </div>
 
                       <div style={{ position: 'relative', display: 'grid', gap: 12 }}>
@@ -775,9 +769,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                         </div>
 
                         {poruwaItem && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 42, marginTop: -4 }}>
-                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: PRIMARY, flexShrink: 0 }} />
-                            <div style={{ fontSize: 11.5, color: MUTED }}>Poruwa rites begin at <strong style={{ color: DARK }}>{poruwaItem.time}</strong></div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <EventIconBadge primary={PRIMARY} primaryLight={PRIMARY_LIGHT}>🪷</EventIconBadge>
+                            <div>
+                              <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>Poruwa Ceremony</div>
+                              <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>{poruwaItem.time} Onwards</div>
+                            </div>
                           </div>
                         )}
 
