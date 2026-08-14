@@ -21,6 +21,26 @@ const DEFAULT_PALETTE = {
   muted: "#a89a90",
 }
 
+// ── Per-element text style overrides. Reads couple.text_styles (set from
+// the "Customise Fonts" panel in the couple's dashboard) and merges a
+// color/font/bold override on top of the template's own default styling.
+// A missing key simply falls back to the template default — nothing
+// breaks for invitations that never touch that panel. ──
+type TextStyleEntry = { color?: string; font?: string; bold?: boolean }
+function useTextStyles(couple: any) {
+  const map: Record<string, TextStyleEntry> = couple?.text_styles || {}
+  return (key: string, fallback: React.CSSProperties = {}): React.CSSProperties => {
+    const s = map[key]
+    if (!s) return fallback
+    return {
+      ...fallback,
+      ...(s.color ? { color: s.color } : {}),
+      ...(s.font && s.font !== 'inherit' ? { fontFamily: s.font } : {}),
+      ...(s.bold ? { fontWeight: 700 } : {}),
+    }
+  }
+}
+
 // ── Decorative flourish divider — the recurring signature motif of this
 // template, used instead of plain lines to separate sections. ──
 function OrnateDivider({ color, size = 22 }: { color: string; size?: number }) {
@@ -445,11 +465,11 @@ function GiftAccountCard({ label, bankName, accountName, accountNumber, primary,
 }
 
 // ── Small icon-badge eyebrow used to visually anchor each section ──
-function SectionEyebrow({ icon, label, color }: { icon: string; label: string; color: string }) {
+function SectionEyebrow({ icon, label, color, labelStyle }: { icon: string; label: string; color: string; labelStyle?: React.CSSProperties }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 8 }}>
       <span style={{ fontSize: 13, lineHeight: 1 }}>{icon}</span>
-      <span style={{ fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color, fontWeight: 700 }}>{label}</span>
+      <span style={{ fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color, fontWeight: 700, ...labelStyle }}>{label}</span>
     </div>
   )
 }
@@ -470,6 +490,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const ts = useTextStyles(couple)
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
@@ -536,7 +557,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #c4b48a; }
       `}</style>
@@ -570,10 +591,10 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Wedding Invitation</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
+                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Wedding Invitation</div>
+                <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
                 <div style={{ margin: "6px 0" }}><OrnateDivider color={PRIMARY_LIGHT} size={18} /></div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
+                <div style={{ ...ts('groom_name'), fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
 
                 {guestName && (
                   <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "1.2rem 0 0.3rem" }}>Dear</div>
@@ -613,7 +634,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${DARK} 0%,rgba(61,42,26,0.1) 60%,rgba(61,42,26,0.3) 100%)` }} />
               <div style={{ position: "absolute", bottom: 40, left: 0, right: 0, padding: "0 1.5rem", textAlign: "center" }}>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2rem,7vw,2.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
-                  {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
+                  <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 12 }}>
                   <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: DARK, borderRadius: 100, padding: "9px 20px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 700 }}>RSVP</a>
@@ -631,7 +652,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 boxShadow: "0 -10px 24px rgba(63,74,69,0.1)",
               }}>
               <OrnateDivider color={PRIMARY} />
-              <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, marginTop: 16, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 320, margin: "16px auto 0" }}>
+              <div style={{ ...ts('message'), fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, marginTop: 16, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 320, margin: "16px auto 0" }}>
                 {(couple as any).family_invitation_text ||
                   "With God's grace, and our parents' blessings, the day has come when we are taking a step forward to begin a wonderful life together!"}
               </div>
@@ -649,7 +670,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                       <img src={W.groomPhoto} alt={W.groom} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
                     </div>
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: DARK, marginBottom: 6 }}>{W.groom}</div>
+                  <div style={{ ...ts('groom_name'), fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: DARK, marginBottom: 6 }}>{W.groom}</div>
                   {W.groomFamilyName && <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.6 }}>son of<br /><strong style={{ color: DARK }}>{W.groomFamilyName}</strong></div>}
                 </div>
                 <div style={{ textAlign: "center" }}>
@@ -659,7 +680,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                       <img src={W.bridePhoto} alt={W.bride} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
                     </div>
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: DARK, marginBottom: 6 }}>{W.bride}</div>
+                  <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: "1.9rem", color: DARK, marginBottom: 6 }}>{W.bride}</div>
                   {W.brideFamilyName && <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.6 }}>daughter of<br /><strong style={{ color: DARK }}>{W.brideFamilyName}</strong></div>}
                 </div>
               </div>
@@ -671,7 +692,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             {sv.countdown && (
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
                 style={{ background: TINT_WARM, padding: "1.8rem 1.4rem" }}>
-                <SectionEyebrow icon="📅" label="Save the Date" color={PRIMARY} />
+                <SectionEyebrow icon="📅" label="Save the Date" color={PRIMARY} labelStyle={ts('countdown_label')} />
                 <div style={{ background: "#fff", borderRadius: 18, border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.3rem 1.1rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)", marginTop: 10 }}>
                   <Countdown targetDate={W.date} dark={DARK} />
                 </div>
@@ -693,7 +714,9 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                     <div style={{ display: "grid", gap: 6 }}>
                       <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>📅</span> {evDateDisplay}</div>
                       <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>⏰</span> {evTimeDisplay}</div>
-                      <div style={{ fontSize: 12.5, color: DARK }}><span style={{ opacity: 0.6 }}>📍</span> {ev.venue}{ev.venue_address ? `, ${ev.venue_address}` : ''}</div>
+                      <div style={{ fontSize: 12.5, color: DARK }}>
+                        <span style={{ opacity: 0.6 }}>📍</span> <span style={ts('venue_name')}>{ev.venue}</span>{ev.venue_address ? <span style={ts('venue_address')}>{`, ${ev.venue_address}`}</span> : null}
+                      </div>
                     </div>
                     {ev.maps_url && (
                       <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", marginTop: 12, background: `${PRIMARY}1a`, borderRadius: 100, padding: "8px 18px", fontSize: 10.5, letterSpacing: "0.13em", textTransform: "uppercase", color: PRIMARY, textDecoration: "none", fontWeight: 700 }}>
