@@ -747,20 +747,13 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                         <OrchidMotif color={PRIMARY} size={92} />
                       </div>
 
-                      <div style={{ position: 'relative', textAlign: 'center', marginBottom: 16 }}>
-                        <div style={{
-                          width: 46, height: 46, borderRadius: '50%', margin: '0 auto 10px',
-                          background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
-                          boxShadow: `0 6px 16px ${PRIMARY}44`,
-                        }}>👰</div>
+                      <div style={{ position: 'relative', textAlign: 'center', marginBottom: 18 }}>
                         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.25rem', color: DARK }}>{ev.label}</div>
                         {poruwaItem && (
-                          <div style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8,
-                            padding: '4px 14px', borderRadius: 100, background: `${PRIMARY}14`,
-                            fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: PRIMARY, fontWeight: 700,
-                          }}>✦ Traditional Poruwa Ceremony</div>
+                          <>
+                            <div style={{ width: 26, height: 1, background: PRIMARY_LIGHT, margin: '10px auto' }} />
+                            <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: PRIMARY, lineHeight: 1 }}>Poruwa Ceremony</div>
+                          </>
                         )}
                       </div>
 
