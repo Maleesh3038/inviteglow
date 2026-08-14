@@ -910,24 +910,6 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             {/* RSVP */}
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
-            {/* Family names — warm tint band */}
-            {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_WARM, padding: "2rem 1.5rem", textAlign: "center" }}>
-                <SectionEyebrow icon="💌" label="With Love" color={PRIMARY} />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 10, color: MUTED, marginBottom: 4 }}>Groom's Family</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: DARK, fontSize: 14 }}>{W.groomFamilyName || '—'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: MUTED, marginBottom: 4 }}>Bride's Family</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: DARK, fontSize: 14 }}>{W.brideFamilyName || '—'}</div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
             {/* Send Gift — warm tint band */}
             {giftEnabled && hasGiftDetails && (
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
