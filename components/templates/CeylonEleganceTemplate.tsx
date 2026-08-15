@@ -597,6 +597,10 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const guestName = searchParams?.get('name') || ''
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
+  // Cover only renders once the intro screen has fully finished exiting
+  // (not just started), so there's never a moment where the intro's
+  // "Dear [Name]" text and the cover's "Open Invitation" text overlap.
+  const [introGone, setIntroGone] = useState(!(guestName && introEnabled))
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
@@ -709,7 +713,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
         input::placeholder { color: #c4b48a; }
       `}</style>
 
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => setIntroGone(true)}>
         {showIntro && guestName && (
           <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
         )}
@@ -719,7 +723,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
         {/* ══ COVER ══ */}
         <AnimatePresence>
-          {!opened && (
+          {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
