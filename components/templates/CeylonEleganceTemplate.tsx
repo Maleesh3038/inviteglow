@@ -721,16 +721,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {coverVideoUrl ? (
-                <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
-                  <source src={coverVideoUrl} type="video/mp4" />
-                </video>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              )}
+              {/* Cover always shows the static couple photo — the video
+                  (if one is uploaded) only starts playing once the guest
+                  taps "Open Invitation", inside the hero section below. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(63,74,69,0.45) 0%, rgba(63,74,69,0.15) 35%, rgba(63,74,69,0.3) 65%, rgba(63,74,69,0.72) 100%)` }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
@@ -763,12 +759,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
         {/* ══ INVITATION ══ */}
         {opened && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+          <motion.div initial={false} animate={{ opacity: 1 }}>
 
             {/* Hero — kept tall so the video/photo stays the visual focus */}
             <div style={{ position: "relative", height: 580, overflow: "hidden", zIndex: 1 }}>
               {coverVideoUrl ? (
-                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
+                <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
               ) : (
