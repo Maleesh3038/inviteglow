@@ -659,28 +659,31 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
   // Hero slideshow — when no cover video is set, cycle through the
   // couple's gallery photos with a crossfade instead of showing a single
-  // static image. Falls back to just the couple photo if no gallery exists.
-  const heroImages = W.gallery.length > 0 ? W.gallery : [W.couplePhoto]
+  // static image. The cover screen's photo (W.couplePhoto) is always
+  // frame #1 here, so opening the invitation continues on the exact same
+  // photo instead of jumping straight to a different one — the slideshow
+  // only starts cycling into the rest of the gallery after that.
+  const heroImages = [W.couplePhoto, ...W.gallery.filter(url => url !== W.couplePhoto)]
   useEffect(() => {
-    if (coverVideoUrl || heroImages.length <= 1) return
+    if (!opened || coverVideoUrl || heroImages.length <= 1) return
     const id = setInterval(() => {
       setHeroSlideStarted(true)
       setHeroSlideIndex(i => (i + 1) % heroImages.length)
     }, 4500)
     return () => clearInterval(id)
-  }, [coverVideoUrl, heroImages.length])
+  }, [opened, coverVideoUrl, heroImages.length])
 
   // Footer slideshow — cycles through every uploaded gallery photo every
   // 3 seconds. Falls back to the couple photo if no gallery exists.
   const footerImages = W.gallery.length > 0 ? W.gallery : [W.couplePhoto]
   useEffect(() => {
-    if (footerImages.length <= 1) return
+    if (!opened || footerImages.length <= 1) return
     const id = setInterval(() => {
       setFooterSlideStarted(true)
       setFooterSlideIndex(i => (i + 1) % footerImages.length)
     }, 3000)
     return () => clearInterval(id)
-  }, [footerImages.length])
+  }, [opened, footerImages.length])
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
 
   // If the couple's timeline includes a "Poruwa" item, fold its time into
