@@ -599,6 +599,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const ts = useTextStyles(couple)
 
@@ -652,6 +653,16 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const giftEnabled = (couple as any).enable_gift_section ?? true
   const brideBank = { bank: (couple as any).bride_bank_name || '', accountName: (couple as any).bride_bank_account_name || '', accountNumber: (couple as any).bride_bank_account_number || '' }
   const groomBank = { bank: (couple as any).groom_bank_name || '', accountName: (couple as any).groom_bank_account_name || '', accountNumber: (couple as any).groom_bank_account_number || '' }
+
+  // Hero slideshow — when no cover video is set, cycle through the
+  // couple's gallery photos with a crossfade instead of showing a single
+  // static image. Falls back to just the couple photo if no gallery exists.
+  const heroImages = W.gallery.length > 0 ? W.gallery : [W.couplePhoto]
+  useEffect(() => {
+    if (coverVideoUrl || heroImages.length <= 1) return
+    const id = setInterval(() => setHeroSlideIndex(i => (i + 1) % heroImages.length), 4500)
+    return () => clearInterval(id)
+  }, [coverVideoUrl, heroImages.length])
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
 
   // If the couple's timeline includes a "Poruwa" item, fold its time into
@@ -740,9 +751,18 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
               ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                <AnimatePresence mode="sync">
+                  <motion.img
+                    key={heroSlideIndex}
+                    src={heroImages[heroSlideIndex]}
+                    alt={`${W.bride} and ${W.groom}`}
+                    initial={{ opacity: 0, scale: 1.04 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.1, ease: "easeInOut" }}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                </AnimatePresence>
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${DARK} 0%,rgba(61,42,26,0.1) 60%,rgba(61,42,26,0.3) 100%)` }} />
               <div style={{ position: "absolute", bottom: 40, left: 0, right: 0, padding: "0 1.5rem", textAlign: "center" }}>
@@ -939,10 +959,15 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 18 }}>Our Moments</div>
                 <div style={{ columnCount: 2, columnGap: 8 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ breakInside: "avoid", marginBottom: 8, borderRadius: 12, overflow: "hidden", background: `${PRIMARY_LIGHT}33` }}>
+                    <motion.div key={i}
+                      initial={{ opacity: 0, scale: 0.85, y: 14 }}
+                      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-40px" }}
+                      transition={{ duration: 0.45, delay: (i % 6) * 0.08, ease: "easeOut" }}
+                      style={{ breakInside: "avoid", marginBottom: 8, borderRadius: 12, overflow: "hidden", background: `${PRIMARY_LIGHT}33` }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => (e.currentTarget.closest('div') as HTMLElement).style.display = "none"} />
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
