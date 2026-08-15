@@ -731,7 +731,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 70% 55% at 50% 46%, rgba(10,14,12,0.55), transparent 72%)` }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem", transform: "translateX(-7%)" }}>
 
                 <div style={{
                   ...ts('subtitle'), display: "inline-block", fontSize: 9.5, letterSpacing: "0.32em", textTransform: "uppercase", color: "rgba(255,255,255,0.92)",
