@@ -600,6 +600,9 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [heroSlideIndex, setHeroSlideIndex] = useState(0)
+  const [footerSlideIndex, setFooterSlideIndex] = useState(0)
+  const [heroSlideStarted, setHeroSlideStarted] = useState(false)
+  const [footerSlideStarted, setFooterSlideStarted] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const ts = useTextStyles(couple)
 
@@ -660,9 +663,24 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   const heroImages = W.gallery.length > 0 ? W.gallery : [W.couplePhoto]
   useEffect(() => {
     if (coverVideoUrl || heroImages.length <= 1) return
-    const id = setInterval(() => setHeroSlideIndex(i => (i + 1) % heroImages.length), 4500)
+    const id = setInterval(() => {
+      setHeroSlideStarted(true)
+      setHeroSlideIndex(i => (i + 1) % heroImages.length)
+    }, 4500)
     return () => clearInterval(id)
   }, [coverVideoUrl, heroImages.length])
+
+  // Footer slideshow — cycles through every uploaded gallery photo every
+  // 3 seconds. Falls back to the couple photo if no gallery exists.
+  const footerImages = W.gallery.length > 0 ? W.gallery : [W.couplePhoto]
+  useEffect(() => {
+    if (footerImages.length <= 1) return
+    const id = setInterval(() => {
+      setFooterSlideStarted(true)
+      setFooterSlideIndex(i => (i + 1) % footerImages.length)
+    }, 3000)
+    return () => clearInterval(id)
+  }, [footerImages.length])
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
 
   // If the couple's timeline includes a "Poruwa" item, fold its time into
@@ -756,7 +774,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                     key={heroSlideIndex}
                     src={heroImages[heroSlideIndex]}
                     alt={`${W.bride} and ${W.groom}`}
-                    initial={{ opacity: 0, scale: 1.04 }}
+                    initial={heroSlideStarted ? { opacity: 0, scale: 1.04 } : false}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 1.1, ease: "easeInOut" }}
@@ -1015,10 +1033,20 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Footer — wide photo with name overlay */}
+            {/* Footer — wide photo with name overlay, slideshow through all gallery photos */}
             <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.gallery[0] || W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              <AnimatePresence mode="sync">
+                <motion.img
+                  key={footerSlideIndex}
+                  src={footerImages[footerSlideIndex]}
+                  alt=""
+                  initial={footerSlideStarted ? { opacity: 0, scale: 1.04 } : false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.9, ease: "easeInOut" }}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              </AnimatePresence>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(61,42,26,0.55), rgba(61,42,26,0.1))" }} />
               <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center" }}>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2rem", color: "#fff", textShadow: "0 2px 14px rgba(0,0,0,0.5)" }}>{W.bride} &amp; {W.groom}</div>
