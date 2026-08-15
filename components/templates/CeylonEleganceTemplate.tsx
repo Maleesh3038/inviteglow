@@ -1036,19 +1036,26 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Footer — wide photo with name overlay, slideshow through all gallery photos */}
-            <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
+            {/* Footer — wide photo with name overlay, slideshow through all gallery photos.
+                Uses a blurred-fill background + a fully-visible foreground copy
+                (contain, not cover) so portrait photos never get their top/bottom cropped off. */}
+            <div style={{ position: "relative", height: 260, overflow: "hidden", background: DARK }}>
               <AnimatePresence mode="sync">
-                <motion.img
+                <motion.div
                   key={footerSlideIndex}
-                  src={footerImages[footerSlideIndex]}
-                  alt=""
-                  initial={footerSlideStarted ? { opacity: 0, scale: 1.04 } : false}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={footerSlideStarted ? { opacity: 0 } : false}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.9, ease: "easeInOut" }}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                  style={{ position: "absolute", inset: 0 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={footerImages[footerSlideIndex]} alt="" aria-hidden="true"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(22px) brightness(0.55)", transform: "scale(1.15)" }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={footerImages[footerSlideIndex]} alt=""
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+                </motion.div>
               </AnimatePresence>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(61,42,26,0.55), rgba(61,42,26,0.1))" }} />
               <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center" }}>
