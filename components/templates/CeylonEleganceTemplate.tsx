@@ -899,7 +899,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <EventIconBadge primary={PRIMARY} primaryLight={PRIMARY_LIGHT}>🪷</EventIconBadge>
                             <div>
-                              <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>{preCeremonyItem.event}</div>
+                              <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>Blessing Ceremony</div>
                               <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>{preCeremonyItem.time} Onwards</div>
                             </div>
                           </div>
