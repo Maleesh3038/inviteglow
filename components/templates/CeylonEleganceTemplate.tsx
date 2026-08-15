@@ -954,24 +954,6 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
             {/* RSVP */}
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
-            {/* Send Gift — warm tint band */}
-            {giftEnabled && hasGiftDetails && (
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
-                style={{ background: TINT_WARM, padding: "2rem 1.5rem" }}>
-                <SectionEyebrow icon="🎁" label="With Gratitude" color={PRIMARY} />
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send a Gift</div>
-                <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>With all due respect, you may share your gifts through the following accounts.</div>
-                <div style={{ display: "grid", gap: 12 }}>
-                  {brideBank.accountNumber && (
-                    <GiftAccountCard label={W.bride} bankName={brideBank.bank} accountName={brideBank.accountName} accountNumber={brideBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
-                  )}
-                  {groomBank.accountNumber && (
-                    <GiftAccountCard label={W.groom} bankName={groomBank.bank} accountName={groomBank.accountName} accountNumber={groomBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
-                  )}
-                </div>
-              </motion.div>
-            )}
-
             {/* Gallery — sage tint band, masonry */}
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div id="gallery" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
@@ -990,6 +972,24 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                       <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => (e.currentTarget.closest('div') as HTMLElement).style.display = "none"} />
                     </motion.div>
                   ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Send Gift — warm tint band */}
+            {giftEnabled && hasGiftDetails && (
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+                style={{ background: TINT_WARM, padding: "2rem 1.5rem" }}>
+                <SectionEyebrow icon="🎁" label="With Gratitude" color={PRIMARY} />
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.35rem", color: DARK, textAlign: "center", marginBottom: 6 }}>Send a Gift</div>
+                <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>With all due respect, you may share your gifts through the following accounts.</div>
+                <div style={{ display: "grid", gap: 12 }}>
+                  {brideBank.accountNumber && (
+                    <GiftAccountCard label={W.bride} bankName={brideBank.bank} accountName={brideBank.accountName} accountNumber={brideBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
+                  )}
+                  {groomBank.accountNumber && (
+                    <GiftAccountCard label={W.groom} bankName={groomBank.bank} accountName={groomBank.accountName} accountNumber={groomBank.accountNumber} primary={PRIMARY} muted={MUTED} dark={DARK} />
+                  )}
                 </div>
               </motion.div>
             )}
@@ -1036,26 +1036,19 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Footer — wide photo with name overlay, slideshow through all gallery photos.
-                Uses a blurred-fill background + a fully-visible foreground copy
-                (contain, not cover) so portrait photos never get their top/bottom cropped off. */}
-            <div style={{ position: "relative", height: 260, overflow: "hidden", background: DARK }}>
+            {/* Footer — wide photo with name overlay, slideshow through all gallery photos */}
+            <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
               <AnimatePresence mode="sync">
-                <motion.div
+                <motion.img
                   key={footerSlideIndex}
-                  initial={footerSlideStarted ? { opacity: 0 } : false}
-                  animate={{ opacity: 1 }}
+                  src={footerImages[footerSlideIndex]}
+                  alt=""
+                  initial={footerSlideStarted ? { opacity: 0, scale: 1.04 } : false}
+                  animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.9, ease: "easeInOut" }}
-                  style={{ position: "absolute", inset: 0 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={footerImages[footerSlideIndex]} alt="" aria-hidden="true"
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(22px) brightness(0.55)", transform: "scale(1.15)" }} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={footerImages[footerSlideIndex]} alt=""
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-                </motion.div>
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               </AnimatePresence>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(61,42,26,0.55), rgba(61,42,26,0.1))" }} />
               <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center" }}>
