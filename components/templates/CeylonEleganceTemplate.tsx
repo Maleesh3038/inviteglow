@@ -727,40 +727,35 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,26,24,0.35) 0%, rgba(20,26,24,0.1) 30%, rgba(20,26,24,0.25) 60%, rgba(20,26,24,0.65) 100%)` }} />
-              <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 60% 45% at 50% 46%, rgba(20,26,24,0.4), transparent 70%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,20,18,0.5) 0%, rgba(15,20,18,0.3) 30%, rgba(15,20,18,0.5) 60%, rgba(15,20,18,0.8) 100%)` }} />
+              <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 70% 55% at 50% 46%, rgba(10,14,12,0.55), transparent 72%)` }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{
-                  textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10,
-                  padding: "2.4rem 1.7rem 2rem", borderRadius: 28,
-                  background: "rgba(24,30,27,0.34)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
-                  border: "1px solid rgba(255,255,255,0.16)", boxShadow: "0 24px 60px rgba(0,0,0,0.3)",
-                }}>
+                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{
-                  ...ts('subtitle'), display: "inline-block", fontSize: 9.5, letterSpacing: "0.32em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)",
-                  marginBottom: "1.3rem", padding: "6px 16px", borderRadius: 100, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)",
+                  ...ts('subtitle'), display: "inline-block", fontSize: 9.5, letterSpacing: "0.32em", textTransform: "uppercase", color: "rgba(255,255,255,0.92)",
+                  marginBottom: "1.1rem", textShadow: "0 2px 10px rgba(0,0,0,0.6)",
                 }}>Wedding Invitation</div>
-                <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.7rem,9.5vw,3.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
-                <div style={{ margin: "10px 0" }}><OrnateDivider color={PRIMARY_LIGHT} size={18} /></div>
-                <div style={{ ...ts('groom_name'), fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.7rem,9.5vw,3.8rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
+                <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 22px rgba(0,0,0,0.75)" }}>{W.bride}</div>
+                <div style={{ margin: "8px 0" }}><OrnateDivider color={PRIMARY_LIGHT} size={18} /></div>
+                <div style={{ ...ts('groom_name'), fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 22px rgba(0,0,0,0.75)" }}>{W.groom}</div>
 
                 {guestName && (
-                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "1.4rem 0 0.35rem" }}>Dear</div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "1.3rem 0 0.35rem" }}>Dear</div>
                 )}
                 {guestName && (
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: "#fff", marginBottom: "1.4rem", textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}>{guestName}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}>{guestName}</div>
                 )}
 
                 <button onClick={handleOpen} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: DARK,
                   border: "none", borderRadius: 100, padding: "13px 28px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 10px 26px rgba(0,0,0,0.4)", marginTop: guestName ? 0 : "1.7rem",
+                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 10px 26px rgba(0,0,0,0.45)", marginTop: guestName ? 0 : "1.6rem",
                 }}>
                   Open Invitation →
                 </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.85)", marginTop: 14, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>🎵 Tap to begin — with music</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.9)", marginTop: 13, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>🎵 Tap to begin — with music</div>
               </motion.div>
             </motion.div>
           )}
