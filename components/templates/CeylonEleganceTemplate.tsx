@@ -61,7 +61,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
     <motion.div key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `linear-gradient(160deg, ${cream} 0%, #f3ead4 45%, ${cream} 100%)`,
+        background: `linear-gradient(160deg, ${cream} 0%, ${primaryLight}26 45%, ${cream} 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
