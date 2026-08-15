@@ -686,10 +686,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
   }, [opened, footerImages.length])
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
 
-  // If the couple's timeline includes a "Poruwa" item, fold its time into
-  // the Wedding Ceremony card below instead of only showing it separately
-  // in the Wedding Lineup section further down.
-  const poruwaItem = W.timeline.find(t => t.event.toLowerCase().includes('poruwa'))
+  // Fold the first timeline item into the Wedding Ceremony card below as a
+  // highlighted extra detail (e.g. a pre-ceremony rite that happens before
+  // the main event) — its name comes directly from what the couple typed
+  // into their timeline, so it fits whatever tradition applies to them
+  // (Poruwa, Ring Exchange, Registration, etc.) instead of a fixed label.
+  const preCeremonyItem = W.timeline[0]
 
   // Alternating soft tint bands — gives each section its own subtle
   // background instead of everything blending into one long white column.
@@ -893,12 +895,12 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                           </div>
                         </div>
 
-                        {poruwaItem && (
+                        {preCeremonyItem && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <EventIconBadge primary={PRIMARY} primaryLight={PRIMARY_LIGHT}>🪷</EventIconBadge>
                             <div>
-                              <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>Poruwa Ceremony</div>
-                              <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>{poruwaItem.time} Onwards</div>
+                              <div style={{ fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED }}>{preCeremonyItem.event}</div>
+                              <div style={{ fontSize: 13, color: DARK, fontWeight: 600, marginTop: 1 }}>{preCeremonyItem.time} Onwards</div>
                             </div>
                           </div>
                         )}
