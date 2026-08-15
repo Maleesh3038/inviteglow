@@ -90,7 +90,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 }
 
 // ── Countdown ──
-function Countdown({ targetDate, dark, tint = "#f6f0ee" }: { targetDate: string; dark: string; tint?: string }) {
+function Countdown({ targetDate, dark, tint = "#f6f0ee", labelColor = "#8a7355" }: { targetDate: string; dark: string; tint?: string; labelColor?: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
     const tick = () => {
@@ -107,7 +107,7 @@ function Countdown({ targetDate, dark, tint = "#f6f0ee" }: { targetDate: string;
       {[["Days", t.d], ["Hours", t.h], ["Minutes", t.m], ["Seconds", t.s]].map(([l, v]) => (
         <div key={l} style={{ flex: 1, textAlign: "center", background: tint, borderRadius: 10, padding: "10px 3px" }}>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 700, lineHeight: 1 }}>{v}</div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a7355", marginTop: 5 }}>{l}</div>
+          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: labelColor, marginTop: 5 }}>{l}</div>
         </div>
       ))}
     </div>
@@ -661,8 +661,11 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
 
   // Alternating soft tint bands — gives each section its own subtle
   // background instead of everything blending into one long white column.
-  const TINT_SAGE = "#eef2ee"
-  const TINT_WARM = "#f7ece5"
+  // Derived from the couple's own Primary/Light colors (not hardcoded)
+  // so switching the palette (e.g. to a blue theme) re-tints every one
+  // of these bands automatically instead of leaving old peach/sage tones behind.
+  const TINT_SAGE = `${PRIMARY_LIGHT}26`
+  const TINT_WARM = `${PRIMARY}16`
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -804,7 +807,7 @@ function CeylonEleganceInner({ couple }: { couple: Couple }) {
                 style={{ background: TINT_WARM, padding: "1.8rem 1.4rem" }}>
                 <SectionEyebrow icon="📅" label="Save the Date" color={PRIMARY} labelStyle={ts('countdown_label')} />
                 <div style={{ background: "#fff", borderRadius: 18, border: `1px solid ${PRIMARY_LIGHT}`, padding: "1.3rem 1.1rem", textAlign: "center", boxShadow: "0 4px 16px rgba(63,74,69,0.06)", marginTop: 10 }}>
-                  <Countdown targetDate={W.date} dark={DARK} />
+                  <Countdown targetDate={W.date} dark={DARK} tint={`${PRIMARY_LIGHT}22`} labelColor={MUTED} />
                 </div>
               </motion.div>
             )}
