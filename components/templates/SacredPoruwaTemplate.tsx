@@ -594,10 +594,127 @@ const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSp
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.7rem", color: dark, textAlign: "center", marginBottom: "1.4rem" })
 
 // ── Card corner lotus accent ──
+// ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
+// flexible `contacts` list first; if that's empty, falls back to the
+// classic bride_phone/groom_phone fields so older invitations keep
+// showing their existing numbers with no data lost. ──
+function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
+  const digitsOnly = phone.replace(/\D/g, '')
+  const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#2e1c08', fontFamily: "'Inter',sans-serif" }}>{name}</div>
+        <div style={{ fontSize: 12, color: '#9a7a5a', marginTop: 2 }}>{phone}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <a href={`tel:${digitsOnly}`} aria-label={`Call ${name}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill={primary}>
+            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
+          </svg>
+        </a>
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${name}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="#fff">
+            <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  )
+}
+
 function CornerLotus({ flip = false }: { flip?: boolean }) {
   return (
     <div style={{ position: "absolute", top: 6, [flip ? "left" : "right"]: 6, opacity: 0.22, transform: flip ? "scaleX(-1)" : undefined, pointerEvents: "none" }}>
       <LotusIcon color="#c4956a" size={56} opacity={1} />
+    </div>
+  )
+}
+
+// ── Floating bottom nav bar — quick jump to key sections, plus a raised
+// music toggle on the right. Fixed to the bottom of the phone viewport. ──
+function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, hasContact, audioRef }: {
+  primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; hasContact: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+}) {
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    a.addEventListener('play', onPlay)
+    a.addEventListener('pause', onPause)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
+  }, [audioRef])
+
+  const toggleMusic = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.paused ? a.play().catch(() => {}) : a.pause()
+  }
+
+  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
+    <button key={key} onClick={onClick} aria-label={label} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
+      border: 'none', cursor: 'pointer', color: dark, opacity: 0.8, padding: '2px 4px',
+    }}>
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+      <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
+    </button>
+  )
+
+  return (
+    <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
+        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(61,37,16,0.08)',
+        boxShadow: '0 10px 30px rgba(61,37,16,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
+      }}>
+        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {iconBtn(() => scrollToId('rsvp'), 'RSVP', <><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" /></>, 'rsvp')}
+        {hasContact && iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8, textDecoration: 'none', padding: '2px 4px' }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span style={{ fontSize: 8 }}>Location</span>
+          </a>
+        )}
+
+        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
+          position: 'absolute', right: 4, top: -16,
+          width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
+          background: `linear-gradient(135deg,${primary},${primaryLight})`, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 6px 16px rgba(61,37,16,0.35)',
+        }}>
+          {playing ? (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
+            </svg>
+          ) : (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9l5 6M21.5 9l-5 6" />
+            </svg>
+          )}
+        </button>
+      </div>
     </div>
   )
 }
@@ -681,6 +798,14 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
+
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.name && c?.phone) : []
+  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
+    ? flexContacts
+    : [
+        ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
+        ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
+      ]
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#f7f0e4" }}>
@@ -896,7 +1021,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: "0.8rem" }}>Together with their families</div>
+                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,4.2rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
                     {W.bride}
                     <span style={{ display: "block", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.2rem 0" }}>&amp;</span>
@@ -968,7 +1093,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             {sv.countdown && (
-              <motion.div style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="savethedate" style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(`${PRIMARY}aa`)}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
@@ -1001,7 +1126,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="wishes" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(`${PRIMARY}aa`)}>With Love</div>
                 <div style={heading(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: "center", marginBottom: 16, marginTop: -8 }}>
@@ -1033,7 +1158,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 
                 <div style={eyebrow(`${PRIMARY}aa`)}>Our Celebration</div>
                 <div style={heading(DARK)}>Moments of Love</div>
@@ -1061,29 +1186,22 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride}<span style={{ margin: "0 6px" }}>&amp;</span>{W.groom}</div>
                 </div>
+              </motion.div>
+            )}
 
-                {/* Call buttons — shown if phone numbers are set */}
-                {((couple as any).groom_phone || (couple as any).bride_phone) && (
-                  <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "center", flexWrap: "wrap" }}>
-                    {(couple as any).groom_phone && (
-                      <a href={`tel:${(couple as any).groom_phone}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${PRIMARY_LIGHT}22`, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 18px", fontSize: 12, color: PRIMARY, textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
-                        📞 Call {W.groom} · {(couple as any).groom_phone}
-                      </a>
-                    )}
-                    {(couple as any).bride_phone && (
-                      <a href={`tel:${(couple as any).bride_phone}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${PRIMARY_LIGHT}22`, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 100, padding: "10px 18px", fontSize: 12, color: PRIMARY, textDecoration: "none", fontFamily: "'Inter',sans-serif", fontWeight: 500 }}>
-                        📞 Call {W.bride} · {(couple as any).bride_phone}
-                      </a>
-                    )}
-                  </div>
-                )}
+            {/* Contact Numbers */}
+            {contactList.length > 0 && (
+              <motion.div id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={eyebrow(`${PRIMARY}aa`)}>Get In Touch</div>
+                <div style={heading(DARK)}>Contact Numbers</div>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+                </div>
               </motion.div>
             )}
 
             {/* Footer */}
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}66`, borderRadius: "22px 22px 0 0" }}>
+            <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}66`, borderRadius: "22px 22px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
                 <LotusIcon color={PRIMARY} size={40} opacity={0.5} />
               </div>
@@ -1095,6 +1213,16 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
+      {opened && (
+        <BottomNavBar
+          primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK}
+          mapsUrl={couple.maps_url || ''}
+          hasWishes={(couple as any).enable_guest_wishes ?? false}
+          hasGallery={sv.gallery && W.gallery.length > 0}
+          hasContact={contactList.length > 0}
+          audioRef={audioRef}
+        />
+      )}
     </div>
   )
 }
