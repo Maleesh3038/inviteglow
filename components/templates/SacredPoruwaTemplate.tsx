@@ -1047,17 +1047,20 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 
-                <div style={eyebrow(`${PRIMARY}aa`)}>With Love</div>
-                <div style={{ textAlign: "center", padding: "12px 10px", background: `${PRIMARY_LIGHT}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
+                <div style={eyebrow(`${PRIMARY}aa`)}>🏛️ Our Families</div>
+                <div style={{ textAlign: "center", padding: "16px 14px", background: `${PRIMARY_LIGHT}1a`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 1.9 }}>
+                  {W.groomFamilyName && <div style={{ fontWeight: 700 }}>{W.groomFamilyName}</div>}
+                  {W.groomFamilyName && W.brideFamilyName && (
+                    <div style={{ fontSize: 11, color: MUTED, margin: "2px 0" }}>{(couple as any).together_with_text || "together with"}</div>
+                  )}
+                  {W.brideFamilyName && <div style={{ fontWeight: 700 }}>{W.brideFamilyName}</div>}
                   {(() => {
                     const txt = (couple as any).family_invitation_text
                     const trimmed = (txt || '').trim()
                     // Only show if explicitly set with real content
                     if (!trimmed) return null
                     const lines = trimmed.split('\n')
-                    return <span style={{ color: MUTED }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</span>
+                    return <div style={{ color: MUTED, marginTop: 8 }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</div>
                   })()}
                 </div>
               </motion.div>
