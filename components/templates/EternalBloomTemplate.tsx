@@ -25,6 +25,28 @@ const DEFAULT_PALETTE = {
 // dividers would normally go. ──
 // ── Floating bottom nav bar — modern narrow pill (not edge-to-edge),
 // quick jump to key sections, plus a raised music toggle on the right. ──
+// ── Auto-shrinks the couple-name script font for longer names so they
+// never overflow the screen width on mobile — short names (e.g. "Amal")
+// get the full large size, longer ones (e.g. "Nathasha") step down. ──
+function coupleNameFontSize(name: string): string {
+  const len = (name || '').length
+  if (len > 11) return "clamp(1.7rem,6.5vw,2.4rem)"
+  if (len > 8) return "clamp(2.1rem,7.5vw,2.9rem)"
+  if (len > 6) return "clamp(2.5rem,9vw,3.5rem)"
+  return "clamp(2.8rem,10vw,4rem)"
+}
+
+// Same idea, for the "Bride & Groom" combined single-line treatment used
+// in the hero band further down — combined length matters here, not
+// either name individually, since both sit on one line together.
+function combinedNameFontSize(bride: string, groom: string): string {
+  const len = (bride || '').length + (groom || '').length
+  if (len > 20) return "clamp(1.5rem,5.5vw,2.1rem)"
+  if (len > 15) return "clamp(1.9rem,6.5vw,2.7rem)"
+  if (len > 11) return "clamp(2.1rem,7vw,3.1rem)"
+  return "clamp(2.4rem,8vw,3.6rem)"
+}
+
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -650,13 +672,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>Wedding Invitation</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
                 <div style={{ margin: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
 
                 {guestName && (
                   <>
@@ -700,7 +722,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
                     {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
