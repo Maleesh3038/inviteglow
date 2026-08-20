@@ -1581,7 +1581,7 @@ export default function AdminPage() {
       groom_family: form.groom_family || null,
       bride_phone: (form as any).bride_phone || null,
       groom_phone: (form as any).groom_phone || null,
-      contacts: ((form as any).contacts || []).filter((c: any) => c.name?.trim() && c.phone?.trim()),
+      contacts: ((form as any).contacts || []).filter((c: any) => c.phone?.trim()),
       wedding_date: form.wedding_date,
       time_format: form.time_format || '12h',
       venue: form.venue || null,
@@ -2092,7 +2092,7 @@ export default function AdminPage() {
                       <Icon name="link" size={14} color="#0f766e" /> Additional Contact Numbers
                     </div>
                     <div style={{ fontSize: 11, color: '#0d9488', marginBottom: 12 }}>
-                      Add any number of contacts with a custom name — e.g. "Groom's Father", "Wedding Coordinator". These show alongside the Bride/Groom phone numbers above; nothing here replaces them.
+                      Add any number of contacts with a custom name — e.g. "Groom's Father", "Wedding Coordinator". Name is optional — leave it blank to just show the number. These show alongside the Bride/Groom phone numbers above; nothing here replaces them.
                     </div>
                     {((form as any).contacts || []).map((contact: { name: string; phone: string }, i: number) => (
                       <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
