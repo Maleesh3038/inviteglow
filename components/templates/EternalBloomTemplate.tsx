@@ -30,10 +30,10 @@ const DEFAULT_PALETTE = {
 // get the full large size, longer ones (e.g. "Nathasha") step down. ──
 function coupleNameFontSize(name: string): string {
   const len = (name || '').length
-  if (len > 11) return "clamp(1.7rem,6.5vw,2.4rem)"
-  if (len > 8) return "clamp(2.1rem,7.5vw,2.9rem)"
-  if (len > 6) return "clamp(2.5rem,9vw,3.5rem)"
-  return "clamp(2.8rem,10vw,4rem)"
+  if (len > 12) return "clamp(1.4rem,5.5vw,1.9rem)"
+  if (len > 9) return "clamp(1.7rem,6.5vw,2.3rem)"
+  if (len > 6) return "clamp(2.0rem,7.5vw,2.8rem)"
+  return "clamp(2.4rem,8.5vw,3.4rem)"
 }
 
 // Same idea, for the "Bride & Groom" combined single-line treatment used
@@ -41,10 +41,11 @@ function coupleNameFontSize(name: string): string {
 // either name individually, since both sit on one line together.
 function combinedNameFontSize(bride: string, groom: string): string {
   const len = (bride || '').length + (groom || '').length
-  if (len > 20) return "clamp(1.5rem,5.5vw,2.1rem)"
-  if (len > 15) return "clamp(1.9rem,6.5vw,2.7rem)"
-  if (len > 11) return "clamp(2.1rem,7vw,3.1rem)"
-  return "clamp(2.4rem,8vw,3.6rem)"
+  if (len > 22) return "clamp(1.1rem,4.5vw,1.5rem)"
+  if (len > 17) return "clamp(1.4rem,5.2vw,1.8rem)"
+  if (len > 13) return "clamp(1.6rem,6vw,2.2rem)"
+  if (len > 10) return "clamp(1.9rem,6.8vw,2.7rem)"
+  return "clamp(2.2rem,7.5vw,3.1rem)"
 }
 
 function scrollToId(id: string) {
@@ -672,13 +673,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>Wedding Invitation</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
                 <div style={{ margin: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.groom}</div>
 
                 {guestName && (
                   <>
