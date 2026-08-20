@@ -604,11 +604,17 @@ function ContactRow({ name, phone, primary }: { name: string; phone: string; pri
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#2e1c08', fontFamily: "'Inter',sans-serif" }}>{name}</div>
-        <div style={{ fontSize: 12, color: '#9a7a5a', marginTop: 2 }}>{phone}</div>
+        {name ? (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#2e1c08', fontFamily: "'Inter',sans-serif" }}>{name}</div>
+            <div style={{ fontSize: 12, color: '#9a7a5a', marginTop: 2 }}>{phone}</div>
+          </>
+        ) : (
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#2e1c08', fontFamily: "'Inter',sans-serif" }}>{phone}</div>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-        <a href={`tel:${digitsOnly}`} aria-label={`Call ${name}`} style={{
+        <a href={`tel:${digitsOnly}`} aria-label={name ? `Call ${name}` : `Call ${phone}`} style={{
           width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
           display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
         }}>
@@ -616,7 +622,7 @@ function ContactRow({ name, phone, primary }: { name: string; phone: string; pri
             <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
           </svg>
         </a>
-        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${name}`} style={{
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={name ? `WhatsApp ${name}` : `WhatsApp ${phone}`} style={{
           width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
         }}>
@@ -799,7 +805,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
 
-  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.name && c?.phone) : []
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
   const contactList: { name: string; phone: string }[] = flexContacts.length > 0
     ? flexContacts
     : [
