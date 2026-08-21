@@ -66,7 +66,7 @@ const emptyForm = {
     engagement: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
     wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
     homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
-  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string }>,
+  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string }>,
   events_order: ['engagement', 'wedding', 'homecoming'] as ('engagement' | 'wedding' | 'homecoming')[],
   intro_text: '',
   cover_badge_text: '',
@@ -1553,7 +1553,7 @@ export default function AdminPage() {
           dress_code: c.events?.homecoming?.dress_code ?? '',
           label: (c.events?.homecoming as any)?.label ?? '',
         },
-      },
+      } as any,
       events_order: (Array.isArray((c as any).events_order) && (c as any).events_order.length === 3)
         ? (c as any).events_order
         : ['engagement', 'wedding', 'homecoming'],
