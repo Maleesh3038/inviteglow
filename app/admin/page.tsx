@@ -1482,7 +1482,7 @@ export default function AdminPage() {
       gallery: c.gallery || [],
       timeline: (c.timeline && c.timeline.length > 0
         ? c.timeline.map((t, i) => ({ id: i + 1, enabled: true, time: t.time, event: t.event }))
-        : emptyForm.timeline
+        : []
       ),
       seats: Object.entries(c.seats || {}).map(([k, v]) => `${k} | ${v}`).join('\n'),
       pin: c.pin || generatePin(),
