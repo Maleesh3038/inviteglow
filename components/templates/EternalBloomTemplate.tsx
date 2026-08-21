@@ -783,7 +783,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
+                  <span style={{ color: MUTED }}>
+                    {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
+                      .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
+                  </span>
                 </div>
               </motion.div>
             )}
