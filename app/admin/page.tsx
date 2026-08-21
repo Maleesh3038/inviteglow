@@ -779,7 +779,7 @@ function SectionTogglesPicker({ value, onChange }: { value: SectionVisibilityVal
   )
 }
 
-type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string }
+type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string }
 type EventsValue = Record<'engagement' | 'wedding' | 'homecoming', EventValue>
 const EVENT_LABELS: { key: keyof EventsValue; label: string }[] = [
   { key: 'engagement', label: 'Engagement' }, { key: 'wedding', label: 'Wedding' }, { key: 'homecoming', label: 'Homecoming' },
@@ -823,7 +823,7 @@ function EventsPicker({ value, onChange, order, onOrderChange }: {
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
                     </button>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{ev.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{e.label || ev.label}</span>
                 </div>
                 <div onClick={() => updateEvent(ev.key, 'enabled', !e.enabled)} style={{ width: 38, height: 22, borderRadius: 100, position: 'relative', flexShrink: 0, cursor: 'pointer', background: e.enabled ? ACCENT : '#e2e8f0', transition: 'background 0.2s' }}>
                   <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: e.enabled ? 19 : 3, transition: 'left 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
@@ -831,6 +831,7 @@ function EventsPicker({ value, onChange, order, onOrderChange }: {
               </div>
               {e.enabled && (
                 <div style={{ display: 'grid', gap: 8 }}>
+                  <input placeholder={`Event name (default: "${ev.label}")`} value={e.label || ''} onChange={ev2 => updateEvent(ev.key, 'label', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0, fontWeight: 600 }} />
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <input placeholder="Venue name" value={e.venue} onChange={ev2 => updateEvent(ev.key, 'venue', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                     <input type="datetime-local" value={e.date} onChange={ev2 => updateEvent(ev.key, 'date', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
@@ -1532,6 +1533,7 @@ export default function AdminPage() {
           date: c.events?.engagement?.date ? c.events.engagement.date.slice(0, 16) : '',
           maps_url: c.events?.engagement?.maps_url ?? '',
           dress_code: c.events?.engagement?.dress_code ?? '',
+          label: (c.events?.engagement as any)?.label ?? '',
         },
         wedding: {
           enabled: c.events?.wedding?.enabled ?? true,
@@ -1540,6 +1542,7 @@ export default function AdminPage() {
           date: c.events?.wedding?.date ? c.events.wedding.date.slice(0, 16) : (c.wedding_date ? c.wedding_date.slice(0, 16) : ''),
           maps_url: c.events?.wedding?.maps_url ?? c.maps_url ?? '',
           dress_code: c.events?.wedding?.dress_code ?? '',
+          label: (c.events?.wedding as any)?.label ?? '',
         },
         homecoming: {
           enabled: c.events?.homecoming?.enabled ?? false,
@@ -1548,6 +1551,7 @@ export default function AdminPage() {
           date: c.events?.homecoming?.date ? c.events.homecoming.date.slice(0, 16) : '',
           maps_url: c.events?.homecoming?.maps_url ?? '',
           dress_code: c.events?.homecoming?.dress_code ?? '',
+          label: (c.events?.homecoming as any)?.label ?? '',
         },
       },
       events_order: (Array.isArray((c as any).events_order) && (c as any).events_order.length === 3)
