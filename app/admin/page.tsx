@@ -67,6 +67,7 @@ const emptyForm = {
     wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
     homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
   } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string }>,
+  events_order: ['engagement', 'wedding', 'homecoming'] as ('engagement' | 'wedding' | 'homecoming')[],
   intro_text: '',
   cover_badge_text: '',
   intro_badge_image: '',
@@ -784,19 +785,46 @@ const EVENT_LABELS: { key: keyof EventsValue; label: string }[] = [
   { key: 'engagement', label: 'Engagement' }, { key: 'wedding', label: 'Wedding' }, { key: 'homecoming', label: 'Homecoming' },
 ]
 
-function EventsPicker({ value, onChange }: { value: EventsValue; onChange: (v: EventsValue) => void }) {
+function EventsPicker({ value, onChange, order, onOrderChange }: {
+  value: EventsValue; onChange: (v: EventsValue) => void
+  order: ('engagement' | 'wedding' | 'homecoming')[]; onOrderChange: (o: ('engagement' | 'wedding' | 'homecoming')[]) => void
+}) {
   const updateEvent = (key: keyof EventsValue, field: keyof EventValue, val: string | boolean) => onChange({ ...value, [key]: { ...value[key], [field]: val } })
+  const moveEvent = (index: number, direction: -1 | 1) => {
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= order.length) return
+    const next = [...order]
+    ;[next[index], next[newIndex]] = [next[newIndex], next[index]]
+    onOrderChange(next)
+  }
+  const orderedLabels = order.map(key => EVENT_LABELS.find(e => e.key === key)!).filter(Boolean)
   return (
     <div style={fieldWrap}>
       <label style={labelStyle}>Events</label>
-      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>Add details for each event. Turn one off if it doesn't apply.</div>
+      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 10 }}>Add details for each event. Turn one off if it doesn't apply. Use the arrows to change which event shows first on the invitation.</div>
       <div style={{ display: 'grid', gap: 12 }}>
-        {EVENT_LABELS.map(ev => {
+        {orderedLabels.map((ev, index) => {
           const e = value[ev.key]
           return (
             <div key={ev.key} style={{ borderRadius: 12, padding: 14, background: e.enabled ? '#eef2ff' : '#f8fafc', border: `1px solid ${e.enabled ? '#c7d2fe' : '#e2e8f0'}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: e.enabled ? 12 : 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{ev.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <button type="button" onClick={() => moveEvent(index, -1)} disabled={index === 0} aria-label="Move up" style={{
+                      width: 20, height: 16, borderRadius: 4, border: 'none', cursor: index === 0 ? 'default' : 'pointer',
+                      background: 'transparent', color: index === 0 ? '#cbd5e1' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
+                    </button>
+                    <button type="button" onClick={() => moveEvent(index, 1)} disabled={index === orderedLabels.length - 1} aria-label="Move down" style={{
+                      width: 20, height: 16, borderRadius: 4, border: 'none', cursor: index === orderedLabels.length - 1 ? 'default' : 'pointer',
+                      background: 'transparent', color: index === orderedLabels.length - 1 ? '#cbd5e1' : '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                    </button>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{ev.label}</span>
+                </div>
                 <div onClick={() => updateEvent(ev.key, 'enabled', !e.enabled)} style={{ width: 38, height: 22, borderRadius: 100, position: 'relative', flexShrink: 0, cursor: 'pointer', background: e.enabled ? ACCENT : '#e2e8f0', transition: 'background 0.2s' }}>
                   <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: e.enabled ? 19 : 3, transition: 'left 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }} />
                 </div>
@@ -1522,6 +1550,9 @@ export default function AdminPage() {
           dress_code: c.events?.homecoming?.dress_code ?? '',
         },
       },
+      events_order: (Array.isArray((c as any).events_order) && (c as any).events_order.length === 3)
+        ? (c as any).events_order
+        : ['engagement', 'wedding', 'homecoming'],
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
       intro_badge_image: (c as any).intro_badge_image ?? '',
@@ -1599,6 +1630,7 @@ export default function AdminPage() {
       show_seating: form.show_seating,
       section_visibility: form.section_visibility,
       events: form.events,
+      events_order: (form as any).events_order || ['engagement', 'wedding', 'homecoming'],
       intro_text: form.intro_text || null,
       cover_badge_text: (form as any).cover_badge_text || null,
       intro_badge_image: (form as any).intro_badge_image || null,
@@ -2393,7 +2425,9 @@ export default function AdminPage() {
 
                 <GalleryUploader value={form.gallery} onChange={urls => setForm({ ...form, gallery: urls })} />
                 <TimelinePicker value={form.timeline} onChange={items => setForm({ ...form, timeline: items })} />
-                <EventsPicker value={form.events} onChange={v => setForm({ ...form, events: v })} />
+                <EventsPicker value={form.events} onChange={v => setForm({ ...form, events: v })}
+                  order={(form as any).events_order || ['engagement', 'wedding', 'homecoming']}
+                  onOrderChange={o => setForm({ ...form, events_order: o } as any)} />
                 <SectionTogglesPicker value={form.section_visibility} onChange={v => setForm({ ...form, section_visibility: v })} />
 
                 <div style={fieldWrap}>
