@@ -749,7 +749,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>Wedding Invitation</div>
+                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
                 <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
                 <div style={{ margin: "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
