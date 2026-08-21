@@ -674,8 +674,15 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   }
   type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
   const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
+  // Respects the admin's chosen display order (couple.events_order) when
+  // set — e.g. showing Wedding before Engagement — falling back to the
+  // default engagement → wedding → homecoming order otherwise.
+  const eventKeyOrder: ('engagement' | 'wedding' | 'homecoming')[] =
+    Array.isArray((couple as any).events_order) && (couple as any).events_order.length === 3
+      ? (couple as any).events_order
+      : ['engagement', 'wedding', 'homecoming']
   const eventsList: RenderableEvent[] = hasNewEvents
-    ? (['engagement', 'wedding', 'homecoming'] as const).map((key): RenderableEvent => {
+    ? eventKeyOrder.map((key): RenderableEvent => {
         const e = couple.events![key]
         return { key, ...EVENT_META[key], enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
       }).filter(e => e.enabled && e.date.length > 0)
