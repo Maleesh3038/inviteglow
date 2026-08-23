@@ -26,6 +26,7 @@ type MyCouple = {
   template: string; couple_photo: string | null
   project_status: string; payment_slip_status: string; payment_slip_url: string | null
   page_views: number | null
+  payment_status?: string | null; package_tier?: string | null; paid_amount?: number | null
 }
 type GuestRow = { id: string; couple_id: string; name: string; phone: string | null; heads: number; category: string; side: string; table_id: string | null; created_at: string }
 type SeatingTable = { id: string; couple_id: string; name: string; created_at: string }
@@ -35,7 +36,7 @@ type Vendor = { id: string; couple_id: string; category: string; vendor_name: st
 type LiquorItem = { id: string; couple_id: string; item_name: string; category: string; quantity: number; unit: string; cost_per_unit: number; notes: string | null; created_at: string }
 
 // ── Icons ──
-type IconName = 'grid' | 'file' | 'edit' | 'sparkles' | 'userPlus' | 'users' | 'mail' | 'grid2' | 'gallery' | 'checklist' | 'wallet' | 'home' | 'liquor' | 'support' | 'membersIcon' | 'card' | 'bell' | 'signout' | 'copy' | 'check' | 'cross' | 'trash' | 'whatsapp' | 'link' | 'plus' | 'chevron' | 'search'
+type IconName = 'grid' | 'file' | 'edit' | 'sparkles' | 'userPlus' | 'users' | 'mail' | 'grid2' | 'gallery' | 'checklist' | 'wallet' | 'home' | 'liquor' | 'support' | 'membersIcon' | 'card' | 'bell' | 'signout' | 'copy' | 'check' | 'cross' | 'trash' | 'whatsapp' | 'link' | 'plus' | 'chevron' | 'search' | 'bank' | 'upload'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -66,6 +67,8 @@ function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { 
     case 'plus': return <svg {...c}><path d="M12 5v14M5 12h14" /></svg>
     case 'chevron': return <svg {...c}><path d="M9 6l6 6-6 6" /></svg>
     case 'search': return <svg {...c}><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>
+    case 'bank': return <svg {...c}><path d="M3 10l9-6 9 6" /><path d="M4.5 10v9M9 10v9M15 10v9M19.5 10v9" /><path d="M2.5 21h19" /></svg>
+    case 'upload': return <svg {...c}><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" /></svg>
     default: return null
   }
 }
@@ -196,7 +199,7 @@ export default function CustomerDashboard() {
     setAvatarUrl((userData.user.user_metadata as any)?.avatar_url || '')
     setDisplayName((userData.user.user_metadata as any)?.full_name || '')
     setEmailConfirmed(!!userData.user.email_confirmed_at)
-    const { data: cData } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, venue, template, couple_photo, project_status, payment_slip_status, payment_slip_url, page_views').eq('user_id', userData.user.id).order('created_at', { ascending: false })
+    const { data: cData } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, venue, template, couple_photo, project_status, payment_slip_status, payment_slip_url, page_views, payment_status, package_tier, paid_amount').eq('user_id', userData.user.id).order('created_at', { ascending: false })
     if (cData) {
       setCouples(cData as MyCouple[])
       if (cData.length > 0) setActiveCoupleId(prev => prev || cData[0].id)
@@ -368,7 +371,7 @@ export default function CustomerDashboard() {
           {section === 'support' && <SupportSection couple={couple} />}
           {section === 'profile' && <ProfileSection userEmail={userEmail} avatarUrl={avatarUrl} displayName={displayName} onChanged={loadAll} />}
           {section === 'members' && <MembersSection userEmail={userEmail} />}
-          {section === 'billing' && <BillingSection couple={couple} />}
+          {section === 'billing' && <BillingSection couple={couple} onChanged={loadAll} />}
         </div>
       </div>
     </div>
@@ -1666,7 +1669,7 @@ function LiquorSection({ couple }: { couple: MyCouple }) {
   )
 }
 
-// ══════════════════════════════ SUPPORT / MEMBERS / BILLING ══════════════════════════════
+// ══════════════════════════════ SUPPORT / MEMBERS ══════════════════════════════
 function SupportSection({ couple }: { couple: MyCouple }) {
   const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`Hi! I need help with my InviteGlow invitation.\n\nCouple: ${couple.bride} & ${couple.groom}\nLink: /invite/${couple.slug}`)}`
   return (
@@ -1797,22 +1800,213 @@ function MembersSection({ userEmail }: { userEmail: string }) {
   )
 }
 
-function BillingSection({ couple }: { couple: MyCouple }) {
+// ══════════════════════════════ BILLING — PayHere + Bank Transfer ══════════════════════════════
+const PACKAGES = [
+  { tier: 'starter', name: 'Starter', price: 3000, features: ['1 invitation', 'Up to 150 guests', 'Any template', 'Live RSVP dashboard'] },
+  { tier: 'premium', name: 'Premium', price: 5000, features: ['2 invitations', 'Up to 600 guests', 'Any template', 'Live RSVP dashboard', 'Guest Wishes wall'] },
+  { tier: 'luxury', name: 'Luxury', price: 8000, features: ['Unlimited guests', 'Custom design service', 'Priority support', 'Guest Gallery uploads'] },
+] as const
+
+// Bank details for manual transfer — update these to match your actual account.
+const BANK_DETAILS = {
+  bank_name: 'Commercial Bank of Ceylon',
+  account_name: 'InviteGlow (Pvt) Ltd',
+  account_number: '8001234567',
+  branch: 'Colombo 03',
+}
+
+function BillingSection({ couple, onChanged }: { couple: MyCouple; onChanged: () => void }) {
   const isPaid = couple.payment_slip_status === 'verified'
+  const [selectedTier, setSelectedTier] = useState<string>(couple.package_tier || 'premium')
+  const [payMethod, setPayMethod] = useState<'payhere' | 'bank' | ''>('')
+  const [payingWithPayHere, setPayingWithPayHere] = useState(false)
+  const [payHereError, setPayHereError] = useState('')
+  const [slipUploading, setSlipUploading] = useState(false)
+  const [slipSaved, setSlipSaved] = useState(false)
+  const slipInputRef = useRef<HTMLInputElement>(null)
+
+  const payWithPayHere = async () => {
+    setPayHereError('')
+    setPayingWithPayHere(true)
+    try {
+      const res = await fetch('/api/payhere/hash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coupleId: couple.id, packageTier: selectedTier }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setPayHereError(data.error)
+        setPayingWithPayHere(false)
+        return
+      }
+      // Build and submit a hidden form to PayHere's hosted checkout —
+      // this is PayHere's standard redirect-checkout integration.
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = 'https://www.payhere.lk/pay/checkout'
+      Object.entries(data).forEach(([key, value]) => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = key
+        input.value = String(value)
+        form.appendChild(input)
+      })
+      document.body.appendChild(form)
+      form.submit()
+    } catch {
+      setPayHereError('Could not start checkout. Please try again.')
+      setPayingWithPayHere(false)
+    }
+  }
+
+  const uploadSlip = async (file: File) => {
+    setSlipUploading(true)
+    setSlipSaved(false)
+    const ext = file.name.split('.').pop()
+    const fileName = `payment-slips/${couple.id}-${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!uploadError) {
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      const { error: updateError } = await supabase.from('couples').update({
+        payment_slip_url: data.publicUrl,
+        payment_slip_status: 'pending',
+        package_tier: selectedTier,
+      }).eq('id', couple.id)
+      if (!updateError) { setSlipSaved(true); onChanged() }
+    }
+    setSlipUploading(false)
+  }
+
+  const selectedPackage = PACKAGES.find(p => p.tier === selectedTier) || PACKAGES[1]
+
   return (
     <div>
       <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Upgrade Plan</div>
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Manage your plan and payment status.</div>
-      <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Choose a package and pay to publish your invitation.</div>
+
+      <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', marginBottom: 4 }}>CURRENT PLAN</div>
           <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{isPaid ? 'Live Plan' : 'Free Plan'}</div>
-          <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 4 }}>{isPaid ? 'Your invitation is live and shareable.' : 'Upload your payment slip to publish and share your invitation.'}</div>
+          <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 4 }}>
+            {isPaid ? 'Your invitation is live and shareable.' : couple.payment_slip_status === 'pending' && couple.payment_slip_url ? 'Bank slip uploaded — waiting for verification.' : 'Choose a package below to publish and share your invitation.'}
+          </div>
         </div>
-        {!isPaid && (
-          <a href="#" style={{ padding: '11px 24px', borderRadius: 100, background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>Upgrade Now</a>
+        {isPaid && (
+          <div style={{ padding: '6px 14px', borderRadius: 100, background: '#dcfce7', color: '#16a34a', fontSize: 12, fontWeight: 700 }}>✓ Active</div>
         )}
       </div>
+
+      {!isPaid && (
+        <>
+          {/* Package selection */}
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>1. Choose your package</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, marginBottom: 24 }}>
+            {PACKAGES.map(p => (
+              <div key={p.tier} onClick={() => setSelectedTier(p.tier)} style={{
+                ...cardStyle, cursor: 'pointer', padding: 18,
+                border: selectedTier === p.tier ? `2px solid ${PINK}` : '1px solid #f3e6ea',
+                boxShadow: selectedTier === p.tier ? `0 6px 20px ${PINK}25` : cardStyle.boxShadow,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{p.name}</div>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', border: `2px solid ${selectedTier === p.tier ? PINK : '#e2e8f0'}`,
+                    background: selectedTier === p.tier ? PINK : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    {selectedTier === p.tier && <Icon name="check" size={11} color="#fff" />}
+                  </div>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>LKR {p.price.toLocaleString()}</div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {p.features.map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 11.5, color: '#64748b' }}>
+                      <Icon name="check" size={11} color={PINK} /> {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Payment method selection */}
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>2. Choose how to pay</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, marginBottom: 20 }}>
+            <button onClick={() => setPayMethod(payMethod === 'payhere' ? '' : 'payhere')} style={{
+              ...cardStyle, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
+              border: payMethod === 'payhere' ? `2px solid ${PINK}` : '1px solid #f3e6ea',
+            }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="card" size={18} color="#4f46e5" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>Pay Online (PayHere)</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>Card, bank app · instant activation</div>
+              </div>
+            </button>
+            <button onClick={() => setPayMethod(payMethod === 'bank' ? '' : 'bank')} style={{
+              ...cardStyle, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
+              border: payMethod === 'bank' ? `2px solid ${PINK}` : '1px solid #f3e6ea',
+            }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="bank" size={18} color="#16a34a" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>Bank Transfer</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>Upload your slip · manually verified</div>
+              </div>
+            </button>
+          </div>
+
+          {payMethod === 'payhere' && (
+            <div style={{ ...cardStyle, marginBottom: 20 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Pay with PayHere</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 16 }}>
+                You'll pay LKR {selectedPackage.price.toLocaleString()} for the {selectedPackage.name} package. You'll be redirected to PayHere's secure checkout.
+              </div>
+              {payHereError && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 12 }}>{payHereError}</div>}
+              <button onClick={payWithPayHere} disabled={payingWithPayHere} style={{
+                padding: '12px 26px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 13.5,
+                opacity: payingWithPayHere ? 0.6 : 1,
+              }}>
+                {payingWithPayHere ? 'Redirecting to PayHere...' : `Pay LKR ${selectedPackage.price.toLocaleString()} Now`}
+              </button>
+            </div>
+          )}
+
+          {payMethod === 'bank' && (
+            <div style={{ ...cardStyle, marginBottom: 20 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Bank Transfer Details</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 16 }}>Transfer LKR {selectedPackage.price.toLocaleString()} to the account below, then upload your slip — we'll verify and activate your invitation within 24 hours.</div>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 18, display: 'grid', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Bank</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.bank_name}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Account Name</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.account_name}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Account Number</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.account_number}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Branch</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.branch}</strong></div>
+              </div>
+
+              <label style={labelStyle}>Upload Payment Slip</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <button type="button" onClick={() => slipInputRef.current?.click()} disabled={slipUploading} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, border: '1px solid #e2e8f0',
+                  background: slipUploading ? '#f1f5f9' : '#fff', cursor: slipUploading ? 'default' : 'pointer', fontSize: 13, color: '#475569', fontWeight: 500,
+                }}>
+                  <Icon name="upload" size={14} /> {slipUploading ? 'Uploading...' : couple.payment_slip_url ? 'Change Slip' : 'Upload Slip'}
+                </button>
+                {(slipSaved || couple.payment_slip_url) && !slipUploading && (
+                  <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Icon name="check" size={13} color="#16a34a" /> Slip uploaded — pending verification
+                  </span>
+                )}
+                <input ref={slipInputRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadSlip(f) }} />
+              </div>
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>Accepted: photo or PDF of your transfer receipt.</div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
