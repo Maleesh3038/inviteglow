@@ -1074,6 +1074,38 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
+            {/* Wedding Note Section — dedicated hero-style block shown right
+                before the Wedding Ceremony details, with its own background
+                photo, a short note, "Dear [Guest]" if present, and the
+                couple's names. */}
+            {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
+              <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+                style={{ position: "relative", margin: "0 16px 16px", borderRadius: 22, overflow: "hidden", minHeight: 340 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={(couple as any).wedding_note_background_image || W.couplePhoto}
+                  alt=""
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }}
+                />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(20,14,6,0.35) 0%, rgba(20,14,6,0.55) 60%, rgba(20,14,6,0.8) 100%)" }} />
+                <div style={{ position: "relative", padding: "3rem 1.8rem", textAlign: "center", minHeight: 340, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  {guestName && (
+                    <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 6, textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+                      Dear {guestName}
+                    </div>
+                  )}
+                  <div style={{ fontSize: "0.95rem", color: "#fff", opacity: 0.95, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 340, margin: "0 auto 18px", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                    {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center" }}><LotusIcon color={PRIMARY_LIGHT} size={28} opacity={0.9} /></div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: "#fff", marginTop: 14, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+                    {W.bride}<span style={{ margin: "0 8px" }}>&amp;</span>{W.groom}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
