@@ -1121,39 +1121,6 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
               <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} />
             </div>
 
-            {/* Wedding Note Section — dedicated hero-style block, with its
-                own background photo, a short note, "Dear [Guest]" if
-                present, and the couple's names. Overlay tint is derived
-                from the template's own DARK color so it always matches
-                whatever palette the couple has chosen. */}
-            {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
-              <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ position: "relative", margin: "16px 16px", borderRadius: 22, overflow: "hidden", minHeight: 340 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={(couple as any).wedding_note_background_image || W.couplePhoto}
-                  alt=""
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }}
-                />
-                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}59 0%, ${DARK}8c 60%, ${DARK}cc 100%)` }} />
-                <div style={{ position: "relative", padding: "3rem 1.8rem", textAlign: "center", minHeight: 340, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  {guestName && (
-                    <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 6, textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-                      Dear {guestName}
-                    </div>
-                  )}
-                  <div style={{ fontSize: "0.95rem", color: "#fff", opacity: 0.95, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 340, margin: "0 auto 18px", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
-                    {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center" }}><LotusIcon color={PRIMARY_LIGHT} size={28} opacity={0.9} /></div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: "#fff", marginTop: 14, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
-                    {W.bride}<span style={{ margin: "0 8px" }}>&amp;</span>{W.groom}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -1246,6 +1213,42 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={heading(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
                   {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Wedding Note Section — styled to match the rest of the
+                template's cards (eyebrow + white card), with its own
+                background photo, a short note, "Dear [Guest]" if present,
+                and the couple's names. Overlay tint is derived from the
+                template's own DARK color so it always matches whatever
+                palette the couple has chosen. */}
+            {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={eyebrow(`${PRIMARY}aa`)}>💌 A Note For You</div>
+                <div style={{ position: "relative", margin: "10px -1.8rem -1.8rem", borderRadius: 0, overflow: "hidden", minHeight: 320 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={(couple as any).wedding_note_background_image || W.couplePhoto}
+                    alt=""
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }}
+                  />
+                  <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}59 0%, ${DARK}8c 60%, ${DARK}cc 100%)` }} />
+                  <div style={{ position: "relative", padding: "3rem 1.8rem", textAlign: "center", minHeight: 320, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    {guestName && (
+                      <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, marginBottom: 6, textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+                        Dear {guestName}
+                      </div>
+                    )}
+                    <div style={{ fontSize: "0.95rem", color: "#fff", opacity: 0.95, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 340, margin: "0 auto 18px", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                      {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "center" }}><LotusIcon color={PRIMARY_LIGHT} size={28} opacity={0.9} /></div>
+                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: "#fff", marginTop: 14, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+                      {W.bride}<span style={{ margin: "0 8px" }}>&amp;</span>{W.groom}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
