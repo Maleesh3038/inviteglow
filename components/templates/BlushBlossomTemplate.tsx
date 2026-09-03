@@ -107,10 +107,153 @@ function extractLatLng(url?: string): { lat: number; lng: number } | null {
   return null
 }
 
+// ── Per-element text style overrides. Reads couple.text_styles (set from
+// the "Customise Fonts" panel in the couple's dashboard) and merges a
+// color/font/bold override on top of the template's own default styling.
+// A missing key simply falls back to the template default — nothing
+// breaks for invitations that never touch that panel. ──
+type TextStyleEntry = { color?: string; font?: string; bold?: boolean }
+function useTextStyles(couple: any) {
+  const map: Record<string, TextStyleEntry> = couple?.text_styles || {}
+  return (key: string, fallback: React.CSSProperties = {}): React.CSSProperties => {
+    const s = map[key]
+    if (!s) return fallback
+    return {
+      ...fallback,
+      ...(s.color ? { color: s.color } : {}),
+      ...(s.font && s.font !== 'inherit' ? { fontFamily: s.font } : {}),
+      ...(s.bold ? { fontWeight: 700 } : {}),
+    }
+  }
+}
+
 const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: string }> = {
   engagement: { title: 'Engagement' },
   wedding: { title: 'Event Details' },
   homecoming: { title: 'Homecoming' },
+}
+
+// ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
+// flexible `contacts` list first; if that's empty, falls back to the
+// classic bride_phone/groom_phone fields so older invitations keep
+// showing their existing numbers with no data lost. ──
+function ContactRow({ name, phone, primary, dark }: { name: string; phone: string; primary: string; dark: string }) {
+  const digitsOnly = phone.replace(/\D/g, '')
+  const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px' }}>
+      <div style={{ minWidth: 0 }}>
+        {name ? (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: dark, fontFamily: "'Inter',sans-serif" }}>{name}</div>
+            <div style={{ fontSize: 12, color: dark, opacity: 0.55, marginTop: 2 }}>{phone}</div>
+          </>
+        ) : (
+          <div style={{ fontSize: 13, fontWeight: 700, color: dark, fontFamily: "'Inter',sans-serif" }}>{phone}</div>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <a href={`tel:${digitsOnly}`} aria-label={name ? `Call ${name}` : `Call ${phone}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill={primary}>
+            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
+          </svg>
+        </a>
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={name ? `WhatsApp ${name}` : `WhatsApp ${phone}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="#fff">
+            <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  )
+}
+
+// ── Floating bottom nav bar — quick jump to key sections, plus a raised
+// music toggle on the right. Fixed to the bottom of the phone viewport. ──
+function bbScrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, hasContact, audioRef }: {
+  primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; hasContact: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+}) {
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    a.addEventListener('play', onPlay)
+    a.addEventListener('pause', onPause)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
+  }, [audioRef])
+
+  const toggleMusic = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.paused ? a.play().catch(() => {}) : a.pause()
+  }
+
+  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
+    <button key={key} onClick={onClick} aria-label={label} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
+      border: 'none', cursor: 'pointer', color: dark, opacity: 0.8, padding: '2px 4px',
+    }}>
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+      <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
+    </button>
+  )
+
+  return (
+    <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
+        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: `1px solid ${dark}14`,
+        boxShadow: `0 10px 30px ${dark}30`, padding: '10px 18px', paddingRight: 56, position: 'relative',
+      }}>
+        {hasWishes && iconBtn(() => bbScrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(() => bbScrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(() => bbScrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {iconBtn(() => bbScrollToId('rsvp-form'), 'RSVP', <><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" /></>, 'rsvp')}
+        {hasContact && iconBtn(() => bbScrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8, textDecoration: 'none', padding: '2px 4px' }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span style={{ fontSize: 8 }}>Location</span>
+          </a>
+        )}
+
+        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
+          position: 'absolute', right: 4, top: -16,
+          width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
+          background: `linear-gradient(135deg,${primary},${primaryLight})`, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: `0 6px 16px ${dark}40`,
+        }}>
+          {playing ? (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
+            </svg>
+          ) : (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9l5 6M21.5 9l-5 6" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo' | 'ring' | 'play' | 'pause'
@@ -645,6 +788,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const guestName = searchParams?.get('name') || ''
 
   const colors = sanitizeColors(couple.custom_colors)
+  const ts = useTextStyles(couple)
   const initials = getInitials(couple.bride, couple.groom)
   const badgeText = (couple as any).cover_badge_text || 'WEDDING INVITATION'
   const familyInvitationText = (couple as any).family_invitation_text
@@ -656,14 +800,29 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const groomPhone = (couple as any).groom_phone
   const section = couple.section_visibility || {}
 
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
+  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
+    ? flexContacts
+    : [
+        ...(couple.groom && groomPhone ? [{ name: couple.groom, phone: groomPhone }] : []),
+        ...(couple.bride && bridePhone ? [{ name: couple.bride, phone: bridePhone }] : []),
+      ]
+
   const enabledEvents = useMemo(() => {
     const ev = (couple as any).events as Record<'engagement' | 'wedding' | 'homecoming', {
-      enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string
+      enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; label?: string
     }> | undefined
     if (!ev) return []
-    return (['engagement', 'wedding', 'homecoming'] as const)
+    // Respects the admin's chosen display order (couple.events_order) when
+    // set, and a custom event name if the admin typed one — falling back
+    // to the default order/labels otherwise.
+    const order: ('engagement' | 'wedding' | 'homecoming')[] =
+      Array.isArray((couple as any).events_order) && (couple as any).events_order.length === 3
+        ? (couple as any).events_order
+        : ['engagement', 'wedding', 'homecoming']
+    return order
       .filter(k => ev[k]?.enabled)
-      .map(k => ({ key: k, ...ev[k], ...EVENT_LABELS[k] }))
+      .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || EVENT_LABELS[k].title }))
   }, [couple])
 
   const [guestNameInput, setGuestNameInput] = useState(guestName)
@@ -829,11 +988,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           {/* Heading */}
           <div style={{ ...wrap, textAlign: 'center' }}>
-            <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
+            <h1 style={{ ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
               {(couple as any).invitation_heading || 'Together with Love'}
             </h1>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.primary, margin: '0 auto 10px' }} />
-            <p style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6 }}>
+            <p style={{ ...ts('tagline'), fontSize: 12.5, color: colors.dark, opacity: 0.6 }}>
               {(couple as any).invitation_subheading || 'Together with love, joy and blessings'}
             </p>
             {guestName && <p style={{ fontSize: 12, color: colors.primary, fontStyle: 'italic', marginTop: 8 }}>Dear {guestName},</p>}
@@ -852,7 +1011,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               )}
               <div style={{ background: PURPLE_BOX, padding: '15px 12px 13px', textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
-                  {couple.bride} &amp; {couple.groom}
+                  <span style={ts('bride_name')}>{couple.bride}</span> &amp; <span style={ts('groom_name')}>{couple.groom}</span>
                 </div>
                 <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, color: colors.dark, opacity: 0.6, marginTop: 5 }}>{badgeText}</div>
               </div>
@@ -876,7 +1035,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               </p>
             )}
             <div style={{ ...eyebrow, marginBottom: 10 }}>A Loving Invitation From Our Family</div>
-            <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
+            <p style={{ ...ts('message'), fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
               {familyInvitationText || 'We warmly invite you to join us as we celebrate the beautiful beginning of our lifelong bond.'}
             </p>
           </Reveal>
@@ -938,36 +1097,22 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
                 <div style={{ ...cardStyle, padding: '16px 18px', textAlign: 'left' }}>
                   {[
-                    { icon: 'calendar' as const, label: 'DATE', value: ev.date ? new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'To be announced' },
-                    { icon: 'clock' as const, label: 'TIME', value: (ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'To be announced') + ' Onwards' },
-                    { icon: 'pin' as const, label: 'VENUE', value: ev.venue || 'Venue to be announced', sub: ev.venue_address },
+                    { icon: 'calendar' as const, label: 'DATE', value: ev.date ? new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'To be announced', tsKey: '' },
+                    { icon: 'clock' as const, label: 'TIME', value: (ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'To be announced') + ' Onwards', tsKey: '' },
+                    { icon: 'pin' as const, label: 'VENUE', value: ev.venue || 'Venue to be announced', sub: ev.venue_address, tsKey: 'venue_name', subTsKey: 'venue_address' },
                   ].map((row, i, arr) => (
                     <div key={row.label} style={{
-                      display: 'flex', gap: 12, paddingBottom: 14, marginBottom: 14,
-                      borderBottom: (i < arr.length - 1 || bridePhone || groomPhone) ? `1px solid ${colors.primaryLight}` : 'none',
+                      display: 'flex', gap: 12, paddingBottom: i < arr.length - 1 ? 14 : 0, marginBottom: i < arr.length - 1 ? 14 : 0,
+                      borderBottom: i < arr.length - 1 ? `1px solid ${colors.primaryLight}` : 'none',
                     }}>
                       <div style={iconBadge}><Icon name={row.icon} size={15} color={colors.primary} /></div>
                       <div>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>{row.label}</div>
-                        <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.dark, marginTop: 2 }}>{row.value}</div>
-                        {row.sub && <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 3, lineHeight: 1.5 }}>{row.sub}</div>}
+                        <div style={{ ...(row.tsKey ? ts(row.tsKey) : {}), fontSize: 13.5, fontWeight: 700, color: colors.dark, marginTop: 2 }}>{row.value}</div>
+                        {row.sub && <div style={{ ...((row as any).subTsKey ? ts((row as any).subTsKey) : {}), fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 3, lineHeight: 1.5 }}>{row.sub}</div>}
                       </div>
                     </div>
                   ))}
-                  {(bridePhone || groomPhone) && (
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <div style={iconBadge}><Icon name="phone" size={15} color={colors.primary} /></div>
-                      <div>
-                        <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.primary, letterSpacing: '0.04em' }}>CONTACT</div>
-                        <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 2, marginBottom: 4 }}>
-                          For inquiries, feel free to contact us at the below numbers.
-                        </div>
-                        {bridePhone && <a href={`tel:${bridePhone}`} style={{ display: 'block', fontSize: 12.5, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>{bridePhone} ({couple.bride})</a>}
-                        {groomPhone && <a href={`tel:${groomPhone}`} style={{ display: 'block', fontSize: 12.5, color: colors.dark, textDecoration: 'none', fontWeight: 600 }}>{groomPhone} ({couple.groom})</a>}
-                      </div>
-                    </div>
-
-                  )}
                 </div>
                 </div>
               </Reveal>
@@ -976,7 +1121,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           {/* Gallery — card, since it's an image grid */}
           {(section.gallery ?? true) && couple.gallery && couple.gallery.length > 0 && (
-            <Reveal>
+            <Reveal id="gallery">
               <div style={capsHeading}>Our Moments</div>
               {divider}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
@@ -1017,7 +1162,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Guest Wishes Wall — everyone can read it, everyone can add to it,
               hidden entirely when the couple turns it off from admin */}
           {((couple as any).enable_guest_wishes ?? false) && (
-            <Reveal wide>
+            <Reveal wide id="wishes">
               <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Wishes for Us</div>
               {divider}
               <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 6, marginBottom: 20 }}>
@@ -1051,8 +1196,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown — big 2x2 grid */}
             {(section.countdown ?? true) && (
-              <Reveal mt={80}>
-                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Just a Few More</div>
+              <Reveal mt={80} id="savethedate">
+                <div style={{ ...capsHeading, ...ts('countdown_label') }}><Icon name="heart" size={12} color={colors.primary} />Just a Few More</div>
                 {divider}
                 <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 16, marginBottom: 20 }}>
                   We are counting the days until our beautiful celebration.
@@ -1086,6 +1231,33 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                     </>
                   )}
                 </div>
+              </Reveal>
+            )}
+
+            {/* Contact Numbers — collected once here instead of repeated per event */}
+            {contactList.length > 0 && (
+              <Reveal id="contact">
+                <div style={capsHeading}><Icon name="phone" size={12} color={colors.primary} />Get In Touch</div>
+                {divider}
+                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginBottom: 16 }}>For inquiries, feel free to contact us at the below numbers.</p>
+                <div style={{ display: 'grid', gap: 10, textAlign: 'left' }}>
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={colors.primary} dark={colors.dark} />)}
+                </div>
+              </Reveal>
+            )}
+
+            {/* Wedding Note — no card, matching the template's "floats on
+                the page" style used by Invitation/Thank You. */}
+            {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
+              <Reveal>
+                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />A Note For You</div>
+                {divider}
+                {guestName && (
+                  <p style={{ fontSize: 11.5, color: colors.primary, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Dear {guestName}</p>
+                )}
+                <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic' }}>
+                  {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
+                </p>
               </Reveal>
             )}
 
@@ -1221,8 +1393,19 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               </p>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={colors.primary} background={`${colors.primary}14`} />}
             </div>
+            <div style={{ height: 70 }} />
           </div>
         </motion.div>
+      )}
+      {opened && (
+        <BottomNavBar
+          primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark}
+          mapsUrl={enabledEvents[0]?.maps_url || ''}
+          hasWishes={(couple as any).enable_guest_wishes ?? false}
+          hasGallery={(section.gallery ?? true) && !!(couple.gallery && couple.gallery.length > 0)}
+          hasContact={contactList.length > 0}
+          audioRef={audioRef}
+        />
       )}
     </div>
   )
