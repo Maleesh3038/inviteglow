@@ -18,6 +18,26 @@ const DEFAULT_PALETTE = {
   muted: "#b08868",
 }
 
+// ── Per-element text style overrides. Reads couple.text_styles (set from
+// the "Customise Fonts" panel in the couple's dashboard) and merges a
+// color/font/bold override on top of the template's own default styling.
+// A missing key simply falls back to the template default — nothing
+// breaks for invitations that never touch that panel. ──
+type TextStyleEntry = { color?: string; font?: string; bold?: boolean }
+function useTextStyles(couple: any) {
+  const map: Record<string, TextStyleEntry> = couple?.text_styles || {}
+  return (key: string, fallback: React.CSSProperties = {}): React.CSSProperties => {
+    const s = map[key]
+    if (!s) return fallback
+    return {
+      ...fallback,
+      ...(s.color ? { color: s.color } : {}),
+      ...(s.font && s.font !== 'inherit' ? { fontFamily: s.font } : {}),
+      ...(s.bold ? { fontWeight: 700 } : {}),
+    }
+  }
+}
+
 // ── Guest intro screen — sunset gradient shimmer, "Dear [Name]," shown
 // for ~5s before the cover. Toggle via couple.show_guest_intro. ──
 function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
@@ -456,6 +476,129 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
   )
 }
 
+// ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
+// flexible `contacts` list first; if that's empty, falls back to the
+// classic bride_phone/groom_phone fields so older invitations keep
+// showing their existing numbers with no data lost. ──
+function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
+  const digitsOnly = phone.replace(/\D/g, '')
+  const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+      <div style={{ minWidth: 0 }}>
+        {name ? (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#5a3a2e', fontFamily: "'Inter',sans-serif" }}>{name}</div>
+            <div style={{ fontSize: 12, color: '#b08868', marginTop: 2 }}>{phone}</div>
+          </>
+        ) : (
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#5a3a2e', fontFamily: "'Inter',sans-serif" }}>{phone}</div>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <a href={`tel:${digitsOnly}`} aria-label={name ? `Call ${name}` : `Call ${phone}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill={primary}>
+            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
+          </svg>
+        </a>
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={name ? `WhatsApp ${name}` : `WhatsApp ${phone}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="#fff">
+            <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  )
+}
+
+// ── Floating bottom nav bar — quick jump to key sections, plus a raised
+// music toggle on the right. Fixed to the bottom of the phone viewport. ──
+function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, hasContact, audioRef }: {
+  primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; hasContact: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+}) {
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    a.addEventListener('play', onPlay)
+    a.addEventListener('pause', onPause)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
+  }, [audioRef])
+
+  const toggleMusic = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.paused ? a.play().catch(() => {}) : a.pause()
+  }
+
+  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
+    <button key={key} onClick={onClick} aria-label={label} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
+      border: 'none', cursor: 'pointer', color: dark, opacity: 0.8, padding: '2px 4px',
+    }}>
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+      <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
+    </button>
+  )
+
+  return (
+    <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
+        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(90,58,46,0.08)',
+        boxShadow: '0 10px 30px rgba(90,58,46,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
+      }}>
+        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {iconBtn(() => scrollToId('rsvp'), 'RSVP', <><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" /></>, 'rsvp')}
+        {hasContact && iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8, textDecoration: 'none', padding: '2px 4px' }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span style={{ fontSize: 8 }}>Location</span>
+          </a>
+        )}
+
+        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
+          position: 'absolute', right: 4, top: -16,
+          width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
+          background: `linear-gradient(135deg,${primary},${primaryLight})`, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 6px 16px rgba(90,58,46,0.35)',
+        }}>
+          {playing ? (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
+            </svg>
+          ) : (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9l5 6M21.5 9l-5 6" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }
 const sectionEyebrow = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
 const sectionTitle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
@@ -481,6 +624,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
+  const ts = useTextStyles(couple)
 
   useEffect(() => {
     const audio = new Audio(couple.song_url || DEFAULT_SONG_URL)
@@ -495,10 +639,18 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
   }
   type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
   const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
+  // Respects the admin's chosen display order (couple.events_order) when
+  // set — e.g. showing Wedding before Engagement — falling back to the
+  // default engagement → wedding → homecoming order otherwise.
+  const eventKeyOrder: ('engagement' | 'wedding' | 'homecoming')[] =
+    Array.isArray((couple as any).events_order) && (couple as any).events_order.length === 3
+      ? (couple as any).events_order
+      : ['engagement', 'wedding', 'homecoming']
   const eventsList: RenderableEvent[] = hasNewEvents
-    ? (['engagement', 'wedding', 'homecoming'] as const).map((key): RenderableEvent => {
+    ? eventKeyOrder.map((key): RenderableEvent => {
         const e = couple.events![key]
-        return { key, ...EVENT_META[key], enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
+        const customLabel = (e as any)?.label
+        return { key, ...EVENT_META[key], label: (customLabel && customLabel.trim()) || EVENT_META[key].label, enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
       }).filter(e => e.enabled && e.date.length > 0)
     : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
 
@@ -514,6 +666,14 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
+
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
+  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
+    ? flexContacts
+    : [
+        ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
+        ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
+      ]
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#fdf3ea" }}>
@@ -548,19 +708,18 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ fontSize: 28, marginBottom: 10 }}>🌴</div>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
+                <div style={{ ...ts('subtitle'), display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
 
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                   {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
+                <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.1rem 0" }}>&amp;</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
+                <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
 
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                <div style={{ ...ts('tagline'), fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   As the sun sets on the horizon,<br />our forever begins
                 </div>
 
@@ -586,9 +745,9 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(253,243,234,1) 0%,rgba(90,58,46,0.15) 55%,rgba(90,58,46,0.4) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
+                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(90,58,46,0.3)" }}>
-                  {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
+                  <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                   <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none" }}>RSVP</a>
@@ -600,11 +759,14 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>With Love</div>
-                <div style={{ textAlign: "center", padding: 12, background: "#fbeadc", borderRadius: 12, fontSize: 13, color: "#5a3a2e", lineHeight: 2 }}>
+                <div style={{ ...ts('message'), textAlign: "center", padding: 12, background: "#fbeadc", borderRadius: 12, fontSize: 13, color: "#5a3a2e", lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
+                  <span style={{ color: MUTED }}>
+                    {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
+                      .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
+                  </span>
                 </div>
               </motion.div>
             )}
@@ -618,16 +780,16 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={sectionTitle(DARK)}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, sun: true },
-                    { icon: "⏰", label: "Time", val: evTimeDisplay },
-                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
+                    { icon: "📅", label: "Date", val: evDateDisplay, tsKey: '' },
+                    { icon: "⏰", label: "Time", val: evTimeDisplay, tsKey: '' },
+                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address, tsKey: 'venue_name', subTsKey: 'venue_address' },
                   ].map(d => (
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY}1a` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#d4a888" }}>{d.label}</div>
-                        <div style={{ fontSize: (d as any).sun ? 18 : 15, color: (d as any).sun ? PRIMARY : DARK, fontWeight: 600, marginTop: 2, fontFamily: (d as any).sun ? "'Cormorant Garamond',serif" : "inherit", fontStyle: (d as any).sun ? "italic" : "normal" }}>{d.val}</div>
-                        {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
+                        <div style={{ ...(d.tsKey ? ts(d.tsKey) : {}), fontSize: 15, color: DARK, fontWeight: 600, marginTop: 2 }}>{d.val}</div>
+                        {d.sub && <div style={{ ...((d as any).subTsKey ? ts((d as any).subTsKey) : {}), fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
                   ))}
@@ -641,8 +803,8 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             })}
 
             {sv.countdown && (
-              <div style={{ ...sectionCard, textAlign: "center" }}>
-                <div style={sectionEyebrow(PRIMARY)}>Counting Down to Our Big Day</div>
+              <div id="savethedate" style={{ ...sectionCard, textAlign: "center" }}>
+                <div style={{ ...sectionEyebrow(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </div>
             )}
@@ -668,7 +830,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
 
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="wishes" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>With Love</div>
                 <div style={sectionTitle(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: "center", marginBottom: 16, marginTop: -8 }}>
@@ -695,7 +857,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             )}
 
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
                 <div style={sectionTitle(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -723,7 +885,37 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
+            {/* Contact Numbers */}
+            {contactList.length > 0 && (
+              <motion.div id="contact" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>Get In Touch</div>
+                <div style={sectionTitle(DARK)}>Contact Numbers</div>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Wedding Note Section — plain white card, matching the rest
+                of the template's sections. No photo background. */}
+            {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
+              <motion.div style={{ ...sectionCard, textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>💌 A Note For You</div>
+                {guestName && (
+                  <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, marginBottom: 8, fontWeight: 600 }}>
+                    Dear {guestName}
+                  </div>
+                )}
+                <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 340, margin: "0 auto 18px" }}>
+                  {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.7rem", color: PRIMARY, marginTop: 6 }}>
+                  {W.bride}<span style={{ margin: "0 8px" }}>&amp;</span>{W.groom}
+                </div>
+              </motion.div>
+            )}
+
+            <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#d4a888" }}>inviteglow.com · Digital Wedding Invitations</div>
             {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
@@ -731,6 +923,16 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
+      {opened && (
+        <BottomNavBar
+          primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK}
+          mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
+          hasWishes={(couple as any).enable_guest_wishes ?? false}
+          hasGallery={sv.gallery && W.gallery.length > 0}
+          hasContact={contactList.length > 0}
+          audioRef={audioRef}
+        />
+      )}
     </div>
   )
 }
