@@ -818,10 +818,12 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const [flapOpen, setFlapOpen] = useState(false)
+  const [letterOut, setLetterOut] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const handleOpenClick = () => {
     setFlapOpen(true)
-    setTimeout(() => setOpened(true), 550)
+    setTimeout(() => setLetterOut(true), 400)
+    setTimeout(() => setOpened(true), 950)
   }
   // The <audio> element only mounts once `opened` is true, so we wait for
   // that render (a same-tick .play() call would hit a still-null ref).
@@ -986,40 +988,53 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(90,50,110,0.16) 0%, rgba(0,0,0,0.08) 50%, rgba(90,50,110,0.2) 100%)' }} />
             <motion.div
               initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1, scale: flapOpen ? 0.93 : 1 }}
-              transition={{ y: { duration: 0.6, ease: 'easeOut' }, opacity: { duration: 0.6, ease: 'easeOut' }, scale: { duration: 0.5, delay: 0.35, ease: 'easeIn' } }}
+              animate={{ y: letterOut ? -170 : 0, opacity: letterOut ? 0 : 1, scale: flapOpen && !letterOut ? 0.95 : 1 }}
+              transition={{
+                y: { duration: letterOut ? 0.55 : 0.6, ease: letterOut ? 'easeIn' : 'easeOut' },
+                opacity: { duration: letterOut ? 0.5 : 0.6, ease: 'easeOut', delay: letterOut ? 0.05 : 0 },
+                scale: { duration: 0.35, ease: 'easeIn' },
+              }}
               style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 300, perspective: 900 }}>
 
-              {/* White card body — glass-like finish with corner flourishes for more detail */}
-              <div style={{ borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', position: 'relative', background: PURPLE_BOX, backdropFilter: 'blur(6px)', border: `1px solid ${colors.primaryLight}` }}>
-                <div style={{ position: 'absolute', top: 66, left: 10, opacity: 0.5, pointerEvents: 'none' }}><Blossom size={16} color={colors.primaryLight} /></div>
-                <div style={{ position: 'absolute', top: 66, right: 10, opacity: 0.5, pointerEvents: 'none' }}><Blossom size={16} color={colors.primaryLight} /></div>
-                <div style={{ position: 'absolute', bottom: 10, left: 14, opacity: 0.4, pointerEvents: 'none' }}><Blossom size={13} color={colors.primaryLight} /></div>
-                <div style={{ position: 'absolute', bottom: 10, right: 14, opacity: 0.4, pointerEvents: 'none' }}><Blossom size={13} color={colors.primaryLight} /></div>
+              {/* Card body — cleaner modern finish: soft gradient, subtle
+                  border, no heavy blossom clutter in the corners. */}
+              <div style={{
+                borderRadius: 20, overflow: 'hidden', position: 'relative',
+                background: `linear-gradient(165deg, #fff 0%, ${PURPLE_BOX} 100%)`,
+                boxShadow: '0 24px 70px rgba(0,0,0,0.32)', border: `1px solid ${colors.primaryLight}`,
+              }}>
                 <div style={{ height: 58 }} />
-                <div style={{ padding: '36px 26px 32px', textAlign: 'center', position: 'relative' }}>
-                  <div style={{ width: 58, height: 58, borderRadius: '50%', border: `1px solid ${colors.primary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-                    <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, letterSpacing: 2, color: colors.dark }}>{initials}</span>
+                <div style={{ padding: '38px 28px 34px', textAlign: 'center', position: 'relative' }}>
+                  <div style={{
+                    width: 62, height: 62, borderRadius: '50%', margin: '0 auto 20px',
+                    background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: `0 8px 20px ${colors.primary}44`,
+                  }}>
+                    <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 19, letterSpacing: 2, color: '#fff' }}>{initials}</span>
                   </div>
-                  <div style={{ fontSize: 11, letterSpacing: '0.28em', fontWeight: 700, color: colors.primary, marginBottom: 8 }}>{badgeText}</div>
-                  <div style={{ fontSize: 12, color: colors.primary, opacity: 0.5, marginBottom: 22 }}>~ &#42; ~</div>
+                  <div style={{ fontSize: 11, letterSpacing: '0.28em', fontWeight: 700, color: colors.primary, marginBottom: 10 }}>{badgeText}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 26 }}>
+                    <div style={{ width: 30, height: 1, background: colors.primary, opacity: 0.35 }} />
+                    <Blossom size={11} color={colors.primary} />
+                    <div style={{ width: 30, height: 1, background: colors.primary, opacity: 0.35 }} />
+                  </div>
                   <motion.button
                     onClick={handleOpenClick}
                     aria-label="Open invitation"
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.92 }}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
                     disabled={flapOpen}
                     style={{
-                      position: 'relative', width: 68, height: 62, background: 'transparent', border: 'none', cursor: flapOpen ? 'default' : 'pointer',
-                      margin: '0 auto', display: 'block',
+                      display: 'inline-flex', alignItems: 'center', gap: 9,
+                      padding: '13px 28px', borderRadius: 100, border: 'none',
+                      background: `linear-gradient(135deg,${colors.primary},${colors.primaryLight})`,
+                      color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase',
+                      cursor: flapOpen ? 'default' : 'pointer', boxShadow: `0 10px 26px ${colors.primary}55`,
+                      fontFamily: "'Inter',sans-serif",
                     }}>
-                    <svg width="68" height="62" viewBox="0 0 100 90" style={{ position: 'absolute', inset: 0 }}>
-                      <path
-                        d="M50 88 C 20 66, 0 46, 0 26 C 0 8, 16 -2, 32 6 C 42 11, 48 19, 50 27 C 52 19, 58 11, 68 6 C 84 -2, 100 8, 100 26 C 100 46, 80 66, 50 88 Z"
-                        fill={colors.primary}
-                      />
-                    </svg>
-                    <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', paddingTop: 6, color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.05em' }}>OPEN</span>
+                    Open Invitation
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                   </motion.button>
                 </div>
               </div>
@@ -1028,12 +1043,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   3D open animation is never cut off */}
               <motion.div
                 animate={{ rotateX: flapOpen ? -160 : 0 }}
-                transition={{ duration: 0.55, ease: [0.45, 0, 0.55, 1] }}
+                transition={{ duration: 0.5, ease: [0.45, 0, 0.55, 1] }}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: 58, zIndex: 2,
                   background: `linear-gradient(135deg,${colors.primaryLight},${colors.primary},#8c6aa8)`,
                   clipPath: 'polygon(0 0, 50% 100%, 100% 0)', transformOrigin: 'top center', transformStyle: 'preserve-3d',
-                  borderTopLeftRadius: 14, borderTopRightRadius: 14,
+                  borderTopLeftRadius: 20, borderTopRightRadius: 20,
                 }}
               />
             </motion.div>
