@@ -127,6 +127,53 @@ function useTextStyles(couple: any) {
   }
 }
 
+// ── Guest intro screen — soft blush/lavender shimmer, "Dear [Name]," shown
+// for ~5s before the envelope cover. Toggle via couple.show_guest_intro. ──
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+}) {
+  return (
+    <motion.div
+      key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 200,
+        background: `linear-gradient(160deg, ${cream} 0%, ${primaryLight}55 45%, #fce0d2 100%)`,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "2rem", overflow: "hidden",
+      }}>
+      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primary}33, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
+
+      <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
+        style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}44` }}>
+        <Blossom size={30} color="#fff" />
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
+        style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
+          Dear <span style={{ color: primary, fontWeight: 600 }}>{guestName}</span>,
+        </div>
+      </motion.div>
+
+      <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }}
+        style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)`, margin: "0 auto 1rem" }} />
+
+      <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
+        style={{ fontSize: 10, textTransform: "uppercase", color: `${primary}cc`, fontFamily: "'Inter',sans-serif" }}>
+        You're Invited
+      </motion.div>
+
+      <motion.div style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100 }}
+        initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }} onAnimationComplete={onDone} />
+
+      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 2 }} onClick={onDone}
+        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
+        Skip →
+      </motion.button>
+    </motion.div>
+  )
+}
+
 const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: string }> = {
   engagement: { title: 'Engagement' },
   wedding: { title: 'Event Details' },
@@ -786,6 +833,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [showRsvpForm, setShowRsvpForm] = useState(false)
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
+  const introEnabled = (couple as any).show_guest_intro !== false
+  const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
+  // Cover only renders once the intro screen has fully finished exiting
+  // (not just started), so there's never a moment where the intro's
+  // "Dear [Name]" text and the cover's content overlap.
+  const [introGone, setIntroGone] = useState(!(guestName && introEnabled))
 
   const colors = sanitizeColors(couple.custom_colors)
   const ts = useTextStyles(couple)
@@ -913,9 +966,15 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
       <FallingPetals color={colors.primary} />
 
+      <AnimatePresence onExitComplete={() => setIntroGone(true)}>
+        {showIntro && guestName && (
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} cream={colors.cream} />
+        )}
+      </AnimatePresence>
+
       {/* ───────── ENVELOPE COVER ───────── */}
       <AnimatePresence>
-        {!opened && (
+        {!opened && introGone && (
           <motion.div key="cover" className="bb-cover-bg"
             exit={{ opacity: 0, transition: { duration: 0.5, delay: 0.15 } }}
             style={{
