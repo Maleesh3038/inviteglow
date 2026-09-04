@@ -831,7 +831,7 @@ function EventsPicker({ value, onChange, order, onOrderChange }: {
               </div>
               {e.enabled && (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  <input placeholder={`Event name (default: "${ev.label}")`} value={e.label || ''} onChange={ev2 => updateEvent(ev.key, 'label', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0, fontWeight: 600 }} />
+                  <input placeholder={`Event name — e.g. "${ev.label}" (leave blank to hide the title)`} value={e.label || ''} onChange={ev2 => updateEvent(ev.key, 'label', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0, fontWeight: 600 }} />
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <input placeholder="Venue name" value={e.venue} onChange={ev2 => updateEvent(ev.key, 'venue', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                     <input type="datetime-local" value={e.date} onChange={ev2 => updateEvent(ev.key, 'date', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
