@@ -1,279 +1,1337 @@
 "use client"
-import { useState, useEffect, useRef } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { supabase, Couple, RSVP, CoupleColors } from '@/lib/supabase'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import EditInvitationEditor from './EditInvitationEditor'
 
+const PINK = "#c4607a"
+const RED = "#e0355c"
+const GOLD = "#e0a458"
 const BUCKET = 'wedding-photos'
+const ADMIN_WHATSAPP = '94770024484'
 
-// Default color presets per template — used as the starting point when a couple
-// customises colors for the first time (no custom_colors saved yet)
-const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
-  'floral-romance': { primary: '#c4607a', primaryLight: '#e8a0b8', dark: '#3d1a2a', cream: '#fdf0f0' },
-  'elegant-photo': { primary: '#c9a06e', primaryLight: '#e8d5a0', dark: '#2d2424', cream: '#faf6f4' },
-  'cinematic-gold': { primary: '#e8c468', primaryLight: '#f0d488', dark: '#1a1208', cream: '#241a0c' },
-  'kandyan-heritage': { primary: '#d4923f', primaryLight: '#f0c878', dark: '#4a1f0f', cream: '#fbf0dc' },
-  'twilight-picnic': { primary: '#f0a868', primaryLight: '#e0849a', dark: '#171c33', cream: '#232a4d' },
-  'golden-garden': { primary: '#d4a857', primaryLight: '#e8a87a', dark: '#3d2b1f', cream: '#fdf6ec' },
-  'ocean-pearl': { primary: '#2f7d9e', primaryLight: '#7fc4d8', dark: '#0d2e3a', cream: '#f0f9fb' },
-  'sunset-shores': { primary: '#e0795a', primaryLight: '#f4b896', dark: '#5a3a2e', cream: '#fdf3ea' },
-  'traditional-ceylon': { primary: '#2f4a35', primaryLight: '#c9a227', dark: '#1f2e22', cream: '#fbf6e9' },
-  'sacred-poruwa': { primary: '#c4956a', primaryLight: '#e8c99a', dark: '#3d2510', cream: '#fdf6e9' },
-  'garden-minimal': { primary: '#4a8a5a', primaryLight: '#a0d8b0', dark: '#1a2e20', cream: '#f0f7f0' },
-  'blush-blossom': { primary: '#c17d8a', primaryLight: '#f3d6d6', dark: '#5c4632', cream: '#fff6f1' },
-  'ceylon-elegance': { primary: '#c68a8f', primaryLight: '#e7c9c0', dark: '#3f4a45', cream: '#faf6f3' },
-  'eternal-bloom': { primary: '#5c7a52', primaryLight: '#b9cdae', dark: '#2d3d28', cream: '#f8f6ee' },
-  'noble-salute': { primary: '#3f5233', primaryLight: '#9aa87f', dark: '#1a2116', cream: '#faf8f2' },
-  'crimson-royale': { primary: '#8b1a2b', primaryLight: '#c96b78', dark: '#1a1214', cream: '#faf5f0' },
-  'kanchi-vivaha': { primary: '#9b2c2c', primaryLight: '#d98a5f', dark: '#221512', cream: '#f7ecd9' },
-}
-
-// Human-readable labels for the "Change Template" picker in the couple's
-// own dashboard — purely cosmetic, doesn't affect any stored data.
-const TEMPLATE_NAMES: Record<string, string> = {
-  'floral-romance': 'Floral Romance',
-  'elegant-photo': 'Elegant Photo Hero',
-  'cinematic-gold': 'Cinematic Gold',
-  'kandyan-heritage': 'Kandyan Heritage',
-  'twilight-picnic': 'Twilight Picnic',
-  'golden-garden': 'Golden Garden',
-  'ocean-pearl': 'Ocean Pearl',
-  'sunset-shores': 'Sunset Shores',
-  'traditional-ceylon': 'Traditional Ceylon',
-  'sacred-poruwa': 'Sacred Poruwa',
-  'blush-blossom': 'Blush Blossom',
-  'ceylon-elegance': 'Ceylon Elegance',
-  'eternal-bloom': 'Eternal Bloom',
-  'noble-salute': 'Noble Salute',
-  'crimson-royale': 'Crimson Royale',
-  'kanchi-vivaha': 'Kanchi Vivaha',
-}
-
-// ── Fonts available for per-element text styling. ──
-const FONT_OPTIONS = [
-  { key: 'inherit', label: 'Template Default' },
-  { key: "'Inter',sans-serif", label: 'Inter (Clean Sans)' },
-  { key: "'Cormorant Garamond',serif", label: 'Cormorant Garamond (Elegant Serif)' },
-  { key: "'Great Vibes',cursive", label: 'Great Vibes (Script)' },
-  { key: "'Playfair Display',serif", label: 'Playfair Display (Classic Serif)' },
-  { key: "'Dancing Script',cursive", label: 'Dancing Script (Casual Script)' },
-  { key: "'Montserrat',sans-serif", label: 'Montserrat (Modern Sans)' },
-  { key: "'Lora',serif", label: 'Lora (Soft Serif)' },
-  { key: "'EB Garamond',serif", label: 'EB Garamond (Traditional Serif)' },
+const TEMPLATE_OPTIONS = [
+  { id: 'floral-romance', name: 'Floral Romance' }, { id: 'elegant-photo', name: 'Elegant Photo Hero' },
+  { id: 'cinematic-gold', name: 'Cinematic Gold' }, { id: 'kandyan-heritage', name: 'Kandyan Heritage' },
+  { id: 'twilight-picnic', name: 'Twilight Picnic' }, { id: 'golden-garden', name: 'Golden Garden' },
+  { id: 'ocean-pearl', name: 'Ocean Pearl' }, { id: 'sunset-shores', name: 'Sunset Shores' },
+  { id: 'traditional-ceylon', name: 'Traditional Ceylon' }, { id: 'sacred-poruwa', name: 'Sacred Poruwa' },
+  { id: 'blush-blossom', name: 'Blush Blossom' }, { id: 'ceylon-elegance', name: 'Ceylon Elegance' },
+  { id: 'eternal-bloom', name: 'Eternal Bloom' }, { id: 'noble-salute', name: 'Noble Salute' }, { id: 'crimson-royale', name: 'Crimson Royale' }, { id: 'kanchi-vivaha', name: 'Kanchi Vivaha' },
 ]
+const templateName = (id: string) => TEMPLATE_OPTIONS.find(t => t.id === id)?.name || (id || '').replace(/-/g, ' ')
 
-// ── Which text elements can be individually styled. Stored as
-// couple.text_styles = { [key]: { color, font, bold } }. Templates read
-// this object and fall back to their own default styling when a key is
-// absent — nothing breaks for invitations that never touch this panel.
-// Labels + example text are written in plain terms (not template jargon)
-// so it's clear what each one actually controls. ──
-const TEXT_STYLE_TARGETS: { key: string; label: string; example: (c: { bride: string; groom: string; venue: string; venue_address: string }) => string }[] = [
-  { key: 'groom_name', label: "Groom's Name", example: c => c.groom || 'Roshan' },
-  { key: 'bride_name', label: "Bride's Name", example: c => c.bride || 'Amara' },
-  { key: 'subtitle', label: 'Welcome Line (shown above the names, e.g. "You Are Invited")', example: () => 'You Are Invited' },
-  { key: 'tagline', label: 'Short Quote Under the Names', example: () => 'Where the tide meets eternity, we begin our forever' },
-  { key: 'message', label: 'Family Invitation Message', example: () => 'With the blessings of our families, we joyfully invite you to celebrate...' },
-  { key: 'love_story', label: 'Love Story Text', example: () => 'Our journey began on a rainy afternoon in Colombo...' },
-  { key: 'venue_name', label: 'Venue Name', example: c => c.venue || 'Hotel Green Court' },
-  { key: 'venue_address', label: 'Venue Address', example: c => c.venue_address || 'Janadhipathi Mawatha, Colombo' },
-  { key: 'together_label', label: '"Together With Their Families" Line (shown above the names once the invitation is opened)', example: () => 'Together with their families' },
-  { key: 'dress_code', label: 'Dress Code Text', example: () => 'Formal / No. 1 Ceremonial Dress' },
-  { key: 'countdown_label', label: 'Countdown Heading', example: () => 'Counting Down to Our Big Day' },
-]
-
-async function uploadToStorage(file: File, folder: string): Promise<string | null> {
-  const ext = file.name.split('.').pop()
-  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-  const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
-  if (error) { console.error('Upload error:', error); return null }
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
-  return data.publicUrl
+type MyCouple = {
+  id: string; slug: string; bride: string; groom: string; wedding_date: string; venue: string | null
+  template: string; couple_photo: string | null
+  project_status: string; payment_slip_status: string; payment_slip_url: string | null
+  page_views: number | null
+  payment_status?: string | null; package_tier?: string | null; paid_amount?: number | null
 }
+type GuestRow = { id: string; couple_id: string; name: string; phone: string | null; heads: number; category: string; side: string; table_id: string | null; created_at: string }
+type SeatingTable = { id: string; couple_id: string; name: string; created_at: string }
+type RsvpRow = { id: string; couple_id: string; guest_name: string; response: 'yes' | 'no'; guest_count: number; created_at: string }
+type ChecklistItem = { id: string; couple_id: string; task_name: string; category: string; due_date: string | null; done: boolean; created_at: string }
+type Vendor = { id: string; couple_id: string; category: string; vendor_name: string; contact_name: string | null; phone: string | null; email: string | null; cost: number; status: 'contacted' | 'booked' | 'paid'; notes: string | null; created_at: string }
+type LiquorItem = { id: string; couple_id: string; item_name: string; category: string; quantity: number; unit: string; cost_per_unit: number; notes: string | null; created_at: string }
 
-function findSeatForGuest(guestName: string, seats: Record<string, string>): string | null {
-  const query = guestName.trim().toLowerCase()
-  if (!query) return null
-  const found = Object.keys(seats || {}).find(k => query.includes(k) || k.includes(query))
-  return found ? seats[found] : null
-}
-
-// ── Clean line-style SVG icons — no emoji in the dashboard chrome ──
-type IconName = 'lock' | 'check' | 'cross' | 'users' | 'chair' | 'wine' | 'glass' | 'edit' | 'link' | 'overview' | 'search' | 'refresh' | 'trash' | 'copy' | 'whatsapp' | 'home' | 'car' | 'sparkles' | 'camera' | 'heart' | 'wallet' | 'plus'
+// ── Icons ──
+type IconName = 'grid' | 'file' | 'edit' | 'sparkles' | 'userPlus' | 'users' | 'mail' | 'grid2' | 'gallery' | 'checklist' | 'wallet' | 'home' | 'liquor' | 'support' | 'membersIcon' | 'card' | 'bell' | 'signout' | 'copy' | 'check' | 'cross' | 'trash' | 'whatsapp' | 'link' | 'plus' | 'chevron' | 'search' | 'bank' | 'upload'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
-    case 'lock': return <svg {...c}><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M7.5 10.5V7a4.5 4.5 0 019 0v3.5" /></svg>
+    case 'grid': return <svg {...c}><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></svg>
+    case 'file': return <svg {...c}><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" /><path d="M14 3v5h5" /></svg>
+    case 'edit': return <svg {...c}><path d="M4 20h4L18.5 9.5a2.1 2.1 0 00-3-3L5 17v3z" /><path d="M13.5 8l3 3" /></svg>
+    case 'sparkles': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
+    case 'userPlus': return <svg {...c}><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20a6.5 6.5 0 0113 0" /><path d="M18 8v6M21 11h-6" /></svg>
+    case 'users': return <svg {...c}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20a5.5 5.5 0 0111 0" /><path d="M15.5 8.2a3 3 0 010 5.8" /><path d="M15 20a5 5 0 016.5-4.8" /></svg>
+    case 'mail': return <svg {...c}><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></svg>
+    case 'grid2': return <svg {...c}><rect x="3" y="3" width="7.5" height="7.5" rx="1.2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.2" /></svg>
+    case 'gallery': return <svg {...c}><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.7" /><path d="M21 15.5l-5.5-5.5a1.5 1.5 0 00-2.1 0L4 18.5" /></svg>
+    case 'checklist': return <svg {...c}><path d="M9 6h11M9 12h11M9 18h11" /><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" /></svg>
+    case 'wallet': return <svg {...c}><rect x="3" y="6.5" width="18" height="13" rx="2.5" /><path d="M3 10h18" /><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" /><path d="M7 6.5V5a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0117 5v1.5" /></svg>
+    case 'home': return <svg {...c}><path d="M4 11l8-7 8 7" /><path d="M6 10v9a1 1 0 001 1h10a1 1 0 001-1v-9" /></svg>
+    case 'liquor': return <svg {...c}><path d="M8 3h8l-1 7a3 3 0 01-6 0z" /><path d="M12 13v7M8.5 20h7" /></svg>
+    case 'support': return <svg {...c}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="3.2" /><path d="M5.6 5.6l3.4 3.4M18.4 5.6l-3.4 3.4M5.6 18.4l3.4-3.4M18.4 18.4l-3.4-3.4" /></svg>
+    case 'membersIcon': return <svg {...c}><circle cx="8.5" cy="8" r="3" /><path d="M2.5 19a6 6 0 0112 0" /><path d="M16 5.5a3 3 0 010 5.8M19 19a5 5 0 00-4.5-5.5" /></svg>
+    case 'card': return <svg {...c}><rect x="3" y="5.5" width="18" height="13" rx="2.2" /><path d="M3 9.5h18" /><path d="M6.5 14h4" /></svg>
+    case 'bell': return <svg {...c}><path d="M6 10a6 6 0 0112 0c0 4 1.5 5.5 1.5 5.5h-15S6 14 6 10z" /><path d="M9.7 19a2.3 2.3 0 004.6 0" /></svg>
+    case 'signout': return <svg {...c}><path d="M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h3" /><path d="M15 16l4-4-4-4" /><path d="M19 12H9" /></svg>
+    case 'copy': return <svg {...c}><rect x="8.5" y="8.5" width="12" height="12" rx="2" /><path d="M15.5 8.5V5.8A1.8 1.8 0 0013.7 4H5.8A1.8 1.8 0 004 5.8v7.9A1.8 1.8 0 005.8 15.5H8.5" /></svg>
     case 'check': return <svg {...c}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
     case 'cross': return <svg {...c}><path d="M6 6l12 12M18 6L6 18" /></svg>
-    case 'users': return <svg {...c}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20a5.5 5.5 0 0111 0" /><path d="M15.5 8.2a3 3 0 010 5.8" /><path d="M15 20a5 5 0 016.5-4.8" /></svg>
-    case 'chair': return <svg {...c}><path d="M6 4v9a2 2 0 002 2h8a2 2 0 002-2V4" /><path d="M6 15v5M18 15v5M8 4h8" /></svg>
-    case 'wine': return <svg {...c}><path d="M8 3h8l-1 7a3 3 0 01-6 0z" /><path d="M12 13v7M8.5 20h7" /></svg>
-    case 'glass': return <svg {...c}><path d="M6 3h12l-1.5 12a3.5 3.5 0 01-3 3h-3a3.5 3.5 0 01-3-3z" /><path d="M9 8h6" /></svg>
-    case 'edit': return <svg {...c}><path d="M4 20h4L18.5 9.5a2.1 2.1 0 00-3-3L5 17v3z" /><path d="M13.5 8l3 3" /></svg>
-    case 'link': return <svg {...c}><path d="M9.5 14.5l5-5" /><path d="M13 6l1-1a3.5 3.5 0 015 5l-1 1" /><path d="M11 18l-1 1a3.5 3.5 0 01-5-5l1-1" /></svg>
-    case 'overview': return <svg {...c}><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></svg>
-    case 'search': return <svg {...c}><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>
-    case 'refresh': return <svg {...c}><path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3" /><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5" /></svg>
     case 'trash': return <svg {...c}><path d="M5 7h14" /><path d="M9 7V4.8A1.8 1.8 0 0110.8 3h2.4A1.8 1.8 0 0115 4.8V7" /><path d="M7 7l1 13.2A1.8 1.8 0 009.8 22h4.4a1.8 1.8 0 001.8-1.8L17 7" /></svg>
-    case 'copy': return <svg {...c}><rect x="8.5" y="8.5" width="12" height="12" rx="2" /><path d="M15.5 8.5V5.8A1.8 1.8 0 0013.7 4H5.8A1.8 1.8 0 004 5.8v7.9A1.8 1.8 0 005.8 15.5H8.5" /></svg>
     case 'whatsapp': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" /></svg>
-    case 'home': return <svg {...c}><path d="M4 11l8-7 8 7" /><path d="M6 10v9a1 1 0 001 1h10a1 1 0 001-1v-9" /></svg>
-    case 'car': return <svg {...c}><path d="M4 16V11l2-4h12l2 4v5" /><path d="M4 16a1.5 1.5 0 003 0M17 16a1.5 1.5 0 003 0M4 16h16" /></svg>
-    case 'sparkles': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
-    case 'camera': return <svg {...c}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7l1.5-3h5L16 7" /><circle cx="12" cy="13.5" r="3.5" /></svg>
-    case 'heart': return <svg {...c}><path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" /></svg>
-    case 'wallet': return <svg {...c}><rect x="3" y="6.5" width="18" height="13" rx="2.5" /><path d="M3 10h18" /><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" /><path d="M7 6.5V5a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0117 5v1.5" /></svg>
+    case 'link': return <svg {...c}><path d="M9.5 14.5l5-5" /><path d="M13 6l1-1a3.5 3.5 0 015 5l-1 1" /><path d="M11 18l-1 1a3.5 3.5 0 01-5-5l1-1" /></svg>
     case 'plus': return <svg {...c}><path d="M12 5v14M5 12h14" /></svg>
+    case 'chevron': return <svg {...c}><path d="M9 6l6 6-6 6" /></svg>
+    case 'search': return <svg {...c}><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>
+    case 'bank': return <svg {...c}><path d="M3 10l9-6 9 6" /><path d="M4.5 10v9M9 10v9M15 10v9M19.5 10v9" /><path d="M2.5 21h19" /></svg>
+    case 'upload': return <svg {...c}><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" /></svg>
     default: return null
   }
 }
 
-// ── Small donut chart (attending vs declined), pure SVG — no charting library ──
-function RsvpDonut({ accepted, declined, accent, accentLight, size = 128 }: { accepted: number; declined: number; accent: string; accentLight: string; size?: number }) {
-  const total = accepted + declined
-  const r = size / 2 - 12
-  const circumference = 2 * Math.PI * r
-  const acceptedFrac = total > 0 ? accepted / total : 0
-  const acceptedLen = circumference * acceptedFrac
+// ── Shared UI bits ──
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 13px', borderRadius: 9, border: '1px solid #e2e8f0',
+  fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box', color: '#1e293b', background: '#fff',
+}
+const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 5, display: 'block' }
+const cardStyle: React.CSSProperties = { background: '#fff', borderRadius: 18, padding: 22, border: '1px solid #f3e6ea', boxShadow: '0 4px 18px rgba(196,96,122,0.06)' }
+
+function StatCard({ label, value, icon, iconBg, iconColor, sub }: { label: string; value: string | number; icon: IconName; iconBg: string; iconColor: string; sub?: string }) {
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={12} />
-      {total > 0 && (
-        <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={accent} strokeWidth={12}
-          strokeDasharray={`${acceptedLen} ${circumference - acceptedLen}`}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      )}
-      <text x="50%" y="47%" textAnchor="middle" fontSize={size * 0.22} fontWeight={800} fill="#1e293b" fontFamily="'Inter',sans-serif">{total}</text>
-      <text x="50%" y="63%" textAnchor="middle" fontSize={size * 0.09} fill="#94a3b8" fontFamily="'Inter',sans-serif">RSVPs</text>
-    </svg>
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: '#a89298', letterSpacing: '0.06em' }}>{label.toUpperCase()}</div>
+        <div style={{ width: 34, height: 34, borderRadius: 11, background: `linear-gradient(150deg, ${iconBg}, ${iconColor}22)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={icon} size={16} color={iconColor} />
+        </div>
+      </div>
+      <div style={{ fontSize: 27, fontWeight: 800, color: '#2a1f22' }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: '#a89298', marginTop: 4 }}>{sub}</div>}
+    </div>
   )
 }
 
-// ── Guest wish moderation ──────────────────────────────────────────
-type DashWishMedia = { url: string; type: 'photo' | 'video' }
-type DashWish = {
-  id: string; couple_id: string; guest_name: string; message: string
-  photo_url: string | null; video_url: string | null; media: DashWishMedia[] | null
-  approved: boolean | null; created_at: string
+function EmptyIcon({ name }: { name: IconName }) {
+  return (
+    <div style={{ width: 52, height: 52, borderRadius: '50%', background: `${PINK}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+      <Icon name={name} size={22} color={PINK} />
+    </div>
+  )
 }
 
-function getDashWishMedia(w: DashWish): DashWishMedia[] {
-  if (w.media && w.media.length > 0) return w.media
-  if (w.photo_url) return [{ url: w.photo_url, type: 'photo' }]
-  if (w.video_url) return [{ url: w.video_url, type: 'video' }]
-  return []
+// ── Guest management shared bits ──
+const GUEST_CATEGORIES = [
+  { key: 'family', label: 'Family' }, { key: 'friends', label: 'Friends' }, { key: 'office', label: 'Office' },
+  { key: 'vip', label: 'VIP' }, { key: 'neighbors', label: 'Neighbors' }, { key: 'other', label: 'Other' },
+]
+const GUEST_SIDES = [{ key: 'bride', label: 'Bride' }, { key: 'groom', label: 'Groom' }, { key: 'both', label: 'Both' }]
+const categoryLabel = (k: string) => GUEST_CATEGORIES.find(c => c.key === k)?.label || k
+const sideLabel = (k: string) => GUEST_SIDES.find(s => s.key === k)?.label || k
+
+const GUEST_TABS: { key: SectionKey; label: string; icon: IconName }[] = [
+  { key: 'add-guests', label: 'Add Guests', icon: 'userPlus' },
+  { key: 'guest-links', label: 'Guest List & Links', icon: 'users' },
+  { key: 'rsvp', label: 'RSVP Management', icon: 'mail' },
+  { key: 'table', label: 'Table Arrangement', icon: 'grid2' },
+  { key: 'gallery', label: 'Wishes Wall', icon: 'gallery' },
+]
+
+function GuestManagementTabs({ active, onNavigate }: { active: SectionKey; onNavigate: (s: SectionKey) => void }) {
+  return (
+    <div style={{
+      display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 24, background: '#fdf1f3', borderRadius: 100, padding: 4,
+      border: '1px solid #f6dfe4', boxShadow: 'inset 0 1px 2px rgba(196,96,122,0.06)',
+    }}>
+      {GUEST_TABS.map(t => (
+        <button key={t.key} onClick={() => onNavigate(t.key)} style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '9px 15px', borderRadius: 100, border: 'none', cursor: 'pointer',
+          background: active === t.key ? '#fff' : 'transparent',
+          color: active === t.key ? PINK : '#a8828a', fontWeight: active === t.key ? 700 : 600, fontSize: 12.5,
+          boxShadow: active === t.key ? '0 3px 10px rgba(196,96,122,0.18)' : 'none', transition: 'all 0.15s',
+        }}>
+          <Icon name={t.icon} size={14} color={active === t.key ? PINK : '#c9a9b1'} /> {t.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
-function WishesManager({ coupleId, accent }: { coupleId: string; accent: string }) {
-  const [wishes, setWishes] = useState<DashWish[]>([])
+
+type SectionKey =
+  | 'overview' | 'my-invitations' | 'edit-invitation' | 'custom-design'
+  | 'add-guests' | 'guest-links' | 'rsvp' | 'table' | 'gallery'
+  | 'checklist' | 'budget' | 'vendors' | 'liquor'
+  | 'support' | 'profile' | 'members' | 'billing'
+
+const NAV_GROUPS: { title: string; items: { key: SectionKey; label: string; icon: IconName }[] }[] = [
+  { title: 'Invitation', items: [
+    { key: 'overview', label: 'Overview', icon: 'grid' },
+    { key: 'my-invitations', label: 'My Invitations', icon: 'file' },
+    { key: 'edit-invitation', label: 'Edit Invitation', icon: 'edit' },
+    { key: 'custom-design', label: 'Custom Design', icon: 'sparkles' },
+  ]},
+  { title: 'Guest Management', items: [
+    { key: 'add-guests', label: 'Add Guests', icon: 'userPlus' },
+    { key: 'guest-links', label: 'Guest List & Links', icon: 'users' },
+    { key: 'rsvp', label: 'RSVP Management', icon: 'mail' },
+    { key: 'table', label: 'Table Arrangement', icon: 'grid2' },
+    { key: 'gallery', label: 'Wishes Wall', icon: 'gallery' },
+  ]},
+  { title: 'Wedding Plan Tools', items: [
+    { key: 'checklist', label: 'Task Checklist', icon: 'checklist' },
+    { key: 'budget', label: 'Budget Management', icon: 'wallet' },
+    { key: 'vendors', label: 'Vendor List', icon: 'home' },
+    { key: 'liquor', label: 'Liquor Planner', icon: 'liquor' },
+  ]},
+  { title: 'Help', items: [{ key: 'support', label: 'Support', icon: 'support' }] },
+  { title: 'Account', items: [
+    { key: 'profile', label: 'My Profile', icon: 'membersIcon' },
+    { key: 'members', label: 'Members', icon: 'users' },
+  ]},
+  { title: 'Billing', items: [{ key: 'billing', label: 'Upgrade Plan', icon: 'card' }] },
+]
+
+export default function CustomerDashboard() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'pending' | 'approved'>('pending')
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const BORDER = '#e2e8f0'
-  const TEXT_DARK = '#1e293b'
-  const TEXT_MUTED = '#64748b'
+  const [userEmail, setUserEmail] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [emailConfirmed, setEmailConfirmed] = useState(true)
+  const [couples, setCouples] = useState<MyCouple[]>([])
+  const [activeCoupleId, setActiveCoupleId] = useState('')
+  const [guests, setGuests] = useState<GuestRow[]>([])
+  const [rsvps, setRsvps] = useState<RsvpRow[]>([])
+  const [section, setSection] = useState<SectionKey>('overview')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const load = async () => {
-    const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
-    if (data) setWishes(data as DashWish[])
+  const couple = couples.find(c => c.id === activeCoupleId) || couples[0] || null
+
+  const loadAll = async () => {
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) { router.push('/login'); return }
+    setUserEmail(userData.user.email || '')
+    setAvatarUrl((userData.user.user_metadata as any)?.avatar_url || '')
+    setDisplayName((userData.user.user_metadata as any)?.full_name || '')
+    setEmailConfirmed(!!userData.user.email_confirmed_at)
+    const { data: cData } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, venue, template, couple_photo, project_status, payment_slip_status, payment_slip_url, page_views, payment_status, package_tier, paid_amount').eq('user_id', userData.user.id).order('created_at', { ascending: false })
+    if (cData) {
+      setCouples(cData as MyCouple[])
+      if (cData.length > 0) setActiveCoupleId(prev => prev || cData[0].id)
+    }
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [coupleId])
+  useEffect(() => { loadAll() }, [])
+
+  const loadGuestsAndRsvps = async (coupleId: string) => {
+    const [{ data: g }, { data: r }] = await Promise.all([
+      supabase.from('guests').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false }),
+      supabase.from('rsvps').select('id, couple_id, guest_name, response, guest_count, created_at').eq('couple_id', coupleId).order('created_at', { ascending: false }),
+    ])
+    if (g) setGuests(g as GuestRow[])
+    if (r) setRsvps(r as RsvpRow[])
+  }
+
+  useEffect(() => { if (couple) loadGuestsAndRsvps(couple.id) }, [couple?.id])
+
+  const resendVerification = async () => {
+    await supabase.auth.resend({ type: 'signup', email: userEmail })
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
+  if (loading) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter',sans-serif", color: '#94a3b8' }}>Loading your dashboard...</div>
+  }
+
+  if (!couple) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter',sans-serif", flexDirection: 'column', gap: 16, padding: 24, textAlign: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>No invitation yet</div>
+        <div style={{ fontSize: 13, color: '#64748b' }}>Create your first invitation to unlock your dashboard.</div>
+        <a href="/create" style={{ padding: '12px 24px', borderRadius: 100, background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13.5 }}>Create Invitation</a>
+      </div>
+    )
+  }
+
+  const initials = userEmail ? userEmail[0].toUpperCase() : 'U'
+  const daysToWedding = Math.max(0, Math.ceil((new Date(couple.wedding_date).getTime() - Date.now()) / 86400000))
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#fdf7f8', fontFamily: "'Inter',sans-serif", display: 'flex' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital@1&family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
+
+      {/* ── SIDEBAR ── */}
+      <div style={{
+        width: 244, flexShrink: 0, background: '#fffaf9', borderRight: '1px solid #f6e1e6',
+        display: sidebarOpen ? 'flex' : undefined, flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 40,
+        transform: sidebarOpen ? 'translateX(0)' : undefined,
+      }} className="ig-sidebar">
+        <div style={{ padding: '22px 18px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18 }}>
+            <span style={{ color: PINK, fontSize: 18 }}>♥</span>
+            <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 24, color: PINK, lineHeight: 1 }}>InviteGlow</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: `${PINK}0d`, borderRadius: 14, padding: '12px 14px', border: `1px solid ${PINK}33` }}>
+            <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
+              <svg width={40} height={40} viewBox="0 0 40 40">
+                <circle cx={20} cy={20} r={17} fill="none" stroke="#f1dde1" strokeWidth={4} />
+                <circle cx={20} cy={20} r={17} fill="none" stroke={PINK} strokeWidth={4} strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 17}`} strokeDashoffset={2 * Math.PI * 17 * Math.max(0, 1 - Math.min(daysToWedding, 90) / 90)}
+                  transform="rotate(-90 20 20)" />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{daysToWedding}</div>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: PINK, letterSpacing: '0.08em' }}>DAYS TO GO</div>
+              <div style={{ fontSize: 10.5, color: '#8a7478', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px' }}>
+          {NAV_GROUPS.map(group => (
+            <div key={group.title} style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#c9a9b1', letterSpacing: '0.1em', padding: '8px 10px 4px' }}>{group.title.toUpperCase()}</div>
+              {group.items.map(item => (
+                <button key={item.key} onClick={() => { setSection(item.key); setSidebarOpen(false) }} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 9,
+                  border: 'none', cursor: 'pointer', marginBottom: 2,
+                  background: section === item.key ? PINK : 'transparent',
+                  color: section === item.key ? '#fff' : '#6b5a5f', fontWeight: section === item.key ? 700 : 500, fontSize: 13,
+                  boxShadow: section === item.key ? `0 4px 14px ${PINK}45` : 'none',
+                }}>
+                  <Icon name={item.icon} size={16} color={section === item.key ? '#fff' : '#c9a9b1'} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ padding: 14, borderTop: '1px solid #f6e1e6' }}>
+          <button onClick={() => { setSection('profile'); setSidebarOpen(false) }} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: '100%', textAlign: 'left' }}>
+            {avatarUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={avatarUrl} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${PINK}` }} />
+            ) : (
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{initials}</div>
+            )}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{couple.bride} &amp; {couple.groom}</div>
+              <div style={{ fontSize: 10.5, color: '#94a3b8' }}>{couple.payment_slip_status === 'verified' ? 'Live Plan' : 'Free Plan'}</div>
+            </div>
+          </button>
+          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 12.5, fontWeight: 600, padding: '4px 2px' }}>
+            <Icon name="signout" size={14} /> Sign Out
+          </button>
+        </div>
+      </div>
+
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', zIndex: 35 }} className="ig-sidebar-backdrop" />}
+
+      <style>{`
+        .ig-sidebar { transform: translateX(-100%); transition: transform 0.2s; }
+        .ig-sidebar-backdrop { display: none; }
+        @media (min-width: 900px) {
+          .ig-sidebar { display: flex !important; transform: none !important; position: sticky !important; }
+          .ig-sidebar-backdrop { display: none !important; }
+        }
+      `}</style>
+
+      {/* ── MAIN ── */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', background: '#fff', borderBottom: '1px solid #eef0f3' }}>
+          <button onClick={() => setSidebarOpen(true)} className="ig-hamburger" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid #e2e8f0', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', fontSize: 12, color: '#475569' }}>
+            <Icon name="grid" size={14} /> Menu
+          </button>
+          <div style={{ flex: 1 }} />
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="bell" size={16} color="#64748b" />
+          </div>
+        </div>
+        <style>{`@media (min-width: 900px) { .ig-hamburger { display: none !important; } }`}</style>
+
+        {!emailConfirmed && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '12px 24px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Icon name="mail" size={16} color="#b45309" />
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#92400e' }}>Please verify your email address</div>
+                <div style={{ fontSize: 11.5, color: '#a16207' }}>We sent a verification link when you signed up. Click it to confirm your email.</div>
+              </div>
+            </div>
+            <button onClick={resendVerification} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#f59e0b', color: '#fff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>Resend email</button>
+          </div>
+        )}
+
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 60px' }}>
+          {section === 'overview' && <OverviewSection couple={couple} guests={guests} rsvps={rsvps} daysToWedding={daysToWedding} onNavigate={setSection} />}
+          {section === 'my-invitations' && <MyInvitationSection couple={couple} onSaved={() => loadAll()} focusEdit={false} />}
+          {section === 'edit-invitation' && <EditInvitationEditor coupleId={couple.id} />}
+          {section === 'custom-design' && <CustomDesignSection couple={couple} />}
+          {section === 'add-guests' && <AddGuestsSection couple={couple} guests={guests} onChanged={() => loadGuestsAndRsvps(couple.id)} onNavigate={setSection} />}
+          {section === 'guest-links' && <GuestLinksSection couple={couple} guests={guests} rsvps={rsvps} onNavigate={setSection} />}
+          {section === 'rsvp' && <RsvpManagementSection couple={couple} guests={guests} rsvps={rsvps} onChanged={() => loadGuestsAndRsvps(couple.id)} onNavigate={setSection} />}
+          {section === 'table' && <TableArrangementSection couple={couple} guests={guests} onChanged={() => loadGuestsAndRsvps(couple.id)} onNavigate={setSection} />}
+          {section === 'gallery' && <WishesWallSection couple={couple} onNavigate={setSection} />}
+          {section === 'checklist' && <ChecklistSection couple={couple} />}
+          {section === 'budget' && <BudgetSection couple={couple} />}
+          {section === 'vendors' && <VendorsSection couple={couple} />}
+          {section === 'liquor' && <LiquorSection couple={couple} />}
+          {section === 'support' && <SupportSection couple={couple} />}
+          {section === 'profile' && <ProfileSection userEmail={userEmail} avatarUrl={avatarUrl} displayName={displayName} onChanged={loadAll} />}
+          {section === 'members' && <MembersSection userEmail={userEmail} />}
+          {section === 'billing' && <BillingSection couple={couple} onChanged={loadAll} />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════ OVERVIEW ══════════════════════════════
+function OverviewSection({ couple, guests, rsvps, daysToWedding, onNavigate }: {
+  couple: MyCouple; guests: GuestRow[]; rsvps: RsvpRow[]; daysToWedding: number; onNavigate: (s: SectionKey) => void
+}) {
+  const accepted = rsvps.filter(r => r.response === 'yes')
+  const declined = rsvps.filter(r => r.response === 'no')
+  const totalAttending = accepted.reduce((s, r) => s + (r.guest_count || 1), 0)
+  const respondedNames = new Set(rsvps.map(r => r.guest_name.trim().toLowerCase()))
+  const awaiting = guests.filter(g => {
+    const q = g.name.trim().toLowerCase()
+    return !Array.from(respondedNames).some(n => n.includes(q) || q.includes(n))
+  })
+  const totalInvited = Math.max(guests.length, rsvps.length)
+  const respondedCount = rsvps.length
+
+  const isPublished = couple.payment_slip_status === 'verified'
+  const steps = [
+    { label: 'Create account', done: true },
+    { label: 'Choose template', done: !!couple.template },
+    { label: 'Add guest list', done: guests.length > 0 },
+    { label: 'Customize details', done: !!couple.couple_photo },
+    { label: 'Publish & share', done: isPublished },
+  ]
+  const doneCount = steps.filter(s => s.done).length
+  const progressPct = Math.round((doneCount / steps.length) * 100)
+  const nextStep = steps.find(s => !s.done)
+
+  const link = typeof window !== 'undefined' ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
+
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>DASHBOARD</div>
+      <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>Welcome back, <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', color: PINK, fontWeight: 700 }}>{couple.bride} &amp; {couple.groom}</span></div>
+      <div style={{ fontSize: 13.5, color: '#64748b', marginTop: 4, marginBottom: 22 }}>Let's get your invitation ready to share.</div>
+
+      {/* Hero status card */}
+      <div style={{ background: `linear-gradient(135deg,${PINK},${RED})`, borderRadius: 20, padding: 26, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginBottom: 22, boxShadow: `0 10px 30px ${PINK}40` }}>
+        <div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            <span style={{ padding: '3px 10px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{(couple.project_status || 'DRAFT').toUpperCase()}</span>
+            <span style={{ padding: '3px 10px', borderRadius: 100, border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: 10, fontWeight: 700 }}>{isPublished ? 'LIVE' : 'FREE'}</span>
+          </div>
+          <div style={{ fontSize: 21, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
+            Your invitation is <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic' }}>{isPublished ? 'live!' : 'almost ready.'}</span>
+          </div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', marginBottom: 16, maxWidth: 340 }}>
+            {isPublished ? 'Share your link and start collecting RSVPs.' : 'Finish a few steps below to publish and start collecting RSVPs.'}
+          </div>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => onNavigate('edit-invitation')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 100, border: 'none', cursor: 'pointer', background: '#fff', color: PINK, fontWeight: 700, fontSize: 13 }}>
+              <Icon name="edit" size={13} color={PINK} /> Edit invitation
+            </button>
+            <button onClick={() => onNavigate('billing')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#fff', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>Upgrade <Icon name="chevron" size={13} color="#fff" /></button>
+          </div>
+        </div>
+        <div style={{ width: 118, height: 140, borderRadius: 16, overflow: 'hidden', border: '3px solid rgba(255,255,255,0.5)', boxShadow: '0 8px 24px rgba(0,0,0,0.25)', flexShrink: 0, position: 'relative', background: '#fdf6ee' }}>
+          {couple.couple_photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={couple.couple_photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: '#a8895a' }}>{couple.bride}</span>
+              <span style={{ fontSize: 9, color: '#a8895a' }}>&amp;</span>
+              <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: '#a8895a' }}>{couple.groom}</span>
+            </div>
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '5px 4px', textAlign: 'center', background: 'rgba(36,26,31,0.75)', fontSize: 9, color: '#fff', fontWeight: 700 }}>
+            {new Date(couple.wedding_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          </div>
+        </div>
+      </div>
+
+      {/* Getting started — connected horizontal timeline */}
+      <div style={{ ...cardStyle, marginBottom: 22 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Getting started</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: PINK, background: `${PINK}14`, padding: '3px 10px', borderRadius: 100 }}>{progressPct}%</div>
+        </div>
+        <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 24 }}>{nextStep ? `Next: ${nextStep.label}` : 'All steps complete!'}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 12, left: '10%', right: '10%', height: 2, background: '#f1f5f9', zIndex: 0 }} />
+          <div style={{ position: 'absolute', top: 12, left: '10%', height: 2, width: `${Math.max(0, (doneCount - 1)) / (steps.length - 1) * 80}%`, background: PINK, zIndex: 0, transition: 'width 0.3s' }} />
+          {steps.map((s, i) => (
+            <div key={s.label} style={{ flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: s.done ? PINK : '#fff', border: `2px solid ${s.done ? PINK : '#e2e8f0'}`, color: s.done ? '#fff' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 11, fontWeight: 700 }}>
+                {s.done ? <Icon name="check" size={12} color="#fff" /> : i + 1}
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: s.done ? '#334155' : '#94a3b8', padding: '0 4px' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats — unified strip instead of separate cards */}
+      <div style={{ ...cardStyle, display: 'flex', flexWrap: 'wrap', marginBottom: 22, padding: 0, overflow: 'hidden' }}>
+        {[
+          { label: 'Total Guests', value: totalInvited, icon: 'users' as IconName, color: PINK },
+          { label: 'Page Views', value: couple.page_views ?? 0, icon: 'gallery' as IconName, color: '#0369a1' },
+          { label: 'Attending', value: totalAttending, icon: 'check' as IconName, color: '#16a34a' },
+          { label: 'Days to Wedding', value: daysToWedding, icon: 'home' as IconName, color: '#b45309' },
+        ].map((s, i) => (
+          <div key={s.label} style={{ flex: '1 1 140px', padding: '18px 20px', borderLeft: i > 0 ? '1px solid #f1f5f9' : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <Icon name={s.icon} size={14} color={s.color} />
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em' }}>{s.label.toUpperCase()}</span>
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Guest responses */}
+      <div style={{ ...cardStyle, marginBottom: 22 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Guest responses</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{totalInvited} invited · {respondedCount} responded</div>
+          </div>
+          <button onClick={() => onNavigate('rsvp')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: PINK, fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>Details <Icon name="chevron" size={12} color={PINK} /></button>
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <div style={{ display: 'flex', height: 14, borderRadius: 100, overflow: 'hidden', background: '#f1f5f9', marginBottom: 16 }}>
+            {totalInvited > 0 && <>
+              <div style={{ width: `${accepted.length / totalInvited * 100}%`, background: '#16a34a' }} />
+              <div style={{ width: `${declined.length / totalInvited * 100}%`, background: '#f59e0b' }} />
+              <div style={{ width: `${awaiting.length / totalInvited * 100}%`, background: '#e2e8f0' }} />
+            </>}
+          </div>
+          {[
+            { label: 'Attending', color: '#16a34a', n: accepted.length },
+            { label: 'Declined', color: '#f59e0b', n: declined.length },
+            { label: 'Awaiting', color: '#cbd5e1', n: awaiting.length },
+          ].map(r => (
+            <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.color, display: 'inline-block' }} />
+                <span style={{ fontSize: 13, color: '#334155' }}>{r.label}</span>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{r.n} / {totalInvited}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Awaiting responses */}
+      <div style={{ ...cardStyle, marginBottom: 22 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>Awaiting responses</div>
+        <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 16 }}>{awaiting.length === 0 ? 'All caught up.' : `${awaiting.length} guest${awaiting.length > 1 ? 's' : ''} haven't responded yet.`}</div>
+        {awaiting.length === 0 ? (
+          <div style={{ border: '1px dashed #e2e8f0', borderRadius: 14, padding: 36, textAlign: 'center' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <Icon name="check" size={18} color="#16a34a" />
+            </div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>No pending guests</div>
+            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Add guests and we'll track responses here.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {awaiting.slice(0, 6).map(g => (
+              <div key={g.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: '#f8fafc' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{g.name}</div>
+                  {g.phone && <div style={{ fontSize: 11, color: '#94a3b8' }}>{g.phone}</div>}
+                </div>
+                {g.phone && (
+                  <a href={`https://wa.me/${g.phone.replace(/\D/g, '').replace(/^0/, '94')}?text=${encodeURIComponent(`Hi ${g.name}! Just a friendly reminder to RSVP for our wedding: ${link}`)}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: '#25d366', textDecoration: 'none', fontWeight: 600 }}>
+                    <Icon name="whatsapp" size={13} color="#25d366" /> Remind
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick actions */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 2 }}>Quick actions</div>
+        <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>Jump back into what matters.</div>
+        {[
+          { key: 'custom-design' as SectionKey, icon: 'sparkles' as IconName, label: 'Choose template', sub: `${templateName(couple.template)} · switch anytime` },
+          { key: 'rsvp' as SectionKey, icon: 'users' as IconName, label: 'Manage guests', sub: `${totalInvited} invited · ${awaiting.length} pending RSVP` },
+          { key: 'checklist' as SectionKey, icon: 'checklist' as IconName, label: 'Plan wedding', sub: 'Tasks, checklist & vendors' },
+          { key: 'budget' as SectionKey, icon: 'wallet' as IconName, label: 'Track budget', sub: 'Estimates, payments & vendors' },
+          { key: 'vendors' as SectionKey, icon: 'home' as IconName, label: 'Vendor list', sub: 'Photographers, caterers & more' },
+        ].map(q => (
+          <button key={q.key} onClick={() => onNavigate(q.key)} style={{
+            display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', padding: '12px 4px',
+            background: 'transparent', border: 'none', borderBottom: '1px solid #f1f5f9', cursor: 'pointer',
+          }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon name={q.icon} size={16} color="#64748b" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{q.label}</div>
+              <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{q.sub}</div>
+            </div>
+            <Icon name="chevron" size={15} color="#cbd5e1" />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════ MY INVITATION / EDIT ══════════════════════════════
+function MyInvitationSection({ couple, onSaved, focusEdit }: { couple: MyCouple; onSaved: () => void; focusEdit: boolean }) {
+  const [bride, setBride] = useState(couple.bride)
+  const [groom, setGroom] = useState(couple.groom)
+  const [weddingDate, setWeddingDate] = useState(couple.wedding_date ? couple.wedding_date.slice(0, 10) : '')
+  const [venue, setVenue] = useState(couple.venue || '')
+  const [template, setTemplate] = useState(couple.template)
+  const [photo, setPhoto] = useState(couple.couple_photo || '')
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [copied, setCopied] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const link = typeof window !== 'undefined' ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&color=${PINK.replace('#', '')}&data=${encodeURIComponent(link)}`
+
+  const uploadPhoto = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const fileName = `couple/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!error) {
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      setPhoto(data.publicUrl)
+    }
+    setUploading(false)
+  }
+
+  const handleSave = async () => {
+    if (!bride.trim() || !groom.trim() || !weddingDate) { setMessage("Please fill in the couple's names and wedding date."); return }
+    setSaving(true); setMessage('')
+    const { error } = await supabase.from('couples').update({
+      bride: bride.trim(), groom: groom.trim(), wedding_date: weddingDate, venue: venue.trim() || null, template, couple_photo: photo || null,
+    }).eq('id', couple.id)
+    setSaving(false)
+    if (error) setMessage('Could not save: ' + error.message)
+    else { setMessage('Saved! Your invitation has been updated.'); onSaved() }
+  }
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(link)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const pMeta: Record<string, { label: string; bg: string; color: string }> = {
+    lead: { label: 'Draft', bg: '#fef3c7', color: '#b45309' }, ongoing: { label: 'In Progress', bg: '#dbeafe', color: '#1d4ed8' },
+    complete: { label: 'Live', bg: '#dcfce7', color: '#16a34a' }, sample: { label: 'Sample', bg: '#ede9fe', color: '#6d28d9' },
+  }
+  const statusMeta = pMeta[couple.project_status] || pMeta.lead
+
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>{focusEdit ? 'Edit Invitation' : 'My Invitations'}</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Manage your invitation details, link, and QR code.</div>
+
+      <div style={{ ...cardStyle, marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+          <div style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: statusMeta.bg, color: statusMeta.color }}>{statusMeta.label}</div>
+          <div style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: '#f1f5f9', color: '#475569' }}>{templateName(couple.template)}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 14, marginBottom: 4 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em', marginBottom: 4 }}>YOUR INVITATION LINK</div>
+            <div style={{ fontSize: 12.5, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 10 }}>{link.replace(/^https?:\/\//, '')}</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={copyLink} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: copied ? '#16a34a' : PINK, color: '#fff', fontSize: 11.5, fontWeight: 600 }}>
+                <Icon name={copied ? 'check' : 'copy'} size={12} color="#fff" /> {copied ? 'Copied' : 'Copy'}
+              </button>
+              <a href={`/invite/${couple.slug}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: `1px solid ${PINK}`, color: PINK, fontSize: 11.5, fontWeight: 600, textDecoration: 'none' }}>Preview</a>
+            </div>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrSrc} alt="QR code" width={72} height={72} style={{ borderRadius: 8, background: '#fff', border: '1px solid #e2e8f0', flexShrink: 0 }} />
+        </div>
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0f172a', marginBottom: 16 }}>Invitation Details</div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Couple Photo</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {photo ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={photo} alt="" style={{ width: 52, height: 52, borderRadius: 10, objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+            ) : (
+              <div style={{ width: 52, height: 52, borderRadius: 10, background: '#f8fafc', border: '1px solid #e2e8f0' }} />
+            )}
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12, color: '#475569', fontWeight: 500 }}>
+              {uploading ? 'Uploading...' : photo ? 'Change Photo' : 'Upload Photo'}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(f) }} />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          <div><label style={labelStyle}>Bride's Name</label><input value={bride} onChange={e => setBride(e.target.value)} style={inputStyle} /></div>
+          <div><label style={labelStyle}>Groom's Name</label><input value={groom} onChange={e => setGroom(e.target.value)} style={inputStyle} /></div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          <div><label style={labelStyle}>Wedding Date</label><input type="date" value={weddingDate} onChange={e => setWeddingDate(e.target.value)} style={inputStyle} /></div>
+          <div><label style={labelStyle}>Venue</label><input value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. Cinnamon Grand, Colombo" style={inputStyle} /></div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Template</label>
+          <select value={template} onChange={e => setTemplate(e.target.value)} style={inputStyle}>
+            {TEMPLATE_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+
+        {message && <div style={{ fontSize: 12, marginBottom: 12, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
+        <button onClick={handleSave} disabled={saving} style={{ padding: '11px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 13, opacity: saving ? 0.6 : 1 }}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function CustomDesignSection({ couple }: { couple: MyCouple }) {
+  const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`Hi! I'd like a custom design for my InviteGlow invitation.\n\nCouple: ${couple.bride} & ${couple.groom}\nLink: /invite/${couple.slug}`)}`
+  const benefits = [
+    'A one-of-a-kind layout built around your story — not a shared template',
+    'Direct back-and-forth with our design team until it feels right',
+    'Your own color palette, fonts, and section layout',
+  ]
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>PREMIUM</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Custom Design</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Want something entirely your own? Our team can hand-build it with you.</div>
+
+      <div style={{ background: `linear-gradient(150deg, #fff9f6 0%, #fdeef1 55%, #fbe4e9 100%)`, borderRadius: 20, padding: 32, position: 'relative', overflow: 'hidden', border: '1px solid #f6e1e6' }}>
+        <div style={{ position: 'absolute', top: -70, right: -70, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(244,180,140,0.25), transparent 70%)' }} />
+        <div style={{ position: 'absolute', bottom: -50, left: -30, width: 160, height: 160, borderRadius: '50%', background: `radial-gradient(circle, ${PINK}1a, transparent 70%)` }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: 'linear-gradient(135deg,#f4b48c,#e0355c)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18, boxShadow: '0 6px 18px rgba(224,53,92,0.25)' }}>
+            <Icon name="sparkles" size={20} color="#fff" />
+          </div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Bespoke design, built with you</div>
+          <div style={{ fontSize: 13, color: '#6b5a5f', marginBottom: 20, maxWidth: 440 }}>
+            Every template on InviteGlow is fully editable already — but if you want a design made from scratch, our team can craft one entirely around your vision.
+          </div>
+          <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+            {benefits.map(b => (
+              <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'linear-gradient(135deg,#f4b48c,#e0355c)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <Icon name="check" size={10} color="#fff" />
+                </div>
+                <span style={{ fontSize: 12.5, color: '#3d2e32', lineHeight: 1.5 }}>{b}</span>
+              </div>
+            ))}
+          </div>
+          <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 100, background: '#25d366', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13, boxShadow: '0 6px 18px rgba(37,211,102,0.3)' }}>
+            <Icon name="whatsapp" size={14} color="#fff" /> Chat with our design team
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════ ADD GUESTS ══════════════════════════════
+type NewGuestRow = { name: string; phone: string; heads: number; category: string; side: string }
+const emptyGuestRow = (): NewGuestRow => ({ name: '', phone: '', heads: 1, category: 'friends', side: 'both' })
+
+function AddGuestsSection({ couple, guests, onChanged, onNavigate }: { couple: MyCouple; guests: GuestRow[]; onChanged: () => void; onNavigate: (s: SectionKey) => void }) {
+  const [rows, setRows] = useState<NewGuestRow[]>([emptyGuestRow()])
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const updateRow = (i: number, patch: Partial<NewGuestRow>) => setRows(prev => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r))
+  const addRow = () => setRows(prev => [...prev, emptyGuestRow()])
+  const removeRow = (i: number) => setRows(prev => prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev)
+
+  const validRows = rows.filter(r => r.name.trim())
+
+  const saveGuests = async () => {
+    if (validRows.length === 0) { setMessage('Enter at least one name.'); return }
+    setSaving(true); setMessage('')
+    const payload = validRows.map(r => ({
+      couple_id: couple.id, name: r.name.trim(), phone: r.phone.trim() || null, heads: r.heads, category: r.category, side: r.side,
+    }))
+    const { error } = await supabase.from('guests').insert(payload)
+    setSaving(false)
+    if (!error) { setRows([emptyGuestRow()]); onChanged() } else setMessage('Could not save: ' + error.message)
+  }
+
+  const removeGuest = async (id: string, gname: string) => {
+    if (!confirm(`Remove ${gname} from your guest list?`)) return
+    const { error } = await supabase.from('guests').delete().eq('id', id)
+    if (!error) onChanged()
+  }
+
+  const colStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em', padding: '0 4px 8px' }
+  const cellInput: React.CSSProperties = { ...inputStyle, padding: '9px 12px', fontSize: 12.5 }
+
+  return (
+    <div>
+      <GuestManagementTabs active="add-guests" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Add guests</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Add guests to your invitation list — fill in as many rows as you need.</div>
+
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 760, padding: '18px 20px 8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '24px 2fr 1.6fr 1fr 0.9fr 1fr 1fr 32px', gap: 10 }}>
+              <div style={colStyle}>#</div>
+              <div style={colStyle}>NAME *</div>
+              <div style={colStyle}>WHATSAPP</div>
+              <div style={colStyle}>HEADS</div>
+              <div style={colStyle}></div>
+              <div style={colStyle}>CATEGORY</div>
+              <div style={colStyle}>SIDE</div>
+              <div />
+            </div>
+            {rows.map((row, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '24px 2fr 1.6fr 1fr 0.9fr 1fr 1fr 32px', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{i + 1}</div>
+                <input value={row.name} onChange={e => updateRow(i, { name: e.target.value })} placeholder="Full name" style={cellInput} />
+                <input value={row.phone} onChange={e => updateRow(i, { phone: e.target.value })} placeholder="071 234 5678" style={cellInput} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button onClick={() => updateRow(i, { heads: Math.max(1, row.heads - 1) })} style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b' }}>−</button>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, width: 16, textAlign: 'center' }}>{row.heads}</span>
+                  <button onClick={() => updateRow(i, { heads: row.heads + 1 })} style={{ width: 24, height: 24, borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b' }}>+</button>
+                </div>
+                <div />
+                <select value={row.category} onChange={e => updateRow(i, { category: e.target.value })} style={cellInput}>
+                  {GUEST_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+                <select value={row.side} onChange={e => updateRow(i, { side: e.target.value })} style={cellInput}>
+                  {GUEST_SIDES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+                <button onClick={() => removeRow(i)} aria-label="Remove row" style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', color: '#cbd5e1', cursor: 'pointer' }}><Icon name="cross" size={13} color="#cbd5e1" /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            {message && <div style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>{message}</div>}
+            <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{rows.length} row{rows.length > 1 ? 's' : ''} total</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={addRow} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 16px', borderRadius: 100, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: '#475569' }}>
+              <Icon name="plus" size={12} /> Row
+            </button>
+            <button onClick={saveGuests} disabled={saving || validRows.length === 0} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 12.5, opacity: (saving || validRows.length === 0) ? 0.6 : 1 }}>
+              <Icon name="userPlus" size={13} color="#fff" /> {saving ? 'Saving...' : 'Save guests'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Guest List ({guests.length})</div>
+        {guests.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No guests added yet.</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {guests.map(g => (
+              <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: '#f8fafc', flexWrap: 'wrap', gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{g.name} {g.heads > 1 && <span style={{ fontSize: 11, color: '#94a3b8' }}>× {g.heads}</span>}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8' }}>{g.phone || 'No phone'} · {categoryLabel(g.category)} · {sideLabel(g.side)}</div>
+                </div>
+                <button onClick={() => removeGuest(g.id, g.name)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={13} color="#dc2626" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════ GUEST LIST & LINKS ══════════════════════════════
+function GuestLinksSection({ couple, guests, rsvps, onNavigate }: { couple: MyCouple; guests: GuestRow[]; rsvps: RsvpRow[]; onNavigate: (s: SectionKey) => void }) {
+  const [copiedId, setCopiedId] = useState('')
+  const [template, setTemplate] = useState((couple as any).whatsapp_invite_message || `Hi {name}! 💌\n\nWe're getting married and would be so happy to have you celebrate with us! Please tap below to view your invitation and let us know if you can make it.\n\nWith love,\n${couple.bride} & ${couple.groom}`)
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [search, setSearch] = useState('')
+  const [rsvpFilter, setRsvpFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [sideFilter, setSideFilter] = useState('all')
+
+  const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
+  const linkFor = (name: string) => `${baseUrl}?name=${encodeURIComponent(name)}`
+  const respondedNames = new Set(rsvps.map(r => r.guest_name.trim().toLowerCase()))
+  const rsvpStatusOf = (name: string) => {
+    const q = name.trim().toLowerCase()
+    const match = rsvps.find(r => r.guest_name.trim().toLowerCase() === q || r.guest_name.trim().toLowerCase().includes(q) || q.includes(r.guest_name.trim().toLowerCase()))
+    return match ? match.response : 'pending'
+  }
+
+  const copy = async (id: string, name: string) => {
+    await navigator.clipboard.writeText(linkFor(name))
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(''), 2000)
+  }
+
+  const saveTemplate = async () => {
+    setSavingTemplate(true)
+    await supabase.from('couples').update({ whatsapp_invite_message: template }).eq('id', couple.id)
+    setSavingTemplate(false)
+  }
+
+  const filtered = guests.filter(g => {
+    if (search && !g.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (categoryFilter !== 'all' && g.category !== categoryFilter) return false
+    if (sideFilter !== 'all' && g.side !== sideFilter) return false
+    if (rsvpFilter !== 'all' && rsvpStatusOf(g.name) !== rsvpFilter) return false
+    return true
+  })
+
+  const totalHeads = guests.reduce((s, g) => s + (g.heads || 1), 0)
+  const selectStyle: React.CSSProperties = { ...inputStyle, padding: '9px 12px', fontSize: 12.5 }
+
+  return (
+    <div>
+      <GuestManagementTabs active="guest-links" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Guest list &amp; links</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>{guests.length} guests · {totalHeads} total head count</div>
+
+      <div style={{ ...cardStyle, marginBottom: 14 }}>
+        <button onClick={() => setTemplateOpen(!templateOpen)} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+          <Icon name="sparkles" size={14} color={PINK} />
+          <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>WhatsApp message template</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', background: '#f1f5f9', padding: '2px 10px', borderRadius: 100 }}>{(couple as any).whatsapp_invite_message ? 'Custom' : 'Default'}</span>
+          <Icon name="chevron" size={14} color="#cbd5e1" />
+        </button>
+        {templateOpen && (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ fontSize: 10.5, color: PINK, marginBottom: 8 }}>Tip: type <strong>{'{name}'}</strong> anywhere and it'll be swapped for each guest's own name.</div>
+            <textarea value={template} onChange={e => setTemplate(e.target.value)} style={{ ...inputStyle, borderRadius: 14, minHeight: 100, resize: 'vertical' as const, marginBottom: 10 }} />
+            <button onClick={saveTemplate} disabled={savingTemplate} style={{ padding: '9px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 12.5, opacity: savingTemplate ? 0.6 : 1 }}>{savingTemplate ? 'Saving...' : 'Save template'}</button>
+          </div>
+        )}
+      </div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.04em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="grid2" size={12} color="#94a3b8" /> REFINE
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 12 }}>
+          <select value={rsvpFilter} onChange={e => setRsvpFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All RSVP</option><option value="yes">Attending</option><option value="no">Declined</option><option value="pending">Pending</option>
+          </select>
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All groups</option>{GUEST_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+          <select value={sideFilter} onChange={e => setSideFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All sides</option>{GUEST_SIDES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={15} color="#94a3b8" /></div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search guests..." style={{ ...inputStyle, paddingLeft: 38 }} />
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+          <EmptyIcon name="users" />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No guests match</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{guests.length === 0 ? 'Add guests from the Add Guests page to start sharing invitations.' : 'Try a different search or filter.'}</div>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {filtered.map(g => (
+            <div key={g.id} style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{g.name}</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{linkFor(g.name).replace(/^https?:\/\//, '')}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <button onClick={() => copy(g.id, g.name)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: copiedId === g.id ? '#16a34a' : PINK, color: '#fff', fontSize: 11.5, fontWeight: 600 }}>
+                  <Icon name={copiedId === g.id ? 'check' : 'copy'} size={12} color="#fff" /> {copiedId === g.id ? 'Copied' : 'Copy'}
+                </button>
+                <a href={`https://wa.me/${g.phone ? g.phone.replace(/\D/g, '').replace(/^0/, '94') : ''}?text=${encodeURIComponent(`${template.replace(/\{name\}/g, g.name)}\n${linkFor(g.name)}`)}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', background: '#25d366', color: '#fff', fontSize: 11.5, fontWeight: 600, textDecoration: 'none' }}>
+                  <Icon name="whatsapp" size={12} color="#fff" /> Share
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════ RSVP MANAGEMENT ══════════════════════════════
+function RsvpManagementSection({ couple, guests, rsvps, onChanged, onNavigate }: { couple: MyCouple; guests: GuestRow[]; rsvps: RsvpRow[]; onChanged: () => void; onNavigate: (s: SectionKey) => void }) {
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<'all' | 'yes' | 'no' | 'pending'>('all')
+
+  const respondedNames = new Set(rsvps.map(r => r.guest_name.trim().toLowerCase()))
+  const pendingGuests = guests.filter(g => {
+    const q = g.name.trim().toLowerCase()
+    return !Array.from(respondedNames).some(n => n.includes(q) || q.includes(n))
+  })
+  const attending = rsvps.filter(r => r.response === 'yes')
+  const declined = rsvps.filter(r => r.response === 'no')
+  const totalInvited = Math.max(guests.length, rsvps.length)
+  const responseRate = totalInvited > 0 ? Math.round((rsvps.length / totalInvited) * 100) : 0
+
+  const removeRsvp = async (id: string, name: string) => {
+    if (!confirm(`Remove ${name}'s RSVP?`)) return
+    const { error } = await supabase.from('rsvps').delete().eq('id', id)
+    if (!error) onChanged()
+  }
+
+  const filteredRsvps = rsvps.filter(r => {
+    if (search && !r.guest_name.toLowerCase().includes(search.toLowerCase())) return false
+    if (filter === 'yes' && r.response !== 'yes') return false
+    if (filter === 'no' && r.response !== 'no') return false
+    return true
+  })
+  const filteredPending = pendingGuests.filter(g => !search || g.name.toLowerCase().includes(search.toLowerCase()))
+
+  const pill = (active: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #f3e6ea', background: active ? `linear-gradient(135deg,${PINK},${RED})` : '#fff', color: active ? '#fff' : '#8a7478', boxShadow: active ? `0 4px 12px ${PINK}35` : 'none' })
+  const countBadge = (active: boolean, n: number): React.CSSProperties => ({ fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 100, background: active ? 'rgba(255,255,255,0.25)' : '#fdeef1', color: active ? '#fff' : '#c4607a' })
+
+  return (
+    <div>
+      <GuestManagementTabs active="rsvp" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>RSVP management</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Responses, head counts, and notes from your guests.</div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 18 }}>
+        <div style={{ ...cardStyle, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 700, color: '#16a34a', marginBottom: 10 }}><Icon name="users" size={12} color="#16a34a" /> ATTENDING</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{attending.length}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>of {totalInvited} invited</div>
+        </div>
+        <div style={{ ...cardStyle, background: '#fef2f2', border: '1px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 700, color: '#dc2626', marginBottom: 10 }}><Icon name="cross" size={12} color="#dc2626" /> DECLINED</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{declined.length}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>responses</div>
+        </div>
+        <div style={{ ...cardStyle, background: '#fffbeb', border: '1px solid #fde68a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, fontWeight: 700, color: '#b45309', marginBottom: 10 }}><Icon name="mail" size={12} color="#b45309" /> PENDING</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>{pendingGuests.length}</div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>{responseRate}% response rate</div>
+        </div>
+      </div>
+
+      <div style={{ position: 'relative', marginBottom: 12 }}>
+        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={15} color="#94a3b8" /></div>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name..." style={{ ...inputStyle, paddingLeft: 38 }} />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div onClick={() => setFilter('all')} style={pill(filter === 'all')}>All <span style={countBadge(filter === 'all', rsvps.length)}>{rsvps.length}</span></div>
+        <div onClick={() => setFilter('yes')} style={pill(filter === 'yes')}>Accepted <span style={countBadge(filter === 'yes', attending.length)}>{attending.length}</span></div>
+        <div onClick={() => setFilter('pending')} style={pill(filter === 'pending')}>Pending <span style={countBadge(filter === 'pending', pendingGuests.length)}>{pendingGuests.length}</span></div>
+        <div onClick={() => setFilter('no')} style={pill(filter === 'no')}>Declined <span style={countBadge(filter === 'no', declined.length)}>{declined.length}</span></div>
+      </div>
+
+      {filter === 'pending' ? (
+        filteredPending.length === 0 ? (
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+            <EmptyIcon name="mail" />
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No responses match this view</div>
+            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>No guests are pending for this event yet.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {filteredPending.map(g => (
+              <div key={g.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{g.name}</div>
+                <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: '#fef3c7', color: '#b45309' }}>Pending</span>
+              </div>
+            ))}
+          </div>
+        )
+      ) : filteredRsvps.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+          <EmptyIcon name="mail" />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>No responses match this view</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>No guests are linked to this event yet.</div>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {filteredRsvps.map(r => (
+            <div key={r.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{r.guest_name}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8' }}>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}{r.response === 'yes' && r.guest_count > 1 ? ` · Party of ${r.guest_count}` : ''}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: r.response === 'yes' ? '#dcfce7' : '#fee2e2', color: r.response === 'yes' ? '#16a34a' : '#dc2626' }}>{r.response === 'yes' ? 'Attending' : 'Declined'}</span>
+                <button onClick={() => removeRsvp(r.id, r.guest_name)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={12} color="#dc2626" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════ TABLE ARRANGEMENT ══════════════════════════════
+function TableArrangementSection({ couple, guests, onChanged, onNavigate }: { couple: MyCouple; guests: GuestRow[]; onChanged: () => void; onNavigate: (s: SectionKey) => void }) {
+  const [tables, setTables] = useState<SeatingTable[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [sideFilter, setSideFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [newTableName, setNewTableName] = useState('')
+  const [selectedGuestId, setSelectedGuestId] = useState('')
+
+  const load = async () => {
+    const { data } = await supabase.from('seating_tables').select('*').eq('couple_id', couple.id).order('created_at', { ascending: true })
+    if (data) setTables(data as SeatingTable[])
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [couple.id])
+
+  // Keep the public invitation's "Find Your Table" search in sync — it
+  // reads couple.seats as a flat { guestNameLower: tableName } map.
+  const syncSeatsMap = async (updatedGuests: GuestRow[], tableList: SeatingTable[]) => {
+    const seatsObj: Record<string, string> = {}
+    updatedGuests.forEach(g => {
+      if (g.table_id) {
+        const t = tableList.find(tb => tb.id === g.table_id)
+        if (t) seatsObj[g.name.trim().toLowerCase()] = t.name
+      }
+    })
+    await supabase.from('couples').update({ seats: seatsObj, show_seating: true }).eq('id', couple.id)
+  }
+
+  const addTable = async () => {
+    const name = newTableName.trim() || `Table ${tables.length + 1}`
+    const { data, error } = await supabase.from('seating_tables').insert([{ couple_id: couple.id, name }]).select().single()
+    if (!error && data) { setTables(prev => [...prev, data as SeatingTable]); setNewTableName('') }
+  }
+
+  const removeTable = async (id: string) => {
+    if (!confirm('Delete this table? Guests seated here will become unassigned.')) return
+    await supabase.from('guests').update({ table_id: null }).eq('table_id', id)
+    await supabase.from('seating_tables').delete().eq('id', id)
+    load(); onChanged()
+  }
+
+  const assignGuest = async (guestId: string, tableId: string | null) => {
+    await supabase.from('guests').update({ table_id: tableId }).eq('id', guestId)
+    const updated = guests.map(g => g.id === guestId ? { ...g, table_id: tableId } : g)
+    await syncSeatsMap(updated, tables)
+    setSelectedGuestId('')
+    onChanged()
+  }
+
+  const unassigned = guests.filter(g => !g.table_id).filter(g => {
+    if (search && !g.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (sideFilter !== 'all' && g.side !== sideFilter) return false
+    if (categoryFilter !== 'all' && g.category !== categoryFilter) return false
+    return true
+  })
+
+  const totalHeadsSeated = guests.filter(g => g.table_id).reduce((s, g) => s + (g.heads || 1), 0)
+  const totalHeads = guests.reduce((s, g) => s + (g.heads || 1), 0)
+
+  const pillSm = (active: boolean): React.CSSProperties => ({ padding: '4px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #f3e6ea', background: active ? `linear-gradient(135deg,${PINK},${RED})` : '#fff', color: active ? '#fff' : '#8a7478' })
+
+  return (
+    <div>
+      <GuestManagementTabs active="table" onNavigate={onNavigate} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Table arrangement</div>
+          <div style={{ fontSize: 13, color: '#64748b' }}>{tables.length} tables · {totalHeadsSeated}/{totalHeads} heads seated</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input value={newTableName} onChange={e => setNewTableName(e.target.value)} placeholder="New table name" style={{ ...inputStyle, width: 160 }} />
+          <button onClick={addTable} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 12.5, whiteSpace: 'nowrap' }}>
+            <Icon name="plus" size={13} color="#fff" /> Add table
+          </button>
+        </div>
+      </div>
+
+      {selectedGuestId && (
+        <div style={{ background: `${PINK}14`, border: `1px solid ${PINK}44`, borderRadius: 12, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span style={{ fontSize: 12.5, color: '#3d2530' }}><strong>{guests.find(g => g.id === selectedGuestId)?.name}</strong> selected — tap a table below to seat them.</span>
+          <button onClick={() => setSelectedGuestId('')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: PINK, fontSize: 12, fontWeight: 700 }}>Cancel</button>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16 }} className="ig-table-grid">
+        <style>{`@media (max-width: 800px) { .ig-table-grid { grid-template-columns: 1fr !important; } }`}</style>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Unassigned guests ({unassigned.length})</div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search guests..." style={{ ...inputStyle, marginBottom: 10, fontSize: 12.5 }} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
+            <span onClick={() => setSideFilter('all')} style={pillSm(sideFilter === 'all')}>All sides</span>
+            {GUEST_SIDES.map(s => <span key={s.key} onClick={() => setSideFilter(s.key)} style={pillSm(sideFilter === s.key)}>{s.label}</span>)}
+          </div>
+          <div style={{ display: 'grid', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
+            {unassigned.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 20, color: '#94a3b8', fontSize: 12 }}>No unassigned guests.</div>
+            ) : unassigned.map(g => (
+              <button key={g.id} onClick={() => setSelectedGuestId(g.id === selectedGuestId ? '' : g.id)} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 9,
+                border: selectedGuestId === g.id ? `1.5px solid ${PINK}` : '1px solid #f1f5f9', background: selectedGuestId === g.id ? `${PINK}0d` : '#f8fafc', cursor: 'pointer',
+              }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>{g.name}</span>
+                <span style={{ fontSize: 10, color: '#94a3b8' }}>× {g.heads}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tables.length === 0 ? (
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 50 }}>
+            <EmptyIcon name="grid2" />
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 12 }}>No tables yet</div>
+            <div style={{ fontSize: 12.5, color: '#94a3b8', marginTop: 4, marginBottom: 18 }}>Create your first table to start seating guests.</div>
+            <button onClick={addTable} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 22px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 13 }}>
+              <Icon name="plus" size={14} color="#fff" /> Add your first table
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12, alignContent: 'start' }}>
+            {tables.map(t => {
+              const seated = guests.filter(g => g.table_id === t.id)
+              return (
+                <div key={t.id} onClick={() => selectedGuestId && assignGuest(selectedGuestId, t.id)} style={{
+                  ...cardStyle, cursor: selectedGuestId ? 'pointer' : 'default',
+                  border: selectedGuestId ? `1.5px dashed ${PINK}` : '1px solid #f3e6ea', borderTop: `3px solid ${PINK}`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 26, height: 26, borderRadius: 8, background: `${PINK}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon name="grid2" size={12} color={PINK} />
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#2a1f22' }}>{t.name}</div>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); removeTable(t.id) }} style={{ width: 24, height: 24, borderRadius: 7, border: 'none', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={11} color="#dc2626" /></button>
+                  </div>
+                  {seated.length === 0 ? (
+                    <div style={{ fontSize: 11.5, color: '#cbd5e1', fontStyle: 'italic' }}>No guests seated</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 5 }}>
+                      {seated.map(g => (
+                        <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', borderRadius: 8, padding: '5px 8px' }}>
+                          <span style={{ fontSize: 11.5, color: '#334155' }}>{g.name}</span>
+                          <button onClick={e => { e.stopPropagation(); assignGuest(g.id, null) }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 12 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════ GUEST GALLERY ══════════════════════════════
+function WishesWallSection({ couple, onNavigate }: { couple: MyCouple; onNavigate: (s: SectionKey) => void }) {
+  const [wishes, setWishes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState('')
+  const [filter, setFilter] = useState<'pending' | 'approved'>('pending')
+
+  const load = async () => {
+    const { data } = await supabase.from('wishes').select('*').eq('couple_id', couple.id).order('created_at', { ascending: false })
+    if (data) setWishes(data)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [couple.id])
 
   const setApproved = async (id: string, approved: boolean) => {
     setBusyId(id)
     const { error } = await supabase.from('wishes').update({ approved }).eq('id', id)
+    setBusyId('')
     if (!error) setWishes(prev => prev.map(w => w.id === id ? { ...w, approved } : w))
-    setBusyId(null)
   }
 
-  const deleteWish = async (id: string, guestName: string) => {
-    if (!confirm(`Delete ${guestName}'s wish? This cannot be undone.`)) return
+  const del = async (id: string) => {
+    if (!confirm('Delete this wish?')) return
     setBusyId(id)
     const { error } = await supabase.from('wishes').delete().eq('id', id)
+    setBusyId('')
     if (!error) setWishes(prev => prev.filter(w => w.id !== id))
-    setBusyId(null)
   }
 
   const pending = wishes.filter(w => !w.approved)
   const approved = wishes.filter(w => w.approved)
   const shown = filter === 'pending' ? pending : approved
-
-  const pillStyle = (active: boolean): React.CSSProperties => ({
-    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-    border: active ? 'none' : `1px solid ${BORDER}`,
-    background: active ? accent : '#fff',
-    color: active ? '#fff' : TEXT_MUTED,
-  })
-
-  if (loading) {
-    return <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>Loading wishes...</div>
-  }
+  const pill = (active: boolean): React.CSSProperties => ({ padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: active ? 'none' : '1px solid #e2e8f0', background: active ? PINK : '#fff', color: active ? '#fff' : '#64748b' })
 
   return (
     <div>
+      <GuestManagementTabs active="gallery" onNavigate={onNavigate} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: PINK, letterSpacing: '0.05em', marginBottom: 4 }}>GUEST MANAGEMENT</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Wishes wall</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Approve guest wishes, photos, and videos before they appear on your invitation.</div>
+
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <div onClick={() => setFilter('pending')} style={pillStyle(filter === 'pending')}>Pending ({pending.length})</div>
-        <div onClick={() => setFilter('approved')} style={pillStyle(filter === 'approved')}>Approved ({approved.length})</div>
+        <div onClick={() => setFilter('pending')} style={pill(filter === 'pending')}>Pending ({pending.length})</div>
+        <div onClick={() => setFilter('approved')} style={pill(filter === 'approved')}>Approved ({approved.length})</div>
       </div>
 
-      {shown.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>
-          {filter === 'pending' ? 'No wishes waiting for approval.' : 'No approved wishes yet.'}
+      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : shown.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+          <EmptyIcon name="gallery" />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginTop: 10 }}>{filter === 'pending' ? 'No wishes waiting for approval' : 'No approved wishes yet'}</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Once your invitation is live and guests visit, their wishes will appear here.</div>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div style={{ display: 'grid', gap: 10 }}>
           {shown.map(w => {
-            const media = getDashWishMedia(w)
+            const media: { url: string; type: string }[] = w.media?.length ? w.media : (w.photo_url ? [{ url: w.photo_url, type: 'photo' }] : w.video_url ? [{ url: w.video_url, type: 'video' }] : [])
             return (
-              <div key={w.id} style={{ background: "#fff", borderRadius: 14, padding: "14px 18px", boxShadow: "0 2px 10px rgba(15,23,42,0.05)" }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  {media.length > 0 && (
-                    <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f1f5f9' }}>
-                      {media[0].type === 'video' ? (
-                        <video src={media[0].url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
+              <div key={w.id} style={{ ...cardStyle, padding: 16 }}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                  {media[0] && (
+                    <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f1f5f9' }}>
+                      {media[0].type === 'video' ? <video src={media[0].url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={media[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      )}
+                        <img src={media[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{w.guest_name}</div>
-                    <div style={{ fontSize: 13, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{w.message}</div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
-                      {new Date(w.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      {media.length > 1 && ` · ${media.length} attachments`}
-                    </div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{w.guest_name}</div>
+                    <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 2 }}>{w.message}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   {w.approved ? (
-                    <button type="button" onClick={() => setApproved(w.id, false)} disabled={busyId === w.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
-                      border: '1px solid #fde68a', cursor: 'pointer', background: '#fffbeb', color: '#b45309',
-                      fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
-                    }}>Unapprove</button>
+                    <button onClick={() => setApproved(w.id, false)} disabled={busyId === w.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 100, border: '1px solid #fde68a', background: '#fffbeb', color: '#b45309', cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}>Unapprove</button>
                   ) : (
-                    <button type="button" onClick={() => setApproved(w.id, true)} disabled={busyId === w.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
-                      border: '1px solid #bbf7d0', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a',
-                      fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
-                    }}>
-                      <Icon name="check" size={11} color="#16a34a" /> Approve
+                    <button onClick={() => setApproved(w.id, true)} disabled={busyId === w.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 100, border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a', cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}>
+                      <Icon name="check" size={11} color="#16a34a" /> Accept
                     </button>
                   )}
-                  <button type="button" onClick={() => deleteWish(w.id, w.guest_name)} disabled={busyId === w.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
-                    border: '1px solid #fecaca', cursor: 'pointer', background: '#fef2f2', color: '#dc2626',
-                    fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
-                  }}>
-                    <Icon name="trash" size={11} color="#dc2626" /> Delete
+                  <button onClick={() => del(w.id)} disabled={busyId === w.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 100, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}>
+                    <Icon name="cross" size={11} color="#dc2626" /> Decline
                   </button>
                 </div>
               </div>
@@ -285,281 +1343,249 @@ function WishesManager({ coupleId, accent }: { coupleId: string; accent: string 
   )
 }
 
-// ── Couple-facing self-service edit panel ──
-// ── Wedding Budget Tracker ────────────────────────────────────────
-type BudgetItem = {
-  id: string
-  couple_id: string
-  category: string
-  item_name: string
-  vendor: string | null
-  estimated_cost: number
-  paid_amount: number
-  due_date: string | null
-  status: 'pending' | 'partial' | 'paid'
-  notes: string | null
-  created_at: string
-}
-
-const BUDGET_CATEGORIES = [
-  { key: 'venue', label: 'Venue', icon: '🏛️' },
-  { key: 'catering', label: 'Catering', icon: '🍽️' },
-  { key: 'photography', label: 'Photo & Video', icon: '📷' },
-  { key: 'attire', label: 'Attire', icon: '👗' },
-  { key: 'decor', label: 'Decor & Flowers', icon: '💐' },
-  { key: 'music', label: 'Music & DJ', icon: '🎵' },
-  { key: 'invitations', label: 'Invitations', icon: '💌' },
-  { key: 'transport', label: 'Transport', icon: '🚗' },
-  { key: 'beauty', label: 'Hair & Makeup', icon: '💄' },
-  { key: 'other', label: 'Other', icon: '📦' },
-]
-const categoryMeta = (key: string) => BUDGET_CATEGORIES.find(c => c.key === key) || BUDGET_CATEGORIES[BUDGET_CATEGORIES.length - 1]
-
-const emptyBudgetForm = {
-  category: 'venue', item_name: '', vendor: '', estimated_cost: '', paid_amount: '', due_date: '', status: 'pending' as BudgetItem['status'], notes: '',
-}
-
-function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string }) {
-  const [items, setItems] = useState<BudgetItem[]>([])
+// ══════════════════════════════ TASK CHECKLIST ══════════════════════════════
+function ChecklistSection({ couple }: { couple: MyCouple }) {
+  const [items, setItems] = useState<ChecklistItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState(emptyBudgetForm)
-  const [saving, setSaving] = useState(false)
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const [totalBudgetInput, setTotalBudgetInput] = useState('')
-  const [totalBudget, setTotalBudget] = useState<number | null>(null)
-
-  const TEXT_DARK = '#1e293b'
-  const TEXT_MUTED = '#64748b'
-  const BORDER = '#e2e8f0'
+  const [taskName, setTaskName] = useState('')
+  const [dueDate, setDueDate] = useState('')
 
   const load = async () => {
-    const { data } = await supabase.from('budget_items').select('*').eq('couple_id', coupleId).order('created_at', { ascending: true })
-    if (data) setItems(data as BudgetItem[])
+    const { data } = await supabase.from('checklist_items').select('*').eq('couple_id', couple.id).order('created_at', { ascending: true })
+    if (data) setItems(data as ChecklistItem[])
     setLoading(false)
   }
+  useEffect(() => { load() }, [couple.id])
 
-  useEffect(() => { load() }, [coupleId])
+  const add = async () => {
+    if (!taskName.trim()) return
+    const { error } = await supabase.from('checklist_items').insert([{ couple_id: couple.id, task_name: taskName.trim(), due_date: dueDate || null }])
+    if (!error) { setTaskName(''); setDueDate(''); load() }
+  }
+  const toggle = async (item: ChecklistItem) => {
+    const { error } = await supabase.from('checklist_items').update({ done: !item.done }).eq('id', item.id)
+    if (!error) setItems(prev => prev.map(i => i.id === item.id ? { ...i, done: !i.done } : i))
+  }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('checklist_items').delete().eq('id', id)
+    if (!error) setItems(prev => prev.filter(i => i.id !== id))
+  }
 
-  useEffect(() => {
-    const saved = window.localStorage?.getItem?.(`budget-target-${coupleId}`)
-    if (saved) { setTotalBudget(parseFloat(saved)); setTotalBudgetInput(saved) }
-  }, [coupleId])
-  const saveTotalBudget = () => {
-    const val = parseFloat(totalBudgetInput)
-    if (!isNaN(val) && val > 0) {
-      setTotalBudget(val)
-      try { window.localStorage?.setItem?.(`budget-target-${coupleId}`, String(val)) } catch { }
-    }
+  const doneCount = items.filter(i => i.done).length
+  const pct = items.length > 0 ? Math.round((doneCount / items.length) * 100) : 0
+
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Task Checklist</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Keep track of everything on your wedding to-do list.</div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{doneCount} of {items.length} done</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#16a34a' }}>{pct}%</div>
+        </div>
+        <div style={{ height: 6, background: '#f1f5f9', borderRadius: 100, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg,${PINK},${RED})` }} />
+        </div>
+      </div>
+
+      <div style={{ ...cardStyle, marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <input value={taskName} onChange={e => setTaskName(e.target.value)} placeholder="Add a task, e.g. Book photographer" style={{ ...inputStyle, flex: 2, minWidth: 200 }} />
+        <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
+        <button onClick={add} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13 }}>Add</button>
+      </div>
+
+      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : items.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No tasks yet — add your first above.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {items.map(item => (
+            <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button onClick={() => toggle(item)} style={{ width: 24, height: 24, borderRadius: '50%', border: `2px solid ${item.done ? '#16a34a' : '#e2e8f0'}`, background: item.done ? '#16a34a' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {item.done && <Icon name="check" size={12} color="#fff" />}
+              </button>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: item.done ? '#94a3b8' : '#0f172a', textDecoration: item.done ? 'line-through' : 'none' }}>{item.task_name}</div>
+                {item.due_date && <div style={{ fontSize: 11, color: '#94a3b8' }}>Due {new Date(item.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>}
+              </div>
+              <button onClick={() => remove(item.id)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={12} color="#dc2626" /></button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════ BUDGET (reuses the couples-dashboard pattern) ══════════════════════════════
+function BudgetSection({ couple }: { couple: MyCouple }) {
+  const [items, setItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ item_name: '', vendor: '', estimated_cost: '', paid_amount: '' })
+
+  const load = async () => {
+    const { data } = await supabase.from('budget_items').select('*').eq('couple_id', couple.id).order('created_at', { ascending: true })
+    if (data) setItems(data)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [couple.id])
+
+  const add = async () => {
+    if (!form.item_name.trim()) return
+    const { error } = await supabase.from('budget_items').insert([{
+      couple_id: couple.id, category: 'other', item_name: form.item_name.trim(), vendor: form.vendor.trim() || null,
+      estimated_cost: parseFloat(form.estimated_cost) || 0, paid_amount: parseFloat(form.paid_amount) || 0, status: 'pending',
+    }])
+    if (!error) { setForm({ item_name: '', vendor: '', estimated_cost: '', paid_amount: '' }); setShowForm(false); load() }
+  }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('budget_items').delete().eq('id', id)
+    if (!error) setItems(prev => prev.filter(i => i.id !== id))
   }
 
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_cost || 0), 0)
   const totalPaid = items.reduce((s, i) => s + (i.paid_amount || 0), 0)
-  const totalRemaining = totalEstimated - totalPaid
-  const budgetTarget = totalBudget ?? totalEstimated
-  const usedPct = budgetTarget > 0 ? Math.min(100, Math.round((totalEstimated / budgetTarget) * 100)) : 0
-
   const fmt = (n: number) => `LKR ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
 
-  const resetForm = () => { setForm(emptyBudgetForm); setEditingId(null); setShowForm(false) }
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Budget Management</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Track expenses, vendors, and how much you've paid so far.</div>
 
-  const startEdit = (item: BudgetItem) => {
-    setForm({
-      category: item.category, item_name: item.item_name, vendor: item.vendor || '',
-      estimated_cost: String(item.estimated_cost ?? ''), paid_amount: String(item.paid_amount ?? ''),
-      due_date: item.due_date || '', status: item.status, notes: item.notes || '',
-    })
-    setEditingId(item.id)
-    setShowForm(true)
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 14, marginBottom: 20 }}>
+        <StatCard label="Total Estimated" value={fmt(totalEstimated)} icon="wallet" iconBg="#eef2ff" iconColor="#4f46e5" />
+        <StatCard label="Paid So Far" value={fmt(totalPaid)} icon="check" iconBg="#f0fdf4" iconColor="#16a34a" />
+        <StatCard label="Balance Due" value={fmt(Math.max(0, totalEstimated - totalPaid))} icon="card" iconBg="#fef2f2" iconColor="#dc2626" />
+      </div>
+
+      {showForm ? (
+        <div style={{ ...cardStyle, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} placeholder="Item, e.g. Wedding Cake" style={inputStyle} />
+            <input value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} placeholder="Vendor (optional)" style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+            <input value={form.estimated_cost} onChange={e => setForm({ ...form, estimated_cost: e.target.value.replace(/[^\d.]/g, '') })} placeholder="Estimated (LKR)" style={inputStyle} />
+            <input value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value.replace(/[^\d.]/g, '') })} placeholder="Paid (LKR)" style={inputStyle} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={add} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13 }}>Add Expense</button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b' }}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: 13, borderRadius: 12, border: `1.5px dashed ${PINK}`, cursor: 'pointer', background: `${PINK}0d`, color: PINK, fontWeight: 700, fontSize: 13, marginBottom: 16 }}>
+          <Icon name="plus" size={14} color={PINK} /> Add Expense
+        </button>
+      )}
+
+      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : items.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No expenses tracked yet.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {items.map(item => (
+            <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{item.item_name}</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{item.vendor || 'No vendor set'} · Est {fmt(item.estimated_cost || 0)} · Paid {fmt(item.paid_amount || 0)}</div>
+              </div>
+              <button onClick={() => remove(item.id)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={12} color="#dc2626" /></button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════ VENDOR LIST ══════════════════════════════
+function VendorsSection({ couple }: { couple: MyCouple }) {
+  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ vendor_name: '', category: 'photography', contact_name: '', phone: '', cost: '' })
+
+  const load = async () => {
+    const { data } = await supabase.from('vendors').select('*').eq('couple_id', couple.id).order('created_at', { ascending: true })
+    if (data) setVendors(data as Vendor[])
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [couple.id])
+
+  const add = async () => {
+    if (!form.vendor_name.trim()) return
+    const { error } = await supabase.from('vendors').insert([{
+      couple_id: couple.id, vendor_name: form.vendor_name.trim(), category: form.category,
+      contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, cost: parseFloat(form.cost) || 0, status: 'contacted',
+    }])
+    if (!error) { setForm({ vendor_name: '', category: 'photography', contact_name: '', phone: '', cost: '' }); setShowForm(false); load() }
+  }
+  const setStatus = async (id: string, status: Vendor['status']) => {
+    const { error } = await supabase.from('vendors').update({ status }).eq('id', id)
+    if (!error) setVendors(prev => prev.map(v => v.id === id ? { ...v, status } : v))
+  }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('vendors').delete().eq('id', id)
+    if (!error) setVendors(prev => prev.filter(v => v.id !== id))
   }
 
-  const handleSaveItem = async () => {
-    if (!form.item_name.trim()) return
-    setSaving(true)
-    const payload = {
-      couple_id: coupleId,
-      category: form.category,
-      item_name: form.item_name.trim(),
-      vendor: form.vendor.trim() || null,
-      estimated_cost: parseFloat(form.estimated_cost) || 0,
-      paid_amount: parseFloat(form.paid_amount) || 0,
-      due_date: form.due_date || null,
-      status: form.status,
-      notes: form.notes.trim() || null,
-    }
-    const { error } = editingId
-      ? await supabase.from('budget_items').update(payload).eq('id', editingId)
-      : await supabase.from('budget_items').insert([payload])
-    setSaving(false)
-    if (!error) { resetForm(); load() }
-  }
-
-  const handleDeleteItem = async (id: string, name: string) => {
-    if (!confirm(`Remove "${name}" from your budget?`)) return
-    setBusyId(id)
-    const { error } = await supabase.from('budget_items').delete().eq('id', id)
-    setBusyId(null)
-    if (!error) setItems(prev => prev.filter(i => i.id !== id))
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 12px', borderRadius: 9, border: `1px solid ${BORDER}`,
-    fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", background: '#fff', color: TEXT_DARK, boxSizing: 'border-box',
-  }
-  const labelStyle: React.CSSProperties = { fontSize: 10.5, fontWeight: 600, color: TEXT_MUTED, marginBottom: 5, display: 'block' }
-
-  const statusMeta: Record<BudgetItem['status'], { label: string; bg: string; color: string }> = {
-    pending: { label: 'Pending', bg: '#fef3c7', color: '#b45309' },
-    partial: { label: 'Partially Paid', bg: '#dbeafe', color: '#1d4ed8' },
-    paid: { label: 'Paid in Full', bg: '#dcfce7', color: '#16a34a' },
-  }
-
-  if (loading) {
-    return <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>Loading budget...</div>
+  const statusMeta: Record<string, { label: string; bg: string; color: string }> = {
+    contacted: { label: 'Contacted', bg: '#fef3c7', color: '#b45309' }, booked: { label: 'Booked', bg: '#dbeafe', color: '#1d4ed8' }, paid: { label: 'Paid', bg: '#dcfce7', color: '#16a34a' },
   }
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
-          <div style={{ fontSize: 10.5, color: TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>TOTAL ESTIMATED</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: TEXT_DARK }}>{fmt(totalEstimated)}</div>
-        </div>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
-          <div style={{ fontSize: 10.5, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>PAID SO FAR</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: '#16a34a' }}>{fmt(totalPaid)}</div>
-        </div>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
-          <div style={{ fontSize: 10.5, color: totalRemaining > 0 ? '#dc2626' : TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>BALANCE DUE</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: totalRemaining > 0 ? '#dc2626' : TEXT_DARK }}>{fmt(Math.max(0, totalRemaining))}</div>
-        </div>
-      </div>
-
-      <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT_DARK }}>Overall Budget Goal (optional)</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input value={totalBudgetInput} onChange={e => setTotalBudgetInput(e.target.value.replace(/[^\d.]/g, ''))}
-              placeholder="e.g. 1500000" style={{ ...inputStyle, width: 140, padding: '7px 10px', fontSize: 12.5 }} />
-            <button onClick={saveTotalBudget} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: accent, color: '#fff', fontSize: 12, fontWeight: 600 }}>Set</button>
-          </div>
-        </div>
-        {budgetTarget > 0 && (
-          <>
-            <div style={{ height: 8, background: '#f1f5f9', borderRadius: 100, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${usedPct}%`, background: usedPct >= 100 ? '#dc2626' : `linear-gradient(90deg,${accent},#a5b4fc)`, borderRadius: 100, transition: 'width 0.3s' }} />
-            </div>
-            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>
-              {fmt(totalEstimated)} planned of {fmt(budgetTarget)} goal ({usedPct}%)
-            </div>
-          </>
-        )}
-      </div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Vendor List</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Photographers, caterers, decorators, and everyone else helping bring your day together.</div>
 
       {showForm ? (
-        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 16 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, marginBottom: 14 }}>{editingId ? 'Edit Expense' : 'Add Expense'}</div>
+        <div style={{ ...cardStyle, marginBottom: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-            <div>
-              <label style={labelStyle}>Category</label>
-              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
-                {BUDGET_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Item / Service Name</label>
-              <input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} placeholder="e.g. Wedding Cake" style={inputStyle} />
-            </div>
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={labelStyle}>Vendor (optional)</label>
-            <input value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Sweet Dreams Bakery" style={inputStyle} />
+            <input value={form.vendor_name} onChange={e => setForm({ ...form, vendor_name: e.target.value })} placeholder="Vendor name" style={inputStyle} />
+            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+              <option value="photography">Photography</option><option value="catering">Catering</option><option value="decor">Decor</option>
+              <option value="music">Music/DJ</option><option value="transport">Transport</option><option value="attire">Attire</option><option value="other">Other</option>
+            </select>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-            <div>
-              <label style={labelStyle}>Estimated Cost (LKR)</label>
-              <input value={form.estimated_cost} onChange={e => setForm({ ...form, estimated_cost: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Paid / Advance (LKR)</label>
-              <input value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
-            </div>
+            <input value={form.contact_name} onChange={e => setForm({ ...form, contact_name: e.target.value })} placeholder="Contact name (optional)" style={inputStyle} />
+            <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone (optional)" style={inputStyle} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-            <div>
-              <label style={labelStyle}>Due Date</label>
-              <input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Payment Status</label>
-              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as BudgetItem['status'] })} style={inputStyle}>
-                <option value="pending">Pending</option>
-                <option value="partial">Partially Paid</option>
-                <option value="paid">Paid in Full</option>
-              </select>
-            </div>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>Notes (optional)</label>
-            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contract details, contact info, etc." style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
-          </div>
+          <input value={form.cost} onChange={e => setForm({ ...form, cost: e.target.value.replace(/[^\d.]/g, '') })} placeholder="Cost (LKR)" style={{ ...inputStyle, marginBottom: 14 }} />
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleSaveItem} disabled={saving || !form.item_name.trim()} style={{
-              flex: 1, padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer', background: accent, color: '#fff',
-              fontWeight: 700, fontSize: 13, opacity: (saving || !form.item_name.trim()) ? 0.6 : 1,
-            }}>{saving ? 'Saving...' : editingId ? 'Update Expense' : 'Add Expense'}</button>
-            <button onClick={resetForm} style={{ padding: '12px 18px', borderRadius: 10, border: `1px solid ${BORDER}`, cursor: 'pointer', background: '#fff', color: TEXT_MUTED, fontWeight: 600, fontSize: 13 }}>Cancel</button>
+            <button onClick={add} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13 }}>Add Vendor</button>
+            <button onClick={() => setShowForm(false)} style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b' }}>Cancel</button>
           </div>
         </div>
       ) : (
-        <button onClick={() => setShowForm(true)} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: 13, borderRadius: 12,
-          border: `1.5px dashed ${accent}`, cursor: 'pointer', background: `${accent}0d`, color: accent, fontWeight: 700, fontSize: 13, marginBottom: 16,
-        }}>
-          <Icon name="plus" size={14} color={accent} /> Add Expense
+        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: 13, borderRadius: 12, border: `1.5px dashed ${PINK}`, cursor: 'pointer', background: `${PINK}0d`, color: PINK, fontWeight: 700, fontSize: 13, marginBottom: 16 }}>
+          <Icon name="plus" size={14} color={PINK} /> Add Vendor
         </button>
       )}
 
-      {items.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 40, background: "#fff", borderRadius: 16, color: TEXT_MUTED, fontSize: 13 }}>
-          No expenses added yet. Start planning your budget above!
-        </div>
+      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : vendors.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No vendors added yet.</div>
       ) : (
-        <div style={{ display: 'grid', gap: 10 }}>
-          {items.map(item => {
-            const meta = categoryMeta(item.category)
-            const sMeta = statusMeta[item.status]
-            const balance = (item.estimated_cost || 0) - (item.paid_amount || 0)
+        <div style={{ display: 'grid', gap: 8 }}>
+          {vendors.map(v => {
+            const sm = statusMeta[v.status] || statusMeta.contacted
             return (
-              <div key={item.id} style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 10px rgba(15,23,42,0.05)' }}>
+              <div key={v.id} style={{ ...cardStyle, padding: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 9, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{meta.icon}</div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK }}>{item.item_name}</div>
-                      <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>
-                        {meta.label}{item.vendor ? ` · ${item.vendor}` : ''}{item.due_date ? ` · Due ${new Date(item.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
-                      </div>
-                    </div>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{v.vendor_name}</div>
+                    <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{v.category}{v.contact_name ? ` · ${v.contact_name}` : ''}{v.phone ? ` · ${v.phone}` : ''}</div>
                   </div>
-                  <div style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 700, background: sMeta.bg, color: sMeta.color, whiteSpace: 'nowrap' }}>{sMeta.label}</div>
+                  <button onClick={() => remove(v.id)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon name="trash" size={12} color="#dc2626" /></button>
                 </div>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 44 }}>
-                  <span>Est: <strong style={{ color: TEXT_DARK }}>{fmt(item.estimated_cost || 0)}</strong></span>
-                  <span>Paid: <strong style={{ color: '#16a34a' }}>{fmt(item.paid_amount || 0)}</strong></span>
-                  {balance > 0 && <span>Balance: <strong style={{ color: '#dc2626' }}>{fmt(balance)}</strong></span>}
-                </div>
-                {item.notes && <div style={{ fontSize: 11.5, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 44, fontStyle: 'italic' }}>{item.notes}</div>}
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                  <button onClick={() => startEdit(item)} style={{
-                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 100, border: `1px solid ${BORDER}`,
-                    cursor: 'pointer', background: '#f8fafc', color: TEXT_MUTED, fontSize: 11, fontWeight: 500,
-                  }}><Icon name="edit" size={11} /> Edit</button>
-                  <button onClick={() => handleDeleteItem(item.id, item.item_name)} disabled={busyId === item.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 100, border: '1px solid #fecaca',
-                    cursor: 'pointer', background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500, opacity: busyId === item.id ? 0.6 : 1,
-                  }}><Icon name="trash" size={11} color="#dc2626" /> {busyId === item.id ? 'Removing...' : 'Delete'}</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 12.5, color: '#64748b' }}>LKR {(v.cost || 0).toLocaleString()}</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {(['contacted', 'booked', 'paid'] as const).map(s => (
+                      <button key={s} onClick={() => setStatus(v.id, s)} style={{ padding: '4px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 700, cursor: 'pointer', border: v.status === s ? 'none' : '1px solid #e2e8f0', background: v.status === s ? statusMeta[s].bg : '#fff', color: v.status === s ? statusMeta[s].color : '#94a3b8' }}>{statusMeta[s].label}</button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )
@@ -570,1243 +1596,418 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
   )
 }
 
-// ── Text & Fonts — per-element color + font + bold override. Stored
-// under couple.text_styles = { [targetKey]: { color, font, bold } }. A
-// target with no entry simply uses the template's own default styling —
-// nothing breaks for invitations that never open this panel. ──
-function TextStyleFields({ styles, onChange, border, textMuted, inputStyle, previewData }: {
-  styles: Record<string, { color?: string; font?: string; bold?: boolean }>
-  onChange: (next: Record<string, { color?: string; font?: string; bold?: boolean }>) => void
-  border: string
-  textMuted: string
-  inputStyle: React.CSSProperties
-  previewData: { bride: string; groom: string; venue: string; venue_address: string }
-}) {
-  const setStyle = (key: string, patch: { color?: string; font?: string; bold?: boolean }) => {
-    onChange({ ...styles, [key]: { ...(styles[key] || {}), ...patch } })
+// ══════════════════════════════ LIQUOR PLANNER ══════════════════════════════
+function LiquorSection({ couple }: { couple: MyCouple }) {
+  const [items, setItems] = useState<LiquorItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState({ item_name: '', category: 'hard-liquor', quantity: '', unit: 'bottles', cost_per_unit: '' })
+
+  const load = async () => {
+    const { data } = await supabase.from('liquor_items').select('*').eq('couple_id', couple.id).order('created_at', { ascending: true })
+    if (data) setItems(data as LiquorItem[])
+    setLoading(false)
   }
-  const resetStyle = (key: string) => {
-    const next = { ...styles }
-    delete next[key]
-    onChange(next)
+  useEffect(() => { load() }, [couple.id])
+
+  const add = async () => {
+    if (!form.item_name.trim()) return
+    const { error } = await supabase.from('liquor_items').insert([{
+      couple_id: couple.id, item_name: form.item_name.trim(), category: form.category,
+      quantity: parseFloat(form.quantity) || 0, unit: form.unit, cost_per_unit: parseFloat(form.cost_per_unit) || 0,
+    }])
+    if (!error) { setForm({ item_name: '', category: 'hard-liquor', quantity: '', unit: 'bottles', cost_per_unit: '' }); load() }
   }
+  const remove = async (id: string) => {
+    const { error } = await supabase.from('liquor_items').delete().eq('id', id)
+    if (!error) setItems(prev => prev.filter(i => i.id !== id))
+  }
+
+  const totalCost = items.reduce((s, i) => s + (i.quantity || 0) * (i.cost_per_unit || 0), 0)
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      {TEXT_STYLE_TARGETS.map(t => {
-        const s = styles[t.key] || {}
-        const hasOverride = !!s.color || (!!s.font && s.font !== 'inherit') || !!s.bold
-        const previewStyle: React.CSSProperties = {
-          fontSize: 13.5,
-          color: s.color || '#334155',
-          fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif",
-          fontWeight: s.bold ? 700 : 400,
-        }
-        return (
-          <div key={t.key} style={{ background: '#fff', borderRadius: 12, padding: 12, border: `1px solid ${border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#334155', lineHeight: 1.4 }}>{t.label}</span>
-              {hasOverride && (
-                <button type="button" onClick={() => resetStyle(t.key)} style={{ fontSize: 10.5, color: textMuted, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline', whiteSpace: 'nowrap', flexShrink: 0 }}>Reset</button>
-              )}
-            </div>
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Liquor Planner</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Plan quantities and estimated cost for drinks at the reception.</div>
 
-            {/* Live preview so it's obvious what you're changing */}
-            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
-              <div style={previewStyle}>{t.example(previewData)}</div>
-            </div>
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', marginBottom: 4 }}>ESTIMATED TOTAL COST</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>LKR {totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+      </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
+          <input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} placeholder="e.g. Red Label Whiskey" style={inputStyle} />
+          <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+            <option value="hard-liquor">Hard Liquor</option><option value="wine">Wine</option><option value="beer">Beer</option><option value="non-alcoholic">Non-Alcoholic</option>
+          </select>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <input value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value.replace(/[^\d.]/g, '') })} placeholder="Quantity" style={inputStyle} />
+          <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} style={inputStyle}>
+            <option value="bottles">Bottles</option><option value="cases">Cases</option><option value="crates">Crates</option>
+          </select>
+          <input value={form.cost_per_unit} onChange={e => setForm({ ...form, cost_per_unit: e.target.value.replace(/[^\d.]/g, '') })} placeholder="Cost/unit (LKR)" style={inputStyle} />
+        </div>
+        <button onClick={add} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13 }}>Add Item</button>
+      </div>
+
+      {loading ? <div style={{ color: '#94a3b8', fontSize: 13 }}>Loading...</div> : items.length === 0 ? (
+        <div style={{ ...cardStyle, textAlign: 'center', padding: 30, color: '#94a3b8', fontSize: 13 }}>No items planned yet.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {items.map(item => (
+            <div key={item.id} style={{ ...cardStyle, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: textMuted, marginBottom: 4 }}>COLOR</div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input
-                    type="color"
-                    value={s.color || '#1e293b'}
-                    onChange={e => setStyle(t.key, { color: e.target.value })}
-                    style={{ width: 38, height: 38, borderRadius: 8, border: `1px solid ${border}`, padding: 0, cursor: 'pointer', flexShrink: 0 }}
-                  />
-                  <input
-                    value={s.color || ''}
-                    onChange={e => setStyle(t.key, { color: e.target.value })}
-                    placeholder="Default"
-                    style={{ ...inputStyle, padding: '8px 10px', fontSize: 12 }}
-                  />
-                </div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{item.item_name}</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{item.quantity} {item.unit} × LKR {item.cost_per_unit.toLocaleString()} = LKR {(item.quantity * item.cost_per_unit).toLocaleString()}</div>
               </div>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: textMuted, marginBottom: 4 }}>FONT</div>
-                <select
-                  value={s.font || 'inherit'}
-                  onChange={e => setStyle(t.key, { font: e.target.value })}
-                  style={{ ...inputStyle, padding: '8px 10px', height: 38, fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif" }}
-                >
-                  {FONT_OPTIONS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: 'fit-content' }}>
-              <input type="checkbox" checked={!!s.bold} onChange={e => setStyle(t.key, { bold: e.target.checked })}
-                style={{ width: 16, height: 16, cursor: 'pointer' }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Bold</span>
-            </label>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void }) {
-  const panelTemplateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
-  const PANEL_ACCENT = couple.custom_colors?.primary || panelTemplateDefault.primary
-  const PANEL_BORDER = '#e2e8f0'
-  const PANEL_TEXT_MUTED = '#64748b'
-  const PANEL_TEXT_DARK = '#1e293b'
-
-  const [photo, setPhoto] = useState(couple.couple_photo || '')
-  const [weddingDate, setWeddingDate] = useState(couple.wedding_date ? couple.wedding_date.slice(0, 16) : '')
-  const [venue, setVenue] = useState(couple.venue || '')
-  const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
-  const [mapsUrl, setMapsUrl] = useState(couple.maps_url || '')
-  const [introText, setIntroText] = useState(couple.intro_text || '')
-  const [thankYouText, setThankYouText] = useState((couple as any).thank_you_text || '')
-  const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
-  const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
-  const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
-  const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text || '')
-  const [textStyles, setTextStyles] = useState<Record<string, { color?: string; font?: string; bold?: boolean }>>((couple as any).text_styles || {})
-
-  const [seatRows, setSeatRows] = useState<{ id: number; name: string; table: string }[]>(
-    Object.entries(couple.seats || {}).map(([name, table], i) => ({ id: i, name, table }))
-  )
-
-  const templateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
-  const [colors, setColors] = useState<Required<CoupleColors>>({
-    primary: couple.custom_colors?.primary || templateDefault.primary,
-    primaryLight: couple.custom_colors?.primaryLight || templateDefault.primaryLight,
-    dark: couple.custom_colors?.dark || templateDefault.dark,
-    cream: couple.custom_colors?.cream || templateDefault.cream,
-  })
-
-  const [uploading, setUploading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [newPin, setNewPin] = useState('')
-  const [confirmPin, setConfirmPin] = useState('')
-  const [pinSaving, setPinSaving] = useState(false)
-  const [pinMessage, setPinMessage] = useState('')
-
-  const handleChangePin = async () => {
-    setPinMessage('')
-    if (newPin.length !== 4) { setPinMessage('PIN must be exactly 4 digits.'); return }
-    if (newPin !== confirmPin) { setPinMessage("PINs don't match — please re-enter."); return }
-    setPinSaving(true)
-    const { error } = await supabase.from('couples').update({ pin: newPin }).eq('id', couple.id)
-    setPinSaving(false)
-    if (error) {
-      setPinMessage('Could not update PIN: ' + error.message)
-    } else {
-      setPinMessage('PIN updated! Use it next time you unlock this dashboard.')
-      setNewPin('')
-      setConfirmPin('')
-    }
-  }
-
-  const allowedTemplates: string[] = Array.isArray((couple as any).allowed_templates) ? (couple as any).allowed_templates : []
-  const defaultTemplateId: string = (couple as any).default_template || 'floral-romance'
-  const templateOptions: string[] = Array.from(new Set([...allowedTemplates, defaultTemplateId, couple.template]))
-  const [selectedTemplate, setSelectedTemplate] = useState(couple.template)
-  const [templateSaving, setTemplateSaving] = useState(false)
-  const [templateMessage, setTemplateMessage] = useState('')
-
-  const handleChangeTemplate = async () => {
-    if (selectedTemplate === couple.template) { setTemplateMessage("That's already your current template."); return }
-    setTemplateMessage('')
-    setTemplateSaving(true)
-    const { error } = await supabase.from('couples').update({ template: selectedTemplate }).eq('id', couple.id)
-    setTemplateSaving(false)
-    if (error) {
-      setTemplateMessage('Could not switch template: ' + error.message)
-    } else {
-      setTemplateMessage('Template updated! Refresh your invitation link to see the new look.')
-      onSaved()
-    }
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '11px 14px', borderRadius: 10,
-    border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
-    fontFamily: "'Inter',sans-serif", background: '#fff', color: '#1e293b',
-  }
-  const labelStyle: React.CSSProperties = {
-    fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block',
-  }
-  const fieldWrap: React.CSSProperties = { marginBottom: 16 }
-
-  const handlePhotoUpload = async (file: File) => {
-    setUploading(true)
-    const url = await uploadToStorage(file, 'couple')
-    setUploading(false)
-    if (url) setPhoto(url)
-  }
-
-  const updateSeatRow = (id: number, field: 'name' | 'table', value: string) => {
-    setSeatRows(rows => rows.map(r => r.id === id ? { ...r, [field]: value } : r))
-  }
-  const addSeatRow = () => {
-    const newId = seatRows.length ? Math.max(...seatRows.map(r => r.id)) + 1 : 0
-    setSeatRows(rows => [...rows, { id: newId, name: '', table: '' }])
-  }
-  const removeSeatRow = (id: number) => {
-    setSeatRows(rows => rows.filter(r => r.id !== id))
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    setMessage('')
-
-    const seatsObj: Record<string, string> = {}
-    seatRows.forEach(r => {
-      const name = r.name.trim()
-      const table = r.table.trim()
-      if (name && table) seatsObj[name.toLowerCase()] = table
-    })
-
-    const { error } = await supabase.from('couples').update({
-      couple_photo: photo || null,
-      wedding_date: weddingDate,
-      venue: venue || null,
-      venue_address: venueAddress || null,
-      maps_url: mapsUrl || null,
-      custom_colors: colors,
-      seats: seatsObj,
-      intro_text: introText || null,
-      thank_you_text: thankYouText || null,
-      bride_family: brideFamilyName || null,
-      groom_family: groomFamilyName || null,
-      together_with_text: togetherWithText || null,
-      family_invitation_text: familyInvitationText || null,
-      text_styles: textStyles,
-    }).eq('id', couple.id)
-
-    setSaving(false)
-    if (error) {
-      setMessage('Could not save: ' + error.message)
-    } else {
-      setMessage('Saved! Your invitation has been updated.')
-      onSaved()
-    }
-  }
-
-  const resetColors = () => setColors(templateDefault)
-
-  return (
-    <div style={{ background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 2px 20px rgba(15,23,42,0.06)' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <div style={{ fontSize: 16, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 4 }}>Edit Your Invitation</div>
-      <div style={{ fontSize: 12, color: PANEL_TEXT_MUTED, marginBottom: 20 }}>Changes apply instantly to your live invitation link.</div>
-
-      <div style={fieldWrap}>
-        <label style={labelStyle}>Couple Photo</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {photo ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: `1px solid ${PANEL_BORDER}` }} />
-          ) : (
-            <div style={{ width: 56, height: 56, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="camera" size={20} color="#94a3b8" />
-            </div>
-          )}
-          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, background: uploading ? '#f1f5f9' : '#fff', cursor: uploading ? 'default' : 'pointer', fontSize: 13, color: PANEL_TEXT_MUTED, fontWeight: 500 }}>
-            <Icon name="camera" size={14} />
-            {uploading ? 'Uploading...' : photo ? 'Change Photo' : 'Upload Photo'}
-          </button>
-          {photo && (
-            <button type="button" onClick={() => setPhoto('')} style={{ fontSize: 12, color: PANEL_ACCENT, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
-          )}
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
-            onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Wedding Date &amp; Time</label>
-          <input type="datetime-local" style={inputStyle} value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
-        </div>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Venue Name</label>
-          <input style={inputStyle} value={venue} onChange={e => setVenue(e.target.value)} placeholder="The Kingsbury" />
-        </div>
-      </div>
-      <div style={fieldWrap}>
-        <label style={labelStyle}>Venue Address</label>
-        <input style={inputStyle} value={venueAddress} onChange={e => setVenueAddress(e.target.value)} placeholder="Janadhipathi Mawatha, Colombo" />
-      </div>
-      <div style={fieldWrap}>
-        <label style={labelStyle}>Google Maps URL</label>
-        <input style={inputStyle} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/?q=..." />
-      </div>
-
-      {couple.show_seating && (
-        <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>
-            <Icon name="chair" size={15} color="#3730a3" /> Manage Seating
-          </div>
-          <div style={{ fontSize: 11, color: '#4338ca', marginBottom: 14 }}>
-            Guests can search their name on your invitation to find their table. Add, edit, or remove names below.
-          </div>
-          <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
-            {seatRows.map(row => (
-              <div key={row.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input value={row.name} onChange={e => updateSeatRow(row.id, 'name', e.target.value)} placeholder="Guest name"
-                  style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }} />
-                <input value={row.table} onChange={e => updateSeatRow(row.id, 'table', e.target.value)} placeholder="Table 3"
-                  style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }} />
-                <button type="button" onClick={() => removeSeatRow(row.id)} aria-label="Remove guest" style={{
-                  width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', flexShrink: 0,
-                  background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}><Icon name="cross" size={13} color="#dc2626" /></button>
-              </div>
-            ))}
-            {seatRows.length === 0 && <div style={{ fontSize: 12, color: '#6b6098', fontStyle: 'italic' }}>No guests added yet.</div>}
-          </div>
-          <button type="button" onClick={addSeatRow} style={{
-            padding: '8px 16px', borderRadius: 8, border: '1px solid #c7d2fe',
-            background: '#fff', cursor: 'pointer', fontSize: 13, color: '#4338ca', fontWeight: 500,
-          }}>+ Add Guest</button>
-        </div>
-      )}
-
-      <div style={{ background: '#fdf8ec', borderRadius: 12, padding: 16, marginTop: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#8a6a2a' }}>Customise Colors</div>
-          <button type="button" onClick={resetColors} style={{ fontSize: 11, color: PANEL_TEXT_MUTED, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-            Reset to default
-          </button>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          {[
-            { key: 'primary' as const, label: 'Primary Accent' },
-            { key: 'primaryLight' as const, label: 'Light Accent' },
-            { key: 'dark' as const, label: 'Dark / Text' },
-            { key: 'cream' as const, label: 'Background' },
-          ].map(c => (
-            <div key={c.key}>
-              <label style={labelStyle}>{c.label}</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="color" value={colors[c.key]} onChange={e => setColors({ ...colors, [c.key]: e.target.value })}
-                  style={{ width: 38, height: 38, borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, cursor: 'pointer', padding: 0 }} />
-                <input value={colors[c.key]} onChange={e => setColors({ ...colors, [c.key]: e.target.value })}
-                  style={{ ...inputStyle, padding: '8px 10px', fontSize: 12 }} />
-              </div>
+              <button onClick={() => remove(item.id)} style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="trash" size={12} color="#dc2626" /></button>
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 14, padding: 12, borderRadius: 10, background: colors.cream }}>
-          <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: colors.primary, color: '#fff', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>Primary</div>
-          <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: colors.primaryLight, color: colors.dark, fontSize: 11, textAlign: 'center', fontWeight: 600 }}>Light</div>
-          <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: colors.dark, color: '#fff', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>Dark</div>
-        </div>
-      </div>
-
-      <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginTop: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#166534', marginBottom: 14 }}>Customise Text</div>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Groom's Family Name</label>
-          <input style={inputStyle} value={groomFamilyName} onChange={e => setGroomFamilyName(e.target.value)} placeholder="e.g. MR & MRS De Silva" />
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>"Together With" Label</label>
-          <input style={inputStyle} value={togetherWithText} onChange={e => setTogetherWithText(e.target.value)} placeholder="together with (default)" />
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Bride's Family Name</label>
-          <input style={inputStyle} value={brideFamilyName} onChange={e => setBrideFamilyName(e.target.value)} placeholder="e.g. MR & MRS Perera" />
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Family Invitation Text</label>
-          <textarea value={familyInvitationText} onChange={e => setFamilyInvitationText(e.target.value)} style={{ ...inputStyle, minHeight: 70, resize: 'vertical' as const }} />
-        </div>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>Cover Intro Text</label>
-          <textarea value={introText} onChange={e => setIntroText(e.target.value)} placeholder="Leave empty to use the template's default line..." style={{ ...inputStyle, minHeight: 70, resize: 'vertical' as const }} />
-        </div>
-        <div>
-          <label style={labelStyle}>Thank You Message</label>
-          <textarea value={thankYouText} onChange={e => setThankYouText(e.target.value)} placeholder="Leave empty to use the default thank you message..." style={{ ...inputStyle, minHeight: 90, resize: 'vertical' as const }} />
-        </div>
-      </div>
-
-      <div style={{ background: '#f5f3ff', borderRadius: 12, padding: 16, marginTop: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 4 }}>Customise Fonts</div>
-        <div style={{ fontSize: 11, color: '#6d28d9', marginBottom: 14, lineHeight: 1.5 }}>
-          For each part of your invitation below: pick a color, pick a font, or make it bold. Each box shows a live preview so you can see exactly what changes. Leave anything untouched to keep the template's original look.
-        </div>
-        <TextStyleFields
-          styles={textStyles}
-          onChange={setTextStyles}
-          border={PANEL_BORDER}
-          textMuted={PANEL_TEXT_MUTED}
-          inputStyle={inputStyle}
-          previewData={{ bride: couple.bride, groom: couple.groom, venue: venue, venue_address: venueAddress }}
-        />
-      </div>
-
-      {message && <div style={{ marginTop: 16, fontSize: 13, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
-
-      <button onClick={handleSave} disabled={saving} style={{
-        marginTop: 18, width: '100%', padding: 14, borderRadius: 12, border: 'none', cursor: 'pointer',
-        background: `linear-gradient(135deg,${PANEL_ACCENT},${panelTemplateDefault.primaryLight})`, color: '#fff', fontWeight: 700, fontSize: 14,
-        opacity: saving ? 0.6 : 1,
-      }}>
-        {saving ? 'Saving...' : 'Save Changes'}
-      </button>
-
-      {(couple as any).enable_template_switch === true && allowedTemplates.length > 0 && (
-        <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, marginTop: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>
-            <Icon name="sparkles" size={14} color="#c2410c" /> Change Template
-          </div>
-          <div style={{ fontSize: 11, color: '#ea580c', marginBottom: 14 }}>
-            Not feeling the current look? Pick a different template below — your photos, text, and RSVPs all stay exactly as they are.
-          </div>
-          <label style={labelStyle}>Template</label>
-          <select value={selectedTemplate} onChange={e => { setSelectedTemplate(e.target.value); setTemplateMessage('') }}
-            style={{ ...inputStyle, marginBottom: 14 }}>
-            {templateOptions.map(id => {
-              const label = TEMPLATE_NAMES[id] || id
-              const isCurrent = couple.template === id
-              const isDefault = id === defaultTemplateId
-              return (
-                <option key={id} value={id}>
-                  {label}{isCurrent ? ' (Current)' : isDefault ? ' (Default)' : ''}
-                </option>
-              )
-            })}
-          </select>
-          {templateMessage && (
-            <div style={{ fontSize: 12.5, marginBottom: 12, color: templateMessage.startsWith('Template updated') ? '#16a34a' : '#dc2626' }}>{templateMessage}</div>
-          )}
-          <button type="button" onClick={handleChangeTemplate} disabled={templateSaving || selectedTemplate === couple.template} style={{
-            width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
-            background: '#c2410c', color: '#fff', fontWeight: 700, fontSize: 13,
-            opacity: (templateSaving || selectedTemplate === couple.template) ? 0.5 : 1,
-          }}>
-            {templateSaving ? 'Switching...' : 'Switch to This Template'}
-          </button>
-        </div>
       )}
-
-      <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginTop: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1e40af', marginBottom: 4 }}>
-          <Icon name="lock" size={14} color="#1e40af" /> Change Dashboard PIN
-        </div>
-        <div style={{ fontSize: 11, color: '#3b5bab', marginBottom: 14 }}>
-          This is the 4-digit code you enter to unlock this dashboard. Changing it here does not affect anything else about your invitation.
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-          <div>
-            <label style={labelStyle}>New PIN</label>
-            <input type="tel" inputMode="numeric" maxLength={4} value={newPin}
-              onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="••••" style={{ ...inputStyle, letterSpacing: '0.3em', textAlign: 'center' }} />
-          </div>
-          <div>
-            <label style={labelStyle}>Confirm New PIN</label>
-            <input type="tel" inputMode="numeric" maxLength={4} value={confirmPin}
-              onChange={e => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="••••" style={{ ...inputStyle, letterSpacing: '0.3em', textAlign: 'center' }} />
-          </div>
-        </div>
-        {pinMessage && (
-          <div style={{ fontSize: 12.5, marginBottom: 12, color: pinMessage.startsWith('PIN updated') ? '#16a34a' : '#dc2626' }}>{pinMessage}</div>
-        )}
-        <button type="button" onClick={handleChangePin} disabled={pinSaving || newPin.length !== 4 || confirmPin.length !== 4} style={{
-          width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
-          background: '#1e40af', color: '#fff', fontWeight: 700, fontSize: 13,
-          opacity: (pinSaving || newPin.length !== 4 || confirmPin.length !== 4) ? 0.5 : 1,
-        }}>
-          {pinSaving ? 'Updating...' : 'Update PIN'}
-        </button>
-      </div>
     </div>
   )
 }
 
-function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string }) {
-  const [guestName, setGuestName] = useState("")
-  const [copied, setCopied] = useState(false)
-  const [waMessage, setWaMessage] = useState((couple as any).whatsapp_invite_message || `Hi {name}! 💌\n\nWe're getting married and would be so happy to have you celebrate with us! Please tap below to view your invitation and let us know if you can make it.\n\nWith love,\n${couple.bride} & ${couple.groom}`)
-  const [editingMsg, setEditingMsg] = useState(false)
-
-  const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
-  const generatedLink = guestName.trim() ? `${baseUrl}?name=${encodeURIComponent(guestName.trim())}` : baseUrl
-  // Swaps {name} in the template for the guest currently typed above —
-  // if they haven't typed a name yet, leaves the placeholder visible so
-  // it's clear a name is expected here.
-  const personalizedMessage = waMessage.replace(/\{name\}/g, guestName.trim() || '{name}')
-
-  const copyLink = async () => {
-    if (!guestName.trim()) return
-    await navigator.clipboard.writeText(generatedLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const shareWhatsApp = () => {
-    if (!guestName.trim()) return
-    const msg = encodeURIComponent(`${personalizedMessage}\n${generatedLink}`)
-    window.open(`https://wa.me/?text=${msg}`, '_blank')
-  }
-
-  const saveMessage = async () => {
-    await supabase.from('couples').update({ whatsapp_invite_message: waMessage }).eq('id', couple.id)
-    setEditingMsg(false)
-  }
-
+// ══════════════════════════════ SUPPORT / MEMBERS ══════════════════════════════
+function SupportSection({ couple }: { couple: MyCouple }) {
+  const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`Hi! I need help with my InviteGlow invitation.\n\nCouple: ${couple.bride} & ${couple.groom}\nLink: /invite/${couple.slug}`)}`
   return (
-    <div style={{ background: "#fff", borderRadius: 18, padding: 24, boxShadow: "0 2px 20px rgba(15,23,42,0.06)" }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>Generate Guest Link</div>
-      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 16 }}>
-        Type a guest's name to generate a personalised invitation link — their name will appear on the cover and auto-fill in the RSVP form.
-      </div>
-
-      <input
-        value={guestName}
-        onChange={e => { setGuestName(e.target.value); setCopied(false) }}
-        placeholder="e.g. Amara & Family"
-        style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif", color: "#1e293b", marginBottom: 12, boxSizing: 'border-box' }}
-      />
-
-      {guestName.trim() && (
-        <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#475569", wordBreak: "break-all", border: "1px solid #e2e8f0" }}>
-          {generatedLink}
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Support</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Need help with your invitation? We're here.</div>
+      <div style={{ ...cardStyle, textAlign: 'center', padding: 40 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+          <Icon name="whatsapp" size={22} color="#25d366" />
         </div>
-      )}
-
-      <div style={{ background: "#f0fdf4", borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: "1px solid #bbf7d0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "#166534" }}>WhatsApp Message</div>
-          <button onClick={() => setEditingMsg(!editingMsg)} style={{ fontSize: 11, color: accent, background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 }}>
-            {editingMsg ? "Cancel" : "Edit"}
-          </button>
-        </div>
-        {editingMsg ? (
-          <div>
-            <div style={{ fontSize: 10.5, color: "#16a34a", marginBottom: 6 }}>Tip: type <strong>{'{name}'}</strong> anywhere and it'll be swapped for the guest's name above.</div>
-            <textarea value={waMessage} onChange={e => setWaMessage(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none", fontFamily: "'Inter',sans-serif", resize: "vertical" as const, minHeight: 90, boxSizing: 'border-box' }} />
-            <button onClick={saveMessage} style={{ marginTop: 6, padding: "7px 16px", borderRadius: 8, background: accent, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
-              Save Message
-            </button>
-          </div>
-        ) : (
-          <div style={{ fontSize: 13, color: "#1e293b", whiteSpace: "pre-wrap" }}>{personalizedMessage}<br /><span style={{ color: "#64748b" }}>[link auto-added]</span></div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", gap: 10 }}>
-        <button onClick={copyLink} disabled={!guestName.trim()} style={{
-          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: "11px", borderRadius: 10, border: "none", cursor: guestName.trim() ? "pointer" : "default",
-          background: copied ? "#16a34a" : accent, color: "#fff", fontWeight: 600, fontSize: 13,
-          opacity: guestName.trim() ? 1 : 0.4, transition: "background 0.2s",
-        }}>
-          {copied ? <Icon name="check" size={14} color="#fff" /> : <Icon name="copy" size={14} color="#fff" />}
-          {copied ? "Copied!" : "Copy Link"}
-        </button>
-        <button onClick={shareWhatsApp} disabled={!guestName.trim()} style={{
-          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: "11px", borderRadius: 10, border: "none", cursor: guestName.trim() ? "pointer" : "default",
-          background: "#25d366", color: "#fff", fontWeight: 600, fontSize: 13, opacity: guestName.trim() ? 1 : 0.4,
-        }}>
-          <Icon name="whatsapp" size={14} color="#fff" />
-          WhatsApp
-        </button>
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>Chat with us on WhatsApp</div>
+        <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 18 }}>Fastest way to get help — we usually reply within a few hours.</div>
+        <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', padding: '11px 22px', borderRadius: 100, background: '#25d366', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>Message Support</a>
       </div>
     </div>
   )
 }
 
-type DashTabKey = 'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'
-const TABS: { key: DashTabKey; label: string; icon: IconName }[] = [
-  { key: 'overview', label: 'Overview', icon: 'overview' },
-  { key: 'guests', label: 'Guests', icon: 'users' },
-  { key: 'budget', label: 'Budget', icon: 'wallet' },
-  { key: 'wishes', label: 'Wishes', icon: 'heart' },
-  { key: 'edit', label: 'Edit', icon: 'edit' },
-  { key: 'share', label: 'Share', icon: 'link' },
-]
+function ProfileSection({ userEmail, avatarUrl, displayName, onChanged }: { userEmail: string; avatarUrl: string; displayName: string; onChanged: () => void }) {
+  const [name, setName] = useState(displayName)
+  const [photo, setPhoto] = useState(avatarUrl)
+  const [uploading, setUploading] = useState(false)
+  const [savingName, setSavingName] = useState(false)
+  const [nameMessage, setNameMessage] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-export default function CoupleDashboard() {
-  const params = useParams()
-  const searchParams = useSearchParams()
-  const slug = params.slug as string
-
-  const [couple, setCouple] = useState<Couple | null>(null)
-  const [rsvps, setRsvps] = useState<RSVP[]>([])
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [search, setSearch] = useState("")
-  const [filterResponse, setFilterResponse] = useState<'all' | 'yes' | 'no'>('all')
-  const [filterDrinking, setFilterDrinking] = useState<'all' | 'yes' | 'no'>('all')
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name-az' | 'name-za' | 'guests'>('newest')
-  const [showAddGuest, setShowAddGuest] = useState(false)
-  const [addGuestForm, setAddGuestForm] = useState({ name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
-  const [addingGuest, setAddingGuest] = useState(false)
-  const [editingRsvpId, setEditingRsvpId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ guest_name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
-  const [savingEdit, setSavingEdit] = useState(false)
-
-  // Deep-linking: /dashboard/[slug]?tab=guests etc. jumps straight to that
-  // tab. Falls back to 'overview' for anything unrecognised. This only
-  // sets the *initial* tab — after that the tab strip behaves as before.
-  const initialTab: DashTabKey = (() => {
-    const t = searchParams?.get('tab')
-    const match = TABS.find(tab => tab.key === t)
-    return match ? match.key : 'overview'
-  })()
-  const [activeTab, setActiveTab] = useState<DashTabKey>(initialTab)
-
-  const [unlocked, setUnlocked] = useState(false)
-  const [pinInput, setPinInput] = useState("")
-  const [pinError, setPinError] = useState(false)
-  const [deletingRsvpId, setDeletingRsvpId] = useState<string | null>(null)
-
-  const loadData = async () => {
-    const { data: coupleData, error: coupleError } = await supabase
-      .from('couples').select('*').eq('slug', slug).single()
-
-    if (coupleError || !coupleData) {
-      setNotFound(true)
-      setLoading(false)
-      return
-    }
-    setCouple(coupleData as Couple)
-
-    if ((coupleData as any).user_id) {
-      const { data: authData } = await supabase.auth.getUser()
-      if (authData.user && authData.user.id === (coupleData as any).user_id) {
-        setUnlocked(true)
-      }
-    }
-
-    const { data: rsvpData } = await supabase
-      .from('rsvps').select('*').eq('couple_id', coupleData.id).order('created_at', { ascending: false })
-
-    setRsvps((rsvpData as RSVP[]) || [])
-    setLoading(false)
-  }
-
-  useEffect(() => { loadData() }, [slug])
-
-  useEffect(() => {
-    if (!couple || activeTab !== 'share') return
-    const shareAllowed = (couple as any).enable_guest_links !== false && (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
-    if (!shareAllowed) setActiveTab('overview')
-  }, [couple, activeTab])
-
-  useEffect(() => {
-    if (couple && (couple as any).enable_guest_wishes !== true && activeTab === 'wishes') {
-      setActiveTab('overview')
-    }
-  }, [couple, activeTab])
-
-  useEffect(() => {
-    if (couple && (couple as any).enable_budget_tracker !== true && activeTab === 'budget') {
-      setActiveTab('overview')
-    }
-  }, [couple, activeTab])
-
-  useEffect(() => {
-    if (!unlocked) return
-    const interval = setInterval(loadData, 30000)
-    return () => clearInterval(interval)
-  }, [unlocked, slug])
-
-  const checkPin = () => {
-    if (couple && pinInput === couple.pin) {
-      setUnlocked(true)
-      setPinError(false)
-    } else {
-      setPinError(true)
-    }
-  }
-
-  const handleDeleteRsvp = async (id: string, guestName: string) => {
-    if (!confirm(`Remove ${guestName}'s RSVP? This cannot be undone.`)) return
-    setDeletingRsvpId(id)
-    const { error } = await supabase.from('rsvps').delete().eq('id', id)
-    setDeletingRsvpId(null)
-    if (!error) setRsvps(prev => prev.filter(r => r.id !== id))
-  }
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: "'Inter',sans-serif", color: "#475569" }}>
-        Loading...
-      </div>
-    )
-  }
-
-  if (notFound || !couple) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: "'Inter',sans-serif", color: "#1e293b", textAlign: "center", padding: 24 }}>
-        <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.6rem", color: "#1e293b", marginBottom: 8 }}>Dashboard Not Found</div>
-        <div style={{ fontSize: 14, color: "#64748b" }}>This invitation doesn't exist.</div>
-      </div>
-    )
-  }
-
-  const ACCENT = couple.custom_colors?.primary || '#6366f1'
-  const ACCENT_LIGHT = couple.custom_colors?.primaryLight || '#a5b4fc'
-  const TEXT_DARK = '#1e293b'
-  const TEXT_MUTED = '#64748b'
-  const BORDER = '#e2e8f0'
-  const PAGE_BG = '#f6f7fb'
-
-  if (!unlocked) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: PAGE_BG, fontFamily: "'Inter',sans-serif", padding: 24 }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');`}</style>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          style={{ background: "#fff", borderRadius: 20, padding: "2.5rem 2rem", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 8px 32px rgba(15,23,42,0.1)" }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%', background: `${ACCENT}1a`, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
-          }}>
-            <Icon name="lock" size={24} color={ACCENT} />
-          </div>
-          <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.4rem", color: TEXT_DARK, marginBottom: 4 }}>
-            {couple.bride} &amp; {couple.groom}
-          </div>
-          <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 24 }}>Enter your PIN to view your dashboard</div>
-          <input
-            type="tel" inputMode="numeric" maxLength={4} value={pinInput}
-            onChange={e => { setPinInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setPinError(false) }}
-            onKeyDown={e => e.key === 'Enter' && checkPin()}
-            placeholder="••••"
-            style={{
-              width: "100%", padding: "16px", borderRadius: 12, textAlign: "center",
-              fontSize: 28, letterSpacing: "0.5em", border: `2px solid ${pinError ? '#dc2626' : BORDER}`,
-              outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif", color: TEXT_DARK, boxSizing: 'border-box',
-            }}
-          />
-          {pinError && <div style={{ color: "#dc2626", fontSize: 12, marginBottom: 12 }}>Incorrect PIN. Please try again.</div>}
-          <button onClick={checkPin} style={{
-            width: "100%", padding: "14px", borderRadius: 12, border: "none", cursor: "pointer",
-            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: "#fff", fontWeight: 600, fontSize: 14,
-          }}>
-            Unlock Dashboard
-          </button>
-        </motion.div>
-      </div>
-    )
-  }
-
-  const accepted = rsvps.filter(r => r.response === 'yes')
-  const declined = rsvps.filter(r => r.response === 'no')
-  const drinkingYes = accepted.filter(r => r.drinking === 'yes').length
-  const drinkingNo = accepted.filter(r => r.drinking === 'no').length
-  const totalGuests = accepted.reduce((sum, r) => sum + (r.guest_count || 1), 0)
-
-  const isTwilightPicnic = couple.template === 'twilight-picnic'
-  const drinkCounts = { 'Hard Liquor': 0, 'Wine': 0, 'Beer': 0, 'Non-Alcoholic': 0 }
-  if (isTwilightPicnic) {
-    accepted.forEach(r => {
-      (r.drinking || '').split(',').map(d => d.trim()).forEach(d => {
-        if (d in drinkCounts) drinkCounts[d as keyof typeof drinkCounts]++
-      })
-    })
-  }
-  const accommodationNeeded = accepted.filter(r => r.accommodation === 'needed').length
-  const accommodationNotNeeded = accepted.filter(r => r.accommodation === 'not_needed').length
-
-  const filteredRsvps = rsvps.filter(r => {
-    if (search && !r.guest_name.toLowerCase().includes(search.toLowerCase())) return false
-    if (filterResponse !== 'all' && r.response !== filterResponse) return false
-    if (filterDrinking !== 'all' && r.drinking !== filterDrinking) return false
-    return true
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      case 'name-az': return a.guest_name.localeCompare(b.guest_name)
-      case 'name-za': return b.guest_name.localeCompare(a.guest_name)
-      case 'guests': return (b.guest_count || 1) - (a.guest_count || 1)
-      case 'newest':
-      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    }
-  })
-
-  const addGuestManually = async () => {
-    if (!addGuestForm.name.trim()) return
-    setAddingGuest(true)
-    const { error } = await supabase.from('rsvps').insert([{
-      couple_id: couple.id, guest_name: addGuestForm.name.trim(), response: addGuestForm.response,
-      guest_count: addGuestForm.response === 'yes' ? (parseInt(addGuestForm.guest_count) || 1) : 1,
-      drinking: addGuestForm.response === 'yes' ? (addGuestForm.drinking || null) : null,
-    }])
-    setAddingGuest(false)
+  const uploadAvatar = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const fileName = `profile/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
     if (!error) {
-      setAddGuestForm({ name: '', response: 'yes', guest_count: '1', drinking: '' })
-      setShowAddGuest(false)
-      loadData()
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      setPhoto(data.publicUrl)
+      await supabase.auth.updateUser({ data: { avatar_url: data.publicUrl } })
+      onChanged()
+    }
+    setUploading(false)
+  }
+
+  const saveName = async () => {
+    setSavingName(true); setNameMessage('')
+    const { error } = await supabase.auth.updateUser({ data: { full_name: name.trim() } })
+    setSavingName(false)
+    setNameMessage(error ? 'Could not save: ' + error.message : 'Saved!')
+    if (!error) onChanged()
+  }
+
+  const changePassword = async () => {
+    setPasswordMessage('')
+    if (newPassword.length < 6) { setPasswordMessage('Password must be at least 6 characters.'); return }
+    if (newPassword !== confirmPassword) { setPasswordMessage("Passwords don't match — please re-enter."); return }
+    setSavingPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setSavingPassword(false)
+    if (error) setPasswordMessage('Could not update password: ' + error.message)
+    else { setPasswordMessage('Password updated!'); setNewPassword(''); setConfirmPassword('') }
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>My Profile</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Your personal account details — separate from your invitation's details.</div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Profile Picture</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={photo} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${PINK}` }} />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22 }}>{userEmail[0]?.toUpperCase()}</div>
+          )}
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 12.5, color: '#475569', fontWeight: 500 }}>
+            {uploading ? 'Uploading...' : photo ? 'Change Photo' : 'Upload Photo'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f) }} />
+        </div>
+      </div>
+
+      <div style={{ ...cardStyle, marginBottom: 16 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Account Details</div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={labelStyle}>Email</label>
+          <input value={userEmail} disabled style={{ ...inputStyle, background: '#f8fafc', color: '#94a3b8' }} />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Display Name</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Erandi Perera" style={inputStyle} />
+        </div>
+        {nameMessage && <div style={{ fontSize: 12, marginBottom: 10, color: nameMessage.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{nameMessage}</div>}
+        <button onClick={saveName} disabled={savingName} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13, opacity: savingName ? 0.6 : 1 }}>{savingName ? 'Saving...' : 'Save Name'}</button>
+      </div>
+
+      <div style={cardStyle}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Change Password</div>
+        <div style={{ fontSize: 11.5, color: '#94a3b8', marginBottom: 14 }}>Use this to update the password you sign in with.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <div><label style={labelStyle}>New Password</label><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="At least 6 characters" style={inputStyle} /></div>
+          <div><label style={labelStyle}>Confirm New Password</label><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat password" style={inputStyle} /></div>
+        </div>
+        {passwordMessage && <div style={{ fontSize: 12, marginBottom: 10, color: passwordMessage.startsWith('Password updated') ? '#16a34a' : '#dc2626' }}>{passwordMessage}</div>}
+        <button onClick={changePassword} disabled={savingPassword || newPassword.length < 6} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', background: PINK, color: '#fff', fontWeight: 700, fontSize: 13, opacity: (savingPassword || newPassword.length < 6) ? 0.6 : 1 }}>{savingPassword ? 'Updating...' : 'Update Password'}</button>
+      </div>
+    </div>
+  )
+}
+
+function MembersSection({ userEmail }: { userEmail: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Members</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>People with access to this invitation account.</div>
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{userEmail[0]?.toUpperCase()}</div>
+          <div><div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>{userEmail}</div><div style={{ fontSize: 11.5, color: '#94a3b8' }}>Owner</div></div>
+        </div>
+        <div style={{ marginTop: 14, padding: 14, background: '#f8fafc', borderRadius: 10, fontSize: 12.5, color: '#94a3b8' }}>
+          Inviting additional members (e.g. a partner or wedding planner) with shared access is coming soon.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════ BILLING — PayHere + Bank Transfer ══════════════════════════════
+const PACKAGES = [
+  { tier: 'starter', name: 'Starter', price: 3000, features: ['1 invitation', 'Up to 150 guests', 'Any template', 'Live RSVP dashboard'] },
+  { tier: 'premium', name: 'Premium', price: 5000, features: ['2 invitations', 'Up to 600 guests', 'Any template', 'Live RSVP dashboard', 'Guest Wishes wall'] },
+  { tier: 'luxury', name: 'Luxury', price: 8000, features: ['Unlimited guests', 'Custom design service', 'Priority support', 'Guest Gallery uploads'] },
+] as const
+
+// Bank details for manual transfer — update these to match your actual account.
+const BANK_DETAILS = {
+  bank_name: 'Commercial Bank of Ceylon',
+  account_name: 'InviteGlow (Pvt) Ltd',
+  account_number: '8001234567',
+  branch: 'Colombo 03',
+}
+
+function BillingSection({ couple, onChanged }: { couple: MyCouple; onChanged: () => void }) {
+  const isPaid = couple.payment_slip_status === 'verified'
+  const [selectedTier, setSelectedTier] = useState<string>(couple.package_tier || 'premium')
+  const [payMethod, setPayMethod] = useState<'payhere' | 'bank' | ''>('')
+  const [payingWithPayHere, setPayingWithPayHere] = useState(false)
+  const [payHereError, setPayHereError] = useState('')
+  const [slipUploading, setSlipUploading] = useState(false)
+  const [slipSaved, setSlipSaved] = useState(false)
+  const slipInputRef = useRef<HTMLInputElement>(null)
+
+  const payWithPayHere = async () => {
+    setPayHereError('')
+    setPayingWithPayHere(true)
+    try {
+      const res = await fetch('/api/payhere/hash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coupleId: couple.id, packageTier: selectedTier }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setPayHereError(data.error)
+        setPayingWithPayHere(false)
+        return
+      }
+      // Build and submit a hidden form to PayHere's hosted checkout —
+      // this is PayHere's standard redirect-checkout integration.
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = 'https://www.payhere.lk/pay/checkout'
+      Object.entries(data).forEach(([key, value]) => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = key
+        input.value = String(value)
+        form.appendChild(input)
+      })
+      document.body.appendChild(form)
+      form.submit()
+    } catch {
+      setPayHereError('Could not start checkout. Please try again.')
+      setPayingWithPayHere(false)
     }
   }
 
-  const startEditRsvp = (r: RSVP) => {
-    setEditingRsvpId(r.id)
-    setEditForm({ guest_name: r.guest_name, response: r.response, guest_count: String(r.guest_count || 1), drinking: (r.drinking as any) || '' })
+  const uploadSlip = async (file: File) => {
+    setSlipUploading(true)
+    setSlipSaved(false)
+    const ext = file.name.split('.').pop()
+    const fileName = `payment-slips/${couple.id}-${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+    if (!uploadError) {
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+      const { error: updateError } = await supabase.from('couples').update({
+        payment_slip_url: data.publicUrl,
+        payment_slip_status: 'pending',
+        package_tier: selectedTier,
+      }).eq('id', couple.id)
+      if (!updateError) { setSlipSaved(true); onChanged() }
+    }
+    setSlipUploading(false)
   }
 
-  const saveEditRsvp = async (id: string) => {
-    if (!editForm.guest_name.trim()) return
-    setSavingEdit(true)
-    const { error } = await supabase.from('rsvps').update({
-      guest_name: editForm.guest_name.trim(), response: editForm.response,
-      guest_count: editForm.response === 'yes' ? (parseInt(editForm.guest_count) || 1) : 1,
-      drinking: editForm.response === 'yes' ? (editForm.drinking || null) : null,
-    }).eq('id', id)
-    setSavingEdit(false)
-    if (!error) { setEditingRsvpId(null); loadData() }
-  }
-
-  const pillStyle = (active: boolean): React.CSSProperties => ({
-    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-    border: active ? 'none' : `1px solid ${BORDER}`,
-    background: active ? `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})` : '#fff',
-    color: active ? '#fff' : TEXT_MUTED,
-  })
+  const selectedPackage = PACKAGES.find(p => p.tier === selectedTier) || PACKAGES[1]
 
   return (
-    <div style={{ minHeight: "100vh", background: PAGE_BG, fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`}</style>
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Upgrade Plan</div>
+      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>Choose a package and pay to publish your invitation.</div>
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, flexShrink: 0,
-            }}>
-              {couple.bride?.[0]}{couple.groom?.[0]}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {couple.bride} &amp; {couple.groom}
-              </div>
-              <div style={{ fontSize: 10, color: TEXT_MUTED }}>Wedding Dashboard</div>
-            </div>
+      <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', marginBottom: 4 }}>CURRENT PLAN</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>{isPaid ? 'Live Plan' : 'Free Plan'}</div>
+          <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 4 }}>
+            {isPaid ? 'Your invitation is live and shareable.' : couple.payment_slip_status === 'pending' && couple.payment_slip_url ? 'Bank slip uploaded — waiting for verification.' : 'Choose a package below to publish and share your invitation.'}
           </div>
+        </div>
+        {isPaid && (
+          <div style={{ padding: '6px 14px', borderRadius: 100, background: '#dcfce7', color: '#16a34a', fontSize: 12, fontWeight: 700 }}>✓ Active</div>
+        )}
+      </div>
 
-          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
-            {TABS.filter(tab =>
-              (tab.key !== 'share' || (
-                (couple as any).enable_guest_links !== false &&
-                (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
-              )) &&
-              (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true) &&
-              (tab.key !== 'budget' || (couple as any).enable_budget_tracker === true)
-            ).map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
-                border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
-                background: activeTab === tab.key ? '#fff' : 'transparent',
-                color: activeTab === tab.key ? ACCENT : TEXT_MUTED,
-                boxShadow: activeTab === tab.key ? '0 2px 8px rgba(15,23,42,0.08)' : 'none',
-                transition: 'all 0.15s',
+      {!isPaid && (
+        <>
+          {/* Package selection */}
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>1. Choose your package</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, marginBottom: 24 }}>
+            {PACKAGES.map(p => (
+              <div key={p.tier} onClick={() => setSelectedTier(p.tier)} style={{
+                ...cardStyle, cursor: 'pointer', padding: 18,
+                border: selectedTier === p.tier ? `2px solid ${PINK}` : '1px solid #f3e6ea',
+                boxShadow: selectedTier === p.tier ? `0 6px 20px ${PINK}25` : cardStyle.boxShadow,
               }}>
-                <Icon name={tab.icon} size={14} />
-                <span className="dash-tab-label">{tab.label}</span>
-              </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>{p.name}</div>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', border: `2px solid ${selectedTier === p.tier ? PINK : '#e2e8f0'}`,
+                    background: selectedTier === p.tier ? PINK : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    {selectedTier === p.tier && <Icon name="check" size={11} color="#fff" />}
+                  </div>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>LKR {p.price.toLocaleString()}</div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {p.features.map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 11.5, color: '#64748b' }}>
+                      <Icon name="check" size={11} color={PINK} /> {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      </div>
 
-      <style>{`
-        @media (max-width: 520px) {
-          .dash-tab-label { display: none; }
-        }
-        .dash-overview-grid { grid-template-columns: 1fr; }
-        @media (min-width: 600px) {
-          .dash-overview-grid { grid-template-columns: minmax(160px, auto) 1fr; }
-        }
-      `}</style>
+          {/* Payment method selection */}
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>2. Choose how to pay</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, marginBottom: 20 }}>
+            <button onClick={() => setPayMethod(payMethod === 'payhere' ? '' : 'payhere')} style={{
+              ...cardStyle, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
+              border: payMethod === 'payhere' ? `2px solid ${PINK}` : '1px solid #f3e6ea',
+            }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="card" size={18} color="#4f46e5" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>Pay Online (PayHere)</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>Card, bank app · instant activation</div>
+              </div>
+            </button>
+            <button onClick={() => setPayMethod(payMethod === 'bank' ? '' : 'bank')} style={{
+              ...cardStyle, cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
+              border: payMethod === 'bank' ? `2px solid ${PINK}` : '1px solid #f3e6ea',
+            }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="bank" size={18} color="#16a34a" />
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>Bank Transfer</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8' }}>Upload your slip · manually verified</div>
+              </div>
+            </button>
+          </div>
 
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 20px 60px" }}>
+          {payMethod === 'payhere' && (
+            <div style={{ ...cardStyle, marginBottom: 20 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Pay with PayHere</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 16 }}>
+                You'll pay LKR {selectedPackage.price.toLocaleString()} for the {selectedPackage.name} package. You'll be redirected to PayHere's secure checkout.
+              </div>
+              {payHereError && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 12 }}>{payHereError}</div>}
+              <button onClick={payWithPayHere} disabled={payingWithPayHere} style={{
+                padding: '12px 26px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                background: `linear-gradient(135deg,${PINK},${RED})`, color: '#fff', fontWeight: 700, fontSize: 13.5,
+                opacity: payingWithPayHere ? 0.6 : 1,
+              }}>
+                {payingWithPayHere ? 'Redirecting to PayHere...' : `Pay LKR ${selectedPackage.price.toLocaleString()} Now`}
+              </button>
+            </div>
+          )}
 
-        <AnimatePresence mode="wait">
-          {activeTab === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              {(couple as any).user_id && (couple as any).payment_slip_status !== 'verified' && (
-                <div style={{
-                  background: (couple as any).payment_slip_status === 'rejected' ? '#fef2f2' : '#fffbeb',
-                  border: `1px solid ${(couple as any).payment_slip_status === 'rejected' ? '#fecaca' : '#fde68a'}`,
-                  borderRadius: 14, padding: '14px 16px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <Icon name="lock" size={16} color={(couple as any).payment_slip_status === 'rejected' ? '#dc2626' : '#b45309'} />
-                  <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: (couple as any).payment_slip_status === 'rejected' ? '#dc2626' : '#b45309' }}>
-                      {(couple as any).payment_slip_status === 'rejected' ? 'Payment slip rejected' : 'Payment pending verification'}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: (couple as any).payment_slip_status === 'rejected' ? '#991b1b' : '#92400e', marginTop: 2 }}>
-                      {(couple as any).payment_slip_status === 'rejected'
-                        ? 'Please contact us to resolve this — your invitation link will unlock once payment is confirmed.'
-                        : "You can preview and customise your invitation now. Sharing the guest link unlocks once we've verified your payment slip."}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="dash-overview-grid" style={{ display: 'grid', gap: 16, alignItems: 'stretch', marginBottom: 20 }}>
-                <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 2px 16px rgba(15,23,42,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <RsvpDonut accepted={accepted.length} declined={declined.length} accent={ACCENT} accentLight={ACCENT_LIGHT} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="check" size={14} color="#16a34a" />
-                      </div>
-                      <span style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Accepted</span>
-                    </div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: TEXT_DARK }}>{accepted.length}</div>
-                  </div>
-                  <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="cross" size={14} color="#dc2626" />
-                      </div>
-                      <span style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Declined</span>
-                    </div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: TEXT_DARK }}>{declined.length}</div>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1', background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, borderRadius: 16, padding: 18, display: 'flex', alignItems: 'center', gap: 12, boxShadow: `0 4px 20px ${ACCENT}40` }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="users" size={18} color="#fff" />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>{totalGuests}</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>Total guests attending (incl. families)</div>
-                    </div>
-                  </div>
-                </div>
+          {payMethod === 'bank' && (
+            <div style={{ ...cardStyle, marginBottom: 20 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>Bank Transfer Details</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 16 }}>Transfer LKR {selectedPackage.price.toLocaleString()} to the account below, then upload your slip — we'll verify and activate your invitation within 24 hours.</div>
+              <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 18, display: 'grid', gap: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Bank</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.bank_name}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Account Name</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.account_name}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Account Number</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.account_number}</strong></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span style={{ color: '#94a3b8' }}>Branch</span><strong style={{ color: '#0f172a' }}>{BANK_DETAILS.branch}</strong></div>
               </div>
 
-              {isTwilightPicnic ? (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 12 }}>
-                    {([
-                      ['wine', 'Hard Liquor'], ['glass', 'Wine'], ['glass', 'Beer'], ['glass', 'Non-Alcoholic'],
-                    ] as const).map(([icon, label]) => (
-                      <div key={label} style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: `${ACCENT}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name={icon} size={15} color={ACCENT} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{drinkCounts[label]}</div>
-                          <div style={{ fontSize: 10, color: TEXT_MUTED }}>{label}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-                    <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="home" size={15} color="#6d28d9" /></div>
-                      <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{accommodationNeeded}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Accommodation Needed</div></div>
-                    </div>
-                    <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="car" size={15} color="#0369a1" /></div>
-                      <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{accommodationNotNeeded}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Not Needed</div></div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="wine" size={15} color="#b45309" /></div>
-                    <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{drinkingYes}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Drinking Alcohol</div></div>
-                  </div>
-                  <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="glass" size={15} color="#0369a1" /></div>
-                    <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{drinkingNo}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Non-Alcoholic</div></div>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ textAlign: 'center', marginTop: 24 }}>
-                <button onClick={loadData} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: ACCENT,
-                  background: "transparent", border: `1px solid ${BORDER}`, borderRadius: 100, padding: '8px 16px', cursor: "pointer", fontWeight: 600,
+              <label style={labelStyle}>Upload Payment Slip</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <button type="button" onClick={() => slipInputRef.current?.click()} disabled={slipUploading} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, border: '1px solid #e2e8f0',
+                  background: slipUploading ? '#f1f5f9' : '#fff', cursor: slipUploading ? 'default' : 'pointer', fontSize: 13, color: '#475569', fontWeight: 500,
                 }}>
-                  <Icon name="refresh" size={13} color={ACCENT} /> Refresh Data
+                  <Icon name="upload" size={14} /> {slipUploading ? 'Uploading...' : couple.payment_slip_url ? 'Change Slip' : 'Upload Slip'}
                 </button>
+                {(slipSaved || couple.payment_slip_url) && !slipUploading && (
+                  <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Icon name="check" size={13} color="#16a34a" /> Slip uploaded — pending verification
+                  </span>
+                )}
+                <input ref={slipInputRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadSlip(f) }} />
               </div>
-            </motion.div>
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>Accepted: photo or PDF of your transfer receipt.</div>
+            </div>
           )}
-
-          {activeTab === 'guests' && (
-            <motion.div key="guests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-                  <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <Icon name="search" size={16} color="#94a3b8" />
-                  </div>
-                  <input
-                    value={search} onChange={e => setSearch(e.target.value)}
-                    placeholder="Search guest by name..."
-                    style={{
-                      width: "100%", padding: "12px 18px 12px 42px", borderRadius: 12, boxSizing: 'border-box',
-                      border: `1px solid ${BORDER}`, background: "#fff", color: TEXT_DARK,
-                      fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif",
-                    }}
-                  />
-                </div>
-                <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} style={{
-                  padding: '0 14px', borderRadius: 12, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK,
-                  fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", cursor: 'pointer',
-                }}>
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="name-az">Name A–Z</option>
-                  <option value="name-za">Name Z–A</option>
-                  <option value="guests">Most guests</option>
-                </select>
-                <button type="button" onClick={() => setShowAddGuest(!showAddGuest)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 18px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                  background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
-                }}>
-                  <Icon name="plus" size={13} color="#fff" /> Add Guest
-                </button>
-              </div>
-
-              {showAddGuest && (
-                <div style={{ background: '#fff', borderRadius: 14, padding: 18, marginBottom: 16, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 12 }}>Add Guest Manually</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <input value={addGuestForm.name} onChange={e => setAddGuestForm({ ...addGuestForm, name: e.target.value })} placeholder="Guest name"
-                      style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
-                    <select value={addGuestForm.response} onChange={e => setAddGuestForm({ ...addGuestForm, response: e.target.value as 'yes' | 'no' })}
-                      style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
-                      <option value="yes">Attending</option>
-                      <option value="no">Not Attending</option>
-                    </select>
-                  </div>
-                  {addGuestForm.response === 'yes' && (
-                    <div style={{ display: 'grid', gridTemplateColumns: !isTwilightPicnic ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 14 }}>
-                      <input type="number" min={1} value={addGuestForm.guest_count} onChange={e => setAddGuestForm({ ...addGuestForm, guest_count: e.target.value })} placeholder="Guest count"
-                        style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
-                      {!isTwilightPicnic && (
-                        <select value={addGuestForm.drinking} onChange={e => setAddGuestForm({ ...addGuestForm, drinking: e.target.value as any })}
-                          style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
-                          <option value="">Drinks — no preference</option>
-                          <option value="yes">Drinks alcohol</option>
-                          <option value="no">Non-alcoholic</option>
-                        </select>
-                      )}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" onClick={addGuestManually} disabled={addingGuest || !addGuestForm.name.trim()} style={{
-                      padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                      background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 13, opacity: (addingGuest || !addGuestForm.name.trim()) ? 0.6 : 1,
-                    }}>{addingGuest ? 'Saving...' : 'Save Guest'}</button>
-                    <button type="button" onClick={() => setShowAddGuest(false)} style={{
-                      padding: '10px 20px', borderRadius: 10, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 13,
-                    }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Status:</span>
-                <div onClick={() => setFilterResponse('all')} style={pillStyle(filterResponse === 'all')}>All</div>
-                <div onClick={() => setFilterResponse('yes')} style={pillStyle(filterResponse === 'yes')}>Attending</div>
-                <div onClick={() => setFilterResponse('no')} style={pillStyle(filterResponse === 'no')}>Not Attending</div>
-              </div>
-              {!isTwilightPicnic && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                  <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Drinks:</span>
-                  <div onClick={() => setFilterDrinking('all')} style={pillStyle(filterDrinking === 'all')}>All</div>
-                  <div onClick={() => setFilterDrinking('yes')} style={pillStyle(filterDrinking === 'yes')}>Yes</div>
-                  <div onClick={() => setFilterDrinking('no')} style={pillStyle(filterDrinking === 'no')}>No</div>
-                </div>
-              )}
-
-              {filteredRsvps.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>
-                  {rsvps.length === 0 ? "No RSVP responses yet. Share your invitation link with guests!" : "No guests match your filters."}
-                </div>
-              ) : (
-                <div style={{ display: "grid", gap: 10 }}>
-                  {filteredRsvps.map((r, i) => {
-                    const seatTable = r.response === 'yes' ? findSeatForGuest(r.guest_name, couple.seats) : null
-                    const isEditing = editingRsvpId === r.id
-                    return (
-                      <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}
-                        style={{
-                          background: "#fff", borderRadius: 14, padding: "14px 18px",
-                          boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
-                        }}>
-                        {isEditing ? (
-                          <div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
-                              <input value={editForm.guest_name} onChange={e => setEditForm({ ...editForm, guest_name: e.target.value })}
-                                style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
-                              <select value={editForm.response} onChange={e => setEditForm({ ...editForm, response: e.target.value as 'yes' | 'no' })}
-                                style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
-                                <option value="yes">Attending</option>
-                                <option value="no">Not Attending</option>
-                              </select>
-                            </div>
-                            {editForm.response === 'yes' && (
-                              <div style={{ display: 'grid', gridTemplateColumns: !isTwilightPicnic ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 12 }}>
-                                <input type="number" min={1} value={editForm.guest_count} onChange={e => setEditForm({ ...editForm, guest_count: e.target.value })} placeholder="Guest count"
-                                  style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
-                                {!isTwilightPicnic && (
-                                  <select value={editForm.drinking} onChange={e => setEditForm({ ...editForm, drinking: e.target.value as any })}
-                                    style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
-                                    <option value="">No preference</option>
-                                    <option value="yes">Drinks alcohol</option>
-                                    <option value="no">Non-alcoholic</option>
-                                  </select>
-                                )}
-                              </div>
-                            )}
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <button type="button" onClick={() => saveEditRsvp(r.id)} disabled={savingEdit} style={{
-                                padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer', background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 12.5, opacity: savingEdit ? 0.6 : 1,
-                              }}>{savingEdit ? 'Saving...' : 'Save'}</button>
-                              <button type="button" onClick={() => setEditingRsvpId(null)} style={{
-                                padding: '8px 18px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12.5,
-                              }}>Cancel</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                            <div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{r.guest_name}</div>
-                                {r.response === 'yes' && r.guest_count > 1 && (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
-                                    <Icon name="users" size={11} color="#7c3aed" /> {r.guest_count}
-                                  </div>
-                                )}
-                                {seatTable && (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#eef2ff", color: "#4f46e5" }}>
-                                    <Icon name="chair" size={11} color="#4f46e5" /> {seatTable}
-                                  </div>
-                                )}
-                              </div>
-                              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
-                                {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
-                                {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                              </div>
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                {isTwilightPicnic ? (
-                                  <>
-                                    {r.response === 'yes' && r.drinking && (
-                                      <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
-                                        {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
-                                      </div>
-                                    )}
-                                    {r.response === 'yes' && r.accommodation && (
-                                      <div style={{
-                                        padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                                        background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
-                                        color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
-                                      }}>
-                                        {r.accommodation === 'needed' ? 'Needs Stay' : 'Sorted'}
-                                      </div>
-                                    )}
-                                  </>
-                                ) : (
-                                  r.response === 'yes' && r.drinking && (
-                                    <div style={{
-                                      padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
-                                      background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
-                                      color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
-                                    }}>
-                                      {r.drinking === 'yes' ? 'Drinks' : 'No Drinks'}
-                                    </div>
-                                  )
-                                )}
-                                <div style={{
-                                  display: 'flex', alignItems: 'center', gap: 4,
-                                  padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
-                                  background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
-                                  color: r.response === 'yes' ? '#16a34a' : '#dc2626',
-                                }}>
-                                  <Icon name={r.response === 'yes' ? 'check' : 'cross'} size={11} color={r.response === 'yes' ? '#16a34a' : '#dc2626'} />
-                                  {r.response === 'yes' ? 'Attending' : 'Not Attending'}
-                                </div>
-                              </div>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <button type="button" onClick={() => startEditRsvp(r)} style={{
-                                  display: 'flex', alignItems: 'center', gap: 4,
-                                  padding: '4px 12px', borderRadius: 100, border: '1px solid #c7d2fe', cursor: 'pointer',
-                                  background: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 500,
-                                }}>
-                                  <Icon name="edit" size={11} color="#4f46e5" /> Edit
-                                </button>
-                                <button type="button" onClick={() => handleDeleteRsvp(r.id, r.guest_name)} disabled={deletingRsvpId === r.id} style={{
-                                  display: 'flex', alignItems: 'center', gap: 4,
-                                  padding: '4px 12px', borderRadius: 100, border: '1px solid #fecaca', cursor: 'pointer',
-                                  background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500,
-                                  opacity: deletingRsvpId === r.id ? 0.6 : 1,
-                                }}>
-                                  <Icon name="trash" size={11} color="#dc2626" />
-                                  {deletingRsvpId === r.id ? 'Removing...' : 'Remove'}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'budget' && (couple as any).enable_budget_tracker === true && (
-            <motion.div key="budget" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <BudgetManager coupleId={couple.id} accent={ACCENT} />
-            </motion.div>
-          )}
-
-          {activeTab === 'wishes' && (couple as any).enable_guest_wishes === true && (
-            <motion.div key="wishes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <WishesManager coupleId={couple.id} accent={ACCENT} />
-            </motion.div>
-          )}
-
-          {activeTab === 'edit' && (
-            <motion.div key="edit" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <EditPanel couple={couple} onSaved={loadData} />
-            </motion.div>
-          )}
-
-          {activeTab === 'share' && (couple as any).enable_guest_links !== false && (
-            <motion.div key="share" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              <GuestLinkGenerator couple={couple} accent={ACCENT} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div style={{ textAlign: "center", marginTop: 40, fontSize: 11, color: TEXT_MUTED }}>
-          Auto-refreshes every 30 seconds · InviteGlow Dashboard
-        </div>
-      </div>
+        </>
+      )}
     </div>
   )
 }
