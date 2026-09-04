@@ -56,7 +56,11 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 
       <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
         style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}44` }}>
-        <span style={{ fontSize: 30 }}>🌅</span>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="15" r="4" />
+          <path d="M12 3v2M4.2 9.2l1.4 1.4M19.8 9.2l-1.4 1.4M3 15h2M19 15h2" />
+          <path d="M4 20h16" />
+        </svg>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
@@ -616,6 +620,10 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
   const guestName = searchParams?.get('name') || ''
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
+  // Cover only renders once the intro screen has fully finished exiting
+  // (not just started), so there's never a moment where the intro's
+  // "Dear [Name]" text and the cover's content overlap.
+  const [introGone, setIntroGone] = useState(!(guestName && introEnabled))
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -687,7 +695,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
         input::placeholder { color: #d4a888; }
       `}</style>
 
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => setIntroGone(true)}>
         {showIntro && guestName && (
           <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
         )}
@@ -696,7 +704,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
 
         <AnimatePresence>
-          {!opened && (
+          {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
