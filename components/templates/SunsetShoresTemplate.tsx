@@ -650,7 +650,10 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
     ? eventKeyOrder.map((key): RenderableEvent => {
         const e = couple.events![key]
         const customLabel = (e as any)?.label
-        return { key, ...EVENT_META[key], label: (customLabel && customLabel.trim()) || EVENT_META[key].label, enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
+        // No fallback to a default title — if the admin leaves this blank
+        // (or clears it), the title line simply doesn't render for that
+        // event, so they can hide it entirely if they'd rather not show one.
+        return { key, ...EVENT_META[key], label: (customLabel || '').trim(), enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
       }).filter(e => e.enabled && e.date.length > 0)
     : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
 
@@ -778,7 +781,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               return (
                 <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
-                  <div style={sectionTitle(DARK)}>{ev.label}</div>
+                  {ev.label && <div style={sectionTitle(DARK)}>{ev.label}</div>}
                   {[
                     { icon: "📅", label: "Date", val: evDateDisplay, tsKey: '' },
                     { icon: "⏰", label: "Time", val: evTimeDisplay, tsKey: '' },
