@@ -1042,11 +1042,15 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string }) {
   const [guestName, setGuestName] = useState("")
   const [copied, setCopied] = useState(false)
-  const [waMessage, setWaMessage] = useState((couple as any).whatsapp_invite_message || "You're invited!")
+  const [waMessage, setWaMessage] = useState((couple as any).whatsapp_invite_message || `Hi {name}! 💌\n\nWe're getting married and would be so happy to have you celebrate with us! Please tap below to view your invitation and let us know if you can make it.\n\nWith love,\n${couple.bride} & ${couple.groom}`)
   const [editingMsg, setEditingMsg] = useState(false)
 
   const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
   const generatedLink = guestName.trim() ? `${baseUrl}?name=${encodeURIComponent(guestName.trim())}` : baseUrl
+  // Swaps {name} in the template for the guest currently typed above —
+  // if they haven't typed a name yet, leaves the placeholder visible so
+  // it's clear a name is expected here.
+  const personalizedMessage = waMessage.replace(/\{name\}/g, guestName.trim() || '{name}')
 
   const copyLink = async () => {
     if (!guestName.trim()) return
@@ -1057,7 +1061,7 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
 
   const shareWhatsApp = () => {
     if (!guestName.trim()) return
-    const msg = encodeURIComponent(`${waMessage}\n${generatedLink}`)
+    const msg = encodeURIComponent(`${personalizedMessage}\n${generatedLink}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 
@@ -1095,14 +1099,15 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
         </div>
         {editingMsg ? (
           <div>
+            <div style={{ fontSize: 10.5, color: "#16a34a", marginBottom: 6 }}>Tip: type <strong>{'{name}'}</strong> anywhere and it'll be swapped for the guest's name above.</div>
             <textarea value={waMessage} onChange={e => setWaMessage(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none", fontFamily: "'Inter',sans-serif", resize: "vertical" as const, minHeight: 60, boxSizing: 'border-box' }} />
+              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none", fontFamily: "'Inter',sans-serif", resize: "vertical" as const, minHeight: 90, boxSizing: 'border-box' }} />
             <button onClick={saveMessage} style={{ marginTop: 6, padding: "7px 16px", borderRadius: 8, background: accent, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
               Save Message
             </button>
           </div>
         ) : (
-          <div style={{ fontSize: 13, color: "#1e293b" }}>{waMessage}<br /><span style={{ color: "#64748b" }}>[link auto-added]</span></div>
+          <div style={{ fontSize: 13, color: "#1e293b", whiteSpace: "pre-wrap" }}>{personalizedMessage}<br /><span style={{ color: "#64748b" }}>[link auto-added]</span></div>
         )}
       </div>
 
