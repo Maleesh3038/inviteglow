@@ -498,7 +498,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
   const [introGone, setIntroGone] = useState(!(guestName && introEnabled))
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
   const ts = useTextStyles(couple)
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
@@ -529,20 +528,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
     if (coverVideoUrl) {
       setVideoPlaying(true)
-      const v = videoRef.current
-      const attemptPlay = (retriesLeft: number) => {
-        if (!v) return
-        v.play().catch(() => {
-          // Mobile networks often need a beat to buffer enough data
-          // before playback can actually start — retry a couple of
-          // times before giving up, instead of silently skipping the
-          // video straight to the main invitation.
-          if (retriesLeft > 0) setTimeout(() => attemptPlay(retriesLeft - 1), 400)
-          else { setVideoPlaying(false); handleVideoEnded() }
-        })
-      }
-      attemptPlay(3)
-      videoTimerRef.current = setTimeout(handleVideoEnded, 6000)
+      videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
     } else {
       handleVideoEnded()
     }
@@ -618,19 +604,19 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* If a video is set, its own poster frame (falling back to
-                  the couple photo, or the template default) is always
-                  visible before play — no separate photo layer needed, so
-                  nothing goes invisible if only a video was uploaded. */}
-              {coverVideoUrl ? (
-                <video ref={videoRef} muted playsInline preload="auto" poster={couple.couple_photo || DEFAULT_PHOTO} onEnded={handleVideoEnded}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
+              {/* Cover always shows the static photo — reliable on every
+                  device. The video (if any) only mounts fresh, with
+                  autoPlay, once "Open Invitation" is tapped — a fresh
+                  autoplay mount right after a user gesture is the most
+                  reliable way to get video playing on mobile browsers. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {videoPlaying && coverVideoUrl && (
+                <video autoPlay muted playsInline onEnded={handleVideoEnded}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2 }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3 }} />
 
