@@ -679,15 +679,23 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,${DARK}26 60%,${DARK}59 100%)` }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2.2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
-                    <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
+                  <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.8)", marginBottom: "0.9rem", fontWeight: 500 }}>{(couple as any).together_with_text || "Together with their families"}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
+                    <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT, fontStyle: "normal" }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                   </div>
-                  <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                    <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 2, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 700 }}>RSVP</a>
-                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.2)", backdropFilter: "blur(8px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 2, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
+                  <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
+                    <a href="#rsvp" style={{
+                      background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100,
+                      padding: "11px 26px", fontSize: 10.5, letterSpacing: "0.18em", textDecoration: "none", fontWeight: 600,
+                      boxShadow: `0 6px 18px ${DARK}40`,
+                    }}>RSVP</a>
+                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer" style={{
+                      background: "rgba(255,255,255,0.14)", backdropFilter: "blur(10px)", color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.35)", borderRadius: 100, padding: "11px 26px",
+                      fontSize: 10.5, letterSpacing: "0.18em", textDecoration: "none", fontWeight: 500,
+                    }}>Location</a>
                   </div>
                 </motion.div>
               </div>
