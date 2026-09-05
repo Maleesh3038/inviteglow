@@ -519,15 +519,18 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
 
-  // Matches the Eternal Bloom flow: tapping "Open Invitation" plays a
-  // short video preview (if one is set) before the main invitation reveals.
+  // Matches the Eternal Bloom flow: tapping "Open Invitation" reveals the
+  // video (which has been playing muted underneath the photo since page
+  // load, for mobile-autoplay reliability) before the main invitation opens.
   const [videoPlaying, setVideoPlaying] = useState(false)
+  const [videoRevealed, setVideoRevealed] = useState(false)
   const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleOpen = () => {
     audioRef.current?.play().catch(() => {})
     if (coverVideoUrl) {
       setVideoPlaying(true)
+      setVideoRevealed(true)
       videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
     } else {
       handleVideoEnded()
@@ -604,20 +607,25 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Cover always shows the static photo — reliable on every
-                  device. The video (if any) only mounts fresh, with
-                  autoPlay, once "Open Invitation" is tapped — a fresh
-                  autoplay mount right after a user gesture is the most
-                  reliable way to get video playing on mobile browsers. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
-                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              {videoPlaying && coverVideoUrl && (
-                <video autoPlay muted playsInline onEnded={handleVideoEnded}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2 }}>
+              {/* The video (if any) starts playing muted from page load —
+                  exactly like Eternal Bloom's proven-reliable mobile
+                  pattern — but stays completely hidden behind the opaque
+                  photo (z-index above it) until "Open Invitation" is
+                  tapped, at which point the photo fades away to reveal the
+                  video that's already been playing underneath. This keeps
+                  mobile autoplay reliable while still looking exactly like
+                  "photo, then click, then video" to the guest. */}
+              {coverVideoUrl && (
+                <video autoPlay muted loop playsInline preload="auto"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
               )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt="" style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
+                zIndex: 2, opacity: videoRevealed ? 0 : 1, transition: "opacity 0.7s ease",
+              }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3 }} />
 
               {/* Corner insignia flourishes */}
