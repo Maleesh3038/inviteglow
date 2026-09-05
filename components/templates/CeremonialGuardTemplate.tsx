@@ -650,10 +650,10 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 )}
 
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
-                  display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
-                  border: "none", borderRadius: 2, padding: "14px 32px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700,
-                  boxShadow: `0 12px 30px ${DARK}55`, opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
+                  display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
+                  border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
+                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
+                  boxShadow: `0 8px 20px ${DARK}40`, opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s, transform 0.2s",
                 }}>
                   {videoPlaying ? "Playing..." : "Open Invitation →"}
                 </button>
