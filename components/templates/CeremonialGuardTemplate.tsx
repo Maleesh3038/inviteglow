@@ -622,7 +622,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
         )}
       </AnimatePresence>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.08)", position: "relative" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", boxShadow: "0 0 80px rgba(0,0,0,0.08)", position: "relative" }}>
 
         {/* ══ COVER ══ */}
         <AnimatePresence>
