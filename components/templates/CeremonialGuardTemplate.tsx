@@ -606,17 +606,19 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* Static photo always shows first; the video (if any) only
-                  starts playing once "Open Invitation" is tapped. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
-                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              {coverVideoUrl && (
-                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
-                  onPlaying={e => { e.currentTarget.style.opacity = "1" }}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
+              {/* If a video is set, its own poster frame (falling back to
+                  the couple photo, or the template default) is always
+                  visible before play — no separate photo layer needed, so
+                  nothing goes invisible if only a video was uploaded. */}
+              {coverVideoUrl ? (
+                <video ref={videoRef} muted playsInline preload="auto" poster={W.couplePhoto || DEFAULT_PHOTO} onEnded={handleVideoEnded}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3 }} />
 
