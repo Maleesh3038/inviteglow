@@ -611,7 +611,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                   visible before play — no separate photo layer needed, so
                   nothing goes invisible if only a video was uploaded. */}
               {coverVideoUrl ? (
-                <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={couple.couple_photo || DEFAULT_PHOTO}
+                <video ref={videoRef} muted playsInline preload="auto" poster={couple.couple_photo || DEFAULT_PHOTO} onEnded={handleVideoEnded}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
