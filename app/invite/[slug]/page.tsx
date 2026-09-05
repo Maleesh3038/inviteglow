@@ -18,6 +18,7 @@ import EternalBloomTemplate from '@/components/templates/EternalBloomTemplate'
 import NobleSaluteTemplate from '@/components/templates/NobleSaluteTemplate'
 import CrimsonRoyaleTemplate from '@/components/templates/CrimsonRoyaleTemplate'
 import KanchiVivahaTemplate from '@/components/templates/KanchiVivahaTemplate'
+import CeremonialGuardTemplate from '@/components/templates/CeremonialGuardTemplate'
 export default function InvitePage() {
   const params = useParams()
   const slug = params.slug as string
@@ -86,6 +87,8 @@ export default function InvitePage() {
       return <CrimsonRoyaleTemplate couple={couple} />
     case 'kanchi-vivaha':
       return <KanchiVivahaTemplate couple={couple} />
+    case 'ceremonial-guard':
+      return <CeremonialGuardTemplate couple={couple} />
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
