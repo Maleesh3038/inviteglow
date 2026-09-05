@@ -612,7 +612,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               {coverVideoUrl && (
-                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
+                <video ref={videoRef} autoPlay muted playsInline preload="auto" onEnded={handleVideoEnded}
                   onPlaying={e => { e.currentTarget.style.opacity = "1" }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
