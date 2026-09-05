@@ -478,7 +478,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
 }
 
 // ── Card + section styles ──
-const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 4, padding: "1.8rem", boxShadow: "0 4px 24px rgba(58,46,77,0.08)", position: "relative", overflow: "hidden", borderTop: "2px solid" })
+const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.09), 0 2px 8px rgba(58,46,77,0.05)", position: "relative", overflow: "hidden" })
 const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: dark, textAlign: "center", marginBottom: "1.2rem" })
 
@@ -612,7 +612,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%", zIndex: 1 }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               {coverVideoUrl && (
-                <video ref={videoRef} autoPlay muted playsInline preload="auto" onEnded={handleVideoEnded}
+                <video ref={videoRef} muted playsInline preload="auto" onEnded={handleVideoEnded}
                   onPlaying={e => { e.currentTarget.style.opacity = "1" }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
@@ -628,9 +628,8 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{
-                  ...ts('subtitle'), display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.12)",
-                  backdropFilter: "blur(6px)", borderRadius: 2, padding: "7px 18px", fontSize: 10, letterSpacing: "0.3em",
-                  textTransform: "uppercase", color: "#fff", marginBottom: "1.3rem", border: "1px solid rgba(255,255,255,0.3)",
+                  ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 500,
+                  fontSize: 15, letterSpacing: "0.12em", color: "#fff", marginBottom: "1.1rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)",
                 }}>
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
@@ -693,7 +692,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Family / blessing card */}
             {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>🎖️ Our Families</div>
                 <div style={{ ...ts('message'), textAlign: "center", padding: "14px 12px", background: `${PRIMARY_LIGHT}22`, borderRadius: 4, fontSize: 13, color: DARK, lineHeight: 2 }}>
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
@@ -713,7 +712,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
-                <motion.div key={ev.key} style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <motion.div key={ev.key} style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div style={eyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={heading(DARK)}>{ev.label}</div>
                   {[
@@ -742,7 +741,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Countdown */}
             {sv.countdown && (
-              <motion.div id="savethedate" style={{ ...cardStyle(), textAlign: "center", borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="savethedate" style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={{ ...eyebrow(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
@@ -753,7 +752,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
-              <motion.div style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>Our Celebration</div>
                 <div style={heading(DARK)}>Order of the Day</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -771,7 +770,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Gift */}
             {giftEnabled && hasGiftDetails && (
-              <motion.div style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>With Gratitude</div>
                 <div style={heading(DARK)}>Send a Gift</div>
                 <div style={{ fontSize: 12, color: MUTED, textAlign: "center", marginBottom: 18 }}>With all due respect, you may share your gifts through the following accounts.</div>
@@ -784,7 +783,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div id="gallery" style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>Our Story</div>
                 <div style={heading(DARK)}>Moments of Love</div>
                 <div style={{ columnCount: 2, columnGap: 8 }}>
@@ -801,7 +800,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div id="wishes" style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="wishes" style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>With Love</div>
                 <div style={heading(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: "center", marginBottom: 16, marginTop: -8 }}>Share your wishes and blessings with {W.bride} &amp; {W.groom}.</div>
@@ -811,7 +810,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Seat finder */}
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <motion.div style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>Be Our Guest</div>
                 <div style={heading(DARK)}>Find Your Table</div>
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
@@ -820,7 +819,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Music */}
             {sv.music && (
-              <motion.div style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>Our Song</div>
                 {youtubeId ? (
                   <div style={{ borderRadius: 12, overflow: "hidden", aspectRatio: "16/9" }}>
@@ -834,7 +833,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Wedding Note */}
             {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
-              <motion.div style={{ ...cardStyle(), textAlign: "center", borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>💌 A Note For You</div>
                 {guestName && <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, marginBottom: 8, fontWeight: 700 }}>Dear {guestName}</div>}
                 <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 340, margin: "0 auto 16px" }}>
@@ -846,7 +845,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Contact Numbers */}
             {contactList.length > 0 && (
-              <motion.div id="contact" style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="contact" style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>Get In Touch</div>
                 <div style={heading(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
@@ -857,7 +856,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
 
             {/* Thank you */}
             {sv.thank_you && (
-              <motion.div style={{ ...cardStyle(), borderTopColor: PRIMARY }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>A Special Note</div>
                 <div style={heading(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
