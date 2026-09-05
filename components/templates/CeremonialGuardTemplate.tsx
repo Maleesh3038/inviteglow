@@ -529,8 +529,20 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
     if (coverVideoUrl) {
       setVideoPlaying(true)
-      videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
-      videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
+      const v = videoRef.current
+      const attemptPlay = (retriesLeft: number) => {
+        if (!v) return
+        v.play().catch(() => {
+          // Mobile networks often need a beat to buffer enough data
+          // before playback can actually start — retry a couple of
+          // times before giving up, instead of silently skipping the
+          // video straight to the main invitation.
+          if (retriesLeft > 0) setTimeout(() => attemptPlay(retriesLeft - 1), 400)
+          else { setVideoPlaying(false); handleVideoEnded() }
+        })
+      }
+      attemptPlay(3)
+      videoTimerRef.current = setTimeout(handleVideoEnded, 6000)
     } else {
       handleVideoEnded()
     }
