@@ -478,7 +478,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
 }
 
 // ── Card + section styles ──
-const cardStyle = (): React.CSSProperties => ({ background: "linear-gradient(165deg, #ffffff 0%, #F6F2FC 100%)", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.09), 0 2px 8px rgba(58,46,77,0.05)", position: "relative", overflow: "hidden" })
+const cardStyle = (): React.CSSProperties => ({ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.1), 0 2px 8px rgba(58,46,77,0.06)", position: "relative", overflow: "hidden" })
 const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: dark, textAlign: "center", marginBottom: "1.2rem" })
 
@@ -585,16 +585,29 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
         ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
       ]
 
+  const invitationBgPhoto = (couple as any).invitation_background_image || ''
+
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM, position: "relative" }}>
-      {/* Subtle lavender floral pattern — fixed in place (doesn't scroll
-          with the page), sitting behind all content. Only shows through
-          in the gaps between cards, giving gentle ambient depth. */}
+      {/* Background — either the couple's own uploaded photo, or a subtle
+          lavender floral pattern by default. Fixed in place (doesn't
+          scroll with the page) so it sits calmly behind all content. */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%238B7BB8' stroke-width='1.2' opacity='0.16'%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M0-10C-6-10-10-6-10 0S-6 10 0 10 10 6 10 0-6-10 0-10Z' /%3E%3Ccircle r='2.4' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(105,80)'%3E%3Cpath d='M0-8C-5-8-8-5-8 0S-5 8 0 8 8 5 8 0-5-8 0-8Z' /%3E%3Ccircle r='2' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(60,115)'%3E%3Cpath d='M0-6C-4-6-6-4-6 0S-4 6 0 6 6 4 6 0-4-6 0-6Z' /%3E%3Ccircle r='1.6' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        backgroundRepeat: "repeat", backgroundSize: "140px 140px", backgroundAttachment: "fixed",
+        backgroundImage: invitationBgPhoto
+          ? `url("${invitationBgPhoto}")`
+          : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%238B7BB8' stroke-width='1.2' opacity='0.16'%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M0-10C-6-10-10-6-10 0S-6 10 0 10 10 6 10 0-6-10 0-10Z' /%3E%3Ccircle r='2.4' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(105,80)'%3E%3Cpath d='M0-8C-5-8-8-5-8 0S-5 8 0 8 8 5 8 0-5-8 0-8Z' /%3E%3Ccircle r='2' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(60,115)'%3E%3Cpath d='M0-6C-4-6-6-4-6 0S-4 6 0 6 6 4 6 0-4-6 0-6Z' /%3E%3Ccircle r='1.6' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        backgroundRepeat: invitationBgPhoto ? "no-repeat" : "repeat",
+        backgroundSize: invitationBgPhoto ? "cover" : "140px 140px",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }} />
+      {/* Soft tint over a custom photo so the glass cards on top stay
+          readable — the default floral pattern is already subtle enough
+          to skip this. */}
+      {invitationBgPhoto && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", background: `${CREAM}cc` }} />
+      )}
 
       <div style={{ position: "relative", zIndex: 1 }}>
       <style>{`
