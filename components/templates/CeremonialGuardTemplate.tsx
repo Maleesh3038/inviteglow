@@ -16,7 +16,7 @@ const DEFAULT_PALETTE = {
   primary: "#8B7BB8",
   primaryLight: "#D4C9E8",
   dark: "#3A2E4D",
-  cream: "#FDFCFF",
+  cream: "#F3EFFA",
   muted: "#9A8FB0",
 }
 
@@ -478,7 +478,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
 }
 
 // ── Card + section styles ──
-const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.09), 0 2px 8px rgba(58,46,77,0.05)", position: "relative", overflow: "hidden" })
+const cardStyle = (): React.CSSProperties => ({ background: "linear-gradient(165deg, #ffffff 0%, #F6F2FC 100%)", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.09), 0 2px 8px rgba(58,46,77,0.05)", position: "relative", overflow: "hidden" })
 const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: dark, textAlign: "center", marginBottom: "1.2rem" })
 
