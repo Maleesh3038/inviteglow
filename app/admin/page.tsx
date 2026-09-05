@@ -1571,6 +1571,8 @@ export default function AdminPage() {
       enable_guest_links: (c as any).enable_guest_links ?? true,
       enable_guest_wishes: (c as any).enable_guest_wishes ?? false,
       show_wedding_note: (c as any).show_wedding_note ?? true,
+      dress_code_gents: (c as any).dress_code_gents ?? '',
+      dress_code_ladies: (c as any).dress_code_ladies ?? '',
       wedding_note_text: (c as any).wedding_note_text ?? '',
       wedding_note_background_image: (c as any).wedding_note_background_image ?? '',
       cover_video_url: (c as any).cover_video_url ?? '',
@@ -1649,6 +1651,8 @@ export default function AdminPage() {
       enable_guest_links: form.enable_guest_links,
       enable_guest_wishes: form.enable_guest_wishes,
       show_wedding_note: (form as any).show_wedding_note,
+      dress_code_gents: (form as any).dress_code_gents || null,
+      dress_code_ladies: (form as any).dress_code_ladies || null,
       wedding_note_text: (form as any).wedding_note_text || null,
       wedding_note_background_image: (form as any).wedding_note_background_image || null,
       cover_video_url: (form as any).cover_video_url || null,
@@ -2486,6 +2490,29 @@ export default function AdminPage() {
                       />
                     </div>
                   )}
+                </div>
+
+                <div style={{ background: '#f5f3ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #ddd6fe' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#5b21b6', marginBottom: 4 }}>
+                    <Icon name="link" size={15} color="#5b21b6" /> Dress Code Section
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6d28d9', marginBottom: 14 }}>
+                    Separate Gents/Ladies attire guidance, shown as its own section. Leave both empty to hide this section entirely.
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>Gents</label>
+                    <textarea style={{ ...inputStyle, minHeight: 50, resize: 'vertical', marginBottom: 0 }}
+                      placeholder='e.g. "A blazer would suit you."'
+                      value={(form as any).dress_code_gents || ''}
+                      onChange={e => setForm({ ...form, dress_code_gents: e.target.value } as any)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Ladies</label>
+                    <textarea style={{ ...inputStyle, minHeight: 50, resize: 'vertical', marginBottom: 0 }}
+                      placeholder='e.g. "You know what looks good on you."'
+                      value={(form as any).dress_code_ladies || ''}
+                      onChange={e => setForm({ ...form, dress_code_ladies: e.target.value } as any)} />
+                  </div>
                 </div>
 
                 <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #e8d9a0' }}>
