@@ -19,6 +19,7 @@ const TEMPLATES = [
   { id: 'noble-salute', name: 'Noble Salute', tag: 'Military Honor', photo: '', demoSlug: '', color: '#3f5233' },
   { id: 'crimson-royale', name: 'Crimson Royale', tag: 'Regal & Bold', photo: '', demoSlug: '', color: '#8b1a2b' },
   { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', tag: 'Tamil Wedding', photo: '', demoSlug: '', color: '#9b2c2c' },
+  { id: 'ceremonial-guard', name: 'Ceremonial Guard', tag: 'Lavender Ceremony', photo: '', demoSlug: '', color: '#8B7BB8' },
 ]
 
 const BUCKET = 'wedding-photos'
