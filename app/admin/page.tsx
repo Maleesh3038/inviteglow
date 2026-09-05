@@ -84,6 +84,7 @@ const emptyForm = {
   show_wedding_note: true,
   dress_code_gents: '',
   dress_code_ladies: '',
+  invitation_background_image: '',
   wedding_note_text: '',
   wedding_note_background_image: '',
   cover_video_url: '',
@@ -1575,6 +1576,7 @@ export default function AdminPage() {
       show_wedding_note: (c as any).show_wedding_note ?? true,
       dress_code_gents: (c as any).dress_code_gents ?? '',
       dress_code_ladies: (c as any).dress_code_ladies ?? '',
+      invitation_background_image: (c as any).invitation_background_image ?? '',
       wedding_note_text: (c as any).wedding_note_text ?? '',
       wedding_note_background_image: (c as any).wedding_note_background_image ?? '',
       cover_video_url: (c as any).cover_video_url ?? '',
@@ -1655,6 +1657,7 @@ export default function AdminPage() {
       show_wedding_note: (form as any).show_wedding_note,
       dress_code_gents: (form as any).dress_code_gents || null,
       dress_code_ladies: (form as any).dress_code_ladies || null,
+      invitation_background_image: (form as any).invitation_background_image || null,
       wedding_note_text: (form as any).wedding_note_text || null,
       wedding_note_background_image: (form as any).wedding_note_background_image || null,
       cover_video_url: (form as any).cover_video_url || null,
@@ -2515,6 +2518,21 @@ export default function AdminPage() {
                       value={(form as any).dress_code_ladies || ''}
                       onChange={e => setForm({ ...form, dress_code_ladies: e.target.value } as any)} />
                   </div>
+                </div>
+
+                <div style={{ background: '#f5f3ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #ddd6fe' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#5b21b6', marginBottom: 4 }}>
+                    <Icon name="template" size={15} color="#5b21b6" /> Invitation Background Photo
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6d28d9', marginBottom: 14 }}>
+                    Used by "Ceremonial Guard" as a fixed background behind every section, showing through the semi-transparent cards. Leave empty to use its default subtle pattern instead.
+                  </div>
+                  <PhotoUploader
+                    value={(form as any).invitation_background_image || ''}
+                    onChange={url => setForm({ ...form, invitation_background_image: url } as any)}
+                    label="Background Photo"
+                    hint="A soft, low-contrast photo works best — text sits on top of it."
+                  />
                 </div>
 
                 <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #e8d9a0' }}>
