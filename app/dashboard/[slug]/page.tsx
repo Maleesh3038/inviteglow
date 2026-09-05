@@ -26,6 +26,7 @@ const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
   'noble-salute': { primary: '#3f5233', primaryLight: '#9aa87f', dark: '#1a2116', cream: '#faf8f2' },
   'crimson-royale': { primary: '#8b1a2b', primaryLight: '#c96b78', dark: '#1a1214', cream: '#faf5f0' },
   'kanchi-vivaha': { primary: '#9b2c2c', primaryLight: '#d98a5f', dark: '#221512', cream: '#f7ecd9' },
+  'ceremonial-guard': { primary: '#8B7BB8', primaryLight: '#D4C9E8', dark: '#3A2E4D', cream: '#FDFCFF' },
 }
 
 // Human-readable labels for the "Change Template" picker in the couple's
@@ -47,6 +48,7 @@ const TEMPLATE_NAMES: Record<string, string> = {
   'noble-salute': 'Noble Salute',
   'crimson-royale': 'Crimson Royale',
   'kanchi-vivaha': 'Kanchi Vivaha',
+  'ceremonial-guard': 'Ceremonial Guard',
 }
 
 // ── Fonts available for per-element text styling. ──
