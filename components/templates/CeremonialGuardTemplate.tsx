@@ -586,9 +586,19 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
       ]
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM, position: "relative" }}>
+      {/* Subtle lavender floral pattern — fixed in place (doesn't scroll
+          with the page), sitting behind all content. Only shows through
+          in the gaps between cards, giving gentle ambient depth. */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%238B7BB8' stroke-width='1.2' opacity='0.16'%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M0-10C-6-10-10-6-10 0S-6 10 0 10 10 6 10 0-6-10 0-10Z' /%3E%3Ccircle r='2.4' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(105,80)'%3E%3Cpath d='M0-8C-5-8-8-5-8 0S-5 8 0 8 8 5 8 0-5-8 0-8Z' /%3E%3Ccircle r='2' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(60,115)'%3E%3Cpath d='M0-6C-4-6-6-4-6 0S-4 6 0 6 6 4 6 0-4-6 0-6Z' /%3E%3Ccircle r='1.6' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat", backgroundSize: "140px 140px", backgroundAttachment: "fixed",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@300;400;500;600;700&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #b7a9d1; }
       `}</style>
@@ -926,6 +936,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
           audioRef={audioRef}
         />
       )}
+      </div>
     </div>
   )
 }
