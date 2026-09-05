@@ -18,6 +18,7 @@ const TEMPLATE_OPTIONS = [
   { id: 'traditional-ceylon', name: 'Traditional Ceylon' }, { id: 'sacred-poruwa', name: 'Sacred Poruwa' },
   { id: 'blush-blossom', name: 'Blush Blossom' }, { id: 'ceylon-elegance', name: 'Ceylon Elegance' },
   { id: 'eternal-bloom', name: 'Eternal Bloom' }, { id: 'noble-salute', name: 'Noble Salute' }, { id: 'crimson-royale', name: 'Crimson Royale' }, { id: 'kanchi-vivaha', name: 'Kanchi Vivaha' },
+  { id: 'ceremonial-guard', name: 'Ceremonial Guard' },
 ]
 const templateName = (id: string) => TEMPLATE_OPTIONS.find(t => t.id === id)?.name || (id || '').replace(/-/g, ' ')
 
