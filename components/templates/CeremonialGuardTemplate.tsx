@@ -478,7 +478,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
 }
 
 // ── Card + section styles ──
-const cardStyle = (): React.CSSProperties => ({ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.1), 0 2px 8px rgba(58,46,77,0.06)", position: "relative", overflow: "hidden" })
+const cardStyle = (): React.CSSProperties => ({ background: "rgba(255,255,255,0.3)", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.1), 0 2px 8px rgba(58,46,77,0.06)", border: "1px solid rgba(255,255,255,0.5)", position: "relative", overflow: "hidden" })
 const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: dark, textAlign: "center", marginBottom: "1.2rem" })
 
@@ -596,7 +596,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
         backgroundImage: invitationBgPhoto
           ? `url("${invitationBgPhoto}")`
-          : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%238B7BB8' stroke-width='1.2' opacity='0.16'%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M0-10C-6-10-10-6-10 0S-6 10 0 10 10 6 10 0-6-10 0-10Z' /%3E%3Ccircle r='2.4' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(105,80)'%3E%3Cpath d='M0-8C-5-8-8-5-8 0S-5 8 0 8 8 5 8 0-5-8 0-8Z' /%3E%3Ccircle r='2' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(60,115)'%3E%3Cpath d='M0-6C-4-6-6-4-6 0S-4 6 0 6 6 4 6 0-4-6 0-6Z' /%3E%3Ccircle r='1.6' fill='%238B7BB8' stroke='none' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%235B4A80' stroke-width='2' opacity='0.55'%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M0-14C-8-14-14-8-14 0S-8 14 0 14 14 8 14 0-8-14 0-14Z' /%3E%3Ccircle r='3.2' fill='%235B4A80' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(105,80)'%3E%3Cpath d='M0-11C-7-11-11-7-11 0S-7 11 0 11 11 7 11 0-7-11 0-11Z' /%3E%3Ccircle r='2.8' fill='%235B4A80' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(60,115)'%3E%3Cpath d='M0-9C-5-9-9-5-9 0S-5 9 0 9 9 5 9 0-5-9 0-9Z' /%3E%3Ccircle r='2.2' fill='%235B4A80' stroke='none' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         backgroundRepeat: invitationBgPhoto ? "no-repeat" : "repeat",
         backgroundSize: invitationBgPhoto ? "cover" : "140px 140px",
         backgroundPosition: "center",
