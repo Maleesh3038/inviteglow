@@ -82,6 +82,8 @@ const emptyForm = {
   enable_guest_links: true,
   enable_guest_wishes: false,
   show_wedding_note: true,
+  dress_code_gents: '',
+  dress_code_ladies: '',
   wedding_note_text: '',
   wedding_note_background_image: '',
   cover_video_url: '',
