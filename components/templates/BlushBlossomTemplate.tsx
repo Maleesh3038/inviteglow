@@ -1339,7 +1339,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
                 {couple.gallery.map((url, i) => (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={i} src={url} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 12 }} />
+                  <img key={i} src={url} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'contain', background: PURPLE_BOX, borderRadius: 12 }} />
                 ))}
               </div>
             </Reveal>
