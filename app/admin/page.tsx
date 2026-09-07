@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase, Couple, RSVP, Review } from '@/lib/supabase'
-
 const TEMPLATES = [
   { id: 'floral-romance', name: 'Floral Romance', tag: 'Most Popular', photo: '/images/hero-floral.png', demoSlug: 'kavindi-malina', color: '#c4607a' },
   { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.png', demoSlug: 'sheneli-kevin', color: '#a8895a' },
@@ -21,9 +20,7 @@ const TEMPLATES = [
   { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', tag: 'Tamil Wedding', photo: '', demoSlug: '', color: '#9b2c2c' },
   { id: 'ceremonial-guard', name: 'Ceremonial Guard', tag: 'Lavender Ceremony', photo: '', demoSlug: '', color: '#8B7BB8' },
 ]
-
 const BUCKET = 'wedding-photos'
-
 const emptyForm = {
   slug: '',
   template: 'floral-romance',
@@ -34,7 +31,7 @@ const emptyForm = {
   groom_family: '',
   bride_phone: '',
   groom_phone: '',
-  contacts: [] as { name: string; phone: string }[],
+  contacts: [] as { name: string; phone: string; service_only?: boolean }[],
   wedding_date: '',
   time_format: '12h' as '12h' | '24h',
   venue: '',
@@ -102,7 +99,6 @@ const emptyForm = {
   groom_bank_account_name: '',
   groom_bank_account_number: '',
 }
-
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 8,
   border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
@@ -114,11 +110,9 @@ const labelStyle: React.CSSProperties = {
 const fieldWrap: React.CSSProperties = { marginBottom: 16 }
 const ACCENT = '#6366f1'
 const ACCENT_LIGHT = '#a5b4fc'
-
 function generatePin() {
   return String(Math.floor(1000 + Math.random() * 9000))
 }
-
 async function uploadToStorage(file: File, folder: string): Promise<string | null> {
   const ext = file.name.split('.').pop()
   const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
@@ -127,7 +121,6 @@ async function uploadToStorage(file: File, folder: string): Promise<string | nul
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
   return data.publicUrl
 }
-
 // ── Clean line-style SVG icons — no emoji anywhere in this admin ──
 type IconName = 'grid' | 'users' | 'template' | 'star' | 'chart' | 'calendar' | 'check' | 'cross' | 'camera' | 'music' | 'plus' | 'trash' | 'edit' | 'link' | 'external' | 'lock' | 'chair' | 'wine' | 'search' | 'x' | 'dice' | 'tag'
 function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
@@ -158,19 +151,16 @@ function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { 
     default: return null
   }
 }
-
 // ── Single photo uploader ──
 function PhotoUploader({ value, onChange, label, hint }: { value: string; onChange: (url: string) => void; label: string; hint: string }) {
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-
   const handleFile = async (file: File) => {
     setUploading(true)
     const url = await uploadToStorage(file, 'couple')
     setUploading(false)
     if (url) onChange(url)
   }
-
   return (
     <div style={fieldWrap}>
       <label style={labelStyle}>{label}</label>
@@ -203,12 +193,10 @@ function PhotoUploader({ value, onChange, label, hint }: { value: string; onChan
     </div>
   )
 }
-
 // ── Multi-photo gallery uploader ──
 function GalleryUploader({ value, onChange }: { value: string[]; onChange: (urls: string[]) => void }) {
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-
   const handleFiles = async (files: FileList) => {
     setUploading(true)
     const uploaded: string[] = []
@@ -219,9 +207,7 @@ function GalleryUploader({ value, onChange }: { value: string[]; onChange: (urls
     setUploading(false)
     onChange([...value, ...uploaded])
   }
-
   const removePhoto = (idx: number) => onChange(value.filter((_, i) => i !== idx))
-
   return (
     <div style={fieldWrap}>
       <label style={labelStyle}>Gallery Photos</label>
@@ -250,9 +236,7 @@ function GalleryUploader({ value, onChange }: { value: string[]; onChange: (urls
     </div>
   )
 }
-
 type TimelineItem = { id: number; enabled: boolean; time: string; event: string }
-
 function TimelinePicker({ value, onChange }: { value: TimelineItem[]; onChange: (items: TimelineItem[]) => void }) {
   const toggle = (id: number) => onChange(value.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))
   const updateField = (id: number, field: 'time' | 'event', val: string) => onChange(value.map(t => t.id === id ? { ...t, [field]: val } : t))
@@ -268,7 +252,6 @@ function TimelinePicker({ value, onChange }: { value: TimelineItem[]; onChange: 
     ;[next[index], next[newIndex]] = [next[newIndex], next[index]]
     onChange(next)
   }
-
   return (
     <div style={fieldWrap}>
       <label style={labelStyle}>Wedding Timeline</label>
@@ -312,22 +295,18 @@ function TimelinePicker({ value, onChange }: { value: TimelineItem[]; onChange: 
     </div>
   )
 }
-
 // ── RSVP Manager ──
 function RsvpManager({ coupleId }: { coupleId: string }) {
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-
   const loadRsvps = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('rsvps').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
     if (!error && data) setRsvps(data as RSVP[])
     setLoading(false)
   }
-
   useEffect(() => { loadRsvps() }, [coupleId])
-
   const handleDelete = async (id: string, guestName: string) => {
     if (!confirm(`Delete ${guestName}'s RSVP? This cannot be undone.`)) return
     setDeletingId(id)
@@ -335,7 +314,6 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
     setDeletingId(null)
     if (!error) setRsvps(prev => prev.filter(r => r.id !== id))
   }
-
   return (
     <div style={fieldWrap}>
       <label style={labelStyle}>Guest RSVPs ({rsvps.length})</label>
@@ -366,18 +344,15 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
     </div>
   )
 }
-
 // ── Pending Reviews Manager ──
 // ── Pricing Plans Manager — lets admin edit prices, tags, and feature
 // lists for the 3 pricing tiers shown on the public homepage. ──
 type PricingPlan = { id: string; name: string; subtitle: string; price: number; original_price: number | null; tag: string; features: string[]; color: string; display_order: number }
-
 const DEFAULT_SEED_PLANS: Omit<PricingPlan, 'id'>[] = [
   { name: 'Basic', subtitle: 'Simple & elegant', price: 2500, original_price: 5000, tag: '', features: ['1 invitation', 'Up to 150 guests', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#94a3b8', display_order: 0 },
   { name: 'Standard', subtitle: 'Best for most Sri Lankan weddings', price: 5000, original_price: 10000, tag: 'Most couples pick this', features: ['2 invitations', 'Up to 600 guests', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay', 'Guest Wishes wall included'], color: '#c4607a', display_order: 1 },
   { name: 'Premium', subtitle: 'Custom design service', price: 10000, original_price: 20000, tag: '', features: ['2 invitations — one fully custom', 'Unlimited guests', 'Custom design built from scratch by our team', 'Priority support', 'Guest Gallery included · guests upload their photos & videos', 'Access to any template', 'Free support to edit template', 'Personalised guest links · WhatsApp delivery', 'Live RSVP dashboard & open tracking', 'Guest seating plan · guests find their table', 'Sinhala, Tamil, or English', 'Countdown · Google Maps · Add to calendar', 'Photo gallery & love story', 'Wedding planning tools (checklist, budget, vendors, seating)', 'Free preview before you pay'], color: '#8a6a2a', display_order: 2 },
 ]
-
 // ── Customer Signups Manager — shows every invitation created by a
 // customer directly on the public site (self-service), with their
 // contact details and bank transfer slip for admin to review. ──
@@ -387,21 +362,18 @@ type SignupCouple = {
   package_tier: string | null; payment_slip_url: string | null; payment_slip_status: string | null
   project_status: string; created_at: string
 }
-
 function SignupsManager() {
   const [signups, setSignups] = useState<SignupCouple[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'pending' | 'verified' | 'rejected' | 'all'>('pending')
   const [busyId, setBusyId] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-
   const load = async () => {
     const { data } = await supabase.from('couples').select('id, slug, bride, groom, wedding_date, template, customer_name, customer_email, customer_phone, package_tier, payment_slip_url, payment_slip_status, project_status, created_at').not('user_id', 'is', null).order('created_at', { ascending: false })
     if (data) setSignups(data as SignupCouple[])
     setLoading(false)
   }
   useEffect(() => { load() }, [])
-
   const setSlipStatus = async (id: string, status: 'verified' | 'rejected') => {
     setBusyId(id)
     const payload: any = { payment_slip_status: status }
@@ -410,16 +382,13 @@ function SignupsManager() {
     setBusyId(null)
     if (!error) load()
   }
-
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
-
   const filtered = filter === 'all' ? signups : signups.filter(s => (s.payment_slip_status || 'pending') === filter)
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
     border: active ? 'none' : '1px solid #e2e8f0',
     background: active ? '#6366f1' : '#fff', color: active ? '#fff' : '#64748b',
   })
-
   return (
     <div>
       <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
@@ -431,7 +400,6 @@ function SignupsManager() {
         <div onClick={() => setFilter('rejected')} style={pillStyle(filter === 'rejected')}>Rejected ({signups.filter(s => s.payment_slip_status === 'rejected').length})</div>
         <div onClick={() => setFilter('all')} style={pillStyle(filter === 'all')}>All ({signups.length})</div>
       </div>
-
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 48, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', color: '#94a3b8', fontSize: 13 }}>
           No signups in this category yet.
@@ -455,14 +423,12 @@ function SignupsManager() {
                     color: status === 'verified' ? '#16a34a' : status === 'rejected' ? '#dc2626' : '#b45309',
                   }}>{status === 'verified' ? 'Verified' : status === 'rejected' ? 'Rejected' : 'Pending Review'}</div>
                 </div>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5, color: '#475569', marginBottom: 14, background: '#f8fafc', borderRadius: 10, padding: 12 }}>
                   <div><strong>Customer:</strong> {s.customer_name || '—'}</div>
                   <div><strong>Email:</strong> {s.customer_email || '—'}</div>
                   <div><strong>Phone:</strong> {s.customer_phone || '—'}</div>
                   <div><strong>Slug:</strong> {s.slug}</div>
                 </div>
-
                 {s.payment_slip_url && (
                   <div style={{ marginBottom: 14 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -470,7 +436,6 @@ function SignupsManager() {
                       style={{ maxWidth: 160, borderRadius: 10, border: '1px solid #e2e8f0', cursor: 'pointer', display: 'block' }} />
                   </div>
                 )}
-
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <a href={`/invite/${s.slug}`} target="_blank" rel="noopener noreferrer" style={{
                     padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, textDecoration: 'none',
@@ -494,7 +459,6 @@ function SignupsManager() {
           })}
         </div>
       )}
-
       {previewUrl && (
         <div onClick={() => setPreviewUrl(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: 'pointer' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -504,14 +468,12 @@ function SignupsManager() {
     </div>
   )
 }
-
 function PricingManager() {
   const [plans, setPlans] = useState<PricingPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [seeding, setSeeding] = useState(false)
   const [message, setMessage] = useState('')
-
   const load = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('pricing_plans').select('*').order('display_order', { ascending: true })
@@ -523,9 +485,7 @@ function PricingManager() {
     }
     setLoading(false)
   }
-
   useEffect(() => { load() }, [])
-
   const seedDefaults = async () => {
     setSeeding(true)
     setMessage('')
@@ -537,7 +497,6 @@ function PricingManager() {
       load()
     }
   }
-
   const updatePlan = (id: string, field: keyof PricingPlan, value: any) => {
     setPlans(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
   }
@@ -550,7 +509,6 @@ function PricingManager() {
   const removeFeature = (id: string, idx: number) => {
     setPlans(prev => prev.map(p => p.id === id ? { ...p, features: p.features.filter((_, i) => i !== idx) } : p))
   }
-
   const savePlan = async (plan: PricingPlan) => {
     setSavingId(plan.id)
     setMessage('')
@@ -561,9 +519,7 @@ function PricingManager() {
     setSavingId(null)
     setMessage(error ? 'Error: ' + error.message : 'Saved! Changes are live on the homepage.')
   }
-
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
-
   if (plans.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: 60, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
@@ -578,7 +534,6 @@ function PricingManager() {
       </div>
     )
   }
-
   return (
     <div>
       <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
@@ -617,7 +572,6 @@ function PricingManager() {
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
               </div>
             </div>
-
             <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block' }}>Features</label>
             <div style={{ display: 'grid', gap: 8, marginBottom: 10 }}>
               {plan.features.map((f, i) => (
@@ -637,7 +591,6 @@ function PricingManager() {
             }}>
               <Icon name="plus" size={12} /> Add Feature
             </button>
-
             <button onClick={() => savePlan(plan)} disabled={savingId === plan.id} style={{
               padding: '10px 22px', borderRadius: 8, border: 'none', cursor: 'pointer',
               background: 'linear-gradient(135deg,#6366f1,#a5b4fc)', color: '#fff', fontWeight: 600, fontSize: 13,
@@ -651,29 +604,24 @@ function PricingManager() {
     </div>
   )
 }
-
 function PendingReviewsManager() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected'>('pending')
   const [actingId, setActingId] = useState<string | null>(null)
-
   const loadReviews = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('reviews').select('*').order('created_at', { ascending: false })
     if (!error && data) setReviews(data as Review[])
     setLoading(false)
   }
-
   useEffect(() => { loadReviews() }, [])
-
   const setStatus = async (id: string, status: 'approved' | 'rejected') => {
     setActingId(id)
     const { error } = await supabase.from('reviews').update({ status }).eq('id', id)
     setActingId(null)
     if (!error) setReviews(prev => prev.map(r => r.id === id ? { ...r, status } : r))
   }
-
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Permanently delete ${name}'s review?`)) return
     setActingId(id)
@@ -681,10 +629,8 @@ function PendingReviewsManager() {
     setActingId(null)
     if (!error) setReviews(prev => prev.filter(r => r.id !== id))
   }
-
   const filtered = reviews.filter(r => r.status === filter)
   const pendingCount = reviews.filter(r => r.status === 'pending').length
-
   return (
     <div style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
@@ -704,7 +650,6 @@ function PendingReviewsManager() {
           ))}
         </div>
       </div>
-
       {loading ? (
         <div style={{ fontSize: 13, color: '#94a3b8', padding: 12 }}>Loading...</div>
       ) : filtered.length === 0 ? (
@@ -750,14 +695,12 @@ function PendingReviewsManager() {
     </div>
   )
 }
-
 type SectionVisibilityValue = { gallery: boolean; countdown: boolean; timeline: boolean; seat_finder: boolean; music: boolean; thank_you: boolean }
 const SECTION_LABELS: { key: keyof SectionVisibilityValue; label: string }[] = [
   { key: 'gallery', label: 'Photo Gallery' }, { key: 'countdown', label: 'Countdown Timer' },
   { key: 'timeline', label: 'Wedding Timeline' }, { key: 'seat_finder', label: 'Seat Finder' },
   { key: 'music', label: 'Background Music' }, { key: 'thank_you', label: 'Thank You Note' },
 ]
-
 function SectionTogglesPicker({ value, onChange }: { value: SectionVisibilityValue; onChange: (v: SectionVisibilityValue) => void }) {
   const toggle = (key: keyof SectionVisibilityValue) => onChange({ ...value, [key]: !value[key] })
   return (
@@ -782,13 +725,11 @@ function SectionTogglesPicker({ value, onChange }: { value: SectionVisibilityVal
     </div>
   )
 }
-
 type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string }
 type EventsValue = Record<'engagement' | 'wedding' | 'homecoming', EventValue>
 const EVENT_LABELS: { key: keyof EventsValue; label: string }[] = [
   { key: 'engagement', label: 'Engagement' }, { key: 'wedding', label: 'Wedding' }, { key: 'homecoming', label: 'Homecoming' },
 ]
-
 function EventsPicker({ value, onChange, order, onOrderChange }: {
   value: EventsValue; onChange: (v: EventsValue) => void
   order: ('engagement' | 'wedding' | 'homecoming')[]; onOrderChange: (o: ('engagement' | 'wedding' | 'homecoming')[]) => void
@@ -852,13 +793,11 @@ function EventsPicker({ value, onChange, order, onOrderChange }: {
     </div>
   )
 }
-
 // ── Single video uploader (used for the Ceylon Elegance hero video) ──
 function VideoUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-
   const handleFile = async (file: File) => {
     setUploading(true)
     setError('')
@@ -882,7 +821,6 @@ function VideoUploader({ value, onChange }: { value: string; onChange: (url: str
     }
     setUploading(false)
   }
-
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -904,12 +842,10 @@ function VideoUploader({ value, onChange }: { value: string; onChange: (url: str
     </div>
   )
 }
-
 function MusicUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
   const [tab, setTab] = useState<'upload' | 'youtube'>(value.includes('youtube.com') || value.includes('youtu.be') ? 'youtube' : 'upload')
   const inputRef = useRef<HTMLInputElement>(null)
-
   const handleFile = async (file: File) => {
     setUploading(true)
     const ext = file.name.split('.').pop()
@@ -921,10 +857,8 @@ function MusicUploader({ value, onChange }: { value: string; onChange: (url: str
     }
     setUploading(false)
   }
-
   const isYouTube = value.includes('youtube.com') || value.includes('youtu.be')
   const isUploaded = value && !isYouTube
-
   return (
     <div style={{ marginTop: 12 }}>
       <label style={labelStyle}>Song File / YouTube Link</label>
@@ -966,7 +900,6 @@ function MusicUploader({ value, onChange }: { value: string; onChange: (url: str
     </div>
   )
 }
-
 // ── Finance Manager — Income (from couples' paid_amount) vs Expenses
 // (a new `expenses` table, one-time or recurring) vs Profit, filterable
 // by week / month / year. Doesn't touch any existing table's data. ──
@@ -985,7 +918,6 @@ type Expense = {
 type FinancePeriod = 'week' | 'month' | 'year'
 const PERIOD_AVG_DAYS: Record<FinancePeriod, number> = { week: 7, month: 30.44, year: 365.25 }
 const FREQ_AVG_DAYS: Record<'weekly' | 'monthly' | 'yearly', number> = { weekly: 7, monthly: 30.44, yearly: 365.25 }
-
 function getPeriodRange(period: FinancePeriod, ref: Date): { start: Date; end: Date } {
   const d = new Date(ref)
   if (period === 'week') {
@@ -1004,7 +936,6 @@ function getPeriodRange(period: FinancePeriod, ref: Date): { start: Date; end: D
   const end = new Date(d.getFullYear() + 1, 0, 1)
   return { start, end }
 }
-
 function formatPeriodLabel(period: FinancePeriod, range: { start: Date; end: Date }): string {
   if (period === 'week') {
     const endInclusive = new Date(range.end.getTime() - 86400000)
@@ -1013,9 +944,7 @@ function formatPeriodLabel(period: FinancePeriod, range: { start: Date; end: Dat
   if (period === 'month') return range.start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
   return String(range.start.getFullYear())
 }
-
 const EXPENSE_CATEGORIES = ['Hosting / Subscription', 'Marketing', 'Software / Tools', 'Domain', 'Design Assets', 'Payment Fees', 'Other']
-
 function FinanceManager({ couples }: { couples: Couple[] }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
@@ -1029,7 +958,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     name: '', amount: '', category: EXPENSE_CATEGORIES[0], is_recurring: true,
     frequency: 'monthly' as 'weekly' | 'monthly' | 'yearly', expense_date: new Date().toISOString().slice(0, 10), notes: '',
   })
-
   const loadExpenses = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('expenses').select('*').order('is_recurring', { ascending: false }).order('expense_date', { ascending: false })
@@ -1041,11 +969,8 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     }
     setLoading(false)
   }
-
   useEffect(() => { loadExpenses() }, [])
-
   const range = useMemo(() => getPeriodRange(period, refDate), [period, refDate])
-
   // ── Income: sum of couples.paid_amount whose created_at falls inside
   // the selected period. (There's no separate "payment date" field yet,
   // so this uses the invitation's creation date as the closest proxy —
@@ -1059,7 +984,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       return sum
     }, 0)
   }, [couples, range])
-
   // Individual income entries (one per invitation link that has a
   // payment recorded), shown as a green list next to the red expense list.
   const incomeEntriesInPeriod = useMemo(() => {
@@ -1072,7 +996,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       .map(c => ({ id: c.id, label: `${c.bride} & ${c.groom}`, slug: c.slug, amount: Number((c as any).paid_amount) || 0, date: c.created_at }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }, [couples, range])
-
   // ── Expenses: every expense (recurring or one-time) only counts in the
   // period its own date falls into — nothing is auto-projected into past
   // or future periods. A recurring subscription is just a label; each
@@ -1082,10 +1005,8 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     const d = new Date(e.expense_date)
     return d >= range.start && d < range.end
   }), [expenses, range])
-
   const totalExpensesInPeriod = useMemo(() => expensesInPeriod.reduce((s, e) => s + e.amount, 0), [expensesInPeriod])
   const profitInPeriod = incomeInPeriod - totalExpensesInPeriod
-
   // Informational only — "if every active recurring subscription gets paid
   // this month, this is what it'll cost." Doesn't feed into the period
   // totals above; those only count entries actually dated in the period.
@@ -1095,7 +1016,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       return sum + e.amount * (30.44 / freqDays)
     }, 0)
   }, [expenses])
-
   // Quick "log this month's payment" — duplicates a recurring expense as
   // a fresh dated entry for the currently-viewed period, instead of the
   // admin having to fill the whole form again each month.
@@ -1111,7 +1031,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     loadExpenses()
   }
   const alreadyLoggedThisPeriod = (e: Expense) => expensesInPeriod.some(x => x.name === e.name && x.is_recurring)
-
   const openNewForm = () => {
     setEditingExpense(null)
     setExpForm({ name: '', amount: '', category: EXPENSE_CATEGORIES[0], is_recurring: true, frequency: 'monthly', expense_date: new Date().toISOString().slice(0, 10), notes: '' })
@@ -1125,7 +1044,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     })
     setShowForm(true)
   }
-
   const saveExpense = async () => {
     if (!expForm.name.trim() || !expForm.amount) return
     setSavingExpense(true)
@@ -1147,18 +1065,15 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       loadExpenses()
     }
   }
-
   const toggleActive = async (e: Expense) => {
     await supabase.from('expenses').update({ is_active: !e.is_active }).eq('id', e.id)
     loadExpenses()
   }
-
   const deleteExpense = async (e: Expense) => {
     if (!confirm(`Delete "${e.name}"? This cannot be undone.`)) return
     await supabase.from('expenses').delete().eq('id', e.id)
     loadExpenses()
   }
-
   const shiftPeriod = (dir: -1 | 1) => {
     const d = new Date(refDate)
     if (period === 'week') d.setDate(d.getDate() + dir * 7)
@@ -1166,7 +1081,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     else d.setFullYear(d.getFullYear() + dir)
     setRefDate(d)
   }
-
   if (tableMissing) {
     return (
       <div style={{ textAlign: 'center', padding: 60, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
@@ -1194,9 +1108,7 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
       </div>
     )
   }
-
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
-
   return (
     <div>
       {/* Period switcher */}
@@ -1220,7 +1132,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
           </button>
         </div>
       </div>
-
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 20 }}>
         <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
@@ -1236,11 +1147,9 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
           <div style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>LKR {profitInPeriod.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
         </div>
       </div>
-
       <div style={{ fontSize: 11.5, color: '#94a3b8', marginBottom: 20, lineHeight: 1.5 }}>
         Income is based on each invitation's Amount Paid, counted in the period it was created. Expenses only count in the period their own date falls in — nothing is projected into other months. For a recurring subscription, use "Log for [period]" on its row each time it's actually paid. If every active subscription were billed this month, it'd total <strong style={{ color: '#475569' }}>LKR {monthlyRecurringTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong> — just an estimate, not counted in Expenses above unless logged.
       </div>
-
       {/* Income list — one row per invitation link with a payment, green */}
       <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Income</div>
       {incomeEntriesInPeriod.length === 0 ? (
@@ -1268,7 +1177,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
           ))}
         </div>
       )}
-
       {/* Add expense button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Expenses</div>
@@ -1277,7 +1185,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
           background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 12.5,
         }}><Icon name="plus" size={13} color="#fff" /> Add Expense</button>
       </div>
-
       {/* Expense form */}
       {showForm && (
         <div style={{ background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, border: '1px solid #e2e8f0' }}>
@@ -1335,7 +1242,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
           </div>
         </div>
       )}
-
       {/* Expense list */}
       {(() => {
         // Only show "Log this month" on the most recent row per
@@ -1406,7 +1312,6 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
     </div>
   )
 }
-
 const NAV_TABS = [
   { key: 'overview', label: 'Overview', icon: 'grid' as const },
   { key: 'couples', label: 'Couples', icon: 'users' as const },
@@ -1416,7 +1321,6 @@ const NAV_TABS = [
   { key: 'finance', label: 'Finance', icon: 'chart' as const },
   { key: 'reviews', label: 'Reviews', icon: 'star' as const },
 ]
-
 export default function AdminPage() {
   const [couples, setCouples] = useState<Couple[]>([])
   const [allRsvps, setAllRsvps] = useState<{ couple_id: string; response: string; guest_count: number }[]>([])
@@ -1430,7 +1334,6 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'signups' | 'templates' | 'pricing' | 'finance' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
-
   // ── Admin password gate ──
   // The real password is checked server-side (app/api/admin-auth/route.ts)
   // against process.env.ADMIN_PASSWORD, so it never ships in the client
@@ -1441,14 +1344,12 @@ export default function AdminPage() {
   const [passwordInput, setPasswordInput] = useState('')
   const [authError, setAuthError] = useState('')
   const [authChecking, setAuthChecking] = useState(false)
-
   useEffect(() => {
     if (typeof window !== 'undefined' && sessionStorage.getItem('inviteglow_admin_unlocked') === '1') {
       setUnlocked(true)
     }
     setCheckingSession(false)
   }, [])
-
   const checkPassword = async () => {
     if (!passwordInput.trim()) return
     setAuthChecking(true)
@@ -1471,7 +1372,6 @@ export default function AdminPage() {
     }
     setAuthChecking(false)
   }
-
   const loadCouples = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('couples').select('*').order('created_at', { ascending: false })
@@ -1480,16 +1380,13 @@ export default function AdminPage() {
     if (rsvpData) setAllRsvps(rsvpData as any)
     setLoading(false)
   }
-
   useEffect(() => { loadCouples() }, [])
-
   const startNew = () => {
     setForm({ ...emptyForm, pin: generatePin() })
     setCurrentDefaultTemplate('')
     setEditing('new')
     setActiveTab('couples')
   }
-
   const startEdit = (c: Couple) => {
     setCurrentDefaultTemplate((c as any).default_template || '')
     setForm({
@@ -1597,7 +1494,6 @@ export default function AdminPage() {
     setEditing(c.id)
     setActiveTab('couples')
   }
-
   const handleSave = async () => {
     if (!form.slug || !form.bride || !form.groom || !form.wedding_date) {
       setMessage('Please fill in Slug, Bride, Groom, and Wedding Date.')
@@ -1605,14 +1501,12 @@ export default function AdminPage() {
     }
     setSaving(true)
     setMessage('')
-
     const timelineArr = form.timeline.filter(t => t.enabled && t.time.trim() && t.event.trim()).map(t => ({ time: t.time.trim(), event: t.event.trim() }))
     const seatsObj: Record<string, string> = {}
     form.seats.split('\n').forEach(line => {
       const [name, table] = line.split('|').map(s => s.trim())
       if (name && table) seatsObj[name.toLowerCase()] = table
     })
-
     const payload = {
       slug: form.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
       template: form.template,
@@ -1675,7 +1569,6 @@ export default function AdminPage() {
       groom_bank_account_name: (form as any).groom_bank_account_name || null,
       groom_bank_account_number: (form as any).groom_bank_account_number || null,
     }
-
     let error
     if (editing === 'new') {
       const res = await supabase.from('couples').insert([{ ...payload, default_template: form.template }])
@@ -1684,7 +1577,6 @@ export default function AdminPage() {
       const res = await supabase.from('couples').update(payload).eq('id', editing)
       error = res.error
     }
-
     setSaving(false)
     if (error) {
       setMessage('Error: ' + error.message)
@@ -1694,13 +1586,11 @@ export default function AdminPage() {
       loadCouples()
     }
   }
-
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this invitation permanently?')) return
     await supabase.from('couples').delete().eq('id', id)
     loadCouples()
   }
-
   const [resettingPinId, setResettingPinId] = useState<string | null>(null)
   const handleResetPin = async (id: string, coupleLabel: string) => {
     if (!confirm(`Reset the dashboard PIN for ${coupleLabel}? Their old PIN will stop working immediately.`)) return
@@ -1715,9 +1605,7 @@ export default function AdminPage() {
       alert('Could not reset PIN: ' + error.message)
     }
   }
-
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
-
   // ── Platform-wide stats ──
   const stats = useMemo(() => {
     const now = new Date()
@@ -1748,7 +1636,6 @@ export default function AdminPage() {
     }, 0)
     return { upcoming, totalRsvps, totalGuests, templateCounts, sampleCount, ongoingCount, completeCount, leadCount, realCount, totalRevenue, pendingRevenue }
   }, [couples, allRsvps])
-
   const filteredCouples = useMemo(() => {
     let result = couples
     if (statusFilter !== 'all') {
@@ -1760,11 +1647,9 @@ export default function AdminPage() {
     }
     return result
   }, [couples, coupleSearch, statusFilter])
-
   if (checkingSession) {
     return <div style={{ minHeight: '100vh', background: '#f6f7fb' }} />
   }
-
   if (!unlocked) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6f7fb', fontFamily: "'Inter',sans-serif", padding: 24 }}>
@@ -1799,13 +1684,11 @@ export default function AdminPage() {
       </div>
     )
   }
-
   return (
     <div style={{ minHeight: '100vh', background: '#f6f7fb', fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
       <style>{`
         @media (max-width: 560px) { .admin-tab-label { display: none; } }
       `}</style>
-
       {/* ── NAV BAR ── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #e2e8f0' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -1813,7 +1696,6 @@ export default function AdminPage() {
             <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.7rem', color: ACCENT, lineHeight: 1 }}>InviteGlow</div>
             <div style={{ fontSize: 10, color: '#64748b' }}>Admin Dashboard</div>
           </div>
-
           <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4, flexWrap: 'wrap' }}>
             {NAV_TABS.map(tab => (
               <button key={tab.key} onClick={() => { setActiveTab(tab.key as typeof activeTab); if (tab.key !== 'couples') setEditing(null) }} style={{
@@ -1828,7 +1710,6 @@ export default function AdminPage() {
               </button>
             ))}
           </div>
-
           <button onClick={startNew} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -1838,9 +1719,7 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
-
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 20px 60px' }}>
-
         {/* ── OVERVIEW TAB ── */}
         {activeTab === 'overview' && (
           <div>
@@ -1874,7 +1753,6 @@ export default function AdminPage() {
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Sample / Demo Projects</div>
               </div>
             </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 20 }}>
               <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: '#cffafe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
@@ -1898,7 +1776,6 @@ export default function AdminPage() {
                 <div style={{ fontSize: 11, color: '#64748b' }}>Pending Payments</div>
               </div>
             </div>
-
             <div style={{ background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Finance</div>
@@ -1906,7 +1783,6 @@ export default function AdminPage() {
               </div>
               <div style={{ fontSize: 12.5, color: '#64748b' }}>Track income, subscription/expense costs, and profit — weekly, monthly, or yearly.</div>
             </div>
-
             <div style={{ background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 14 }}>Template Popularity</div>
               <div style={{ display: 'grid', gap: 10 }}>
@@ -1925,7 +1801,6 @@ export default function AdminPage() {
                 })}
               </div>
             </div>
-
             <div style={{ background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Recent Invitations</div>
@@ -1957,7 +1832,6 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-
         {/* ── TEMPLATES TAB ── */}
         {activeTab === 'templates' && (
           <div>
@@ -2008,14 +1882,11 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-
         {/* ── REVIEWS TAB ── */}
         {activeTab === 'signups' && <SignupsManager />}
         {activeTab === 'pricing' && <PricingManager />}
         {activeTab === 'finance' && <FinanceManager couples={couples} />}
-
         {activeTab === 'reviews' && <PendingReviewsManager />}
-
         {/* ── COUPLES TAB ── */}
         {activeTab === 'couples' && (
           <div>
@@ -2046,14 +1917,12 @@ export default function AdminPage() {
                 </div>
               </>
             )}
-
             {/* FORM */}
             {editing && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 28, marginBottom: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#0f172a' }}>
                   {editing === 'new' ? 'Create New Invitation' : 'Edit Invitation'}
                 </h2>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Unique Link Slug *</label>
@@ -2138,17 +2007,17 @@ export default function AdminPage() {
                       <Icon name="link" size={14} color="#0f766e" /> Additional Contact Numbers
                     </div>
                     <div style={{ fontSize: 11, color: '#0d9488', marginBottom: 12 }}>
-                      Add any number of contacts with a custom name — e.g. "Groom's Father", "Wedding Coordinator". Name is optional — leave it blank to just show the number. These show alongside the Bride/Groom phone numbers above; nothing here replaces them.
+                      Add any number of contacts with a custom name — e.g. "Groom's Father", "Wedding Coordinator". Name is optional — leave it blank to just show the number. These show alongside the Bride/Groom phone numbers above; nothing here replaces them. Mark a contact "Service Only" (e.g. photographer, decorator) to label it as a service contact rather than family.
                     </div>
-                    {((form as any).contacts || []).map((contact: { name: string; phone: string }, i: number) => (
-                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    {((form as any).contacts || []).map((contact: { name: string; phone: string; service_only?: boolean }, i: number) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                         <input
                           value={contact.name}
                           onChange={e => {
                             const next = [...(form as any).contacts]; next[i] = { ...next[i], name: e.target.value }
                             setForm({ ...form, contacts: next } as any)
                           }}
-                          placeholder="Name / relation" style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }}
+                          placeholder="Name / relation" style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff', minWidth: 120 }}
                         />
                         <input
                           value={contact.phone}
@@ -2156,8 +2025,20 @@ export default function AdminPage() {
                             const next = [...(form as any).contacts]; next[i] = { ...next[i], phone: e.target.value }
                             setForm({ ...form, contacts: next } as any)
                           }}
-                          placeholder="07XXXXXXXX" style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }}
+                          placeholder="07XXXXXXXX" style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff', minWidth: 120 }}
                         />
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#0f766e', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, padding: '0 4px' }}>
+                          <input
+                            type="checkbox"
+                            checked={!!contact.service_only}
+                            onChange={e => {
+                              const next = [...(form as any).contacts]; next[i] = { ...next[i], service_only: e.target.checked }
+                              setForm({ ...form, contacts: next } as any)
+                            }}
+                            style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#0f766e' }}
+                          />
+                          Service Only
+                        </label>
                         <button type="button" onClick={() => {
                           const next = ((form as any).contacts || []).filter((_: any, idx: number) => idx !== i)
                           setForm({ ...form, contacts: next } as any)
@@ -2167,7 +2048,7 @@ export default function AdminPage() {
                         }}><Icon name="cross" size={13} color="#dc2626" /></button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => setForm({ ...form, contacts: [...((form as any).contacts || []), { name: '', phone: '' }] } as any)} style={{
+                    <button type="button" onClick={() => setForm({ ...form, contacts: [...((form as any).contacts || []), { name: '', phone: '', service_only: false }] } as any)} style={{
                       padding: '8px 16px', borderRadius: 8, border: '1px solid #99f6e4', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#0f766e', fontWeight: 500,
                     }}>+ Add Contact</button>
                   </div>
@@ -2206,7 +2087,6 @@ export default function AdminPage() {
                     <input style={inputStyle} placeholder="https://maps.google.com/?q=..." value={form.maps_url} onChange={e => setForm({ ...form, maps_url: e.target.value })} />
                   </div>
                 </div>
-
                 <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 16, border: '1px solid #e8d9a0' }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>Cover / Intro Media</div>
                   <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14, lineHeight: 1.5 }}>
@@ -2220,10 +2100,8 @@ export default function AdminPage() {
                     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Used by video-hero templates (Ceylon Elegance, Eternal Bloom, Noble Salute, Ocean Pearl). Other templates just use the photo above and ignore this.</div>
                   </div>
                 </div>
-
                 <PhotoUploader value={(form as any).cover_background_image || ''} onChange={url => setForm({ ...form, cover_background_image: url } as any)}
                   label="Cover / Envelope Background Image" hint="Full-screen background behind the opening envelope. Best results: portrait, 9:16 ratio." />
-
                 {/* Payment / Package tracking */}
                 <div style={{ background: '#ecfeff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0e7490', marginBottom: 12 }}>
@@ -2253,13 +2131,11 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Internal admin notes — never shown to the couple */}
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Internal Notes (admin-only, never shown to the couple)</label>
                   <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="e.g. Follow up after their engagement, prefers WhatsApp over calls..." value={form.admin_notes} onChange={e => setForm({ ...form, admin_notes: e.target.value })} />
                 </div>
-
                 {/* One-click WhatsApp confirmation */}
                 {(form.bride_phone || form.groom_phone) && (
                   <div style={fieldWrap}>
@@ -2277,7 +2153,6 @@ export default function AdminPage() {
                     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Opens WhatsApp with a ready-made confirmation message to send.</div>
                   </div>
                 )}
-
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Dashboard PIN (4-digit)</label>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -2288,7 +2163,6 @@ export default function AdminPage() {
                     </button>
                   </div>
                 </div>
-
                 <div style={{ background: '#fffbeb', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>
@@ -2303,7 +2177,6 @@ export default function AdminPage() {
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: form.ask_drinking ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
-
                 <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>
@@ -2318,7 +2191,6 @@ export default function AdminPage() {
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: form.show_seating ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
-
                 <div style={{ background: '#f0fdfa', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0f766e', marginBottom: 4 }}>
@@ -2333,7 +2205,6 @@ export default function AdminPage() {
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: form.enable_guest_links ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
-
                 <div style={{ background: '#fdf4ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#86198f', marginBottom: 4 }}>
@@ -2348,7 +2219,6 @@ export default function AdminPage() {
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_guest_wishes ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
-
                 <div style={{ background: '#f0f9ff', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0369a1', marginBottom: 4 }}>
@@ -2363,7 +2233,6 @@ export default function AdminPage() {
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_footer_social ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
-
                 <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#15803d', marginBottom: 4 }}>
@@ -2378,7 +2247,6 @@ export default function AdminPage() {
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: (form as any).enable_budget_tracker ? 23 : 3, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                   </button>
                 </div>
-
                 <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: (form as any).enable_template_switch ? 14 : 0 }}>
                     <div>
@@ -2419,7 +2287,6 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
-
                 <div style={{ background: '#fdf2f8', borderRadius: 12, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#be185d', marginBottom: 10 }}>
                     <Icon name="music" size={14} color="#be185d" /> Background Music
@@ -2436,25 +2303,21 @@ export default function AdminPage() {
                   </div>
                   <MusicUploader value={form.song_url} onChange={url => setForm({ ...form, song_url: url })} />
                 </div>
-
                 <GalleryUploader value={form.gallery} onChange={urls => setForm({ ...form, gallery: urls })} />
                 <TimelinePicker value={form.timeline} onChange={items => setForm({ ...form, timeline: items })} />
                 <EventsPicker value={form.events} onChange={v => setForm({ ...form, events: v })}
                   order={(form as any).events_order || ['engagement', 'wedding', 'homecoming']}
                   onOrderChange={o => setForm({ ...form, events_order: o } as any)} />
                 <SectionTogglesPicker value={form.section_visibility} onChange={v => setForm({ ...form, section_visibility: v })} />
-
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Bible Verse (optional)</label>
                   <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' as const }} placeholder={'e.g. "So, they are no longer two, but one flesh. Therefore, what God has joined together, let no man separate." — Matthew 19:6'} value={(form as any).bible_verse || ''} onChange={e => setForm({ ...form, bible_verse: e.target.value } as any)} />
                   <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Shown at the very top of the invitation, above the couple's names — matches the verse on a traditional printed card.</div>
                 </div>
-
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Cover Badge Text</label>
                   <input style={inputStyle} placeholder="e.g. Wedding Invitation" value={(form as any).cover_badge_text || ''} onChange={e => setForm({ ...form, cover_badge_text: e.target.value } as any)} />
                 </div>
-
                 <PhotoUploader
                   value={(form as any).intro_badge_image || ''}
                   onChange={url => setForm({ ...form, intro_badge_image: url } as any)}
@@ -2496,7 +2359,6 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
-
                 <div style={{ background: '#f5f3ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #ddd6fe' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#5b21b6', marginBottom: 4 }}>
                     <Icon name="link" size={15} color="#5b21b6" /> Dress Code Section
@@ -2519,7 +2381,6 @@ export default function AdminPage() {
                       onChange={e => setForm({ ...form, dress_code_ladies: e.target.value } as any)} />
                   </div>
                 </div>
-
                 <div style={{ background: '#f5f3ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #ddd6fe' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#5b21b6', marginBottom: 4 }}>
                     <Icon name="template" size={15} color="#5b21b6" /> Invitation Background Photo
@@ -2534,18 +2395,15 @@ export default function AdminPage() {
                     hint="A soft, low-contrast photo works best — text sits on top of it."
                   />
                 </div>
-
                 <div style={{ background: '#fdfaf0', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #e8d9a0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#8a6d1a', marginBottom: 4 }}>
                     <Icon name="template" size={15} color="#8a6d1a" /> Individual Photos &amp; Gift Section
                   </div>
                   <div style={{ fontSize: 11, color: '#a8894a', marginBottom: 14 }}>Individual bride/groom photos, used by "Ceylon Elegance", "Eternal Bloom", and "Noble Salute". The hero photo/video is set above, in "Cover / Intro Media". The gift accounts below only appear on Ceylon Elegance.</div>
-
                   <PhotoUploader value={(form as any).groom_photo || ''} onChange={url => setForm({ ...form, groom_photo: url } as any)}
                     label="Groom's Individual Photo" hint="Leave empty to reuse the main couple photo." />
                   <PhotoUploader value={(form as any).bride_photo || ''} onChange={url => setForm({ ...form, bride_photo: url } as any)}
                     label="Bride's Individual Photo" hint="Leave empty to reuse the main couple photo." />
-
                   <div style={{ background: '#fff', borderRadius: 12, padding: 14, marginBottom: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: (form as any).enable_gift_section ? 12 : 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Send Gift / Bank Account Section</div>
@@ -2579,7 +2437,6 @@ export default function AdminPage() {
                     )}
                   </div>
                 </div>
-
                 <div style={fieldWrap}>
                   <label style={labelStyle}>Cover Intro Text</label>
                   <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="Leave empty to use the theme's default line" value={form.intro_text} onChange={e => setForm({ ...form, intro_text: e.target.value })} />
@@ -2588,11 +2445,8 @@ export default function AdminPage() {
                   <label style={labelStyle}>Guest Seat Assignments (one per line: Name | Table)</label>
                   <textarea style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }} placeholder={"amara | Table 3\nsilva | Table 7"} value={form.seats} onChange={e => setForm({ ...form, seats: e.target.value })} />
                 </div>
-
                 {editing !== 'new' && <RsvpManager coupleId={editing as string} />}
-
                 {message && <div style={{ marginBottom: 16, fontSize: 14, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
-
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={handleSave} disabled={saving} style={{
                     padding: '12px 28px', borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -2604,7 +2458,6 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
-
             {/* LIST */}
             {!editing && (
               <div>
