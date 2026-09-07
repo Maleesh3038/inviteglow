@@ -1336,10 +1336,14 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <Reveal id="gallery">
               <div style={capsHeading}>Our Moments</div>
               {divider}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+              {/* Masonry-style (CSS columns) so every photo shows at its own
+                  natural proportions — no cropping, and no empty letterbox
+                  space around portrait/landscape shots like a fixed square
+                  grid would leave. */}
+              <div style={{ columnCount: 2, columnGap: 8, marginTop: 4 }}>
                 {couple.gallery.map((url, i) => (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={i} src={url} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'contain', background: PURPLE_BOX, borderRadius: 12 }} />
+                  <img key={i} src={url} alt="" style={{ width: '100%', display: 'block', borderRadius: 12, marginBottom: 8, breakInside: 'avoid' }} />
                 ))}
               </div>
             </Reveal>
