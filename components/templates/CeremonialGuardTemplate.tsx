@@ -4,12 +4,10 @@ import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 import FooterSocial from '@/components/shared/FooterSocial'
-
 const DEFAULT_PHOTO = "/images/hero-floral.png"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
-
 // Lavender & white — a soft ceremonial palette. No hardcoded demo video for
 // this template; only plays a video if the couple explicitly uploads one.
 const DEFAULT_PALETTE = {
@@ -19,7 +17,6 @@ const DEFAULT_PALETTE = {
   cream: "#F3EFFA",
   muted: "#9A8FB0",
 }
-
 function normalizeMapsUrl(url: string): string {
   if (!url) return '#'
   if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
@@ -27,7 +24,6 @@ function normalizeMapsUrl(url: string): string {
   }
   return url
 }
-
 // ── Per-element text style overrides. Reads couple.text_styles (set from
 // the "Customise Fonts" panel in the couple's dashboard) and merges a
 // color/font/bold override on top of the template's own default styling.
@@ -45,7 +41,6 @@ function useTextStyles(couple: any) {
     }
   }
 }
-
 // ── Signature motif: a ceremonial rank-star insignia, rendered in line
 // art — a subtle nod to "military" without leaning on camo or literal
 // uniform imagery, kept elegant enough to sit inside a wedding invite. ──
@@ -65,7 +60,6 @@ function Insignia({ color, size = 40, opacity = 0.9 }: { color: string; size?: n
     </svg>
   )
 }
-
 // ── Ribbon divider — a nod to a medal ribbon bar, doubling as the
 // template's section divider. ──
 function RibbonDivider({ color, primaryLight }: { color: string; primaryLight: string }) {
@@ -77,7 +71,50 @@ function RibbonDivider({ color, primaryLight }: { color: string; primaryLight: s
     </div>
   )
 }
-
+// ── Falling lavender flowers — a soft, continuous ambient effect that
+// drifts small flower blossoms down from the top of the screen over the
+// whole invitation. Purely decorative (pointer-events: none) so it never
+// blocks taps on buttons/links underneath. Randomised once per mount via
+// useState initializers so positions don't jump on re-render. ──
+function FlowerBlossom({ color, size, flip }: { color: string; size: number; flip?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" style={{ display: "block", transform: flip ? "scaleX(-1)" : undefined }}>
+      {[0, 72, 144, 216, 288].map((a, i) => (
+        <ellipse key={i} cx="20" cy="11" rx="6.5" ry="10" fill={color} opacity="0.88" transform={`rotate(${a} 20 20)`} />
+      ))}
+      <circle cx="20" cy="20" r="4" fill="#fff" opacity="0.9" />
+    </svg>
+  )
+}
+type PetalSpec = { id: number; left: number; duration: number; delay: number; size: number; sway: number; flip: boolean; light: boolean }
+function FallingFlowers({ primary, primaryLight, count = 14 }: { primary: string; primaryLight: string; count?: number }) {
+  const [petals] = useState<PetalSpec[]>(() =>
+    Array.from({ length: count }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 96,
+      duration: 12 + Math.random() * 10,
+      delay: -(Math.random() * 20),
+      size: 14 + Math.random() * 16,
+      sway: 16 + Math.random() * 24,
+      flip: Math.random() > 0.5,
+      light: Math.random() > 0.5,
+    }))
+  )
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none", overflow: "hidden" }}>
+      {petals.map(p => (
+        <div key={p.id} style={{
+          position: "absolute", left: `${p.left}%`, top: 0,
+          animation: `petalFall ${p.duration}s linear ${p.delay}s infinite`,
+        }}>
+          <div style={{ animation: `petalSway ${p.sway / 5}s ease-in-out infinite alternate`, ["--sway" as any]: `${p.sway}px` }}>
+            <FlowerBlossom color={p.light ? primaryLight : primary} size={p.size} flip={p.flip} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 // ── Guest intro screen — "Dear [Name]," shown for ~5s before the cover. ──
 function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
   guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
@@ -116,7 +153,6 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
     </motion.div>
   )
 }
-
 // ── Countdown ──
 function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: string; primary: string; primaryLight: string; dark: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
@@ -146,7 +182,6 @@ function Countdown({ targetDate, primary, primaryLight, dark }: { targetDate: st
     </div>
   )
 }
-
 // ── YouTube detect / Music player ──
 function getYouTubeId(url: string): string | null {
   if (!url) return null
@@ -154,7 +189,6 @@ function getYouTubeId(url: string): string | null {
   for (const p of patterns) { const m = url.match(p); if (m) return m[1] }
   return null
 }
-
 function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: {
   title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string
 }) {
@@ -181,7 +215,6 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
     </div>
   )
 }
-
 // ── RSVP ──
 function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName }: {
   coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string
@@ -239,7 +272,6 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
     </div>
   )
 }
-
 // ── Seat Finder ──
 function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<string, string>; primary: string; dark: string; cream: string; muted: string }) {
   const [q, setQ] = useState(""); const [res, setRes] = useState("")
@@ -259,11 +291,9 @@ function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<stri
     </div>
   )
 }
-
 // ── Guest Wishes Wall ──────────────────────────────────────────────
 type WishMedia = { url: string; type: 'photo' | 'video' }
 type Wish = { id: string; couple_id: string; guest_name: string; message: string; photo_url: string | null; video_url: string | null; media: WishMedia[] | null; created_at: string }
-
 async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: string; isVideo: boolean }> {
   const isVideo = file.type.startsWith('video/')
   const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
@@ -319,7 +349,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
   const [files, setFiles] = useState<File[]>([]); const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(''); const [done, setDone] = useState(false)
   const [lightbox, setLightbox] = useState<{ media: WishMedia[]; index: number } | null>(null)
-
   useEffect(() => {
     let active = true
     const load = async () => {
@@ -331,7 +360,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
     const channel = supabase.channel(`wishes-${coupleId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'wishes', filter: `couple_id=eq.${coupleId}` }, () => load()).subscribe()
     return () => { active = false; supabase.removeChannel(channel) }
   }, [coupleId])
-
   const submit = async () => {
     if (!name.trim() || !message.trim()) { setError('Please add your name and a message.'); return }
     setSubmitting(true); setError('')
@@ -343,9 +371,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
       setName(''); setMessage(''); setFiles([]); setDone(true)
     } catch { setError('Something went wrong — please try again.') } finally { setSubmitting(false) }
   }
-
   const inputStyle: React.CSSProperties = { width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif" }
-
   return (
     <div>
       <div style={{ background: "#fff", borderRadius: 16, padding: '18px 16px', marginBottom: 18, boxShadow: `0 4px 20px ${dark}0d` }}>
@@ -390,7 +416,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
     </div>
   )
 }
-
 // ── Gift / bank account card ──
 function GiftAccountCard({ label, bankName, accountName, accountNumber, primary, muted, dark }: {
   label: string; bankName?: string; accountName?: string; accountNumber?: string; primary: string; muted: string; dark: string
@@ -407,7 +432,6 @@ function GiftAccountCard({ label, bankName, accountName, accountNumber, primary,
     </div>
   )
 }
-
 // ── Contact Numbers — click-to-call and WhatsApp ──
 function ContactRow({ name, phone, primary, dark }: { name: string; phone: string; primary: string; dark: string }) {
   const digitsOnly = phone.replace(/\D/g, '')
@@ -430,10 +454,8 @@ function ContactRow({ name, phone, primary, dark }: { name: string; phone: strin
     </div>
   )
 }
-
 // ── Floating bottom nav bar ──
 function crScrollToId(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
-
 function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, hasContact, audioRef }: {
   primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; hasContact: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
 }) {
@@ -476,12 +498,10 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
     </div>
   )
 }
-
 // ── Card + section styles ──
-const cardStyle = (): React.CSSProperties => ({ background: "rgba(255,255,255,0.3)", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.1), 0 2px 8px rgba(58,46,77,0.06)", border: "1px solid rgba(255,255,255,0.5)", position: "relative", overflow: "hidden" })
+const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 20, padding: "1.8rem", boxShadow: "0 14px 40px rgba(58,46,77,0.1), 0 2px 8px rgba(58,46,77,0.06)", position: "relative", overflow: "hidden" })
 const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: dark, textAlign: "center", marginBottom: "1.2rem" })
-
 export default function CeremonialGuardTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#FDFCFF" }} />}>
@@ -489,7 +509,6 @@ export default function CeremonialGuardTemplate({ couple }: { couple: Couple }) 
     </Suspense>
   )
 }
-
 function CeremonialGuardInner({ couple }: { couple: Couple }) {
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
@@ -499,33 +518,28 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ts = useTextStyles(couple)
-
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
-
   // No baked-in demo video for this template — only plays a video if the
   // couple explicitly uploads a "Hero Background Video" in the dashboard.
   const coverVideoUrl = (couple as any).cover_video_url || ''
   const songUrl = couple.song_url || DEFAULT_SONG_URL
   const youtubeId = getYouTubeId(songUrl)
-
   useEffect(() => {
     if (youtubeId) return
     const audio = new Audio(songUrl)
     audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
-
   // Matches the Eternal Bloom flow: tapping "Open Invitation" reveals the
   // video (which has been playing muted underneath the photo since page
   // load, for mobile-autoplay reliability) before the main invitation opens.
   const [videoPlaying, setVideoPlaying] = useState(false)
   const [videoRevealed, setVideoRevealed] = useState(false)
   const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const handleOpen = () => {
     audioRef.current?.play().catch(() => {})
     if (coverVideoUrl) {
@@ -541,7 +555,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     setOpened(true)
     audioRef.current?.play().catch(() => {})
   }
-
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '🎖️' }, homecoming: { label: 'Homecoming', icon: '🏡' },
   }
@@ -558,25 +571,21 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
         return { key, ...EVENT_META[key], label: (customLabel || '').trim() || EVENT_META[key].label, enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '', dress_code: (e as any)?.dress_code ?? '' }
       }).filter(e => e.enabled && e.date.length > 0)
     : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
-
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true, countdown: couple.section_visibility?.countdown ?? true,
     timeline: couple.section_visibility?.timeline ?? true, seat_finder: couple.section_visibility?.seat_finder ?? true,
     music: couple.section_visibility?.music ?? true, thank_you: couple.section_visibility?.thank_you ?? true,
   }
-
   const W = {
     bride: couple.bride, groom: couple.groom, brideFamilyName: couple.bride_family || '', groomFamilyName: couple.groom_family || '',
     date: couple.wedding_date, couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
-
   const giftEnabled = (couple as any).enable_gift_section ?? true
   const brideBank = { bank: (couple as any).bride_bank_name || '', accountName: (couple as any).bride_bank_account_name || '', accountNumber: (couple as any).bride_bank_account_number || '' }
   const groomBank = { bank: (couple as any).groom_bank_name || '', accountName: (couple as any).groom_bank_account_name || '', accountNumber: (couple as any).groom_bank_account_number || '' }
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
-
   const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
   const contactList: { name: string; phone: string }[] = flexContacts.length > 0
     ? flexContacts
@@ -584,52 +593,28 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
         ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
         ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
       ]
-
-  const invitationBgPhoto = (couple as any).invitation_background_image || ''
-
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM, position: "relative" }}>
-      {/* Background — either the couple's own uploaded photo, or a subtle
-          lavender floral pattern by default. Fixed in place (doesn't
-          scroll with the page) so it sits calmly behind all content. */}
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
-        backgroundImage: invitationBgPhoto
-          ? `url("${invitationBgPhoto}")`
-          : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%235B4A80' stroke-width='2' opacity='0.55'%3E%3Cg transform='translate(30,30)'%3E%3Cpath d='M0-14C-8-14-14-8-14 0S-8 14 0 14 14 8 14 0-8-14 0-14Z' /%3E%3Ccircle r='3.2' fill='%235B4A80' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(105,80)'%3E%3Cpath d='M0-11C-7-11-11-7-11 0S-7 11 0 11 11 7 11 0-7-11 0-11Z' /%3E%3Ccircle r='2.8' fill='%235B4A80' stroke='none' /%3E%3C/g%3E%3Cg transform='translate(60,115)'%3E%3Cpath d='M0-9C-5-9-9-5-9 0S-5 9 0 9 9 5 9 0-5-9 0-9Z' /%3E%3Ccircle r='2.2' fill='%235B4A80' stroke='none' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        backgroundRepeat: invitationBgPhoto ? "no-repeat" : "repeat",
-        backgroundSize: invitationBgPhoto ? "cover" : "140px 140px",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-      }} />
-      {/* Soft tint over a custom photo so the glass cards on top stay
-          readable — the default floral pattern is already subtle enough
-          to skip this. */}
-      {invitationBgPhoto && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", background: `${CREAM}cc` }} />
-      )}
-
+      <FallingFlowers primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
       <div style={{ position: "relative", zIndex: 1 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@300;400;500;600;700&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+        @keyframes petalFall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; } 8% { opacity: 0.9; } 92% { opacity: 0.9; } 100% { transform: translateY(112vh) rotate(360deg); opacity: 0; } }
+        @keyframes petalSway { 0%, 100% { margin-left: 0px; } 50% { margin-left: var(--sway, 20px); } }
         input::placeholder { color: #b7a9d1; }
       `}</style>
-
       <AnimatePresence onExitComplete={() => setIntroGone(true)}>
         {showIntro && guestName && (
           <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
         )}
       </AnimatePresence>
-
       <div style={{ maxWidth: 480, margin: "0 auto", boxShadow: "0 0 80px rgba(0,0,0,0.08)", position: "relative" }}>
-
         {/* ══ COVER ══ */}
         <AnimatePresence>
           {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
-
               {/* The video (if any) starts playing muted from page load —
                   exactly like Eternal Bloom's proven-reliable mobile
                   pattern — but stays completely hidden behind the opaque
@@ -650,33 +635,26 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 zIndex: 2, opacity: videoRevealed ? 0 : 1, transition: "opacity 0.7s ease",
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3 }} />
-
               {/* Corner insignia flourishes */}
               <div style={{ position: "absolute", top: 16, left: 16, zIndex: 4, opacity: 0.35 }}><Insignia color="#fff" size={40} /></div>
               <div style={{ position: "absolute", top: 16, right: 16, zIndex: 4, opacity: 0.35 }}><Insignia color="#fff" size={40} /></div>
-
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem" }}>
-
                 <div style={{
                   ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 500,
                   fontSize: 15, letterSpacing: "0.12em", color: "#fff", marginBottom: "1.1rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)",
                 }}>
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
-
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.bride}</div>
                 <div style={{ margin: "10px 0" }}><RibbonDivider color={PRIMARY_LIGHT} primaryLight="rgba(255,255,255,0.5)" /></div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.groom}</div>
-
                 <div style={{ ...ts('tagline'), fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.3rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   With honour and devotion,<br />we stand together as one
                 </div>
-
                 {guestName && (
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "1.2rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
-
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
                   display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
@@ -690,11 +668,9 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* ══ INVITATION ══ */}
         {opened && (
           <motion.div initial={false} animate={{ opacity: 1 }}>
-
             {/* Hero */}
             <div style={{ position: "relative", height: 560, overflow: "hidden" }}>
               {coverVideoUrl ? (
@@ -728,7 +704,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </motion.div>
               </div>
             </div>
-
             {/* Family / blessing card */}
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -744,7 +719,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
@@ -777,7 +751,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </motion.div>
               )
             })}
-
             {/* Countdown */}
             {sv.countdown && (
               <motion.div id="savethedate" style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -785,10 +758,8 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} />
               </motion.div>
             )}
-
             {/* RSVP */}
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
-
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -806,7 +777,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Gift */}
             {giftEnabled && hasGiftDetails && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -819,7 +789,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div id="gallery" style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -836,7 +805,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
               <motion.div id="wishes" style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -846,7 +814,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
-
             {/* Seat finder */}
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -855,7 +822,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
-
             {/* Music */}
             {sv.music && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -869,7 +835,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 )}
               </motion.div>
             )}
-
             {/* Dress Code */}
             {(((couple as any).dress_code_gents && (couple as any).dress_code_gents.trim()) || ((couple as any).dress_code_ladies && (couple as any).dress_code_ladies.trim())) && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -891,7 +856,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Wedding Note */}
             {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
               <motion.div style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -903,7 +867,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: PRIMARY }}>{W.bride}<span style={{ margin: "0 8px" }}>&amp;</span>{W.groom}</div>
               </motion.div>
             )}
-
             {/* Contact Numbers */}
             {contactList.length > 0 && (
               <motion.div id="contact" style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -914,7 +877,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Thank you */}
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -929,7 +891,6 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}` }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}><Insignia color={PRIMARY} size={36} opacity={0.6} /></div>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
