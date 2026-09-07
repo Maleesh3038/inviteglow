@@ -71,6 +71,27 @@ function RibbonDivider({ color, primaryLight }: { color: string; primaryLight: s
     </div>
   )
 }
+// ── Two interlocking heart outlines — used on the cover screen only, a
+// softer romantic accent alongside the rank-star Insignia used elsewhere. ──
+function DoubleHeartIcon({ color, size = 26 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size * 0.8} viewBox="0 0 40 32" style={{ display: "block" }}>
+      <path d="M14 6 C10 2, 2 4, 2 13 C2 20, 10 25, 14 28 C18 25, 26 20, 26 13 C26 4, 18 2, 14 6 Z" fill="none" stroke={color} strokeWidth="1.3" opacity="0.92" />
+      <path d="M26 6 C22 2, 14 4, 14 13 C14 20, 22 25, 26 28 C30 25, 38 20, 38 13 C38 4, 30 2, 26 6 Z" fill="none" stroke={color} strokeWidth="1.3" opacity="0.92" />
+    </svg>
+  )
+}
+// ── Thin line + heart divider — the minimal romantic divider used on the
+// cover screen (distinct from RibbonDivider, which suits the card sections). ──
+function LineHeartDivider({ color, lineColor, gap = 50, heartSize = 13 }: { color: string; lineColor: string; gap?: number; heartSize?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+      <div style={{ width: gap, height: 1, background: lineColor }} />
+      <span style={{ color, fontSize: heartSize, lineHeight: 1 }}>♥</span>
+      <div style={{ width: gap, height: 1, background: lineColor }} />
+    </div>
+  )
+}
 // ── Falling lavender flowers — a soft, continuous ambient effect that
 // drifts small flower blossoms down from the top of the screen over the
 // whole invitation. Purely decorative (pointer-events: none) so it never
@@ -684,28 +705,73 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3,
                 opacity: videoRevealed ? 0 : 1, transition: "opacity 0.5s ease",
               }} />
-              {/* Corner insignia flourishes */}
-              <div style={{ position: "absolute", top: 16, left: 16, zIndex: 4, opacity: videoRevealed ? 0 : 0.35, transition: "opacity 0.4s ease" }}><Insignia color="#fff" size={40} /></div>
-              <div style={{ position: "absolute", top: 16, right: 16, zIndex: 4, opacity: videoRevealed ? 0 : 0.35, transition: "opacity 0.4s ease" }}><Insignia color="#fff" size={40} /></div>
+              {/* Top-right cursive accent tag */}
+              <div style={{
+                position: "absolute", top: "9%", right: "7%", zIndex: 6, textAlign: "center", transform: "rotate(-8deg)",
+                opacity: videoRevealed ? 0 : 0.95, transition: "opacity 0.4s ease", pointerEvents: "none",
+              }}>
+                <div style={{ fontFamily: "'Dancing Script',cursive", fontWeight: 600, fontSize: "1.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                  Better<br />Together
+                </div>
+                <div style={{ color: PRIMARY_LIGHT, fontSize: 13, marginTop: 2 }}>♡</div>
+              </div>
+              {/* Left-side vertical accent text */}
+              <div style={{
+                position: "absolute", top: "44%", left: "7%", zIndex: 6, maxWidth: 92,
+                opacity: videoRevealed ? 0 : 0.9, transition: "opacity 0.4s ease", pointerEvents: "none",
+              }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: 13.5, color: "rgba(255,255,255,0.92)", lineHeight: 1.5, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                  A new chapter of our forever
+                </div>
+                <div style={{ width: 26, height: 1, background: "rgba(255,255,255,0.6)", marginTop: 10 }} />
+              </div>
+              {/* Bottom accent line */}
+              <div style={{
+                position: "absolute", bottom: "4%", left: "50%", transform: "translateX(-50%)", zIndex: 6, textAlign: "center", width: "90%",
+                opacity: videoRevealed ? 0 : 0.85, transition: "opacity 0.4s ease", pointerEvents: "none",
+              }}>
+                <div style={{ fontSize: 10, letterSpacing: "0.32em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                  A Lifetime of Love Begins Here
+                </div>
+                <div style={{ width: 28, height: 1, background: "rgba(255,255,255,0.55)", margin: "8px auto 0" }} />
+              </div>
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: videoRevealed ? 0 : 1, y: 0 }} transition={{ duration: videoRevealed ? 0.35 : 0.9 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem", pointerEvents: videoRevealed ? "none" : "auto" }}>
-                <div style={{
-                  ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 500,
-                  fontSize: 15, letterSpacing: "0.12em", color: "#fff", marginBottom: "1.1rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)",
-                }}>
-                  {(couple as any).cover_badge_text || 'Wedding Invitation'}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{
+                    ...ts('subtitle'), fontFamily: "'Inter',sans-serif", fontWeight: 600,
+                    fontSize: 12, letterSpacing: "0.35em", textTransform: "uppercase", color: "#fff",
+                    textShadow: "0 2px 10px rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                  }}>
+                    <span style={{ width: 30, height: 1, background: "rgba(255,255,255,0.55)" }} />
+                    {(couple as any).cover_badge_text || 'Wedding Invitation'}
+                    <span style={{ width: 30, height: 1, background: "rgba(255,255,255,0.55)" }} />
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                  <DoubleHeartIcon color={PRIMARY_LIGHT} size={30} />
+                </div>
+                <div style={{ fontSize: 9.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "2.4rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                  Two Souls <span style={{ color: PRIMARY_LIGHT }}>♥</span> One Journey <span style={{ color: PRIMARY_LIGHT }}>♥</span> Forever
                 </div>
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.bride}</div>
-                <div style={{ margin: "10px 0" }}><RibbonDivider color={PRIMARY_LIGHT} primaryLight="rgba(255,255,255,0.5)" /></div>
+                <div style={{ margin: "12px 0" }}><LineHeartDivider color={PRIMARY_LIGHT} lineColor="rgba(255,255,255,0.5)" /></div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.groom}</div>
-                <div style={{ ...ts('tagline'), fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.3rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
-                  With honour and devotion,<br />we stand together as one
+                <div style={{ ...ts('tagline'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(255,255,255,0.92)", lineHeight: 1.6, margin: "1.5rem 0 1.4rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                  Our hearts found each other,<br />and today we begin our forever.
+                </div>
+                <div style={{ margin: "0 0 1.6rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                    <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.45)" }} />
+                    <DoubleHeartIcon color="rgba(255,255,255,0.9)" size={18} />
+                    <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.45)" }} />
+                  </div>
                 </div>
                 {guestName && (
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "1.2rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
                 <button onClick={handleOpen} disabled={videoRevealed} style={{
-                  display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
+                  display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(90deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
                   cursor: videoRevealed ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
                   boxShadow: `0 8px 20px ${DARK}40`, transition: "opacity 0.2s, transform 0.2s",
