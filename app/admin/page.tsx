@@ -68,6 +68,7 @@ const emptyForm = {
   events_order: ['engagement', 'wedding', 'homecoming'] as ('engagement' | 'wedding' | 'homecoming')[],
   intro_text: '',
   cover_badge_text: '',
+  timeline_title: '',
   intro_badge_image: '',
   bible_verse: '',
   cover_background_image: '',
@@ -1462,6 +1463,7 @@ export default function AdminPage() {
         : ['engagement', 'wedding', 'homecoming'],
       intro_text: c.intro_text ?? '',
       cover_badge_text: (c as any).cover_badge_text ?? '',
+      timeline_title: (c as any).timeline_title ?? '',
       intro_badge_image: (c as any).intro_badge_image ?? '',
       bible_verse: (c as any).bible_verse ?? '',
       cover_background_image: (c as any).cover_background_image ?? '',
@@ -1542,6 +1544,7 @@ export default function AdminPage() {
       events_order: (form as any).events_order || ['engagement', 'wedding', 'homecoming'],
       intro_text: form.intro_text || null,
       cover_badge_text: (form as any).cover_badge_text || null,
+      timeline_title: (form as any).timeline_title || null,
       intro_badge_image: (form as any).intro_badge_image || null,
       bible_verse: (form as any).bible_verse || null,
       cover_background_image: (form as any).cover_background_image || null,
@@ -2310,6 +2313,11 @@ export default function AdminPage() {
                   <MusicUploader value={form.song_url} onChange={url => setForm({ ...form, song_url: url })} />
                 </div>
                 <GalleryUploader value={form.gallery} onChange={urls => setForm({ ...form, gallery: urls })} />
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Timeline Section Title</label>
+                  <input style={inputStyle} placeholder="e.g. The Wedding Lineup" value={(form as any).timeline_title || ''} onChange={e => setForm({ ...form, timeline_title: e.target.value } as any)} />
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>The heading shown above the wedding timeline on the invitation (leave empty to use the template's default title).</div>
+                </div>
                 <TimelinePicker value={form.timeline} onChange={items => setForm({ ...form, timeline: items })} />
                 <EventsPicker value={form.events} onChange={v => setForm({ ...form, events: v })}
                   order={(form as any).events_order || ['engagement', 'wedding', 'homecoming']}
