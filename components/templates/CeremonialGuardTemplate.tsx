@@ -574,24 +574,9 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
-  // Matches the Eternal Bloom flow: tapping "Open Invitation" reveals the
-  // video (which has been playing muted underneath the photo since page
-  // load, for mobile-autoplay reliability) before the main invitation opens.
-  const [videoPlaying, setVideoPlaying] = useState(false)
-  const [videoRevealed, setVideoRevealed] = useState(false)
-  const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Cover stays a plain photo — the couple's video (if any) only plays once
+  // the guest has actually opened the invitation, in the Hero section below.
   const handleOpen = () => {
-    audioRef.current?.play().catch(() => {})
-    if (coverVideoUrl) {
-      setVideoPlaying(true)
-      setVideoRevealed(true)
-      videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
-    } else {
-      handleVideoEnded()
-    }
-  }
-  const handleVideoEnded = () => {
-    if (videoTimerRef.current) { clearTimeout(videoTimerRef.current); videoTimerRef.current = null }
     setOpened(true)
     audioRef.current?.play().catch(() => {})
   }
@@ -656,24 +641,13 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
           {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
-              {/* The video (if any) starts playing muted from page load —
-                  exactly like Eternal Bloom's proven-reliable mobile
-                  pattern — but stays completely hidden behind the opaque
-                  photo (z-index above it) until "Open Invitation" is
-                  tapped, at which point the photo fades away to reveal the
-                  video that's already been playing underneath. This keeps
-                  mobile autoplay reliable while still looking exactly like
-                  "photo, then click, then video" to the guest. */}
-              {coverVideoUrl && (
-                <video autoPlay muted loop playsInline preload="auto"
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
-                  <source src={coverVideoUrl} type="video/mp4" />
-                </video>
-              )}
+              {/* Cover is always a plain photo — the couple's video (if
+                  uploaded) is saved for the Hero section once the guest
+                  actually opens the invitation. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{
                 position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
-                zIndex: 2, opacity: videoRevealed ? 0 : 1, transition: "opacity 0.7s ease",
+                zIndex: 2,
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3 }} />
               {/* Corner insignia flourishes */}
@@ -696,15 +670,15 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 {guestName && (
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "1.2rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
-                <button onClick={handleOpen} disabled={videoPlaying} style={{
+                <button onClick={handleOpen} style={{
                   display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
-                  boxShadow: `0 8px 20px ${DARK}40`, opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s, transform 0.2s",
+                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
+                  boxShadow: `0 8px 20px ${DARK}40`, transition: "opacity 0.2s, transform 0.2s",
                 }}>
-                  {videoPlaying ? "Playing..." : "Open Invitation →"}
+                  Open Invitation →
                 </button>
-                {!videoPlaying && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", marginTop: 13 }}>🎵 Tap to begin — with music</div>}
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", marginTop: 13 }}>🎵 Tap to begin — with music</div>
               </motion.div>
             </motion.div>
           )}
