@@ -574,11 +574,33 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
-  // Cover stays a plain photo — the couple's video (if any) only plays once
-  // the guest has actually opened the invitation, in the Hero section below.
-  const handleOpen = () => {
+  // Cover starts as a plain photo. If the couple uploaded a video, tapping
+  // "Open Invitation" fades the photo/text away and plays that video full-
+  // screen, once, with no text over it — then automatically opens the
+  // invitation when the video ends. The video is mounted from page load
+  // (muted, autoplay, looping) so it's already playing by the time the
+  // guest taps — this is what makes the reveal instant and reliable on
+  // mobile, rather than trying to start playback from a cold click.
+  const coverVideoRef = useRef<HTMLVideoElement | null>(null)
+  const [videoRevealed, setVideoRevealed] = useState(false)
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const finishOpening = () => {
+    if (openTimerRef.current) { clearTimeout(openTimerRef.current); openTimerRef.current = null }
     setOpened(true)
+  }
+  const handleOpen = () => {
     audioRef.current?.play().catch(() => {})
+    const v = coverVideoRef.current
+    if (coverVideoUrl && v) {
+      v.loop = false
+      try { v.currentTime = 0 } catch {}
+      v.play().catch(() => {})
+      setVideoRevealed(true)
+      const fallbackMs = (v.duration && isFinite(v.duration) && v.duration > 0) ? v.duration * 1000 + 500 : 8000
+      openTimerRef.current = setTimeout(finishOpening, fallbackMs)
+    } else {
+      finishOpening()
+    }
   }
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '🎖️' }, homecoming: { label: 'Homecoming', icon: '🏡' },
@@ -641,20 +663,32 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
           {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
-              {/* Cover is always a plain photo — the couple's video (if
-                  uploaded) is saved for the Hero section once the guest
-                  actually opens the invitation. */}
+              {/* If the couple uploaded a video, it's mounted here from page
+                  load — muted, autoplay, looping — so it is already
+                  playing by the time "Open Invitation" is tapped (the
+                  reliable mobile-autoplay pattern). It stays completely
+                  hidden behind the opaque photo until tapped. */}
+              {coverVideoUrl && (
+                <video ref={coverVideoRef} autoPlay muted loop playsInline preload="auto"
+                  onEnded={finishOpening}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
+                  <source src={coverVideoUrl} type="video/mp4" />
+                </video>
+              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{
                 position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
-                zIndex: 2,
+                zIndex: 2, opacity: videoRevealed ? 0 : 1, transition: "opacity 0.6s ease",
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3 }} />
+              <div style={{
+                position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3,
+                opacity: videoRevealed ? 0 : 1, transition: "opacity 0.5s ease",
+              }} />
               {/* Corner insignia flourishes */}
-              <div style={{ position: "absolute", top: 16, left: 16, zIndex: 4, opacity: 0.35 }}><Insignia color="#fff" size={40} /></div>
-              <div style={{ position: "absolute", top: 16, right: 16, zIndex: 4, opacity: 0.35 }}><Insignia color="#fff" size={40} /></div>
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}
-                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+              <div style={{ position: "absolute", top: 16, left: 16, zIndex: 4, opacity: videoRevealed ? 0 : 0.35, transition: "opacity 0.4s ease" }}><Insignia color="#fff" size={40} /></div>
+              <div style={{ position: "absolute", top: 16, right: 16, zIndex: 4, opacity: videoRevealed ? 0 : 0.35, transition: "opacity 0.4s ease" }}><Insignia color="#fff" size={40} /></div>
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: videoRevealed ? 0 : 1, y: 0 }} transition={{ duration: videoRevealed ? 0.35 : 0.9 }}
+                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem", pointerEvents: videoRevealed ? "none" : "auto" }}>
                 <div style={{
                   ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 500,
                   fontSize: 15, letterSpacing: "0.12em", color: "#fff", marginBottom: "1.1rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)",
@@ -670,10 +704,10 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 {guestName && (
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "1.2rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
-                <button onClick={handleOpen} style={{
+                <button onClick={handleOpen} disabled={videoRevealed} style={{
                   display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
+                  cursor: videoRevealed ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
                   boxShadow: `0 8px 20px ${DARK}40`, transition: "opacity 0.2s, transform 0.2s",
                 }}>
                   Open Invitation →
