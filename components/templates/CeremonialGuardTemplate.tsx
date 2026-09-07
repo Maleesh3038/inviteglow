@@ -595,7 +595,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
       ]
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM, position: "relative" }}>
-      <FallingFlowers primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />
+      {opened && <FallingFlowers primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
       <div style={{ position: "relative", zIndex: 1 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@300;400;500;600;700&display=swap');
