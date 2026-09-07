@@ -851,7 +851,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
             {/* Dress Code */}
-            {(((couple as any).dress_code_gents && (couple as any).dress_code_gents.trim()) || ((couple as any).dress_code_ladies && (couple as any).dress_code_ladies.trim())) && (
+            {(((couple as any).dress_code_gents && (couple as any).dress_code_gents.trim()) || ((couple as any).dress_code_ladies && (couple as any).dress_code_ladies.trim()) || ((couple as any).dress_code_extra_text && (couple as any).dress_code_extra_text.trim())) && (
               <motion.div style={{ ...cardStyle() }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={eyebrow(PRIMARY)}>🎽 Attire</div>
                 <div style={heading(DARK)}>Dress Code</div>
@@ -866,6 +866,14 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                     <div style={{ background: `${PRIMARY_LIGHT}1f`, borderRadius: 14, padding: "16px 18px" }}>
                       <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, marginBottom: 6 }}>Ladies</div>
                       <div style={{ ...ts('dress_code'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: DARK }}>{(couple as any).dress_code_ladies}</div>
+                    </div>
+                  )}
+                  {(couple as any).dress_code_extra_text && (couple as any).dress_code_extra_text.trim() && (
+                    <div style={{ background: `${PRIMARY_LIGHT}1f`, borderRadius: 14, padding: "16px 18px" }}>
+                      <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, marginBottom: 6 }}>
+                        {((couple as any).dress_code_extra_label && (couple as any).dress_code_extra_label.trim()) || 'Other'}
+                      </div>
+                      <div style={{ ...ts('dress_code'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: DARK }}>{(couple as any).dress_code_extra_text}</div>
                     </div>
                   )}
                 </div>
