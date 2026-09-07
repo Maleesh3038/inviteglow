@@ -81,6 +81,8 @@ const emptyForm = {
   show_wedding_note: true,
   dress_code_gents: '',
   dress_code_ladies: '',
+  dress_code_extra_label: '',
+  dress_code_extra_text: '',
   invitation_background_image: '',
   wedding_note_text: '',
   wedding_note_background_image: '',
@@ -1473,6 +1475,8 @@ export default function AdminPage() {
       show_wedding_note: (c as any).show_wedding_note ?? true,
       dress_code_gents: (c as any).dress_code_gents ?? '',
       dress_code_ladies: (c as any).dress_code_ladies ?? '',
+      dress_code_extra_label: (c as any).dress_code_extra_label ?? '',
+      dress_code_extra_text: (c as any).dress_code_extra_text ?? '',
       invitation_background_image: (c as any).invitation_background_image ?? '',
       wedding_note_text: (c as any).wedding_note_text ?? '',
       wedding_note_background_image: (c as any).wedding_note_background_image ?? '',
@@ -1551,6 +1555,8 @@ export default function AdminPage() {
       show_wedding_note: (form as any).show_wedding_note,
       dress_code_gents: (form as any).dress_code_gents || null,
       dress_code_ladies: (form as any).dress_code_ladies || null,
+      dress_code_extra_label: (form as any).dress_code_extra_label || null,
+      dress_code_extra_text: (form as any).dress_code_extra_text || null,
       invitation_background_image: (form as any).invitation_background_image || null,
       wedding_note_text: (form as any).wedding_note_text || null,
       wedding_note_background_image: (form as any).wedding_note_background_image || null,
@@ -2373,12 +2379,23 @@ export default function AdminPage() {
                       value={(form as any).dress_code_gents || ''}
                       onChange={e => setForm({ ...form, dress_code_gents: e.target.value } as any)} />
                   </div>
-                  <div>
+                  <div style={{ marginBottom: 14 }}>
                     <label style={labelStyle}>Ladies</label>
                     <textarea style={{ ...inputStyle, minHeight: 50, resize: 'vertical', marginBottom: 0 }}
                       placeholder='e.g. "You know what looks good on you."'
                       value={(form as any).dress_code_ladies || ''}
                       onChange={e => setForm({ ...form, dress_code_ladies: e.target.value } as any)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Custom Topic (optional — e.g. "Kids", "Bridesmaids", "Family")</label>
+                    <input style={{ ...inputStyle, marginBottom: 8 }} placeholder="Topic name — e.g. Kids"
+                      value={(form as any).dress_code_extra_label || ''}
+                      onChange={e => setForm({ ...form, dress_code_extra_label: e.target.value } as any)} />
+                    <textarea style={{ ...inputStyle, minHeight: 50, resize: 'vertical', marginBottom: 0 }}
+                      placeholder='e.g. "Keep it comfy and colourful!"'
+                      value={(form as any).dress_code_extra_text || ''}
+                      onChange={e => setForm({ ...form, dress_code_extra_text: e.target.value } as any)} />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Name this topic anything you like — it only shows once you add guidance text below it.</div>
                   </div>
                 </div>
                 <div style={{ background: '#f5f3ff', borderRadius: 14, padding: 18, marginBottom: 20, border: '1px solid #ddd6fe' }}>
