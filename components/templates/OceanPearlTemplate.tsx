@@ -4,13 +4,11 @@ import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
 import FooterSocial from '@/components/shared/FooterSocial'
-
 const DEFAULT_PHOTO = "/images/hero-ocean-pearl.png"
 const DEFAULT_COVER_VIDEO = "https://eqacrwhbrfqcnlgegvtl.supabase.co/storage/v1/object/public/wedding-photos/videos/ocean-pearl-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
-
 const DEFAULT_PALETTE = {
   primary: "#2f7d9e",
   primaryLight: "#7fc4d8",
@@ -18,7 +16,6 @@ const DEFAULT_PALETTE = {
   cream: "#f0f9fb",
   muted: "#6a98a8",
 }
-
 // ── Per-element text style overrides. Reads couple.text_styles (set from
 // the "Text & Fonts" panel in the customer dashboard editor) and merges
 // a color/font override on top of the template's own default styling.
@@ -39,7 +36,6 @@ function useTextStyles(couple: any) {
     }
   }
 }
-
 // ── Guest intro screen — ocean wave shimmer, "Dear [Name]," shown for ~5s
 // before the cover. Toggle via couple.show_guest_intro (defaults to on). ──
 // ── Floating bottom nav bar — modern narrow pill, quick jump to key
@@ -47,7 +43,6 @@ function useTextStyles(couple: any) {
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
-
 function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
   primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
 }) {
@@ -62,13 +57,11 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
     setPlaying(!a.paused)
     return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
   }, [audioRef])
-
   const toggleMusic = () => {
     const a = audioRef.current
     if (!a) return
     a.paused ? a.play().catch(() => {}) : a.pause()
   }
-
   const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
     <button key={key} onClick={onClick} aria-label={label} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
@@ -78,7 +71,6 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
       <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
     </button>
   )
-
   return (
     <div style={{
       position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)',
@@ -104,7 +96,6 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
             <span style={{ fontSize: 8 }}>Location</span>
           </a>
         )}
-
         {/* Raised music toggle, floating on the right edge of the pill */}
         <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
           position: 'absolute', right: 4, top: -16,
@@ -129,7 +120,6 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
     </div>
   )
 }
-
 function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, badgeImage }: {
   guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; badgeImage: string
 }) {
@@ -143,7 +133,6 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
       <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}33, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
-
       <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
         style={{ width: 78, height: 78, borderRadius: "50%", marginBottom: "1.6rem", position: "relative", zIndex: 1, background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 8px 24px ${primary}33`, overflow: "hidden" }}>
         {badgeImage ? (
@@ -166,25 +155,20 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
           </svg>
         )}
       </motion.div>
-
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
         style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
           Dear <span style={{ color: primary, fontWeight: 600 }}>{guestName}</span>,
         </div>
       </motion.div>
-
       <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }}
         style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)`, margin: "0 auto 1rem" }} />
-
       <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
         style={{ fontSize: 10, textTransform: "uppercase", color: `${primary}bb`, fontFamily: "'Inter',sans-serif" }}>
         Where the Tide Meets Eternity
       </motion.div>
-
       <motion.div style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100 }}
         initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }} onAnimationComplete={onDone} />
-
       <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 2 }} onClick={onDone}
         style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
         Skip →
@@ -192,7 +176,6 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
     </motion.div>
   )
 }
-
 function Countdown({ targetDate, primary, primaryLight, dark, muted }: { targetDate: string; primary: string; primaryLight: string; dark: string; muted: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
@@ -218,7 +201,6 @@ function Countdown({ targetDate, primary, primaryLight, dark, muted }: { targetD
     </div>
   )
 }
-
 function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string }) {
   const [playing, setPlaying] = useState(false); const [prog, setProg] = useState(0)
   useEffect(() => {
@@ -243,7 +225,6 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
     </div>
   )
 }
-
 function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
@@ -299,7 +280,6 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
     </div>
   )
 }
-
 function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<string, string>; primary: string; dark: string; cream: string; muted: string }) {
   const [q, setQ] = useState(""); const [res, setRes] = useState("")
   const search = () => {
@@ -318,7 +298,6 @@ function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<stri
     </div>
   )
 }
-
 // ── Guest Wishes Wall ──────────────────────────────────────────────
 type WishMedia = { url: string; type: 'photo' | 'video' }
 type Wish = {
@@ -331,7 +310,6 @@ type Wish = {
   media: WishMedia[] | null
   created_at: string
 }
-
 async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: string; isVideo: boolean }> {
   const isVideo = file.type.startsWith('video/')
   const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
@@ -341,14 +319,12 @@ async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: str
   const { data } = supabase.storage.from('wishes').getPublicUrl(path)
   return { url: data.publicUrl, isVideo }
 }
-
 function getWishMedia(w: Wish): WishMedia[] {
   if (w.media && w.media.length > 0) return w.media
   if (w.photo_url) return [{ url: w.photo_url, type: 'photo' }]
   if (w.video_url) return [{ url: w.video_url, type: 'video' }]
   return []
 }
-
 function WishLightbox({ media, index, onIndex, onClose }: {
   media: WishMedia[]; index: number; onIndex: (i: number) => void; onClose: () => void
 }) {
@@ -390,7 +366,6 @@ function WishLightbox({ media, index, onIndex, onClose }: {
     </div>
   )
 }
-
 function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: number) => void }) {
   if (media.length === 0) return null
   const shown = media.slice(0, 4)
@@ -424,7 +399,6 @@ function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: 
     </div>
   )
 }
-
 function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
   coupleId: string; primary: string; primaryLight: string; dark: string; cream: string; muted: string
 }) {
@@ -439,7 +413,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
   const [page, setPage] = useState(0)
   const PER_PAGE = 3
   const [lightbox, setLightbox] = useState<{ media: WishMedia[]; index: number } | null>(null)
-
   useEffect(() => {
     let active = true
     const load = async () => {
@@ -454,7 +427,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
       .subscribe()
     return () => { active = false; supabase.removeChannel(channel) }
   }, [coupleId])
-
   const submit = async () => {
     if (!name.trim() || !message.trim()) {
       setError('Please add your name and a message.')
@@ -482,9 +454,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
       setSubmitting(false)
     }
   }
-
   const inputStyle: React.CSSProperties = { width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif" }
-
   return (
     <div>
       <div style={{ background: "#fff", borderRadius: 16, padding: '18px 16px', textAlign: 'left', marginBottom: 18, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
@@ -532,7 +502,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
           </>
         )}
       </div>
-
       {loading ? (
         <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Loading wishes...</div>
       ) : wishes.length === 0 ? (
@@ -583,7 +552,6 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
     </div>
   )
 }
-
 // ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
 // flexible `contacts` list first; if that's empty, falls back to the
 // classic bride_phone/groom_phone fields so older invitations keep
@@ -618,11 +586,9 @@ function ContactRow({ name, phone, primary }: { name: string; phone: string; pri
     </div>
   )
 }
-
 const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }
 const sectionEyebrow = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6, fontWeight: 600 })
 const sectionTitle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
-
 export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#e0f2f7" }} />}>
@@ -630,7 +596,6 @@ export default function OceanPearlTemplate({ couple }: { couple: Couple }) {
     </Suspense>
   )
 }
-
 function OceanPearlInner({ couple }: { couple: Couple }) {
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
@@ -639,7 +604,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ts = useTextStyles(couple)
-
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
@@ -653,15 +617,12 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
   const hasCustomPhoto = !!couple.couple_photo
   const explicitCoverVideo = (couple as any).cover_video_url || ''
   const coverVideoUrl = explicitCoverVideo || (hasCustomPhoto ? '' : DEFAULT_COVER_VIDEO)
-
   useEffect(() => {
     const audio = new Audio(couple.song_url || DEFAULT_SONG_URL)
     audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [couple])
-
   const handleOpen = () => { setOpened(true); audioRef.current?.play().catch(() => {}) }
-
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '👰' }, homecoming: { label: 'Homecoming', icon: '🏡' },
   }
@@ -673,20 +634,17 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
         return { key, ...EVENT_META[key], enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
       }).filter(e => e.enabled && e.date.length > 0)
     : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
-
   const sv = {
     gallery: couple.section_visibility?.gallery ?? true, countdown: couple.section_visibility?.countdown ?? true,
     timeline: couple.section_visibility?.timeline ?? true, seat_finder: couple.section_visibility?.seat_finder ?? true,
     music: couple.section_visibility?.music ?? true, thank_you: couple.section_visibility?.thank_you ?? true,
   }
-
   const W = {
     bride: couple.bride, groom: couple.groom, brideFamilyName: couple.bride_family || '', groomFamilyName: couple.groom_family || '',
     date: couple.wedding_date, couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
-
   const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.name && c?.phone) : []
   const contactList: { name: string; phone: string }[] = flexContacts.length > 0
     ? flexContacts
@@ -694,7 +652,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
         ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
         ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
       ]
-
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#e0f2f7" }}>
       <style>{`
@@ -703,20 +660,16 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
         @keyframes wave-drift { 0%,100%{transform:translateX(0);} 50%{transform:translateX(-14px);} }
         input::placeholder { color: #9cc4d0; }
       `}</style>
-
       <AnimatePresence>
         {showIntro && guestName && (
           <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} badgeImage={(couple as any).intro_badge_image || ''} />
         )}
       </AnimatePresence>
-
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
-
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
-
               {coverVideoUrl ? (
                 <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
                   onLoadedMetadata={e => { try { e.currentTarget.currentTime = 2 } catch { } }}
@@ -730,30 +683,24 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(13,46,58,0.45) 0%, rgba(13,46,58,0.15) 35%, rgba(13,46,58,0.3) 65%, rgba(13,46,58,0.7) 100%)` }} />
-
               {/* Wave decoration at bottom */}
               <svg style={{ position: "absolute", bottom: 0, left: 0, right: 0, animation: "wave-drift 8s ease-in-out infinite" }} viewBox="0 0 400 60" preserveAspectRatio="none" width="120%" height="60">
                 <path d="M0 30 Q50 10 100 30 T200 30 T300 30 T400 30 V60 H0 Z" fill={PRIMARY_LIGHT} opacity="0.35" />
               </svg>
-
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
-
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
-
                 <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                   {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.1rem 0" }}>&amp;</div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
-
                 <div style={{ ...ts('tagline'), fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   Where the tide meets eternity,<br />we begin our forever
                 </div>
-
                 <button onClick={handleOpen} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
@@ -766,10 +713,8 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
             </motion.div>
           )}
         </AnimatePresence>
-
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
-
             <div style={{ position: "relative", height: 460, overflow: "hidden" }}>
               {coverVideoUrl ? (
                 <video autoPlay muted playsInline preload="auto" poster={W.couplePhoto}
@@ -795,7 +740,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </div>
               </div>
             </div>
-
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>With Love</div>
@@ -807,7 +751,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -839,20 +782,17 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </motion.div>
               )
             })}
-
             {sv.countdown && (
               <div id="savethedate" style={{ ...sectionCard, textAlign: "center" }}>
                 <div style={{ ...sectionEyebrow(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </div>
             )}
-
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
-
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
-                <div style={sectionTitle(DARK)}>The Wedding Lineup</div>
+                <div style={sectionTitle(DARK)}>{(couple as any).timeline_title || 'The Wedding Lineup'}</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
                   <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}77` }} />
                   {W.timeline.map((t, i) => (
@@ -865,7 +805,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
               <motion.div id="wishes" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -877,7 +816,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
-
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Be Our Guest</div>
@@ -886,14 +824,12 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
             )}
-
             {sv.music && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
-
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div id="gallery" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
@@ -908,7 +844,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {contactList.length > 0 && (
               <motion.div id="contact" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Get In Touch</div>
@@ -918,7 +853,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             {sv.thank_you && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>A Special Note</div>
@@ -932,7 +866,6 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 </div>
               </motion.div>
             )}
-
             <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#9cc4d0" }}>inviteglow.com · Digital Wedding Invitations</div>
