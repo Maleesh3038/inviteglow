@@ -1336,14 +1336,13 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <Reveal id="gallery">
               <div style={capsHeading}>Our Moments</div>
               {divider}
-              {/* Masonry-style (CSS columns) so every photo shows at its own
-                  natural proportions — no cropping, and no empty letterbox
-                  space around portrait/landscape shots like a fixed square
-                  grid would leave. */}
-              <div style={{ columnCount: 2, columnGap: 8, marginTop: 4 }}>
+              {/* Single column, full-width — every photo shows at its own
+                  natural proportions (no cropping) and stacks cleanly on a
+                  phone screen with no leftover empty space beside it. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
                 {couple.gallery.map((url, i) => (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={i} src={url} alt="" style={{ width: '100%', display: 'block', borderRadius: 12, marginBottom: 8, breakInside: 'avoid' }} />
+                  <img key={i} src={url} alt="" style={{ width: '100%', display: 'block', borderRadius: 12 }} />
                 ))}
               </div>
             </Reveal>
