@@ -815,6 +815,180 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
   )
 }
 
+const BB_WRAP: React.CSSProperties = { maxWidth: 420, margin: '0 auto', padding: '0 24px' }
+
+function Reveal({ id, mt = 56, wide = false, children }: { id?: string; mt?: number; wide?: boolean; children: React.ReactNode }) {
+  return (
+    <div id={id} className={wide ? 'bb-wrap-wide' : undefined}
+      style={{ ...(wide ? {} : BB_WRAP), marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      {children}
+    </div>
+  )
+}
+
+// RSVP is its own component so that typing in the name/guest-count fields
+// only re-renders this small form — not the whole page (map iframes, the
+// wishes wall, the music player, etc). Previously all of that lived in the
+// same giant component as the RSVP state, so every keystroke re-rendered
+// the entire invitation and typing felt laggy/unresponsive on slower phones.
+function RsvpBlock({ couple, colors, guestName }: {
+  couple: Couple; colors: { primary: string; primaryLight: string; dark: string }; guestName: string
+}) {
+  const [showRsvpForm, setShowRsvpForm] = useState(false)
+  const [guestNameInput, setGuestNameInput] = useState(guestName)
+  const [response, setResponse] = useState<'yes' | 'no' | null>(null)
+  // Kept as a string (not a number) while the field is being edited, so the
+  // guest can clear the "1" and type a fresh value instead of it snapping
+  // back to 1 on every keystroke. It's parsed/clamped to 1-10 on blur and
+  // on submit.
+  const [guestCount, setGuestCount] = useState('1')
+  const [drinking, setDrinking] = useState<'yes' | 'no' | ''>('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [rsvpMessage, setRsvpMessage] = useState('')
+
+  const clampedGuestCount = () => Math.max(1, Math.min(10, parseInt(guestCount, 10) || 1))
+
+  const submitRsvp = async () => {
+    if (!guestNameInput.trim() || !response) {
+      setRsvpMessage('Please add your name and select attending or not.')
+      return
+    }
+    setSubmitting(true)
+    setRsvpMessage('')
+    const { error } = await supabase.from('rsvps').insert([{
+      couple_id: couple.id,
+      guest_name: guestNameInput.trim(),
+      response,
+      guest_count: response === 'yes' ? clampedGuestCount() : 1,
+      drinking: couple.ask_drinking && response === 'yes' ? drinking || null : null,
+    }])
+    setSubmitting(false)
+    if (error) setRsvpMessage('Something went wrong — please try again.')
+    else setSubmitted(true)
+  }
+
+  const capsHeading: React.CSSProperties = {
+    fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 700, letterSpacing: '0.12em',
+    color: colors.dark, textAlign: 'center',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textTransform: 'uppercase',
+  }
+  const cardStyle: React.CSSProperties = {
+    background: PURPLE_BOX, borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
+  }
+  const iconBadge: React.CSSProperties = {
+    width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  }
+
+  return (
+    <Reveal id="rsvp-form">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 22px' }}>
+        <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+        <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
+        <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+      </div>
+      <div style={{ ...iconBadge, margin: '0 auto 16px' }}>
+        <Icon name="gift" size={16} color={colors.primary} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 18px' }}>
+        <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+        <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
+        <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
+      </div>
+
+      {submitted ? (
+        <div>
+          <div style={{ fontSize: 13.5, color: colors.dark, fontWeight: 700 }}>Thank you!</div>
+          <div style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6, marginTop: 4 }}>Your response has been recorded.</div>
+        </div>
+      ) : !showRsvpForm ? (
+        <>
+          <p style={{ fontSize: 13, color: colors.dark, opacity: 0.75, marginBottom: 20, fontWeight: 600 }}>
+            Please confirm your attendance by clicking the button below.
+          </p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => setShowRsvpForm(true)} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '13px 26px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              background: colors.primary, color: '#fff', fontWeight: 700, fontSize: 13.5,
+              boxShadow: `0 8px 20px ${colors.primary}55`,
+            }}>
+              <Icon name="check" size={13} color="#fff" />
+              Confirm Attendance
+            </button>
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
+              padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
+              background: PURPLE_BOX, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              boxShadow: `0 4px 14px ${colors.dark}0d`,
+            }}>Back to Top Details</button>
+          </div>
+        </>
+      ) : (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...cardStyle, padding: '20px 18px', textAlign: 'left' }}>
+          <input
+            value={guestNameInput} onChange={e => setGuestNameInput(e.target.value)}
+            placeholder="Your name"
+            style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', marginBottom: 12, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <button type="button" onClick={() => setResponse('yes')} style={{
+              flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              background: response === 'yes' ? colors.primary : colors.primaryLight,
+              color: response === 'yes' ? '#fff' : colors.dark,
+            }}><Icon name="check" size={13} color={response === 'yes' ? '#fff' : colors.dark} />Accept</button>
+            <button type="button" onClick={() => setResponse('no')} style={{
+              flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              background: response === 'no' ? colors.dark : colors.primaryLight,
+              color: response === 'no' ? '#fff' : colors.dark,
+            }}><Icon name="cross" size={13} color={response === 'no' ? '#fff' : colors.dark} />Decline</button>
+          </div>
+          {response === 'yes' && (
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Number of guests</label>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" value={guestCount}
+                onChange={e => {
+                  const v = e.target.value
+                  if (v === '' || /^[0-9]{1,2}$/.test(v)) setGuestCount(v)
+                }}
+                onBlur={() => setGuestCount(String(clampedGuestCount()))}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }} />
+            </div>
+          )}
+          {response === 'yes' && couple.ask_drinking && (
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Will you be drinking alcohol?</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={() => setDrinking('yes')} style={{
+                  flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                  background: drinking === 'yes' ? colors.primary : colors.primaryLight, color: drinking === 'yes' ? '#fff' : colors.dark,
+                }}>Yes</button>
+                <button type="button" onClick={() => setDrinking('no')} style={{
+                  flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                  background: drinking === 'no' ? colors.primary : colors.primaryLight, color: drinking === 'no' ? '#fff' : colors.dark,
+                }}>No</button>
+              </div>
+            </div>
+          )}
+          {rsvpMessage && <div style={{ fontSize: 11.5, color: colors.primary, marginBottom: 10 }}>{rsvpMessage}</div>}
+          <button onClick={submitRsvp} disabled={submitting} style={{
+            width: '100%', padding: 13, borderRadius: 10, border: 'none', cursor: 'pointer',
+            background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 13.5, opacity: submitting ? 0.6 : 1,
+          }}>{submitting ? 'Submitting...' : 'Confirm Attendance'}</button>
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
+              padding: '9px 20px', borderRadius: 100, border: `1px solid ${colors.dark}`,
+              background: 'transparent', color: colors.dark, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+            }}>Back to Top Details</button>
+          </div>
+        </motion.div>
+      )}
+    </Reveal>
+  )
+}
+
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const [flapOpen, setFlapOpen] = useState(false)
@@ -832,7 +1006,6 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     const id = setTimeout(() => { audioRef.current?.play().catch(() => {}) }, 60)
     return () => clearTimeout(id)
   }, [opened])
-  const [showRsvpForm, setShowRsvpForm] = useState(false)
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
   const introEnabled = (couple as any).show_guest_intro !== false
@@ -880,37 +1053,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
       .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || EVENT_LABELS[k].title }))
   }, [couple])
 
-  const [guestNameInput, setGuestNameInput] = useState(guestName)
-  const [response, setResponse] = useState<'yes' | 'no' | null>(null)
-  const [guestCount, setGuestCount] = useState(1)
-  const [drinking, setDrinking] = useState<'yes' | 'no' | ''>('')
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [rsvpMessage, setRsvpMessage] = useState('')
-
   const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
-  const submitRsvp = async () => {
-    if (!guestNameInput.trim() || !response) {
-      setRsvpMessage('Please add your name and select attending or not.')
-      return
-    }
-    setSubmitting(true)
-    setRsvpMessage('')
-    const { error } = await supabase.from('rsvps').insert([{
-      couple_id: couple.id,
-      guest_name: guestNameInput.trim(),
-      response,
-      guest_count: response === 'yes' ? guestCount : 1,
-      drinking: couple.ask_drinking && response === 'yes' ? drinking || null : null,
-    }])
-    setSubmitting(false)
-    if (error) setRsvpMessage('Something went wrong — please try again.')
-    else setSubmitted(true)
-  }
-
   // ── style tokens ──
-  const wrap: React.CSSProperties = { maxWidth: 420, margin: '0 auto', padding: '0 24px' }
   const capsHeading: React.CSSProperties = {
     fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 700, letterSpacing: '0.12em',
     color: colors.dark, textAlign: 'center',
@@ -928,13 +1073,6 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   }
-  const Reveal = ({ id, mt = 56, wide = false, children }: { id?: string; mt?: number; wide?: boolean; children: React.ReactNode }) => (
-    <div id={id} className={wide ? 'bb-wrap-wide' : undefined}
-      style={{ ...(wide ? {} : wrap), marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-      {children}
-    </div>
-  )
-
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: '100vh', background: `linear-gradient(180deg, ${colors.cream} 0%, #fdeee6 55%, #fce0d2 100%)`, position: 'relative', overflowX: 'hidden' }}>
       <style>{`
@@ -1061,7 +1199,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} style={{ paddingTop: 44, paddingBottom: 70, position: 'relative' }}>
 
           {/* Heading */}
-          <div style={{ ...wrap, textAlign: 'center' }}>
+          <div style={{ ...BB_WRAP, textAlign: 'center' }}>
             <h1 style={{ ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
               {(couple as any).invitation_heading || 'Together with Love'}
             </h1>
@@ -1073,7 +1211,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           </div>
 
           {/* Couple photo card */}
-          <div style={{ ...wrap, marginTop: 22 }}>
+          <div style={{ ...BB_WRAP, marginTop: 22 }}>
             <div style={{ ...cardStyle, overflow: 'hidden' }}>
               {couple.couple_photo ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -1346,110 +1484,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               </Reveal>
             )}
 
-            {/* RSVP — no card for the prompt; a light card only appears once the form is revealed */}
-            <Reveal id="rsvp-form">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 22px' }}>
-                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
-                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
-              </div>
-              <div style={{ ...iconBadge, margin: '0 auto 16px' }}>
-                <Icon name="gift" size={16} color={colors.primary} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 18px' }}>
-                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
-                <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
-              </div>
-
-              {submitted ? (
-                <div>
-                  <div style={{ fontSize: 13.5, color: colors.dark, fontWeight: 700 }}>Thank you!</div>
-                  <div style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6, marginTop: 4 }}>Your response has been recorded.</div>
-                </div>
-              ) : !showRsvpForm ? (
-                <>
-                  <p style={{ fontSize: 13, color: colors.dark, opacity: 0.75, marginBottom: 20, fontWeight: 600 }}>
-                    Please confirm your attendance by clicking the button below.
-                  </p>
-                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <button onClick={() => setShowRsvpForm(true)} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '13px 26px', borderRadius: 100, border: 'none', cursor: 'pointer',
-                      background: colors.primary, color: '#fff', fontWeight: 700, fontSize: 13.5,
-                      boxShadow: `0 8px 20px ${colors.primary}55`,
-                    }}>
-                      <Icon name="check" size={13} color="#fff" />
-                      Confirm Attendance
-                    </button>
-                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
-                      padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
-                      background: PURPLE_BOX, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                      boxShadow: `0 4px 14px ${colors.dark}0d`,
-                    }}>Back to Top Details</button>
-                  </div>
-                </>
-              ) : (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...cardStyle, padding: '20px 18px', textAlign: 'left' }}>
-                  <input
-                    value={guestNameInput} onChange={e => setGuestNameInput(e.target.value)}
-                    placeholder="Your name"
-                    style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', marginBottom: 12, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
-                  />
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                    <button type="button" onClick={() => setResponse('yes')} style={{
-                      flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      background: response === 'yes' ? colors.primary : colors.primaryLight,
-                      color: response === 'yes' ? '#fff' : colors.dark,
-                    }}><Icon name="check" size={13} color={response === 'yes' ? '#fff' : colors.dark} />Accept</button>
-                    <button type="button" onClick={() => setResponse('no')} style={{
-                      flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      background: response === 'no' ? colors.dark : colors.primaryLight,
-                      color: response === 'no' ? '#fff' : colors.dark,
-                    }}><Icon name="cross" size={13} color={response === 'no' ? '#fff' : colors.dark} />Decline</button>
-                  </div>
-                  {response === 'yes' && (
-                    <div style={{ marginBottom: 12 }}>
-                      <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Number of guests</label>
-                      <input type="number" min={1} max={10} value={guestCount}
-                        onChange={e => setGuestCount(Math.max(1, parseInt(e.target.value) || 1))}
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }} />
-                    </div>
-                  )}
-                  {response === 'yes' && couple.ask_drinking && (
-                    <div style={{ marginBottom: 12 }}>
-                      <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Will you be drinking alcohol?</label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button type="button" onClick={() => setDrinking('yes')} style={{
-                          flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                          background: drinking === 'yes' ? colors.primary : colors.primaryLight, color: drinking === 'yes' ? '#fff' : colors.dark,
-                        }}>Yes</button>
-                        <button type="button" onClick={() => setDrinking('no')} style={{
-                          flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                          background: drinking === 'no' ? colors.primary : colors.primaryLight, color: drinking === 'no' ? '#fff' : colors.dark,
-                        }}>No</button>
-                      </div>
-                    </div>
-                  )}
-                  {rsvpMessage && <div style={{ fontSize: 11.5, color: colors.primary, marginBottom: 10 }}>{rsvpMessage}</div>}
-                  <button onClick={submitRsvp} disabled={submitting} style={{
-                    width: '100%', padding: 13, borderRadius: 10, border: 'none', cursor: 'pointer',
-                    background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 13.5, opacity: submitting ? 0.6 : 1,
-                  }}>{submitting ? 'Submitting...' : 'Confirm Attendance'}</button>
-                  <div style={{ textAlign: 'center', marginTop: 12 }}>
-                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
-                      padding: '9px 20px', borderRadius: 100, border: `1px solid ${colors.dark}`,
-                      background: 'transparent', color: colors.dark, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
-                    }}>Back to Top Details</button>
-                  </div>
-                </motion.div>
-              )}
-            </Reveal>
+            {/* RSVP — isolated into its own component (see RsvpBlock above) so
+                typing here doesn't re-render the whole invitation. */}
+            <RsvpBlock couple={couple} colors={colors} guestName={guestName} />
 
             {/* Footer flourish — matches the reference's closing monogram section */}
-            <div style={{ ...wrap, marginTop: 50, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+            <div style={{ ...BB_WRAP, marginTop: 50, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 260, margin: '0 auto 18px' }}>
                 <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
               </div>
