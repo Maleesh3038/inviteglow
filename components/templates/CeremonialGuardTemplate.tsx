@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, useRef, useId, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, Couple } from '@/lib/supabase'
@@ -76,39 +76,79 @@ function RibbonDivider({ color, primaryLight }: { color: string; primaryLight: s
 // whole invitation. Purely decorative (pointer-events: none) so it never
 // blocks taps on buttons/links underneath. Randomised once per mount via
 // useState initializers so positions don't jump on re-render. ──
-function FlowerBlossom({ color, size, flip }: { color: string; size: number; flip?: boolean }) {
+const LEAF_TONES = ["#8FA37E", "#A6B98C", "#7E9A78"]
+// A softer, more organic 5-petal blossom — teardrop petals with a
+// centre-to-tip gradient for a bit of dimension, plus a warm little
+// centre (most real blossoms — cherry, lavender sprigs — have a
+// contrasting eye) instead of a flat cut-out white dot.
+function FlowerBlossom({ colorNear, colorFar, size, flip, blur }: { colorNear: string; colorFar: string; size: number; flip?: boolean; blur?: number }) {
+  const rawId = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const gradId = `fbg-${rawId}`
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" style={{ display: "block", transform: flip ? "scaleX(-1)" : undefined }}>
+    <svg width={size} height={size} viewBox="0 0 40 40" style={{ display: "block", transform: flip ? "scaleX(-1) rotate(6deg)" : "rotate(-6deg)", filter: blur ? `blur(${blur}px)` : undefined }}>
+      <defs>
+        <radialGradient id={gradId} cx="50%" cy="20%" r="85%">
+          <stop offset="0%" stopColor={colorNear} stopOpacity="0.95" />
+          <stop offset="100%" stopColor={colorFar} stopOpacity="0.88" />
+        </radialGradient>
+      </defs>
       {[0, 72, 144, 216, 288].map((a, i) => (
-        <ellipse key={i} cx="20" cy="11" rx="6.5" ry="10" fill={color} opacity="0.88" transform={`rotate(${a} 20 20)`} />
+        <path key={i}
+          d="M20 20 C15.5 15.5, 14.5 7, 20 1.5 C25.5 7, 24.5 15.5, 20 20 Z"
+          fill={`url(#${gradId})`}
+          transform={`rotate(${a} 20 20)`}
+        />
       ))}
-      <circle cx="20" cy="20" r="4" fill="#fff" opacity="0.9" />
+      <circle cx="20" cy="20" r="3.1" fill="#FBEFD1" opacity="0.95" />
+      <circle cx="20" cy="20" r="3.1" fill="none" stroke={colorFar} strokeWidth="0.5" opacity="0.35" />
     </svg>
   )
 }
-type PetalSpec = { id: number; left: number; duration: number; delay: number; size: number; sway: number; flip: boolean; light: boolean }
-function FallingFlowers({ primary, primaryLight, count = 14 }: { primary: string; primaryLight: string; count?: number }) {
+// A small falling leaf — simple pointed-oval silhouette with a centre
+// vein, in a muted sage tone so it reads as foliage against the
+// lavender/cream palette without fighting it.
+function LeafShape({ color, size, flip }: { color: string; size: number; flip?: boolean }) {
+  return (
+    <svg width={size} height={size * 0.62} viewBox="0 0 40 24" style={{ display: "block", transform: flip ? "scaleX(-1)" : undefined }}>
+      <path d="M2 12 C9 3, 30 2, 38 12 C30 22, 9 21, 2 12 Z" fill={color} opacity="0.82" />
+      <path d="M3 12 L37 12" stroke="#fff" strokeWidth="0.7" opacity="0.3" strokeLinecap="round" />
+      <path d="M14 8 L20 12 M26 8 L20 12 M14 16 L20 12 M26 16 L20 12" stroke="#fff" strokeWidth="0.4" opacity="0.2" />
+    </svg>
+  )
+}
+type PetalKind = 'flower' | 'leaf'
+type PetalSpec = { id: number; left: number; duration: number; delay: number; size: number; sway: number; flip: boolean; kind: PetalKind; depth: number; spin: boolean; leafTone: string }
+function FallingFlowers({ primary, primaryLight, count = 16 }: { primary: string; primaryLight: string; count?: number }) {
   const [petals] = useState<PetalSpec[]>(() =>
-    Array.from({ length: count }).map((_, i) => ({
-      id: i,
-      left: Math.random() * 96,
-      duration: 12 + Math.random() * 10,
-      delay: -(Math.random() * 20),
-      size: 14 + Math.random() * 16,
-      sway: 16 + Math.random() * 24,
-      flip: Math.random() > 0.5,
-      light: Math.random() > 0.5,
-    }))
+    Array.from({ length: count }).map((_, i) => {
+      const depth = Math.random() // 0 = distant/small, 1 = close/large
+      return {
+        id: i,
+        left: Math.random() * 96,
+        duration: 20 - depth * 8 + Math.random() * 6,
+        delay: -(Math.random() * 26),
+        size: 11 + depth * 15,
+        sway: 14 + Math.random() * 24,
+        flip: Math.random() > 0.5,
+        kind: (Math.random() > 0.7 ? 'leaf' : 'flower') as PetalKind,
+        depth,
+        spin: Math.random() > 0.5,
+        leafTone: LEAF_TONES[Math.floor(Math.random() * LEAF_TONES.length)],
+      }
+    })
   )
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none", overflow: "hidden" }}>
       {petals.map(p => (
         <div key={p.id} style={{
           position: "absolute", left: `${p.left}%`, top: 0,
-          animation: `petalFall ${p.duration}s linear ${p.delay}s infinite`,
+          animation: `${p.spin ? "petalFallRev" : "petalFall"} ${p.duration}s linear ${p.delay}s infinite`,
+          ["--maxOpacity" as any]: 0.45 + p.depth * 0.5,
         }}>
           <div style={{ animation: `petalSway ${p.sway / 5}s ease-in-out infinite alternate`, ["--sway" as any]: `${p.sway}px` }}>
-            <FlowerBlossom color={p.light ? primaryLight : primary} size={p.size} flip={p.flip} />
+            {p.kind === 'flower'
+              ? <FlowerBlossom colorNear={primaryLight} colorFar={primary} size={p.size} flip={p.flip} blur={p.depth < 0.3 ? 1 : 0} />
+              : <LeafShape color={p.leafTone} size={p.size * 1.15} flip={p.flip} />}
           </div>
         </div>
       ))}
@@ -600,7 +640,8 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@300;400;500;600;700&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-        @keyframes petalFall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; } 8% { opacity: 0.9; } 92% { opacity: 0.9; } 100% { transform: translateY(112vh) rotate(360deg); opacity: 0; } }
+        @keyframes petalFall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; } 8% { opacity: var(--maxOpacity, 0.9); } 92% { opacity: var(--maxOpacity, 0.9); } 100% { transform: translateY(112vh) rotate(340deg); opacity: 0; } }
+        @keyframes petalFallRev { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; } 8% { opacity: var(--maxOpacity, 0.9); } 92% { opacity: var(--maxOpacity, 0.9); } 100% { transform: translateY(112vh) rotate(-340deg); opacity: 0; } }
         @keyframes petalSway { 0%, 100% { margin-left: 0px; } 50% { margin-left: var(--sway, 20px); } }
         input::placeholder { color: #b7a9d1; }
       `}</style>
