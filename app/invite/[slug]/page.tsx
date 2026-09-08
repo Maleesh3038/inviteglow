@@ -8,11 +8,13 @@ import InviteClient from './InviteClient'
 export const dynamic = 'force-dynamic'
 
 type Props = {
-  params: { slug: string }
+  // Next.js 15+ (this project is on Next 16) passes `params` to server
+  // pages as a Promise — it must be awaited, not read synchronously.
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = params
+  const { slug } = await params
   const { data: couple } = await supabase.from('couples').select('*').eq('slug', slug).single()
 
   if (!couple) {
@@ -66,6 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function InvitePage({ params }: Props) {
-  return <InviteClient slug={params.slug} />
+export default async function InvitePage({ params }: Props) {
+  const { slug } = await params
+  return <InviteClient slug={slug} />
 }
