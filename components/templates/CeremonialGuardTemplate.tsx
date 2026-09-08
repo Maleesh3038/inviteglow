@@ -764,7 +764,12 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%" }}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,${DARK}26 60%,${DARK}59 100%)` }} />
+              {/* Darkest right behind the text block at the bottom (where the
+                  white names/date/buttons sit), fading up to the clear photo
+                  near the top — the reverse of a "fade to cream" gradient,
+                  which was leaving the text on a near-white patch with no
+                  contrast. */}
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${DARK}e6 0%,${DARK}b0 30%,${DARK}55 55%,transparent 85%)` }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2.2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
