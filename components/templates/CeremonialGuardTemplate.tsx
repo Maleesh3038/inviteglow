@@ -767,9 +767,18 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,${DARK}26 60%,${DARK}59 100%)` }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2.2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+                    <DoubleHeartIcon color={PRIMARY_LIGHT} size={24} />
+                  </div>
                   <div style={{ fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.8)", marginBottom: "0.9rem", fontWeight: 500 }}>{(couple as any).together_with_text || "Together with their families"}</div>
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
                     <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT, fontStyle: "normal" }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
+                  </div>
+                  <div style={{ margin: "14px 0 6px" }}>
+                    <LineHeartDivider color={PRIMARY_LIGHT} lineColor="rgba(255,255,255,0.45)" gap={36} heartSize={11} />
+                  </div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem", color: "rgba(255,255,255,0.88)", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                    {W.date ? new Date(W.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Save the date'}
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
                     <a href="#rsvp" style={{
