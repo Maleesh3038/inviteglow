@@ -668,6 +668,12 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const PANEL_TEXT_DARK = '#1e293b'
 
   const [photo, setPhoto] = useState(couple.couple_photo || '')
+  // Shown as the preview thumbnail when the invitation link is shared on
+  // WhatsApp/Facebook/etc (the "og:image" the messaging app fetches). If
+  // this is an actual animated .gif file, WhatsApp animates it right in
+  // the chat bubble — that's how a "looping video preview" is achieved,
+  // since WhatsApp does not autoplay real video files in link previews.
+  const [sharePreview, setSharePreview] = useState((couple as any).share_preview_url || '')
   const [weddingDate, setWeddingDate] = useState(couple.wedding_date ? couple.wedding_date.slice(0, 16) : '')
   const [venue, setVenue] = useState(couple.venue || '')
   const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
@@ -756,6 +762,15 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
     if (url) setPhoto(url)
   }
 
+  const [sharePreviewUploading, setSharePreviewUploading] = useState(false)
+  const sharePreviewInputRef = useRef<HTMLInputElement>(null)
+  const handleSharePreviewUpload = async (file: File) => {
+    setSharePreviewUploading(true)
+    const url = await uploadToStorage(file, 'share-preview')
+    setSharePreviewUploading(false)
+    if (url) setSharePreview(url)
+  }
+
   const updateSeatRow = (id: number, field: 'name' | 'table', value: string) => {
     setSeatRows(rows => rows.map(r => r.id === id ? { ...r, [field]: value } : r))
   }
@@ -780,6 +795,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 
     const { error } = await supabase.from('couples').update({
       couple_photo: photo || null,
+      share_preview_url: sharePreview || null,
       wedding_date: weddingDate,
       venue: venue || null,
       venue_address: venueAddress || null,
@@ -833,6 +849,33 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           )}
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
+        </div>
+      </div>
+
+      <div style={fieldWrap}>
+        <label style={labelStyle}>WhatsApp Share Preview (Photo or GIF)</label>
+        <div style={{ fontSize: 11.5, color: PANEL_TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
+          This is the thumbnail people see when you send your invitation link on WhatsApp. Upload a regular photo for a static preview — or upload an actual <strong>.gif</strong> file (convert a short video clip to a GIF first, e.g. on ezgif.com) and WhatsApp will play it as a small looping animation right in the chat. Leave empty to use your Couple Photo above.
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {sharePreview ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={sharePreview} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: `1px solid ${PANEL_BORDER}` }} />
+          ) : (
+            <div style={{ width: 56, height: 56, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="sparkles" size={18} color="#94a3b8" />
+            </div>
+          )}
+          <button type="button" onClick={() => sharePreviewInputRef.current?.click()} disabled={sharePreviewUploading}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, background: sharePreviewUploading ? '#f1f5f9' : '#fff', cursor: sharePreviewUploading ? 'default' : 'pointer', fontSize: 13, color: PANEL_TEXT_MUTED, fontWeight: 500 }}>
+            <Icon name="camera" size={14} />
+            {sharePreviewUploading ? 'Uploading...' : sharePreview ? 'Change File' : 'Upload Photo or GIF'}
+          </button>
+          {sharePreview && (
+            <button type="button" onClick={() => setSharePreview('')} style={{ fontSize: 12, color: PANEL_ACCENT, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+          )}
+          <input ref={sharePreviewInputRef} type="file" accept="image/*,.gif" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleSharePreviewUpload(f) }} />
         </div>
       </div>
 
