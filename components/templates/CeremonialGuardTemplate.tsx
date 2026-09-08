@@ -664,18 +664,13 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
           {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
-              {/* Blurred full-bleed backdrop so the frame is always filled edge-to-edge
-                  with no hard border, even though the photo below is shown zoomed out. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" aria-hidden="true" style={{
-                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
-                filter: "blur(30px) brightness(0.65)", transform: "scale(1.15)", transformOrigin: "center center",
-                zIndex: 1,
-              }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              {/* Actual photo, shown in full (zoomed out, uncropped) */}
+              {/* Full-bleed photo, fills the entire cover with no border/letterbox.
+                  objectPosition anchored lower (center 34%) than before (18%) so
+                  more of the scene shows above the couple — a "zoomed out" feel
+                  while still covering edge-to-edge. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{
-                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center 18%",
+                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 34%",
                 zIndex: 2,
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{
