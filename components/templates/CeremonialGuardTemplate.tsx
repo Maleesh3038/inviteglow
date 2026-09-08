@@ -667,31 +667,12 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{
                 position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
+                transform: "scale(0.88)", transformOrigin: "center center",
                 zIndex: 2,
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{
                 position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3,
               }} />
-              {/* Top-right cursive accent tag */}
-              <div style={{
-                position: "absolute", top: "9%", right: "7%", zIndex: 6, textAlign: "center", transform: "rotate(-8deg)",
-                opacity: 0.95, pointerEvents: "none",
-              }}>
-                <div style={{ fontFamily: "'Dancing Script',cursive", fontWeight: 600, fontSize: "1.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
-                  Better<br />Together
-                </div>
-                <div style={{ color: PRIMARY_LIGHT, fontSize: 13, marginTop: 2 }}>♡</div>
-              </div>
-              {/* Left-side vertical accent text */}
-              <div style={{
-                position: "absolute", top: "44%", left: "7%", zIndex: 6, maxWidth: 92,
-                opacity: 0.9, pointerEvents: "none",
-              }}>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: 13.5, color: "rgba(255,255,255,0.92)", lineHeight: 1.5, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-                  A new chapter of our forever
-                </div>
-                <div style={{ width: 26, height: 1, background: "rgba(255,255,255,0.6)", marginTop: 10 }} />
-              </div>
               {/* Bottom accent line */}
               <div style={{
                 position: "absolute", bottom: "4%", left: "50%", transform: "translateX(-50%)", zIndex: 6, textAlign: "center", width: "90%",
