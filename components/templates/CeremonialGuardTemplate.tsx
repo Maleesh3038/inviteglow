@@ -664,10 +664,18 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
           {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
+              {/* Blurred full-bleed backdrop so the frame is always filled edge-to-edge
+                  with no hard border, even though the photo below is shown zoomed out. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={W.couplePhoto} alt="" aria-hidden="true" style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
+                filter: "blur(30px) brightness(0.65)", transform: "scale(1.15)", transformOrigin: "center center",
+                zIndex: 1,
+              }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {/* Actual photo, shown in full (zoomed out, uncropped) */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{
-                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
-                transform: "scale(0.88)", transformOrigin: "center center",
+                position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center 18%",
                 zIndex: 2,
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{
