@@ -595,33 +595,13 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
     audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
-  // Cover starts as a plain photo. If the couple uploaded a video, tapping
-  // "Open Invitation" fades the photo/text away and plays that video full-
-  // screen, once, with no text over it — then automatically opens the
-  // invitation when the video ends. The video is mounted from page load
-  // (muted, autoplay, looping) so it's already playing by the time the
-  // guest taps — this is what makes the reveal instant and reliable on
-  // mobile, rather than trying to start playback from a cold click.
-  const coverVideoRef = useRef<HTMLVideoElement | null>(null)
-  const [videoRevealed, setVideoRevealed] = useState(false)
-  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const finishOpening = () => {
-    if (openTimerRef.current) { clearTimeout(openTimerRef.current); openTimerRef.current = null }
-    setOpened(true)
-  }
+  // Cover is always just a plain photo — tapping "Open Invitation" opens
+  // straight into the invitation. If the couple uploaded a video, it only
+  // plays inside the invitation itself (the Hero section below), not as a
+  // separate full-screen reveal step on the cover.
   const handleOpen = () => {
     audioRef.current?.play().catch(() => {})
-    const v = coverVideoRef.current
-    if (coverVideoUrl && v) {
-      v.loop = false
-      try { v.currentTime = 0 } catch {}
-      v.play().catch(() => {})
-      setVideoRevealed(true)
-      const fallbackMs = (v.duration && isFinite(v.duration) && v.duration > 0) ? v.duration * 1000 + 500 : 8000
-      openTimerRef.current = setTimeout(finishOpening, fallbackMs)
-    } else {
-      finishOpening()
-    }
+    setOpened(true)
   }
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
     engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '🎖️' }, homecoming: { label: 'Homecoming', icon: '🏡' },
@@ -684,31 +664,18 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
           {!opened && introGone && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.6 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
-              {/* If the couple uploaded a video, it's mounted here from page
-                  load — muted, autoplay, looping — so it is already
-                  playing by the time "Open Invitation" is tapped (the
-                  reliable mobile-autoplay pattern). It stays completely
-                  hidden behind the opaque photo until tapped. */}
-              {coverVideoUrl && (
-                <video ref={coverVideoRef} autoPlay muted loop playsInline preload="auto"
-                  onEnded={finishOpening}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}>
-                  <source src={coverVideoUrl} type="video/mp4" />
-                </video>
-              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{
                 position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 18%",
-                zIndex: 2, opacity: videoRevealed ? 0 : 1, transition: "opacity 0.6s ease",
+                zIndex: 2,
               }} onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{
                 position: "absolute", inset: 0, background: `linear-gradient(180deg, ${DARK}80 0%, ${DARK}26 30%, ${DARK}59 60%, ${DARK}d9 100%)`, zIndex: 3,
-                opacity: videoRevealed ? 0 : 1, transition: "opacity 0.5s ease",
               }} />
               {/* Top-right cursive accent tag */}
               <div style={{
                 position: "absolute", top: "9%", right: "7%", zIndex: 6, textAlign: "center", transform: "rotate(-8deg)",
-                opacity: videoRevealed ? 0 : 0.95, transition: "opacity 0.4s ease", pointerEvents: "none",
+                opacity: 0.95, pointerEvents: "none",
               }}>
                 <div style={{ fontFamily: "'Dancing Script',cursive", fontWeight: 600, fontSize: "1.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                   Better<br />Together
@@ -718,7 +685,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               {/* Left-side vertical accent text */}
               <div style={{
                 position: "absolute", top: "44%", left: "7%", zIndex: 6, maxWidth: 92,
-                opacity: videoRevealed ? 0 : 0.9, transition: "opacity 0.4s ease", pointerEvents: "none",
+                opacity: 0.9, pointerEvents: "none",
               }}>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: 13.5, color: "rgba(255,255,255,0.92)", lineHeight: 1.5, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                   A new chapter of our forever
@@ -728,15 +695,15 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
               {/* Bottom accent line */}
               <div style={{
                 position: "absolute", bottom: "4%", left: "50%", transform: "translateX(-50%)", zIndex: 6, textAlign: "center", width: "90%",
-                opacity: videoRevealed ? 0 : 0.85, transition: "opacity 0.4s ease", pointerEvents: "none",
+                opacity: 0.85, pointerEvents: "none",
               }}>
                 <div style={{ fontSize: 10, letterSpacing: "0.32em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                   A Lifetime of Love Begins Here
                 </div>
                 <div style={{ width: 28, height: 1, background: "rgba(255,255,255,0.55)", margin: "8px auto 0" }} />
               </div>
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: videoRevealed ? 0 : 1, y: 0 }} transition={{ duration: videoRevealed ? 0.35 : 0.9 }}
-                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem", pointerEvents: videoRevealed ? "none" : "auto" }}>
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}
+                style={{ textAlign: "center", width: "86%", maxWidth: 350, position: "relative", zIndex: 10, padding: "0 1rem" }}>
                 <div style={{ marginBottom: 14 }}>
                   <div style={{
                     ...ts('subtitle'), fontFamily: "'Inter',sans-serif", fontWeight: 600,
@@ -770,10 +737,10 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 {guestName && (
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "1.2rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
-                <button onClick={handleOpen} disabled={videoRevealed} style={{
+                <button onClick={handleOpen} style={{
                   display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(90deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
                   border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
-                  cursor: videoRevealed ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
+                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
                   boxShadow: `0 8px 20px ${DARK}40`, transition: "opacity 0.2s, transform 0.2s",
                 }}>
                   Open Invitation →
