@@ -1117,7 +1117,7 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
   useEffect(() => {
     let cancelled = false
     if (!sharePreviewUrl) { setPreviewFile(null); return }
-    fetch(sharePreviewUrl)
+    fetch(`/api/media-proxy?url=${encodeURIComponent(sharePreviewUrl)}`)
       .then(res => res.blob())
       .then(blob => {
         if (cancelled) return
