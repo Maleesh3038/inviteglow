@@ -1104,25 +1104,67 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const shareWhatsApp = () => {
+  // The photo/GIF the couple uploaded as their "Share Preview" (falls back to
+  // their Couple Photo). We pre-fetch this into a real File as soon as it's
+  // known — not on click — because the Web Share API below only lets you
+  // attach a file+text as ONE WhatsApp message (photo with the message as its
+  // caption, matching what real invitation senders do) when navigator.share()
+  // is called quickly, ideally with the file already in hand.
+  const sharePreviewUrl: string = (couple as any).share_preview_url || (couple as any).couple_photo || ''
+  const [previewFile, setPreviewFile] = useState<File | null>(null)
+  const [nativeShareReady, setNativeShareReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!sharePreviewUrl) { setPreviewFile(null); return }
+    fetch(sharePreviewUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        if (cancelled) return
+        const isGif = sharePreviewUrl.toLowerCase().includes('.gif')
+        const type = isGif ? 'image/gif' : (blob.type || 'image/jpeg')
+        const ext = isGif ? 'gif' : (type.split('/')[1] || 'jpg')
+        setPreviewFile(new File([blob], `invitation.${ext}`, { type }))
+      })
+      .catch(() => setPreviewFile(null))
+    return () => { cancelled = true }
+  }, [sharePreviewUrl])
+
+  useEffect(() => {
+    const canShareFiles = typeof navigator !== 'undefined' && !!(navigator as any).canShare && !!previewFile
+      && (navigator as any).canShare({ files: [previewFile] })
+    setNativeShareReady(!!canShareFiles)
+  }, [previewFile])
+
+  // Tries to send the photo/GIF and the message as ONE WhatsApp message (the
+  // photo becomes the message, the text becomes its caption — exactly how a
+  // normal person shares a photo+message on WhatsApp). This uses the Web
+  // Share API's file-sharing support, which works on modern mobile browsers
+  // (Android Chrome, iOS Safari) when the OS share sheet includes WhatsApp.
+  // There is no equivalent for desktop browsers or older mobile browsers, so
+  // those fall back to the old text-plus-link-only flow automatically.
+  const shareWhatsApp = async () => {
     if (!guestName.trim()) return
-    const msg = encodeURIComponent(`${personalizedMessage}\n${generatedLink}`)
+    const text = `${personalizedMessage}\n${generatedLink}`
+    if (nativeShareReady && previewFile) {
+      try {
+        await (navigator as any).share({ files: [previewFile], text })
+        return
+      } catch {
+        // User cancelled the native share sheet, or it failed for some other
+        // reason — fall through to the plain link share below instead of
+        // leaving the button looking like it did nothing.
+      }
+    }
+    const msg = encodeURIComponent(text)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 
-  // WhatsApp's "click to chat" link (wa.me/?text=...) can only pre-fill TEXT —
-  // there's no way for a link to also attach a photo/GIF automatically, that's
-  // a WhatsApp platform limitation, not something this app can work around.
-  // So when the couple has uploaded a Share Preview GIF/photo, we give them a
-  // one-tap way to grab that file so they can attach it themselves right after
-  // WhatsApp opens with the message pre-filled.
-  const sharePreviewUrl: string = (couple as any).share_preview_url || ''
-  // Opens the file directly in a new tab, synchronously in the click handler
-  // (no `await` before it) so the browser treats it as a direct user action
-  // and never blocks it as a popup. An `await fetch()` + blob-download here
-  // was getting silently blocked by popup blockers — this is simpler and
-  // reliable: the guest/couple long-presses (or right-click → Save Image) on
-  // the opened photo/GIF to save it to their device.
+  // Manual fallback for when native file-sharing isn't available (desktop
+  // browsers, mainly): opens the photo/GIF directly in a new tab —
+  // synchronously in the click handler, so it's never blocked as a popup —
+  // so the couple can long-press/right-click → Save it and attach it
+  // themselves in the same WhatsApp chat.
   const downloadSharePreview = () => {
     if (!sharePreviewUrl) return
     window.open(sharePreviewUrl, '_blank', 'noopener')
@@ -1194,13 +1236,20 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
         </button>
       </div>
 
-      {sharePreviewUrl && (
+      {sharePreviewUrl && nativeShareReady && (
+        <div style={{ marginTop: 12, fontSize: 11, color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
+          <Icon name="check" size={12} color="#166534" />
+          Your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} will be sent together with the message as one WhatsApp share.
+        </div>
+      )}
+
+      {sharePreviewUrl && !nativeShareReady && (
         <div style={{ marginTop: 12, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 14px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={sharePreviewUrl} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
             <div style={{ fontSize: 11.5, color: "#92400e", lineHeight: 1.6 }}>
-              WhatsApp can't auto-attach your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} to the message above — that's a WhatsApp limit, not this app. Tap <strong>WhatsApp</strong> to send the text, then tap <strong>Open {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'}</strong> below, press-and-hold (or right-click) it to save it, and attach it in the same chat.
+              This browser can't auto-attach your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} to the message (works best on a phone). Tap <strong>WhatsApp</strong> to send the text, then tap <strong>Open {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'}</strong> below, press-and-hold (or right-click) it to save it, and attach it in the same chat.
             </div>
           </div>
           <button onClick={downloadSharePreview} type="button" style={{
