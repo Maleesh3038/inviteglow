@@ -708,10 +708,10 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.bride}</div>
                 <div style={{ margin: "12px 0" }}><LineHeartDivider color={PRIMARY_LIGHT} lineColor="rgba(255,255,255,0.5)" /></div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.groom}</div>
-                <div style={{ ...ts('tagline'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(255,255,255,0.92)", lineHeight: 1.6, margin: "1.5rem 0 1.4rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                <div style={{ ...ts('tagline'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(255,255,255,0.92)", lineHeight: 1.6, margin: "1.5rem 0 0.7rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   Our hearts found each other,<br />and today we begin our forever.
                 </div>
-                <div style={{ margin: "0 0 1.6rem" }}>
+                <div style={{ margin: "0 0 0.9rem" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                     <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.45)" }} />
                     <DoubleHeartIcon color="rgba(255,255,255,0.9)" size={18} />
@@ -719,7 +719,7 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                   </div>
                 </div>
                 {guestName && (
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "1.2rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
                 <button onClick={handleOpen} style={{
                   display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(90deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
