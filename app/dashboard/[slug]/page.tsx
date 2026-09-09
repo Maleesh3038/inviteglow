@@ -1110,6 +1110,33 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 
+  // WhatsApp's "click to chat" link (wa.me/?text=...) can only pre-fill TEXT —
+  // there's no way for a link to also attach a photo/GIF automatically, that's
+  // a WhatsApp platform limitation, not something this app can work around.
+  // So when the couple has uploaded a Share Preview GIF/photo, we give them a
+  // one-tap way to grab that file so they can attach it themselves right after
+  // WhatsApp opens with the message pre-filled.
+  const sharePreviewUrl: string = (couple as any).share_preview_url || ''
+  const downloadSharePreview = async () => {
+    if (!sharePreviewUrl) return
+    try {
+      const res = await fetch(sharePreviewUrl)
+      const blob = await res.blob()
+      const ext = sharePreviewUrl.toLowerCase().includes('.gif') ? 'gif' : 'jpg'
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${couple.slug}-invite.${ext}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      // Fallback: just open it in a new tab so they can long-press/save it manually.
+      window.open(sharePreviewUrl, '_blank')
+    }
+  }
+
   const saveMessage = async () => {
     await supabase.from('couples').update({ whatsapp_invite_message: waMessage }).eq('id', couple.id)
     setEditingMsg(false)
@@ -1175,6 +1202,26 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
           WhatsApp
         </button>
       </div>
+
+      {sharePreviewUrl && (
+        <div style={{ marginTop: 12, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={sharePreviewUrl} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+            <div style={{ fontSize: 11.5, color: "#92400e", lineHeight: 1.6 }}>
+              WhatsApp can't auto-attach your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} to the message above — that's a WhatsApp limit, not this app. Tap <strong>WhatsApp</strong> to send the text, then tap <strong>Save {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'}</strong> below and attach it in the same chat.
+            </div>
+          </div>
+          <button onClick={downloadSharePreview} type="button" style={{
+            marginTop: 10, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            padding: "9px", borderRadius: 8, border: "1px solid #fde68a", background: "#fff", color: "#92400e",
+            fontWeight: 600, fontSize: 12.5, cursor: "pointer",
+          }}>
+            <Icon name="camera" size={13} color="#92400e" />
+            Save {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'} to Attach
+          </button>
+        </div>
+      )}
     </div>
   )
 }
