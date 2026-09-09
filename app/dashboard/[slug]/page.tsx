@@ -1117,24 +1117,15 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
   // one-tap way to grab that file so they can attach it themselves right after
   // WhatsApp opens with the message pre-filled.
   const sharePreviewUrl: string = (couple as any).share_preview_url || ''
-  const downloadSharePreview = async () => {
+  // Opens the file directly in a new tab, synchronously in the click handler
+  // (no `await` before it) so the browser treats it as a direct user action
+  // and never blocks it as a popup. An `await fetch()` + blob-download here
+  // was getting silently blocked by popup blockers — this is simpler and
+  // reliable: the guest/couple long-presses (or right-click → Save Image) on
+  // the opened photo/GIF to save it to their device.
+  const downloadSharePreview = () => {
     if (!sharePreviewUrl) return
-    try {
-      const res = await fetch(sharePreviewUrl)
-      const blob = await res.blob()
-      const ext = sharePreviewUrl.toLowerCase().includes('.gif') ? 'gif' : 'jpg'
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${couple.slug}-invite.${ext}`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-    } catch {
-      // Fallback: just open it in a new tab so they can long-press/save it manually.
-      window.open(sharePreviewUrl, '_blank')
-    }
+    window.open(sharePreviewUrl, '_blank', 'noopener')
   }
 
   const saveMessage = async () => {
@@ -1209,7 +1200,7 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={sharePreviewUrl} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
             <div style={{ fontSize: 11.5, color: "#92400e", lineHeight: 1.6 }}>
-              WhatsApp can't auto-attach your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} to the message above — that's a WhatsApp limit, not this app. Tap <strong>WhatsApp</strong> to send the text, then tap <strong>Save {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'}</strong> below and attach it in the same chat.
+              WhatsApp can't auto-attach your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} to the message above — that's a WhatsApp limit, not this app. Tap <strong>WhatsApp</strong> to send the text, then tap <strong>Open {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'}</strong> below, press-and-hold (or right-click) it to save it, and attach it in the same chat.
             </div>
           </div>
           <button onClick={downloadSharePreview} type="button" style={{
@@ -1218,7 +1209,7 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
             fontWeight: 600, fontSize: 12.5, cursor: "pointer",
           }}>
             <Icon name="camera" size={13} color="#92400e" />
-            Save {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'} to Attach
+            Open {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'} to Save
           </button>
         </div>
       )}
