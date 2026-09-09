@@ -1110,7 +1110,12 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
   // attach a file+text as ONE WhatsApp message (photo with the message as its
   // caption, matching what real invitation senders do) when navigator.share()
   // is called quickly, ideally with the file already in hand.
-  const sharePreviewUrl: string = (couple as any).share_preview_url || (couple as any).couple_photo || ''
+  // Only ever the photo/GIF the couple explicitly uploaded in the Edit tab's
+  // "WhatsApp Share Preview" field — no fallback to their Couple Photo (that
+  // was silently attaching every couple's invitation background photo to
+  // this WhatsApp share even when they never opted into sharing an image
+  // here, which isn't what they asked for).
+  const sharePreviewUrl: string = (couple as any).share_preview_url || ''
   const [previewFile, setPreviewFile] = useState<File | null>(null)
   const [nativeShareReady, setNativeShareReady] = useState(false)
 
