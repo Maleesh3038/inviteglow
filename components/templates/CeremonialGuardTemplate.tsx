@@ -708,7 +708,18 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.bride}</div>
                 <div style={{ margin: "12px 0" }}><LineHeartDivider color={PRIMARY_LIGHT} lineColor="rgba(255,255,255,0.5)" /></div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.groom}</div>
-                <div style={{ ...ts('tagline'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(255,255,255,0.92)", lineHeight: 1.6, margin: "1.5rem 0 0.7rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                <div style={{ marginTop: "1.4rem" }}>
+                  <button onClick={handleOpen} style={{
+                    display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(90deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
+                    border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
+                    cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
+                    boxShadow: `0 8px 20px ${DARK}40`, transition: "opacity 0.2s, transform 0.2s",
+                  }}>
+                    Open Invitation →
+                  </button>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", marginTop: 13 }}>🎵 Tap to begin — with music</div>
+                </div>
+                <div style={{ ...ts('tagline'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: "rgba(255,255,255,0.92)", lineHeight: 1.6, margin: "1.6rem 0 0.7rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
                   Our hearts found each other,<br />and today we begin our forever.
                 </div>
                 <div style={{ margin: "0 0 0.9rem" }}>
@@ -719,17 +730,8 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                   </div>
                 </div>
                 {guestName && (
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>Dear {guestName},</div>
                 )}
-                <button onClick={handleOpen} style={{
-                  display: "inline-flex", alignItems: "center", gap: 9, background: `linear-gradient(90deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
-                  border: "none", borderRadius: 100, padding: "13px 30px", fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
-                  boxShadow: `0 8px 20px ${DARK}40`, transition: "opacity 0.2s, transform 0.2s",
-                }}>
-                  Open Invitation →
-                </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", marginTop: 13 }}>🎵 Tap to begin — with music</div>
               </motion.div>
             </motion.div>
           )}
