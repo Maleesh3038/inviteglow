@@ -703,10 +703,12 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                   <DoubleHeartIcon color={PRIMARY_LIGHT} size={30} />
                 </div>
                 <div style={{ fontSize: 9.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "2.4rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                  Two Souls <span style={{ color: PRIMARY_LIGHT }}>♥</span> One Journey <span style={{ color: PRIMARY_LIGHT }}>♥</span> Forever
+                  Two Souls <span style={{ color: PRIMARY_LIGHT }}>·</span> One Journey <span style={{ color: PRIMARY_LIGHT }}>·</span> Forever
                 </div>
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.bride}</div>
-                <div style={{ margin: "12px 0" }}><LineHeartDivider color={PRIMARY_LIGHT} lineColor="rgba(255,255,255,0.5)" /></div>
+                <div style={{ margin: "12px 0", display: "flex", justifyContent: "center" }}>
+                  <div style={{ width: 90, height: 1, background: "rgba(255,255,255,0.5)" }} />
+                </div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.groom}</div>
                 <div style={{ marginTop: "1.4rem" }}>
                   <button onClick={handleOpen} style={{
