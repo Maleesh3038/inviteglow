@@ -81,13 +81,25 @@ function DoubleHeartIcon({ color, size = 26 }: { color: string; size?: number })
     </svg>
   )
 }
+// ── Small filled heart as real SVG, not a "♥" text glyph. Some phones render
+// the U+2665 character using their color emoji font instead of the plain
+// monochrome glyph, which ignores any CSS `color` set on it and always shows
+// up red/pink regardless of the design's palette. An SVG path always renders
+// in the exact `color` passed in, on every device. ──
+function HeartGlyph({ color, size = 12 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="M12 21s-6.9-4.35-9.6-8.35C.6 10.2 1.1 6.9 3.6 5.1 5.6 3.7 8.3 4 10 5.9L12 8.1l2-2.2c1.7-1.9 4.4-2.2 6.4-.8 2.5 1.8 3 5.1 1.2 7.55C18.9 16.65 12 21 12 21z" fill={color} />
+    </svg>
+  )
+}
 // ── Thin line + heart divider — the minimal romantic divider used on the
 // cover screen (distinct from RibbonDivider, which suits the card sections). ──
 function LineHeartDivider({ color, lineColor, gap = 50, heartSize = 13 }: { color: string; lineColor: string; gap?: number; heartSize?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
       <div style={{ width: gap, height: 1, background: lineColor }} />
-      <span style={{ color, fontSize: heartSize, lineHeight: 1 }}>♥</span>
+      <HeartGlyph color={color} size={heartSize} />
       <div style={{ width: gap, height: 1, background: lineColor }} />
     </div>
   )
@@ -702,13 +714,11 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
                   <DoubleHeartIcon color={PRIMARY_LIGHT} size={30} />
                 </div>
-                <div style={{ fontSize: 9.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "2.4rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-                  Two Souls <span style={{ color: PRIMARY_LIGHT }}>·</span> One Journey <span style={{ color: PRIMARY_LIGHT }}>·</span> Forever
+                <div style={{ fontSize: 9.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "2.4rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <span>Two Souls</span> <HeartGlyph color="#fff" size={9} /> <span>One Journey</span> <HeartGlyph color="#fff" size={9} /> <span>Forever</span>
                 </div>
                 <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.bride}</div>
-                <div style={{ margin: "12px 0", display: "flex", justifyContent: "center" }}>
-                  <div style={{ width: 90, height: 1, background: "rgba(255,255,255,0.5)" }} />
-                </div>
+                <div style={{ margin: "12px 0" }}><LineHeartDivider color="#fff" lineColor="rgba(255,255,255,0.5)" /></div>
                 <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.7rem,9.5vw,3.9rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 22px rgba(0,0,0,0.5)" }}>{W.groom}</div>
                 <div style={{ marginTop: "1.4rem" }}>
                   <button onClick={handleOpen} style={{
