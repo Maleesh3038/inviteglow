@@ -647,12 +647,15 @@ function CeremonialGuardInner({ couple }: { couple: Couple }) {
   const groomBank = { bank: (couple as any).groom_bank_name || '', accountName: (couple as any).groom_bank_account_name || '', accountNumber: (couple as any).groom_bank_account_number || '' }
   const hasGiftDetails = !!(brideBank.accountNumber || groomBank.accountNumber)
   const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
-  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
-    ? flexContacts
-    : [
-        ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
-        ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
-      ]
+  // Admin panel's own help text says additional contacts show "alongside the
+  // Bride/Groom phone numbers... nothing here replaces them" — so combine
+  // both, always, rather than the previous either/or which silently dropped
+  // the Bride/Groom numbers the moment even one additional contact existed.
+  const contactList: { name: string; phone: string }[] = [
+    ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
+    ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
+    ...flexContacts,
+  ]
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM, position: "relative" }}>
       {opened && <FallingFlowers primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
