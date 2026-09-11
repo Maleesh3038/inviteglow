@@ -18,6 +18,89 @@ const DEFAULT_PALETTE = {
   muted: "#8a9880",
 }
 
+// ── Floating bottom nav bar — modern narrow pill, quick jump to key
+// sections, plus a raised music toggle on the right. ──
+function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
+  primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+}) {
+  const [playing, setPlaying] = useState(false)
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    const onPlay = () => setPlaying(true)
+    const onPause = () => setPlaying(false)
+    a.addEventListener('play', onPlay)
+    a.addEventListener('pause', onPause)
+    setPlaying(!a.paused)
+    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
+  }, [audioRef])
+  const toggleMusic = () => {
+    const a = audioRef.current
+    if (!a) return
+    a.paused ? a.play().catch(() => {}) : a.pause()
+  }
+  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
+    <button key={key} onClick={onClick} aria-label={label} style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
+      border: 'none', cursor: 'pointer', color: dark, opacity: 0.8, padding: '2px 4px',
+    }}>
+      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+      <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
+    </button>
+  )
+  return (
+    <div style={{
+      position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)',
+      width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
+        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(31,46,34,0.08)',
+        boxShadow: '0 10px 30px rgba(31,46,34,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
+      }}>
+        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {mapsUrl && (
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8,
+            textDecoration: 'none', padding: '2px 4px',
+          }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span style={{ fontSize: 8 }}>Location</span>
+          </a>
+        )}
+        {/* Raised music toggle, floating on the right edge of the pill */}
+        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
+          position: 'absolute', right: 4, top: -16,
+          width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
+          background: `linear-gradient(135deg,${primary},#8a7420)`, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          boxShadow: '0 6px 16px rgba(31,46,34,0.35)',
+        }}>
+          {playing ? (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
+            </svg>
+          ) : (
+            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+              <path d="M16.5 9l5 6M21.5 9l-5 6" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Guest intro screen — deep green + gold shimmer, "Dear [Name]," shown
 // for ~5s before the cover. Toggle via couple.show_guest_intro. ──
 function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream }: {
@@ -192,6 +275,295 @@ function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<stri
   )
 }
 
+// ── Guest Wishes Wall ──────────────────────────────────────────────
+type WishMedia = { url: string; type: 'photo' | 'video' }
+type Wish = {
+  id: string
+  couple_id: string
+  guest_name: string
+  message: string
+  photo_url: string | null
+  video_url: string | null
+  media: WishMedia[] | null
+  created_at: string
+}
+async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: string; isVideo: boolean }> {
+  const isVideo = file.type.startsWith('video/')
+  const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
+  const path = `${coupleId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await supabase.storage.from('wishes').upload(path, file, { cacheControl: '3600', upsert: false })
+  if (error) throw error
+  const { data } = supabase.storage.from('wishes').getPublicUrl(path)
+  return { url: data.publicUrl, isVideo }
+}
+function getWishMedia(w: Wish): WishMedia[] {
+  if (w.media && w.media.length > 0) return w.media
+  if (w.photo_url) return [{ url: w.photo_url, type: 'photo' }]
+  if (w.video_url) return [{ url: w.video_url, type: 'video' }]
+  return []
+}
+function WishLightbox({ media, index, onIndex, onClose }: {
+  media: WishMedia[]; index: number; onIndex: (i: number) => void; onClose: () => void
+}) {
+  const current = media[index]
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, background: "rgba(31,46,34,0.92)", zIndex: 500,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: "92vw", maxHeight: "86vh" }}>
+        {current.type === 'video' ? (
+          <video src={current.url} controls autoPlay style={{ maxWidth: "92vw", maxHeight: "86vh", display: "block", borderRadius: 10 }} />
+        ) : (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={current.url} alt="" style={{ maxWidth: "92vw", maxHeight: "86vh", display: "block", borderRadius: 10, objectFit: "contain" }} />
+        )}
+        <button onClick={onClose} aria-label="Close" style={{
+          position: "absolute", top: -40, right: 0, background: "transparent", border: "none",
+          color: "#fff", fontSize: 26, cursor: "pointer", lineHeight: 1,
+        }}>×</button>
+        {media.length > 1 && (
+          <>
+            <button onClick={() => onIndex((index - 1 + media.length) % media.length)} aria-label="Previous" style={{
+              position: "absolute", left: -18, top: "50%", transform: "translate(-100%,-50%)",
+              width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none",
+              color: "#fff", fontSize: 20, cursor: "pointer",
+            }}>‹</button>
+            <button onClick={() => onIndex((index + 1) % media.length)} aria-label="Next" style={{
+              position: "absolute", right: -18, top: "50%", transform: "translate(100%,-50%)",
+              width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none",
+              color: "#fff", fontSize: 20, cursor: "pointer",
+            }}>›</button>
+            <div style={{ position: "absolute", bottom: -30, left: "50%", transform: "translateX(-50%)", color: "#fff", fontSize: 12, opacity: 0.8 }}>
+              {index + 1} / {media.length}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: number) => void }) {
+  if (media.length === 0) return null
+  const shown = media.slice(0, 4)
+  const isSingle = media.length === 1
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: isSingle ? "1fr" : "repeat(2, 1fr)", gap: 4, marginBottom: 6, borderRadius: 10, overflow: "hidden" }}>
+      {shown.map((m, idx) => {
+        const isMoreTile = idx === 3 && media.length > 4
+        return (
+          <div key={idx} onClick={() => onOpen(idx)} style={{
+            position: "relative", cursor: "pointer", overflow: "hidden",
+            height: isSingle ? 140 : undefined, aspectRatio: isSingle ? undefined : "1 / 1", background: "#000",
+          }}>
+            {isSingle && m.type === 'photo' && (
+              <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${m.url})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(16px) brightness(0.7)", transform: "scale(1.15)" }} />
+            )}
+            {m.type === 'video' ? (
+              <video src={m.url} muted style={{ position: isSingle ? "relative" : "static", zIndex: 1, width: "100%", height: "100%", objectFit: isSingle ? "contain" : "cover", display: "block" }} />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={m.url} alt="" style={{ position: isSingle ? "relative" : "static", zIndex: 1, width: "100%", height: "100%", objectFit: isSingle ? "contain" : "cover", display: "block" }} />
+            )}
+            {isMoreTile && (
+              <div style={{ position: "absolute", inset: 0, background: "rgba(31,46,34,0.55)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, fontWeight: 700, zIndex: 2 }}>
+                +{media.length - 4}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
+  coupleId: string; primary: string; primaryLight: string; dark: string; cream: string; muted: string
+}) {
+  const [wishes, setWishes] = useState<Wish[]>([])
+  const [loading, setLoading] = useState(true)
+  const [name, setName] = useState('')
+  const [message, setMessage] = useState('')
+  const [files, setFiles] = useState<File[]>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+  const [page, setPage] = useState(0)
+  const PER_PAGE = 3
+  const [lightbox, setLightbox] = useState<{ media: WishMedia[]; index: number } | null>(null)
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+      if (active && data) setWishes(data as Wish[])
+      setLoading(false)
+    }
+    load()
+    const channel = supabase
+      .channel(`wishes-${coupleId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wishes', filter: `couple_id=eq.${coupleId}` }, () => load())
+      .subscribe()
+    return () => { active = false; supabase.removeChannel(channel) }
+  }, [coupleId])
+  const submit = async () => {
+    if (!name.trim() || !message.trim()) {
+      setError('Please add your name and a message.')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    try {
+      const media: WishMedia[] = []
+      for (const f of files) {
+        const { url, isVideo } = await uploadWishMedia(f, coupleId)
+        media.push({ url, type: isVideo ? 'video' : 'photo' })
+      }
+      const { error: insertError } = await supabase.from('wishes').insert([{
+        couple_id: coupleId, guest_name: name.trim(), message: message.trim(), media,
+      }])
+      if (insertError) throw insertError
+      setName('')
+      setMessage('')
+      setFiles([])
+      setDone(true)
+    } catch {
+      setError('Something went wrong — please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif" }
+  return (
+    <div>
+      <div style={{ background: "#fff", borderRadius: 16, padding: '18px 16px', textAlign: 'left', marginBottom: 18, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+        {done ? (
+          <div style={{ textAlign: 'center', padding: '8px 0' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>Thank you for your wish!</div>
+            <div style={{ fontSize: 12, color: muted, marginTop: 4 }}>It's now on the wall below.</div>
+            <button onClick={() => setDone(false)} style={{
+              marginTop: 12, padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              background: `${primary}1a`, color: dark, fontSize: 12, fontWeight: 700,
+            }}>Leave another wish</button>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: dark, marginBottom: 10 }}>Leave a Wish</div>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={inputStyle} />
+            <textarea
+              value={message} onChange={e => setMessage(e.target.value)} placeholder="Write your wishes for the couple..." rows={3}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: muted, opacity: 0.9,
+              padding: '9px 13px', borderRadius: 10, border: `1px dashed ${primary}`, cursor: 'pointer', marginBottom: files.length ? 6 : 10,
+            }}>
+              📷 {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected — add more` : 'Add photos or a video (optional)'}
+              <input type="file" accept="image/*,video/*" multiple
+                onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])].slice(0, 6))}
+                style={{ display: 'none' }} />
+            </label>
+            {files.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                {files.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: dark, background: `${primary}1a`, borderRadius: 100, padding: '4px 9px' }}>
+                    {f.name.length > 16 ? f.name.slice(0, 14) + '…' : f.name}
+                    <span onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {error && <div style={{ fontSize: 11.5, color: primary, marginBottom: 8 }}>{error}</div>}
+            <button onClick={submit} disabled={submitting} style={{
+              width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: primary, color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: "'Inter',sans-serif", opacity: submitting ? 0.6 : 1,
+            }}>{submitting ? 'Sending...' : 'Send Wish'}</button>
+          </>
+        )}
+      </div>
+      {loading ? (
+        <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Loading wishes...</div>
+      ) : wishes.length === 0 ? (
+        <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Be the first to leave a wish!</div>
+      ) : (
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: dark, textAlign: 'center', marginBottom: 14 }}>
+            {wishes.length} {wishes.length === 1 ? 'Wish' : 'Wishes'}
+          </div>
+          {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => {
+            const mediaList = getWishMedia(w)
+            return (
+              <div key={w.id} style={{ padding: '12px 0', borderBottom: i < arr.length - 1 ? `1px solid ${primary}1a` : 'none', textAlign: 'left' }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: primary, marginBottom: 4 }}>{w.guest_name}</div>
+                <div style={{ fontSize: 13, color: dark, opacity: 0.85, lineHeight: 1.7, marginBottom: mediaList.length ? 10 : 6, whiteSpace: 'pre-wrap' }}>{w.message}</div>
+                <WishMediaGrid media={mediaList} onOpen={idx => setLightbox({ media: mediaList, index: idx })} />
+                <div style={{ fontSize: 10.5, color: muted }}>
+                  {new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+            )
+          })}
+          {wishes.length > PER_PAGE && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 16, paddingTop: 14, borderTop: `1px solid ${primary}1a`, flexWrap: 'wrap' }}>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{
+                background: 'transparent', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
+                fontSize: 12, fontWeight: 700, color: primary, opacity: page === 0 ? 0.35 : 1,
+              }}>← Previous</button>
+              {Array.from({ length: Math.ceil(wishes.length / PER_PAGE) }).map((_, i) => (
+                <button key={i} onClick={() => setPage(i)} style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  fontSize: 12, fontWeight: i === page ? 800 : 600, color: i === page ? dark : primary,
+                  textDecoration: i === page ? 'underline' : 'none', padding: '2px 4px',
+                }}>{i + 1}</button>
+              ))}
+              <button onClick={() => setPage(p => (p + 1) * PER_PAGE < wishes.length ? p + 1 : p)}
+                disabled={(page + 1) * PER_PAGE >= wishes.length} style={{
+                background: 'transparent', border: 'none', cursor: (page + 1) * PER_PAGE >= wishes.length ? 'default' : 'pointer',
+                fontSize: 12, fontWeight: 700, color: primary, opacity: (page + 1) * PER_PAGE >= wishes.length ? 0.35 : 1,
+              }}>Next →</button>
+            </div>
+          )}
+        </div>
+      )}
+      {lightbox && (
+        <WishLightbox media={lightbox.media} index={lightbox.index} onIndex={i => setLightbox(l => l && { ...l, index: i })} onClose={() => setLightbox(null)} />
+      )}
+    </div>
+  )
+}
+// ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
+// flexible `contacts` list first; if that's empty, falls back to the
+// classic bride_phone/groom_phone fields so older invitations keep
+// showing their existing numbers with no data lost. ──
+function ContactRow({ name, phone, primary, dark, muted, cream }: { name: string; phone: string; primary: string; dark: string; muted: string; cream: string }) {
+  const digitsOnly = phone.replace(/\D/g, '')
+  const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: cream, borderRadius: 12, padding: '12px 16px' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: dark }}>{name}</div>
+        <div style={{ fontSize: 12.5, color: muted, marginTop: 2 }}>{phone}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <a href={`tel:${digitsOnly}`} aria-label={`Call ${name}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill={primary}>
+            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
+          </svg>
+        </a>
+        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${name}`} style={{
+          width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="#fff">
+            <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  )
+}
+
 const sectionCard: React.CSSProperties = { background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }
 const sectionEyebrow = (primary: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color: primary, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const sectionTitle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
@@ -250,6 +622,17 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
+
+  // Contact Numbers — the flexible `contacts` list (added from the admin
+  // panel) always shows ALONGSIDE the classic Bride/Groom phone fields,
+  // never replacing them.
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
+  const contactList: { name: string; phone: string }[] = [
+    ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
+    ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
+    ...flexContacts,
+  ]
+  const hasWishes = (couple as any).enable_guest_wishes ?? false
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#fbf6e9" }}>
@@ -373,7 +756,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
             })}
 
             {sv.countdown && (
-              <div style={{ ...sectionCard, textAlign: "center" }}>
+              <div id="savethedate" style={{ ...sectionCard, textAlign: "center" }}>
                 <div style={sectionEyebrow(PRIMARY)}>Counting Down to Our Big Day</div>
                 <Countdown targetDate={W.date} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </div>
@@ -398,6 +781,14 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
+            {hasWishes && (
+              <div id="wishes" style={sectionCard}>
+                <div style={sectionEyebrow(PRIMARY)}>Blessings & Wishes</div>
+                <div style={sectionTitle(DARK)}>Guest Wishes Wall</div>
+                <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
+              </div>
+            )}
+
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Be Our Guest</div>
@@ -415,7 +806,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
             )}
 
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
                 <div style={sectionTitle(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -427,6 +818,18 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
                   ))}
                 </div>
               </motion.div>
+            )}
+
+            {contactList.length > 0 && (
+              <div id="contact" style={sectionCard}>
+                <div style={sectionEyebrow(PRIMARY)}>Get in Touch</div>
+                <div style={sectionTitle(DARK)}>Contact Numbers</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {contactList.map((c, i) => (
+                    <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} dark={DARK} muted={MUTED} cream={CREAM} />
+                  ))}
+                </div>
+              </div>
             )}
 
             {sv.thank_you && (
@@ -443,7 +846,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <div style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
+            <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#b0b898" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
@@ -451,6 +854,15 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
+      {opened && (
+        <BottomNavBar
+          primary={PRIMARY} dark={DARK}
+          mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
+          hasWishes={hasWishes}
+          hasGallery={sv.gallery && W.gallery.length > 0}
+          audioRef={audioRef}
+        />
+      )}
     </div>
   )
 }
