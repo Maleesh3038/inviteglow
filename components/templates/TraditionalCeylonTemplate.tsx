@@ -103,15 +103,15 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
 
 // ── Guest intro screen — deep green + gold shimmer, "Dear [Name]," shown
 // for ~5s before the cover. Toggle via couple.show_guest_intro. ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; cream: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream, dark }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; cream: string; dark: string
 }) {
   return (
     <motion.div
       key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `radial-gradient(ellipse 75% 60% at 50% 25%, #24352a 0%, #1c2a1f 45%, #141d15 75%, #0e130e 100%)`,
+        background: `radial-gradient(ellipse 75% 60% at 50% 25%, ${dark} 0%, rgba(10,13,10,0.94) 70%, #06080a 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
@@ -639,7 +639,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
 
       <AnimatePresence>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} dark={DARK} />
         )}
       </AnimatePresence>
 
