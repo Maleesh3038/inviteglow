@@ -662,7 +662,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
 
-                <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#ffffff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9)" }}>
                   {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
