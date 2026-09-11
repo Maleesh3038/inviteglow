@@ -103,33 +103,33 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
 
 // ── Guest intro screen — deep green + gold shimmer, "Dear [Name]," shown
 // for ~5s before the cover. Toggle via couple.show_guest_intro. ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream, dark }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; cream: string; dark: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream, dark, muted }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; cream: string; dark: string; muted: string
 }) {
   return (
     <motion.div
       key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `radial-gradient(ellipse 75% 60% at 50% 25%, ${dark} 0%, rgba(10,13,10,0.94) 70%, #06080a 100%)`,
+        background: `radial-gradient(ellipse 75% 60% at 50% 25%, #fffdf6 0%, ${cream} 55%, #f3ead0 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
-      <div style={{ position: "absolute", width: 340, height: 340, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}26, transparent)`, top: "20%", left: "50%", transform: "translateX(-50%)" }} />
-      <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)`, backgroundSize: "26px 26px", opacity: 0.4 }} />
+      <div style={{ position: "absolute", width: 340, height: 340, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}33, transparent)`, top: "20%", left: "50%", transform: "translateX(-50%)" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${dark}0d 1px, transparent 1px)`, backgroundSize: "26px 26px", opacity: 0.5 }} />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
         style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
-        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: cream, lineHeight: 1.2 }}>
-          Dear <span style={{ color: primaryLight, fontWeight: 600 }}>{guestName}</span>,
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
+          Dear <span style={{ color: primary, fontWeight: 600 }}>{guestName}</span>,
         </div>
       </motion.div>
 
       <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ duration: 0.6, delay: 1.3 }}
-        style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primaryLight}, transparent)`, margin: "0 auto 1rem" }} />
+        style={{ width: 56, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)`, margin: "0 auto 1rem" }} />
 
       <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
-        style={{ fontSize: 10, textTransform: "uppercase", color: `${primaryLight}cc`, fontFamily: "'Inter',sans-serif" }}>
+        style={{ fontSize: 10, textTransform: "uppercase", color: muted, fontFamily: "'Inter',sans-serif" }}>
         A Cultural Celebration Awaits
       </motion.div>
 
@@ -137,7 +137,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream, dar
         initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }} onAnimationComplete={onDone} />
 
       <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 2 }} onClick={onDone}
-        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primaryLight, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
+        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
         Skip →
       </motion.button>
     </motion.div>
@@ -639,7 +639,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
 
       <AnimatePresence>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} dark={DARK} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} cream={CREAM} dark={DARK} muted={MUTED} />
         )}
       </AnimatePresence>
 
