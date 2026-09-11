@@ -111,11 +111,12 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, cream }: {
       key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `radial-gradient(ellipse 70% 55% at 50% 25%, #1f2e22 0%, #12190f 60%, #0a0d08 100%)`,
+        background: `radial-gradient(ellipse 75% 60% at 50% 25%, #3a5a41 0%, #2a4030 45%, #1f2e22 75%, #182319 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
-      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}22, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
+      <div style={{ position: "absolute", width: 340, height: 340, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}3d, transparent)`, top: "20%", left: "50%", transform: "translateX(-50%)" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)`, backgroundSize: "26px 26px", opacity: 0.4 }} />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
         style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
