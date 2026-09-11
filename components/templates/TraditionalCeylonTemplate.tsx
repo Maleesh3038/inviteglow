@@ -726,7 +726,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
                   <div style={sectionTitle(DARK)}>{ev.label}</div>
                   {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, gold: true },
+                    { icon: "📅", label: "Date", val: evDateDisplay },
                     { icon: "⏰", label: "Time", val: evTimeDisplay },
                     { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address },
                   ].map(d => (
@@ -734,7 +734,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
                         <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#b0b898" }}>{d.label}</div>
-                        <div style={{ fontSize: (d as any).gold ? 18 : 15, color: (d as any).gold ? "#8a7420" : DARK, fontWeight: 700, marginTop: 2, fontFamily: (d as any).gold ? "'Cormorant Garamond',serif" : "inherit", fontStyle: (d as any).gold ? "italic" : "normal" }}>{d.val}</div>
+                        <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2, fontFamily: "inherit", fontStyle: "normal" }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
                     </div>
