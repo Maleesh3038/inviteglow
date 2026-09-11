@@ -761,8 +761,6 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
               </div>
             )}
 
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
-
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
@@ -830,6 +828,8 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
                 </div>
               </div>
             )}
+
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {sv.thank_you && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
