@@ -695,7 +695,7 @@ function TraditionalCeylonInner({ couple }: { couple: Couple }) {
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(251,246,233,1) 0%,rgba(31,46,34,0.15) 55%,rgba(31,46,34,0.4) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: PRIMARY, marginBottom: "0.8rem" }}>Together with their families</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(31,46,34,0.3)" }}>
                   {W.bride}<span style={{ color: PRIMARY_LIGHT }}> &amp; </span>{W.groom}
                 </div>
