@@ -18,6 +18,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: couple } = await supabase.from('couples').select('*').eq('slug', slug).single()
 
   if (!couple) {
+    // Not a wedding — check the separate `events` table before giving up.
+    const { data: eventRow } = await supabase.from('events').select('*').eq('slug', slug).single()
+    if (eventRow) {
+      const e = eventRow as any
+      const title = e.title ? `${e.title} | InviteGlow` : "You're Invited! | InviteGlow"
+      const description = e.event_tagline || 'Tap to view your invitation and confirm your attendance.'
+      const previewImage: string = e.cover_photo || 'https://www.inviteglow.com/og-default.jpg'
+      return {
+        title,
+        description,
+        openGraph: { title, description, type: 'website', images: [{ url: previewImage, width: 1200, height: 1200 }] },
+        twitter: { card: 'summary_large_image', title, description, images: [previewImage] },
+      }
+    }
     return {
       title: 'Invitation Not Found | InviteGlow',
       description: "This invitation link doesn't exist or may have been removed.",
