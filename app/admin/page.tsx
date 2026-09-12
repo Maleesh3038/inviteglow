@@ -2,24 +2,26 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase, Couple, RSVP, Review } from '@/lib/supabase'
 const TEMPLATES = [
-  { id: 'floral-romance', name: 'Floral Romance', tag: 'Most Popular', photo: '/images/hero-floral.png', demoSlug: 'kavindi-malina', color: '#c4607a' },
-  { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.png', demoSlug: 'sheneli-kevin', color: '#a8895a' },
-  { id: 'cinematic-gold', name: 'Cinematic Gold', tag: 'Premium', photo: '/images/hero-cinematic.png', demoSlug: 'imesha-pasan', color: '#c9a96e' },
-  { id: 'kandyan-heritage', name: 'Kandyan Heritage', tag: 'Sri Lankan', photo: '/images/hero-kandyan.png', demoSlug: 'irudaka-sachini', color: '#e8a060' },
-  { id: 'twilight-picnic', name: 'Twilight Picnic', tag: 'After-Party', photo: '', demoSlug: '', color: '#f0a868' },
-  { id: 'golden-garden', name: 'Golden Garden', tag: 'Floral Arch', photo: '/images/hero-golden-garden.png', demoSlug: 'sanjeewani-lalith', color: '#d4a857' },
-  { id: 'ocean-pearl', name: 'Ocean Pearl', tag: 'Beach Elegance', photo: '/images/hero-ocean-pearl.png', demoSlug: 'akila-nethmi', color: '#2f7d9e' },
-  { id: 'sunset-shores', name: 'Sunset Shores', tag: 'Bali Sunset', photo: '/images/hero-sunset-shores.png', demoSlug: 'manisha-sachin', color: '#e0795a' },
-  { id: 'traditional-ceylon', name: 'Traditional Ceylon', tag: 'Kandyan Culture', photo: '/images/hero-traditional-ceylon.png', demoSlug: 'maheshi-dilip', color: '#2f4a35' },
-  { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', demoSlug: 'sandunika-geeth', color: '#c4956a' },
-  { id: 'blush-blossom', name: 'Blush Blossom', tag: 'Cherry Blossom', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a' },
-  { id: 'ceylon-elegance', name: 'Ceylon Elegance', tag: 'Gold & Video', photo: '', demoSlug: '', color: '#c9a227' },
-  { id: 'eternal-bloom', name: 'Eternal Bloom', tag: 'Botanical & Video', photo: '', demoSlug: '', color: '#5c7a52' },
-  { id: 'noble-salute', name: 'Noble Salute', tag: 'Military Honor', photo: '', demoSlug: '', color: '#3f5233' },
-  { id: 'crimson-royale', name: 'Crimson Royale', tag: 'Regal & Bold', photo: '', demoSlug: '', color: '#8b1a2b' },
-  { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', tag: 'Tamil Wedding', photo: '', demoSlug: '', color: '#9b2c2c' },
-  { id: 'ceremonial-guard', name: 'Ceremonial Guard', tag: 'Lavender Ceremony', photo: '', demoSlug: '', color: '#8B7BB8' },
+  { id: 'floral-romance', name: 'Floral Romance', tag: 'Most Popular', photo: '/images/hero-floral.png', demoSlug: 'kavindi-malina', color: '#c4607a', category: 'wedding' },
+  { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.png', demoSlug: 'sheneli-kevin', color: '#a8895a', category: 'wedding' },
+  { id: 'cinematic-gold', name: 'Cinematic Gold', tag: 'Premium', photo: '/images/hero-cinematic.png', demoSlug: 'imesha-pasan', color: '#c9a96e', category: 'wedding' },
+  { id: 'kandyan-heritage', name: 'Kandyan Heritage', tag: 'Sri Lankan', photo: '/images/hero-kandyan.png', demoSlug: 'irudaka-sachini', color: '#e8a060', category: 'wedding' },
+  { id: 'twilight-picnic', name: 'Twilight Picnic', tag: 'After-Party', photo: '', demoSlug: '', color: '#f0a868', category: 'wedding' },
+  { id: 'golden-garden', name: 'Golden Garden', tag: 'Floral Arch', photo: '/images/hero-golden-garden.png', demoSlug: 'sanjeewani-lalith', color: '#d4a857', category: 'wedding' },
+  { id: 'ocean-pearl', name: 'Ocean Pearl', tag: 'Beach Elegance', photo: '/images/hero-ocean-pearl.png', demoSlug: 'akila-nethmi', color: '#2f7d9e', category: 'wedding' },
+  { id: 'sunset-shores', name: 'Sunset Shores', tag: 'Bali Sunset', photo: '/images/hero-sunset-shores.png', demoSlug: 'manisha-sachin', color: '#e0795a', category: 'wedding' },
+  { id: 'traditional-ceylon', name: 'Traditional Ceylon', tag: 'Kandyan Culture', photo: '/images/hero-traditional-ceylon.png', demoSlug: 'maheshi-dilip', color: '#2f4a35', category: 'wedding' },
+  { id: 'sacred-poruwa', name: 'Sacred Poruwa', tag: 'Kandyan Sunset', photo: '/images/hero-sacred-poruwa.png', demoSlug: 'sandunika-geeth', color: '#c4956a', category: 'wedding' },
+  { id: 'blush-blossom', name: 'Blush Blossom', tag: 'Cherry Blossom', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a', category: 'wedding' },
+  { id: 'ceylon-elegance', name: 'Ceylon Elegance', tag: 'Gold & Video', photo: '', demoSlug: '', color: '#c9a227', category: 'wedding' },
+  { id: 'eternal-bloom', name: 'Eternal Bloom', tag: 'Botanical & Video', photo: '', demoSlug: '', color: '#5c7a52', category: 'wedding' },
+  { id: 'noble-salute', name: 'Noble Salute', tag: 'Military Honor', photo: '', demoSlug: '', color: '#3f5233', category: 'wedding' },
+  { id: 'crimson-royale', name: 'Crimson Royale', tag: 'Regal & Bold', photo: '', demoSlug: '', color: '#8b1a2b', category: 'wedding' },
+  { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', tag: 'Tamil Wedding', photo: '', demoSlug: '', color: '#9b2c2c', category: 'wedding' },
+  { id: 'ceremonial-guard', name: 'Ceremonial Guard', tag: 'Lavender Ceremony', photo: '', demoSlug: '', color: '#8B7BB8', category: 'wedding' },
+  { id: 'corporate-event', name: 'Corporate Event', tag: 'Office & Corporate', photo: '', demoSlug: '', color: '#1c3d5a', category: 'event' },
 ]
+const CATEGORY_LABELS: Record<string, string> = { wedding: 'Wedding', event: 'Event', birthday: 'Birthday' }
 const BUCKET = 'wedding-photos'
 const emptyForm = {
   slug: '',
@@ -1317,13 +1319,54 @@ function FinanceManager({ couples }: { couples: Couple[] }) {
 }
 const NAV_TABS = [
   { key: 'overview', label: 'Overview', icon: 'grid' as const },
-  { key: 'couples', label: 'Couples', icon: 'users' as const },
+  { key: 'couples', label: 'Wedding', icon: 'users' as const },
+  { key: 'events', label: 'Event', icon: 'calendar' as const },
+  { key: 'birthdays', label: 'Birthday', icon: 'star' as const },
   { key: 'signups', label: 'Signups', icon: 'external' as const },
   { key: 'templates', label: 'Templates', icon: 'template' as const },
   { key: 'pricing', label: 'Pricing', icon: 'tag' as const },
   { key: 'finance', label: 'Finance', icon: 'chart' as const },
   { key: 'reviews', label: 'Reviews', icon: 'star' as const },
 ]
+// ── "Event" category — its own table (`events`), separate from `couples`.
+// Mirrors the couples admin pattern (list + create/edit form) but scoped
+// to the fields a corporate/office event actually needs.
+const emptyEventForm = {
+  slug: '',
+  template: 'corporate-event',
+  title: '',
+  host: '',
+  event_tagline: '',
+  cover_badge_text: '',
+  event_date: '',
+  time_format: '12h' as '12h' | '24h',
+  venue: '',
+  venue_address: '',
+  maps_url: '',
+  cover_photo: '',
+  gallery: [] as string[],
+  song_title: '',
+  song_artist: '',
+  song_url: '',
+  timeline: [] as { id: number; enabled: boolean; time: string; event: string }[],
+  seats: '',
+  show_seating: false,
+  contacts: [] as { name: string; phone: string }[],
+  section_visibility: { gallery: true, countdown: true, timeline: true, seat_finder: true, music: true, thank_you: true },
+  enable_guest_wishes: false,
+  enable_footer_social: true,
+  thank_you_text: '',
+  pin: '',
+  customer_name: '',
+  customer_email: '',
+  customer_phone: '',
+  project_status: 'ongoing' as 'lead' | 'sample' | 'ongoing' | 'complete',
+  payment_status: 'unpaid' as 'unpaid' | 'partial' | 'paid',
+  paid_amount: '',
+  package_tier: '' as '' | 'starter' | 'premium' | 'luxury',
+  admin_notes: '',
+}
+type EventRow = typeof emptyEventForm & { id: string; created_at?: string; page_views?: number }
 export default function AdminPage() {
   const [couples, setCouples] = useState<Couple[]>([])
   const [allRsvps, setAllRsvps] = useState<{ couple_id: string; response: string; guest_count: number }[]>([])
@@ -1334,9 +1377,10 @@ export default function AdminPage() {
   const [settingDefault, setSettingDefault] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'signups' | 'templates' | 'pricing' | 'finance' | 'reviews'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'couples' | 'events' | 'birthdays' | 'signups' | 'templates' | 'pricing' | 'finance' | 'reviews'>('overview')
   const [coupleSearch, setCoupleSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'lead' | 'sample' | 'ongoing' | 'complete'>('all')
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<'all' | 'wedding' | 'event' | 'birthday'>('all')
   // ── Admin password gate ──
   // The real password is checked server-side (app/api/admin-auth/route.ts)
   // against process.env.ADMIN_PASSWORD, so it never ships in the client
@@ -1614,6 +1658,150 @@ export default function AdminPage() {
       alert('Could not reset PIN: ' + error.message)
     }
   }
+  // ── Event tab — its own list/form/handlers, backed by the `events` table ──
+  const [eventRows, setEventRows] = useState<EventRow[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(true)
+  const [editingEvent, setEditingEvent] = useState<string | null>(null)
+  const [eventForm, setEventForm] = useState(emptyEventForm)
+  const [savingEvent, setSavingEvent] = useState(false)
+  const [eventMessage, setEventMessage] = useState('')
+  const [eventSearch, setEventSearch] = useState('')
+  const loadEvents = async () => {
+    setLoadingEvents(true)
+    const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+    if (!error && data) setEventRows(data as EventRow[])
+    setLoadingEvents(false)
+  }
+  useEffect(() => { loadEvents() }, [])
+  const startNewEvent = () => {
+    setEventForm({ ...emptyEventForm, pin: generatePin() })
+    setEditingEvent('new')
+    setActiveTab('events')
+  }
+  const startEditEvent = (e: EventRow) => {
+    setEventForm({
+      slug: e.slug,
+      template: e.template || 'corporate-event',
+      title: e.title || '',
+      host: e.host || '',
+      event_tagline: e.event_tagline || '',
+      cover_badge_text: e.cover_badge_text || '',
+      event_date: (e as any).event_date ? (e as any).event_date.slice(0, 16) : '',
+      time_format: ((e as any).time_format === '24h' ? '24h' : '12h') as '12h' | '24h',
+      venue: e.venue || '',
+      venue_address: e.venue_address || '',
+      maps_url: e.maps_url || '',
+      cover_photo: e.cover_photo || '',
+      gallery: Array.isArray((e as any).gallery) ? (e as any).gallery : [],
+      song_title: e.song_title || '',
+      song_artist: e.song_artist || '',
+      song_url: e.song_url || '',
+      timeline: Array.isArray((e as any).timeline) && (e as any).timeline.length > 0
+        ? (e as any).timeline.map((t: any, i: number) => ({ id: i + 1, enabled: true, time: t.time, event: t.event }))
+        : [],
+      seats: Object.entries((e as any).seats || {}).map(([k, v]) => `${k} | ${v}`).join('\n'),
+      show_seating: (e as any).show_seating || false,
+      contacts: Array.isArray((e as any).contacts) ? (e as any).contacts : [],
+      section_visibility: {
+        gallery: (e as any).section_visibility?.gallery ?? true,
+        countdown: (e as any).section_visibility?.countdown ?? true,
+        timeline: (e as any).section_visibility?.timeline ?? true,
+        seat_finder: (e as any).section_visibility?.seat_finder ?? true,
+        music: (e as any).section_visibility?.music ?? true,
+        thank_you: (e as any).section_visibility?.thank_you ?? true,
+      },
+      enable_guest_wishes: (e as any).enable_guest_wishes ?? false,
+      enable_footer_social: (e as any).enable_footer_social ?? true,
+      thank_you_text: (e as any).thank_you_text || '',
+      pin: e.pin || generatePin(),
+      customer_name: (e as any).customer_name || '',
+      customer_email: (e as any).customer_email || '',
+      customer_phone: (e as any).customer_phone || '',
+      project_status: ((e as any).project_status ?? 'ongoing') as 'lead' | 'sample' | 'ongoing' | 'complete',
+      payment_status: ((e as any).payment_status ?? 'unpaid') as 'unpaid' | 'partial' | 'paid',
+      paid_amount: (e as any).paid_amount != null ? String((e as any).paid_amount) : '',
+      package_tier: ((e as any).package_tier ?? '') as '' | 'starter' | 'premium' | 'luxury',
+      admin_notes: (e as any).admin_notes || '',
+    })
+    setEditingEvent(e.id)
+    setActiveTab('events')
+  }
+  const handleSaveEvent = async () => {
+    if (!eventForm.slug || !eventForm.title || !eventForm.event_date) {
+      setEventMessage('Please fill in Slug, Event Title, and Event Date.')
+      return
+    }
+    setSavingEvent(true)
+    setEventMessage('')
+    const timelineArr = eventForm.timeline.filter(t => t.enabled && t.time.trim() && t.event.trim()).map(t => ({ time: t.time.trim(), event: t.event.trim() }))
+    const seatsObj: Record<string, string> = {}
+    eventForm.seats.split('\n').forEach(line => {
+      const [name, table] = line.split('|').map(s => s.trim())
+      if (name && table) seatsObj[name.toLowerCase()] = table
+    })
+    const payload = {
+      slug: eventForm.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      template: eventForm.template,
+      title: eventForm.title,
+      host: eventForm.host || null,
+      event_tagline: eventForm.event_tagline || null,
+      cover_badge_text: eventForm.cover_badge_text || null,
+      event_date: eventForm.event_date,
+      time_format: eventForm.time_format || '12h',
+      venue: eventForm.venue || null,
+      venue_address: eventForm.venue_address || null,
+      maps_url: eventForm.maps_url || null,
+      cover_photo: eventForm.cover_photo || null,
+      gallery: eventForm.gallery,
+      song_title: eventForm.song_title || null,
+      song_artist: eventForm.song_artist || null,
+      song_url: eventForm.song_url || null,
+      timeline: timelineArr,
+      seats: seatsObj,
+      show_seating: eventForm.show_seating,
+      contacts: eventForm.contacts.filter(c => c.phone?.trim()),
+      section_visibility: eventForm.section_visibility,
+      enable_guest_wishes: eventForm.enable_guest_wishes,
+      enable_footer_social: eventForm.enable_footer_social,
+      thank_you_text: eventForm.thank_you_text || null,
+      pin: eventForm.pin || generatePin(),
+      customer_name: eventForm.customer_name || null,
+      customer_email: eventForm.customer_email || null,
+      customer_phone: eventForm.customer_phone || null,
+      project_status: eventForm.project_status || 'ongoing',
+      payment_status: eventForm.payment_status || 'unpaid',
+      paid_amount: eventForm.paid_amount ? parseFloat(eventForm.paid_amount) : 0,
+      package_tier: eventForm.package_tier || null,
+      admin_notes: eventForm.admin_notes || null,
+    }
+    let error
+    if (editingEvent === 'new') {
+      const res = await supabase.from('events').insert([payload])
+      error = res.error
+    } else {
+      const res = await supabase.from('events').update(payload).eq('id', editingEvent)
+      error = res.error
+    }
+    setSavingEvent(false)
+    if (error) {
+      setEventMessage('Error: ' + error.message)
+    } else {
+      setEventMessage('Saved successfully!')
+      setEditingEvent(null)
+      loadEvents()
+    }
+  }
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Delete this event invitation permanently?')) return
+    await supabase.from('events').delete().eq('id', id)
+    loadEvents()
+  }
+  const filteredEvents = useMemo(() => {
+    const q = eventSearch.trim().toLowerCase()
+    if (!q) return eventRows
+    return eventRows.filter(e => e.title?.toLowerCase().includes(q) || e.slug?.toLowerCase().includes(q) || e.host?.toLowerCase().includes(q))
+  }, [eventRows, eventSearch])
+
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : ''
   // ── Platform-wide stats ──
   const stats = useMemo(() => {
@@ -1841,6 +2029,194 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+        {/* ── EVENT TAB — backed by the separate `events` table ── */}
+        {activeTab === 'events' && (
+          <div>
+            {editingEvent ? (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>{editingEvent === 'new' ? 'New Event Invitation' : 'Edit Event Invitation'}</div>
+                  <button onClick={() => { setEditingEvent(null); setEventMessage('') }} style={{ fontSize: 13, color: '#64748b', background: 'transparent', border: 'none', cursor: 'pointer' }}>← Back to list</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
+                  <div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Slug (URL) *</label>
+                      <input style={inputStyle} value={eventForm.slug} onChange={e => setEventForm({ ...eventForm, slug: e.target.value })} placeholder="annual-day-2026" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Event Title *</label>
+                      <input style={inputStyle} value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} placeholder="Annual Excellence Awards 2026" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Organized By / Host (optional)</label>
+                      <input style={inputStyle} value={eventForm.host} onChange={e => setEventForm({ ...eventForm, host: e.target.value })} placeholder="Acme Holdings PLC" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Tagline (optional)</label>
+                      <input style={inputStyle} value={eventForm.event_tagline} onChange={e => setEventForm({ ...eventForm, event_tagline: e.target.value })} placeholder="Join us for an evening of celebration..." />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Cover Badge Text (optional)</label>
+                      <input style={inputStyle} value={eventForm.cover_badge_text} onChange={e => setEventForm({ ...eventForm, cover_badge_text: e.target.value })} placeholder="Corporate Invitation" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Event Date & Time *</label>
+                      <input type="datetime-local" style={inputStyle} value={eventForm.event_date} onChange={e => setEventForm({ ...eventForm, event_date: e.target.value })} />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Venue</label>
+                      <input style={inputStyle} value={eventForm.venue} onChange={e => setEventForm({ ...eventForm, venue: e.target.value })} placeholder="Shangri-La Colombo" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Venue Address</label>
+                      <input style={inputStyle} value={eventForm.venue_address} onChange={e => setEventForm({ ...eventForm, venue_address: e.target.value })} placeholder="1 Galle Face, Colombo 02" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Google Maps URL</label>
+                      <input style={inputStyle} value={eventForm.maps_url} onChange={e => setEventForm({ ...eventForm, maps_url: e.target.value })} placeholder="https://maps.google.com/..." />
+                    </div>
+                    <PhotoUploader value={eventForm.cover_photo} onChange={url => setEventForm({ ...eventForm, cover_photo: url })} label="Cover Photo (optional)" hint="Leave blank to use a plain navy/gold cover instead of a photo." />
+                    <GalleryUploader value={eventForm.gallery} onChange={urls => setEventForm({ ...eventForm, gallery: urls })} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Event Coordinators (Contact Numbers)</div>
+                    {eventForm.contacts.map((c, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input style={{ ...inputStyle, marginBottom: 0, flex: 1 }} placeholder="Name" value={c.name} onChange={e => {
+                          const next = [...eventForm.contacts]; next[i] = { ...next[i], name: e.target.value }; setEventForm({ ...eventForm, contacts: next })
+                        }} />
+                        <input style={{ ...inputStyle, marginBottom: 0, flex: 1 }} placeholder="Phone" value={c.phone} onChange={e => {
+                          const next = [...eventForm.contacts]; next[i] = { ...next[i], phone: e.target.value }; setEventForm({ ...eventForm, contacts: next })
+                        }} />
+                        <button type="button" onClick={() => setEventForm({ ...eventForm, contacts: eventForm.contacts.filter((_, j) => j !== i) })} style={{ padding: '0 12px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}>
+                          <Icon name="trash" size={14} color="#dc2626" />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setEventForm({ ...eventForm, contacts: [...eventForm.contacts, { name: '', phone: '' }] })} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500, marginBottom: 20 }}>
+                      <Icon name="plus" size={14} /> Add Coordinator
+                    </button>
+
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Event Agenda / Programme</div>
+                    {eventForm.timeline.map((t, i) => (
+                      <div key={t.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input style={{ ...inputStyle, marginBottom: 0, width: 110 }} placeholder="6:00 PM" value={t.time} onChange={e => {
+                          const next = [...eventForm.timeline]; next[i] = { ...next[i], time: e.target.value }; setEventForm({ ...eventForm, timeline: next })
+                        }} />
+                        <input style={{ ...inputStyle, marginBottom: 0, flex: 1 }} placeholder="Welcome address" value={t.event} onChange={e => {
+                          const next = [...eventForm.timeline]; next[i] = { ...next[i], event: e.target.value }; setEventForm({ ...eventForm, timeline: next })
+                        }} />
+                        <button type="button" onClick={() => setEventForm({ ...eventForm, timeline: eventForm.timeline.filter((_, j) => j !== i) })} style={{ padding: '0 12px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}>
+                          <Icon name="trash" size={14} color="#dc2626" />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setEventForm({ ...eventForm, timeline: [...eventForm.timeline, { id: Date.now(), enabled: true, time: '', event: '' }] })} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500, marginBottom: 20 }}>
+                      <Icon name="plus" size={14} /> Add Agenda Item
+                    </button>
+
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Seating (one per line: Name | Table)</label>
+                      <textarea style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} value={eventForm.seats} onChange={e => setEventForm({ ...eventForm, seats: e.target.value })} placeholder={'kasun perera | Table 4\nnadeesha silva | Table 2'} />
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={eventForm.show_seating} onChange={e => setEventForm({ ...eventForm, show_seating: e.target.checked })} /> Show seat/table finder
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={eventForm.enable_guest_wishes} onChange={e => setEventForm({ ...eventForm, enable_guest_wishes: e.target.checked })} /> Enable Guest Messages & Wishes wall
+                    </label>
+
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Background Music URL (optional)</label>
+                      <input style={inputStyle} value={eventForm.song_url} onChange={e => setEventForm({ ...eventForm, song_url: e.target.value })} placeholder="Leave blank for a silent invite" />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Thank You Note (optional)</label>
+                      <textarea style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} value={eventForm.thank_you_text} onChange={e => setEventForm({ ...eventForm, thank_you_text: e.target.value })} />
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginTop: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Business Tracking</div>
+                      <div style={fieldWrap}>
+                        <label style={labelStyle}>Customer Name</label>
+                        <input style={inputStyle} value={eventForm.customer_name} onChange={e => setEventForm({ ...eventForm, customer_name: e.target.value })} />
+                      </div>
+                      <div style={fieldWrap}>
+                        <label style={labelStyle}>Customer Phone</label>
+                        <input style={inputStyle} value={eventForm.customer_phone} onChange={e => setEventForm({ ...eventForm, customer_phone: e.target.value })} />
+                      </div>
+                      <div style={fieldWrap}>
+                        <label style={labelStyle}>Project Status</label>
+                        <select style={inputStyle} value={eventForm.project_status} onChange={e => setEventForm({ ...eventForm, project_status: e.target.value as any })}>
+                          <option value="lead">Lead</option>
+                          <option value="sample">Sample</option>
+                          <option value="ongoing">Ongoing</option>
+                          <option value="complete">Complete</option>
+                        </select>
+                      </div>
+                      <div style={fieldWrap}>
+                        <label style={labelStyle}>Dashboard PIN</label>
+                        <input style={inputStyle} value={eventForm.pin} onChange={e => setEventForm({ ...eventForm, pin: e.target.value })} />
+                      </div>
+                    </div>
+
+                    {eventMessage && <div style={{ fontSize: 13, color: eventMessage.startsWith('Error') ? '#dc2626' : '#16a34a', marginBottom: 12 }}>{eventMessage}</div>}
+                    <button onClick={handleSaveEvent} disabled={savingEvent} style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: '#1c3d5a', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: savingEvent ? 0.6 : 1 }}>
+                      {savingEvent ? 'Saving...' : 'Save Event Invitation'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Event Invitations</div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Corporate & office event invitations — separate from Wedding.</div>
+                  </div>
+                  <button onClick={startNewEvent} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, border: 'none', background: '#1c3d5a', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                    <Icon name="plus" size={14} color="#fff" /> New Event
+                  </button>
+                </div>
+                <input style={{ ...inputStyle, maxWidth: 320, marginBottom: 16 }} placeholder="Search by title, slug, or host..." value={eventSearch} onChange={e => setEventSearch(e.target.value)} />
+                {loadingEvents ? (
+                  <div style={{ fontSize: 13, color: '#94a3b8' }}>Loading...</div>
+                ) : filteredEvents.length === 0 ? (
+                  <div style={{ fontSize: 13, color: '#94a3b8' }}>No event invitations yet — click "New Event" to create one.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {filteredEvents.map(e => (
+                      <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#fff', borderRadius: 10, border: '1px solid #f1f5f9' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{e.title}{e.host ? ` · ${e.host}` : ''}</div>
+                          <div style={{ fontSize: 11, color: '#94a3b8' }}>{(e as any).event_date ? new Date((e as any).event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''} · /{e.slug}</div>
+                        </div>
+                        {siteUrl && (
+                          <a href={`${siteUrl}/invite/${e.slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#64748b', textDecoration: 'none' }}>
+                            <Icon name="external" size={14} />
+                          </a>
+                        )}
+                        <button onClick={() => startEditEvent(e)} style={{ fontSize: 12, color: ACCENT, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Edit</button>
+                        <button onClick={() => handleDeleteEvent(e.id)} style={{ fontSize: 12, color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Delete</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {/* ── BIRTHDAY TAB — placeholder until the first birthday template ships ── */}
+        {activeTab === 'birthdays' && (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
+            <Icon name="star" size={32} color="#cbd5e1" />
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#475569', marginTop: 12 }}>Birthday invitations — coming next</div>
+            <div style={{ fontSize: 13, marginTop: 4, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
+              The `birthdays` table is already created. Once the first birthday template is built, this tab will get the same list + create/edit screen as the Event tab.
+            </div>
+          </div>
+        )}
         {/* ── TEMPLATES TAB ── */}
         {activeTab === 'templates' && (
           <div>
@@ -1848,8 +2224,22 @@ export default function AdminPage() {
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Template Gallery</div>
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Preview every available template and open a live demo where one exists.</div>
             </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+              {(['all', 'wedding', 'event', 'birthday'] as const).map(cat => (
+                <button key={cat} onClick={() => setTemplateCategoryFilter(cat)} style={{
+                  padding: '7px 16px', borderRadius: 100, border: templateCategoryFilter === cat ? 'none' : '1px solid #e2e8f0',
+                  background: templateCategoryFilter === cat ? '#0f172a' : '#fff', color: templateCategoryFilter === cat ? '#fff' : '#475569',
+                  fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  {cat === 'all' ? 'All Templates' : CATEGORY_LABELS[cat]}
+                  {cat !== 'all' && (
+                    <span style={{ marginLeft: 6, opacity: 0.7 }}>({TEMPLATES.filter(t => (t.category || 'wedding') === cat).length})</span>
+                  )}
+                </button>
+              ))}
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 16 }}>
-              {TEMPLATES.map(t => (
+              {TEMPLATES.filter(t => templateCategoryFilter === 'all' || (t.category || 'wedding') === templateCategoryFilter).map(t => (
                 <div key={t.id} style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 12px rgba(15,23,42,0.06)' }}>
                   <div style={{ height: 130, position: 'relative', background: t.photo ? undefined : `linear-gradient(135deg,${t.color}33,${t.color}66)` }}>
                     {t.photo ? (
@@ -1878,7 +2268,13 @@ export default function AdminPage() {
                       ) : (
                         <div style={{ flex: 1, textAlign: 'center', padding: '8px', borderRadius: 8, background: '#f8fafc', fontSize: 12, color: '#94a3b8' }}>No demo yet</div>
                       )}
-                      <button onClick={() => { setForm({ ...emptyForm, template: t.id, pin: generatePin() }); setCurrentDefaultTemplate(''); setEditing('new'); setActiveTab('couples') }} style={{
+                      <button onClick={() => {
+                        if ((t.category || 'wedding') === 'event') {
+                          setEventForm({ ...emptyEventForm, template: t.id, pin: generatePin() }); setEditingEvent('new'); setActiveTab('events')
+                        } else {
+                          setForm({ ...emptyForm, template: t.id, pin: generatePin() }); setCurrentDefaultTemplate(''); setEditing('new'); setActiveTab('couples')
+                        }
+                      }} style={{
                         display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
                         background: `${t.color}1a`, color: t.color, fontSize: 12, fontWeight: 600,
                       }}>
