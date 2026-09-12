@@ -18,20 +18,34 @@ import NobleSaluteTemplate from '@/components/templates/NobleSaluteTemplate'
 import CrimsonRoyaleTemplate from '@/components/templates/CrimsonRoyaleTemplate'
 import KanchiVivahaTemplate from '@/components/templates/KanchiVivahaTemplate'
 import CeremonialGuardTemplate from '@/components/templates/CeremonialGuardTemplate'
+import CorporateEventTemplate from '@/components/templates/CorporateEventTemplate'
 
 export default function InviteClient({ slug }: { slug: string }) {
   const [couple, setCouple] = useState<Couple | null>(null)
+  // Event invitations live in their own `events` table (separate from
+  // `couples` — see events_table_migration.sql), so a slug that isn't a
+  // wedding is checked there next and rendered with its own template.
+  const [eventRow, setEventRow] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase.from('couples').select('*').eq('slug', slug).single()
-      if (error || !data) { setNotFound(true) } else {
+      if (!error && data) {
         setCouple(data as Couple)
         // Fire-and-forget page view counter — never blocks rendering, and a
         // failure here (e.g. missing column before the migration runs)
         // should never break the invitation page itself.
         supabase.from('couples').update({ page_views: ((data as any).page_views || 0) + 1 }).eq('id', data.id).then(() => {}, () => {})
+        setLoading(false)
+        return
+      }
+      const { data: eventData, error: eventError } = await supabase.from('events').select('*').eq('slug', slug).single()
+      if (!eventError && eventData) {
+        setEventRow(eventData)
+        supabase.from('events').update({ page_views: ((eventData as any).page_views || 0) + 1 }).eq('id', (eventData as any).id).then(() => {}, () => {})
+      } else {
+        setNotFound(true)
       }
       setLoading(false)
     }
@@ -43,6 +57,9 @@ export default function InviteClient({ slug }: { slug: string }) {
         Loading invitation...
       </div>
     )
+  }
+  if (eventRow) {
+    return <CorporateEventTemplate couple={eventRow} />
   }
   if (notFound || !couple) {
     return (
@@ -87,6 +104,9 @@ export default function InviteClient({ slug }: { slug: string }) {
       return <KanchiVivahaTemplate couple={couple} />
     case 'ceremonial-guard':
       return <CeremonialGuardTemplate couple={couple} />
+    // NOTE: 'corporate-event' invitations live in the `events` table, not
+    // `couples` — they're handled by the `eventRow` branch above, before
+    // this switch ever runs.
     case 'garden-minimal':
     case 'floral-romance':
       return <FloralRomanceTemplate couple={couple} />
