@@ -1357,6 +1357,8 @@ const emptyEventForm = {
   section_visibility: { gallery: true, countdown: true, timeline: true, seat_finder: true, music: true, thank_you: true },
   enable_guest_wishes: false,
   enable_footer_social: true,
+  ask_drinking: false,
+  ask_meal_pref: false,
   thank_you_text: '',
   pin: '',
   customer_name: '',
@@ -1716,6 +1718,8 @@ export default function AdminPage() {
       },
       enable_guest_wishes: (e as any).enable_guest_wishes ?? false,
       enable_footer_social: (e as any).enable_footer_social ?? true,
+      ask_drinking: (e as any).ask_drinking ?? false,
+      ask_meal_pref: (e as any).ask_meal_pref ?? false,
       thank_you_text: (e as any).thank_you_text || '',
       pin: e.pin || generatePin(),
       customer_name: (e as any).customer_name || '',
@@ -1769,6 +1773,8 @@ export default function AdminPage() {
       section_visibility: eventForm.section_visibility,
       enable_guest_wishes: eventForm.enable_guest_wishes,
       enable_footer_social: eventForm.enable_footer_social,
+      ask_drinking: eventForm.ask_drinking,
+      ask_meal_pref: eventForm.ask_meal_pref,
       thank_you_text: eventForm.thank_you_text || null,
       pin: eventForm.pin || generatePin(),
       customer_name: eventForm.customer_name || null,
@@ -2140,6 +2146,12 @@ export default function AdminPage() {
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
                       <input type="checkbox" checked={eventForm.enable_guest_wishes} onChange={e => setEventForm({ ...eventForm, enable_guest_wishes: e.target.checked })} /> Enable Guest Messages & Wishes wall
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={eventForm.ask_drinking} onChange={e => setEventForm({ ...eventForm, ask_drinking: e.target.checked })} /> Ask guests about alcohol preference during RSVP
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={eventForm.ask_meal_pref} onChange={e => setEventForm({ ...eventForm, ask_meal_pref: e.target.checked })} /> Ask guests for Veg / Non-Veg meal preference during RSVP
                     </label>
 
                     <div style={fieldWrap}>
