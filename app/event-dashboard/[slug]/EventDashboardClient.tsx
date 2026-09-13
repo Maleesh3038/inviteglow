@@ -98,6 +98,7 @@ type EventRow = {
   pin?: string | null
   ask_drinking?: boolean | null
   ask_meal_pref?: boolean | null
+  whatsapp_invite_message?: string | null
 }
 type Guest = {
   id: string
@@ -169,13 +170,21 @@ function safeFileName(s: string) {
 // guest's name, get a link like /invite/<slug>?name=<name>. Opening that
 // link shows a brief "Dear <Name>," welcome screen before the invitation
 // itself opens, and pre-fills the RSVP form with that name.
-function GuestLinkGenerator({ event, accent }: { event: EventRow; accent: string }) {
+const DEFAULT_WA_MESSAGE = "Hi {name}! You're invited to {event}. Please tap below to view your invitation and confirm your attendance."
+
+function GuestLinkGenerator({ event, accent, onMessageSaved }: { event: EventRow; accent: string; onMessageSaved: (msg: string) => void }) {
   const [guestName, setGuestName] = useState('')
   const [copied, setCopied] = useState(false)
+  const [waMessage, setWaMessage] = useState(event.whatsapp_invite_message || DEFAULT_WA_MESSAGE.replace('{event}', event.title))
+  const [editingMsg, setEditingMsg] = useState(false)
+  const [savingMsg, setSavingMsg] = useState(false)
 
   const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${event.slug}` : `/invite/${event.slug}`
   const generatedLink = guestName.trim() ? `${baseUrl}?name=${encodeURIComponent(guestName.trim())}` : baseUrl
-  const waMessage = `Hi ${guestName.trim() || '{name}'}, you're invited to ${event.title}! Please tap below to view your invitation and confirm your attendance.\n${generatedLink}`
+  // Swaps {name} for the guest currently typed above — if nothing's typed
+  // yet, leaves the placeholder visible so it's clear a name goes there.
+  const personalizedMessage = waMessage.replace(/\{name\}/g, guestName.trim() || '{name}')
+  const fullMessage = `${personalizedMessage}\n${generatedLink}`
 
   const copyLink = async () => {
     if (!guestName.trim()) return
@@ -187,7 +196,13 @@ function GuestLinkGenerator({ event, accent }: { event: EventRow; accent: string
   }
   const shareWhatsApp = () => {
     if (!guestName.trim()) return
-    window.open(`https://wa.me/?text=${encodeURIComponent(waMessage)}`, '_blank')
+    window.open(`https://wa.me/?text=${encodeURIComponent(fullMessage)}`, '_blank')
+  }
+  const saveMessage = async () => {
+    setSavingMsg(true)
+    const { error } = await supabase.from('events').update({ whatsapp_invite_message: waMessage }).eq('id', event.id)
+    setSavingMsg(false)
+    if (!error) { onMessageSaved(waMessage); setEditingMsg(false) }
   }
 
   const input: React.CSSProperties = { width: '100%', padding: '11px 13px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK, boxSizing: 'border-box', background: '#fff' }
@@ -204,6 +219,27 @@ function GuestLinkGenerator({ event, accent }: { event: EventRow; accent: string
           {generatedLink}
         </div>
       )}
+
+      <div style={{ background: '#f8fafc', borderRadius: 9, padding: '12px 14px', marginBottom: 12, border: `1px solid ${BORDER}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT_DARK }}>WhatsApp Message</div>
+          <button onClick={() => setEditingMsg(!editingMsg)} style={{ fontSize: 11, color: accent, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            {editingMsg ? 'Cancel' : 'Edit'}
+          </button>
+        </div>
+        {editingMsg ? (
+          <div>
+            <div style={{ fontSize: 10.5, color: TEXT_MUTED, marginBottom: 6 }}>Tip: type <strong>{'{name}'}</strong> anywhere and it'll be swapped for the guest's name above. The link is always added on a new line automatically.</div>
+            <textarea value={waMessage} onChange={e => setWaMessage(e.target.value)} style={{ ...input, minHeight: 80, resize: 'vertical', marginBottom: 8 }} />
+            <button onClick={saveMessage} disabled={savingMsg} style={{ padding: '8px 16px', borderRadius: 8, background: accent, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, opacity: savingMsg ? 0.6 : 1 }}>
+              {savingMsg ? 'Saving...' : 'Save Message'}
+            </button>
+          </div>
+        ) : (
+          <div style={{ fontSize: 12.5, color: TEXT_DARK, whiteSpace: 'pre-wrap' }}>{personalizedMessage}<br /><span style={{ color: TEXT_MUTED }}>[link auto-added]</span></div>
+        )}
+      </div>
+
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={copyLink} disabled={!guestName.trim()} style={{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 12, borderRadius: 9, border: 'none',
@@ -247,7 +283,12 @@ function BulkGuestLinks({ event, accent }: { event: EventRow; accent: string }) 
   }
 
   const waLinkFor = (r: { name: string; phone: string; link: string }) => {
-    const msg = `Hi ${r.name}, you're invited to ${event.title}! Please tap below to view your invitation and confirm your attendance.\n${r.link}`
+    // Reuses whatever WhatsApp message template is saved for this event
+    // (editable above, in the single-guest generator) so bulk-sent
+    // messages match what's been customised, instead of a second
+    // hardcoded copy going stale.
+    const template = event.whatsapp_invite_message || DEFAULT_WA_MESSAGE.replace('{event}', event.title)
+    const msg = `${template.replace(/\{name\}/g, r.name)}\n${r.link}`
     const digits = r.phone.replace(/[^\d+]/g, '').replace(/^\+/, '')
     return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`
   }
@@ -617,7 +658,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   // ── Load event + guest list ──
   useEffect(() => {
     const load = async () => {
-      const { data: ev, error } = await supabase.from('events').select('id,slug,title,host,event_date,pin,ask_drinking,ask_meal_pref').eq('slug', slug).single()
+      const { data: ev, error } = await supabase.from('events').select('id,slug,title,host,event_date,pin,ask_drinking,ask_meal_pref,whatsapp_invite_message').eq('slug', slug).single()
       if (error || !ev) { setNotFound(true); setLoading(false); setCheckingSession(false); return }
       setEvent(ev as EventRow)
       try {
@@ -1044,7 +1085,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
 
           {activeTab === 'share' && (
             <motion.div key="share" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-              <GuestLinkGenerator event={event} accent={ACCENT} />
+              <GuestLinkGenerator event={event} accent={ACCENT} onMessageSaved={msg => setEvent(prev => prev ? { ...prev, whatsapp_invite_message: msg } : prev)} />
               <BulkGuestLinks event={event} accent={ACCENT} />
             </motion.div>
           )}
