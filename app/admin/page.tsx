@@ -1808,6 +1808,20 @@ export default function AdminPage() {
     await supabase.from('events').delete().eq('id', id)
     loadEvents()
   }
+  const [resettingEventPinId, setResettingEventPinId] = useState<string | null>(null)
+  const handleResetEventPin = async (id: string, eventLabel: string) => {
+    if (!confirm(`Reset the check-in dashboard PIN for ${eventLabel}? The old PIN will stop working immediately.`)) return
+    const newPin = generatePin()
+    setResettingEventPinId(id)
+    const { error } = await supabase.from('events').update({ pin: newPin }).eq('id', id)
+    setResettingEventPinId(null)
+    if (!error) {
+      loadEvents()
+      alert(`New check-in dashboard PIN for ${eventLabel}: ${newPin}\n\nShare this with event staff — their dashboard link stays the same.`)
+    } else {
+      alert('Could not reset PIN: ' + error.message)
+    }
+  }
   const filteredEvents = useMemo(() => {
     const q = eventSearch.trim().toLowerCase()
     if (!q) return eventRows
@@ -2183,8 +2197,15 @@ export default function AdminPage() {
                         </select>
                       </div>
                       <div style={fieldWrap}>
-                        <label style={labelStyle}>Dashboard PIN</label>
-                        <input style={inputStyle} value={eventForm.pin} onChange={e => setEventForm({ ...eventForm, pin: e.target.value })} />
+                        <label style={labelStyle}>Dashboard PIN (4-digit)</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input style={{ ...inputStyle, flex: 1 }} placeholder="1234" maxLength={4} value={eventForm.pin} onChange={e => setEventForm({ ...eventForm, pin: e.target.value.replace(/\D/g, '').slice(0, 4) })} />
+                          <button type="button" onClick={() => setEventForm({ ...eventForm, pin: generatePin() })}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer', fontSize: 12, color: '#475569', whiteSpace: 'nowrap' }}>
+                            <Icon name="dice" size={13} /> New
+                          </button>
+                        </div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Given to check-in staff to unlock /event-dashboard/{eventForm.slug || '...'}. They can change it themselves later, or you can reset it below once saved.</div>
                       </div>
                     </div>
 
@@ -2229,6 +2250,15 @@ export default function AdminPage() {
                             📋 Check-in
                           </a>
                         )}
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#94a3b8', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                          <Icon name="lock" size={11} color="#94a3b8" /> {(e as any).pin || '----'}
+                        </span>
+                        <button onClick={() => handleResetEventPin(e.id, e.title)} disabled={resettingEventPinId === e.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#d97706', background: 'transparent',
+                          border: 'none', cursor: 'pointer', fontWeight: 500, padding: 0, opacity: resettingEventPinId === e.id ? 0.5 : 1, whiteSpace: 'nowrap',
+                        }}>
+                          <Icon name="dice" size={11} color="#d97706" /> {resettingEventPinId === e.id ? 'Resetting...' : 'Reset PIN'}
+                        </button>
                         <button onClick={() => startEditEvent(e)} style={{ fontSize: 12, color: ACCENT, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Edit</button>
                         <button onClick={() => handleDeleteEvent(e.id)} style={{ fontSize: 12, color: '#dc2626', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Delete</button>
                       </div>
