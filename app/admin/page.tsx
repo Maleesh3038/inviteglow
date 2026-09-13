@@ -1339,6 +1339,7 @@ const emptyEventForm = {
   event_tagline: '',
   cover_badge_text: '',
   event_date: '',
+  event_end_time: '',
   time_format: '12h' as '12h' | '24h',
   venue: '',
   venue_address: '',
@@ -1687,6 +1688,7 @@ export default function AdminPage() {
       event_tagline: e.event_tagline || '',
       cover_badge_text: e.cover_badge_text || '',
       event_date: (e as any).event_date ? (e as any).event_date.slice(0, 16) : '',
+      event_end_time: (e as any).event_end_time || '',
       time_format: ((e as any).time_format === '24h' ? '24h' : '12h') as '12h' | '24h',
       venue: e.venue || '',
       venue_address: e.venue_address || '',
@@ -1747,6 +1749,7 @@ export default function AdminPage() {
       event_tagline: eventForm.event_tagline || null,
       cover_badge_text: eventForm.cover_badge_text || null,
       event_date: eventForm.event_date,
+      event_end_time: eventForm.event_end_time || null,
       time_format: eventForm.time_format || '12h',
       venue: eventForm.venue || null,
       venue_address: eventForm.venue_address || null,
@@ -2061,8 +2064,12 @@ export default function AdminPage() {
                       <input style={inputStyle} value={eventForm.cover_badge_text} onChange={e => setEventForm({ ...eventForm, cover_badge_text: e.target.value })} placeholder="Corporate Invitation" />
                     </div>
                     <div style={fieldWrap}>
-                      <label style={labelStyle}>Event Date & Time *</label>
+                      <label style={labelStyle}>Event Date & Start Time *</label>
                       <input type="datetime-local" style={inputStyle} value={eventForm.event_date} onChange={e => setEventForm({ ...eventForm, event_date: e.target.value })} />
+                    </div>
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>End Time (optional)</label>
+                      <input style={inputStyle} value={eventForm.event_end_time} onChange={e => setEventForm({ ...eventForm, event_end_time: e.target.value })} placeholder="e.g. 5:00 PM — shows as 8:00 AM – 5:00 PM" />
                     </div>
                     <div style={fieldWrap}>
                       <label style={labelStyle}>Venue</label>
@@ -2195,6 +2202,11 @@ export default function AdminPage() {
                         {siteUrl && (
                           <a href={`${siteUrl}/invite/${e.slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#64748b', textDecoration: 'none' }}>
                             <Icon name="external" size={14} />
+                          </a>
+                        )}
+                        {siteUrl && (
+                          <a href={`${siteUrl}/event-dashboard/${e.slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#1c3d5a', background: '#1c3d5a14', textDecoration: 'none', fontWeight: 600, padding: '6px 10px', borderRadius: 6, whiteSpace: 'nowrap' }}>
+                            📋 Check-in
                           </a>
                         )}
                         <button onClick={() => startEditEvent(e)} style={{ fontSize: 12, color: ACCENT, background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Edit</button>
