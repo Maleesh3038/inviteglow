@@ -847,7 +847,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            <div style={{ position: "relative", height: (coverVideoUrl || W.coverPhoto) ? 380 : 260, overflow: "hidden" }}>
+            <div style={{ position: "relative", height: coverVideoUrl ? 520 : W.coverPhoto ? 380 : 260, overflow: "hidden" }}>
               {coverVideoUrl ? (
                 <>
                   {/* By the time this renders the guest has already tapped
