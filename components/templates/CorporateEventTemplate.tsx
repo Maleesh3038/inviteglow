@@ -18,6 +18,7 @@ type EventInvite = {
   event_tagline?: string | null
   cover_badge_text?: string | null
   event_date: string
+  event_end_time?: string | null
   time_format?: '12h' | '24h' | null
   venue?: string | null
   venue_address?: string | null
@@ -229,14 +230,74 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
   )
 }
 
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
+// Each guest who confirms "Attending" gets their own row in `event_guests`
+// (a dedicated table for check-in — see event_guests_migration.sql). The
+// row's own `id` doubles as the QR payload: unique per person, so scanning
+// it at the gate and at the meal counter can never be shared between two
+// different guests. A copy of the pass is cached in this browser
+// (localStorage) so a guest who RSVP'd earlier and re-opens the link sees
+// their pass again instead of being asked to RSVP twice.
+function passStorageKey(eventId: string) { return `ig_pass_${eventId}` }
+function EntryPassCard({ passId, name, guestCount, primary, primaryLight, dark, muted }: {
+  passId: string; name: string; guestCount: number; primary: string; primaryLight: string; dark: string; muted: string
+}) {
+  const qrData = `INVITEGLOW-GUEST-${passId}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(qrData)}`
+  const shortCode = passId.slice(0, 8).toUpperCase()
+  return (
+    <div>
+      <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
+      <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>See you there, {name}!</div>
+      <div style={{ fontSize: 12, color: muted, marginBottom: 16 }}>{guestCount > 1 ? `Party of ${guestCount} confirmed.` : "We look forward to your presence."}</div>
+      <div style={{ background: dark, borderRadius: 16, padding: "18px 16px", margin: "0 auto" }}>
+        <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: primaryLight, fontWeight: 700, marginBottom: 10 }}>Your Entry Pass · What's Next</div>
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10, display: "inline-block" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrUrl} alt="Your entry QR code" width={180} height={180} style={{ display: "block" }} />
+        </div>
+        <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 10, letterSpacing: "0.15em" }}>Code: {shortCode}</div>
+        <div style={{ fontSize: 11.5, color: "#fff", opacity: 0.75, marginTop: 8, lineHeight: 1.6, maxWidth: 260, marginLeft: "auto", marginRight: "auto" }}>
+          Screenshot this now. Show it at the entrance for check-in, and again at the meal counter — it's unique to you.
+        </div>
+      </div>
+    </div>
+  )
+}
+function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
+  const [passId, setPassId] = useState<string | null>(null)
+  const [passCount, setPassCount] = useState(1)
+
+  // Returning guest? Show their existing pass instead of the form again.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(passStorageKey(coupleId))
+      if (raw) {
+        const cached = JSON.parse(raw)
+        if (cached?.passId) {
+          setPassId(cached.passId); setName(cached.name || name); setPassCount(cached.guestCount || 1)
+          setFinalResponse("yes"); setStep("done")
+        }
+      }
+    } catch { /* ignore — worst case, guest just RSVPs again */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coupleId])
+
   const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
     setSaving(true)
-    const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
-    setSaving(false); if (!error) { setFinalResponse(response); setStep("done") }
+    await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
+    if (response === "yes") {
+      const { data, error } = await supabase.from('event_guests')
+        .insert([{ event_id: coupleId, guest_name: name.trim(), guest_count: count, drinking }])
+        .select('id').single()
+      if (!error && data) {
+        setPassId(data.id); setPassCount(count)
+        try { localStorage.setItem(passStorageKey(coupleId), JSON.stringify({ passId: data.id, name: name.trim(), guestCount: count })) } catch { /* ignore */ }
+      }
+    }
+    setSaving(false); setFinalResponse(response); setStep("done")
   }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
   return (
@@ -275,9 +336,21 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
         )}
         {step === "done" && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🎉" : "🙏"}</div>
-            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>{finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}</div>
-            <div style={{ fontSize: 12, color: muted }}>{finalResponse === "yes" ? (guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We look forward to your presence.") : "Thank you for letting us know."}</div>
+            {finalResponse === "yes" && passId ? (
+              <EntryPassCard passId={passId} name={name} guestCount={passCount} primary={primary} primaryLight={primaryLight} dark={dark} muted={muted} />
+            ) : finalResponse === "yes" ? (
+              <>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>See you there, {name}!</div>
+                <div style={{ fontSize: 12, color: muted }}>{guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We look forward to your presence."}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🙏</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>We'll miss you, {name}.</div>
+                <div style={{ fontSize: 12, color: muted }}>Thank you for letting us know.</div>
+              </>
+            )}
           </motion.div>
         )}
       </div>
@@ -749,7 +822,8 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
+              const evStartTime = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+              const evTimeDisplay = (couple as any).event_end_time ? `${evStartTime} – ${(couple as any).event_end_time}` : `${evStartTime} Onwards`
               return (
                 <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} {ev.label}</div>
@@ -784,7 +858,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
               </div>
             )}
 
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking ?? false} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking ?? false} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
