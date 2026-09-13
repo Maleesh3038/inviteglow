@@ -24,6 +24,7 @@ type EventInvite = {
   venue_address?: string | null
   maps_url?: string | null
   cover_photo?: string | null
+  cover_video_url?: string | null
   gallery?: string[] | null
   song_title?: string | null
   song_artist?: string | null
@@ -679,6 +680,8 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const coverVideoRef = useRef<HTMLVideoElement | null>(null)
+  const coverVideoUrl = couple.cover_video_url || ''
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
@@ -694,7 +697,15 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
     return () => { audio.pause(); audio.src = "" }
   }, [couple])
 
-  const handleOpen = () => { setOpened(true); audioRef.current?.play().catch(() => {}) }
+  // The cover video (when there is one) sits paused on its poster frame
+  // until the guest actually taps "Open Invitation" — it should never
+  // autoplay the moment the link loads. Tapping Open starts it playing at
+  // the same moment the invitation opens.
+  const handleOpen = () => {
+    setOpened(true)
+    audioRef.current?.play().catch(() => {})
+    coverVideoRef.current?.play().catch(() => {})
+  }
 
   // A single event day (unlike weddings, corporate events don't have an
   // engagement/wedding/homecoming split) — sourced straight from the
@@ -722,6 +733,10 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
     ? couple.contacts.filter(c => c?.phone).map(c => ({ name: c.name || '', phone: c.phone }))
     : []
   const hasWishes = couple.enable_guest_wishes ?? false
+  // Video and photo covers both get the darker overlay treatment (vs. the
+  // plain gradient background), so anywhere text color depends on "is
+  // there a real image behind me", check for either.
+  const hasVisualCover = !!(coverVideoUrl || W.coverPhoto)
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#f7f5ef" }}>
@@ -744,7 +759,18 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {W.coverPhoto ? (
+              {coverVideoUrl ? (
+                <>
+                  {/* Paused on its poster frame — playback only starts once
+                      "Open Invitation" is tapped (see handleOpen). */}
+                  <video ref={coverVideoRef} muted playsInline preload="auto" poster={W.coverPhoto || undefined}
+                    onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} }}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
+                    <source src={coverVideoUrl} type="video/mp4" />
+                  </video>
+                  <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,36,56,0.55) 0%, rgba(15,36,56,0.25) 35%, rgba(15,36,56,0.4) 65%, rgba(15,36,56,0.8) 100%)` }} />
+                </>
+              ) : W.coverPhoto ? (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={W.coverPhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
@@ -793,8 +819,20 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            <div style={{ position: "relative", height: W.coverPhoto ? 380 : 260, overflow: "hidden" }}>
-              {W.coverPhoto ? (
+            <div style={{ position: "relative", height: (coverVideoUrl || W.coverPhoto) ? 380 : 260, overflow: "hidden" }}>
+              {coverVideoUrl ? (
+                <>
+                  {/* By the time this renders the guest has already tapped
+                      Open Invitation, so this instance autoplays and loops. */}
+                  <video autoPlay muted playsInline preload="auto" poster={W.coverPhoto || undefined}
+                    onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} }}
+                    onEnded={e => { const v = e.currentTarget; v.currentTime = 0.1; v.play().catch(() => {}) }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}>
+                    <source src={coverVideoUrl} type="video/mp4" />
+                  </video>
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(247,245,239,1) 0%,rgba(15,36,56,0.15) 55%,rgba(15,36,56,0.4) 100%)" }} />
+                </>
+              ) : W.coverPhoto ? (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={W.coverPhoto} alt={W.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
@@ -805,16 +843,16 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
                 <div style={{ position: "absolute", inset: 0, background: `linear-gradient(160deg, ${PRIMARY} 0%, ${DARK} 100%)` }} />
               )}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: W.coverPhoto ? PRIMARY : PRIMARY_LIGHT, marginBottom: "0.8rem" }}>You're Cordially Invited</div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(2rem,7vw,2.8rem)", color: W.coverPhoto ? DARK : "#fff", lineHeight: 1.15, textShadow: W.coverPhoto ? "none" : "0 2px 20px rgba(0,0,0,0.3)" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.4em", textTransform: "uppercase", color: hasVisualCover ? PRIMARY : PRIMARY_LIGHT, marginBottom: "0.8rem" }}>You're Cordially Invited</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(2rem,7vw,2.8rem)", color: hasVisualCover ? DARK : "#fff", lineHeight: 1.15, textShadow: hasVisualCover ? "none" : "0 2px 20px rgba(0,0,0,0.3)" }}>
                   {W.title}
                 </div>
                 {W.host && (
-                  <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: W.coverPhoto ? MUTED : "rgba(255,255,255,0.8)", marginTop: 6 }}>Organized by {W.host}</div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: hasVisualCover ? MUTED : "rgba(255,255,255,0.8)", marginTop: 6 }}>Organized by {W.host}</div>
                 )}
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                   <a href="#rsvp" style={{ background: PRIMARY, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none" }}>RSVP</a>
-                  <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: W.coverPhoto ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", color: W.coverPhoto ? "#fff" : "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
+                  <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: hasVisualCover ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
                 </div>
               </div>
             </div>
