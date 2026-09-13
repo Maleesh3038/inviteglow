@@ -984,7 +984,12 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
         {opened && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}>
 
-            <div style={{ position: "relative", height: coverVideoUrl ? 520 : W.coverPhoto ? 380 : 260, overflow: "hidden" }}>
+            {/* Photo-only covers used to get a much shorter band (380px) than
+                video covers (520px), with a heavy cream fade eating a big
+                chunk of it for text contrast — so the uploaded photo barely
+                showed before "disappearing" under that fade. Now both get
+                the same generous height, so the photo stays clearly visible. */}
+            <div style={{ position: "relative", height: hasVisualCover ? 520 : 260, overflow: "hidden" }}>
               {coverVideoUrl ? (
                 <>
                   {/* By the time this renders the guest has already tapped
