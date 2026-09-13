@@ -74,7 +74,11 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
 
   const [scanOpen, setScanOpen] = useState(false)
   const [scanMsg, setScanMsg] = useState('')
-  const scannerRef = useRef<any>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const guestsRef = useRef<Guest[]>([])
 
   const [walkinOpen, setWalkinOpen] = useState(false)
   const [walkinName, setWalkinName] = useState('')
@@ -146,6 +150,16 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
     return guests.filter(g => g.guest_name.toLowerCase().includes(q) || (g.phone || '').includes(q) || g.id.toLowerCase().startsWith(q))
   }, [guests, search])
 
+  useEffect(() => { guestsRef.current = guests }, [guests])
+
+  // Release the camera if the staff member navigates away mid-scan.
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      streamRef.current?.getTracks().forEach(t => t.stop())
+    }
+  }, [])
+
   const patchGuest = async (id: string, patch: Partial<Guest>) => {
     setGuests(prev => prev.map(g => g.id === id ? { ...g, ...patch } : g))
     await supabase.from('event_guests').update(patch).eq('id', id)
@@ -153,35 +167,74 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   const toggleCheckIn = (g: Guest) => patchGuest(g.id, g.checked_in ? { checked_in: false, checked_in_at: null } : { checked_in: true, checked_in_at: new Date().toISOString() })
   const toggleMeal = (g: Guest) => patchGuest(g.id, g.meal_claimed ? { meal_claimed: false, meal_claimed_at: null } : { meal_claimed: true, meal_claimed_at: new Date().toISOString() })
 
-  // ── QR camera scanning (html5-qrcode — run `npm install html5-qrcode`) ──
+  // ── QR camera scanning ──────────────────────────────────────────────
+  // No npm dependency needed: the decoder (jsQR) is pulled in from a CDN
+  // at runtime, and the camera frames are read with plain browser APIs
+  // (getUserMedia + a <video>/<canvas> pair). This avoids touching
+  // package.json entirely, since this project's files are pasted straight
+  // into GitHub rather than built through a local `npm install` step.
   const [scannedGuest, setScannedGuest] = useState<Guest | null | 'not-found'>(null)
+  function loadJsQR(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).jsQR) { resolve((window as any).jsQR); return }
+      const existing = document.querySelector('script[data-jsqr]') as HTMLScriptElement | null
+      if (existing) {
+        existing.addEventListener('load', () => resolve((window as any).jsQR))
+        existing.addEventListener('error', () => reject(new Error('jsQR failed to load')))
+        return
+      }
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
+      script.async = true
+      script.setAttribute('data-jsqr', 'true')
+      script.onload = () => resolve((window as any).jsQR)
+      script.onerror = () => reject(new Error('jsQR failed to load'))
+      document.head.appendChild(script)
+    })
+  }
+  const jsQRRef = useRef<any>(null)
+  const scanTick = () => {
+    const video = videoRef.current, canvas = canvasRef.current, jsQR = jsQRRef.current
+    if (video && canvas && jsQR && video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      if (ctx && canvas.width > 0 && canvas.height > 0) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const code = jsQR(imageData.data, imageData.width, imageData.height)
+        if (code && code.data) {
+          const gid = extractGuestId(code.data)
+          const found = gid ? guestsRef.current.find(g => g.id === gid) : undefined
+          setScannedGuest(found || 'not-found')
+          return // pause the loop until "Scan Next Guest"
+        }
+      }
+    }
+    rafRef.current = requestAnimationFrame(scanTick)
+  }
   const startScan = async () => {
     setScanOpen(true); setScanMsg(''); setScannedGuest(null)
     try {
-      const mod = await import('html5-qrcode')
-      const { Html5Qrcode } = mod
-      const scanner = new Html5Qrcode('qr-reader')
-      scannerRef.current = scanner
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: 240 },
-        (decodedText: string) => {
-          const gid = extractGuestId(decodedText)
-          const found = gid ? guests.find(g => g.id === gid) : undefined
-          setScannedGuest(found || 'not-found')
-          scanner.pause(true)
-        },
-        () => { /* ignore per-frame scan failures */ }
-      )
+      jsQRRef.current = await loadJsQR()
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
+      rafRef.current = requestAnimationFrame(scanTick)
     } catch (e) {
-      setScanMsg('Could not start camera. Make sure "html5-qrcode" is installed and camera permission is allowed.')
+      setScanMsg('Could not start the camera. Please allow camera access and try again.')
     }
   }
-  const stopScan = async () => {
-    try { await scannerRef.current?.stop(); scannerRef.current?.clear() } catch { /* ignore */ }
+  const stopScan = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    if (videoRef.current) videoRef.current.srcObject = null
     setScanOpen(false); setScannedGuest(null)
   }
-  const resumeScan = () => { setScannedGuest(null); try { scannerRef.current?.resume() } catch { /* ignore */ } }
+  const resumeScan = () => { setScannedGuest(null); rafRef.current = requestAnimationFrame(scanTick) }
 
   const saveWalkin = async () => {
     if (!event || !walkinName.trim()) return
@@ -293,7 +346,11 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
               <button onClick={stopScan} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#64748b' }}>×</button>
             </div>
             {scanMsg && <div style={{ fontSize: 12.5, color: '#dc2626', marginBottom: 10 }}>{scanMsg}</div>}
-            {!scannedGuest && <div id="qr-reader" style={{ width: '100%', borderRadius: 10, overflow: 'hidden' }} />}
+            <div style={{ display: scannedGuest ? 'none' : 'block', width: '100%', borderRadius: 10, overflow: 'hidden', background: '#000', position: 'relative' }}>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <video ref={videoRef} muted playsInline autoPlay style={{ width: '100%', display: 'block' }} />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+            </div>
             {scannedGuest === 'not-found' && (
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <div style={{ fontSize: 26, marginBottom: 8 }}>⚠️</div>
