@@ -14,18 +14,25 @@ import { supabase } from '@/lib/supabase'
 //
 // Data model: every guest who RSVPs "Attending" on the invitation gets a
 // row in `event_guests` (see event_guests_migration.sql), and that row's
-// own `id` is what's encoded in their personal QR code as
-// `INVITEGLOW-GUEST-<id>`. Scanning it (or typing the 8-character short
-// code / searching by name) looks the guest up here so staff can mark
-// them checked in at the door, and mark their meal claimed at the food
-// counter — each guest's QR is unique to them, so one QR can't be reused
-// by someone else at either station.
+// own `id` is what's encoded in their personal QR code, as a link to the
+// public /pass/<id> page (scanning it with any ordinary camera app just
+// shows their name + EPF number — no attendance is marked by that).
+// Actually counting someone as attending only ever happens here: this
+// dashboard's own camera scan (or typing the short code / searching by
+// name) looks the guest up and marks them checked in at the door, and
+// marks their meal claimed at the food counter — each guest's QR is
+// unique to them, so one QR can't be reused by someone else at either
+// station.
 
 const PREFIX = 'INVITEGLOW-GUEST-'
 function extractGuestId(decoded: string): string | null {
   const trimmed = decoded.trim()
+  // Current format: a link to the public pass page, e.g.
+  // https://inviteglow.com/pass/<guest id> — take the last path segment.
+  const m = trimmed.match(/\/pass\/([^/?#]+)\/?(?:[?#].*)?$/)
+  if (m) return decodeURIComponent(m[1])
+  // Backward-compat: older QR codes encoded as INVITEGLOW-GUEST-<id>.
   if (trimmed.startsWith(PREFIX)) return trimmed.slice(PREFIX.length)
-  // Also accept a bare short-code style scan/typed entry as a prefix match, handled by caller.
   return null
 }
 
@@ -45,6 +52,7 @@ type Guest = {
   epf_no: string | null
   guest_count: number
   drinking: string | null
+  meal_pref: string | null
   checked_in: boolean
   checked_in_at: string | null
   meal_claimed: boolean
@@ -92,6 +100,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   const [walkinPhone, setWalkinPhone] = useState('')
   const [walkinEpf, setWalkinEpf] = useState('')
   const [walkinCount, setWalkinCount] = useState(1)
+  const [walkinMeal, setWalkinMeal] = useState<'veg' | 'non-veg' | null>(null)
   const [savingWalkin, setSavingWalkin] = useState(false)
 
   const sessionKey = `ig_dash_unlock_${slug}`
@@ -265,12 +274,12 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
     if (!event || !walkinName.trim()) return
     setSavingWalkin(true)
     const { data, error } = await supabase.from('event_guests')
-      .insert([{ event_id: event.id, guest_name: walkinName.trim(), phone: walkinPhone.trim() || null, epf_no: walkinEpf.trim() || null, guest_count: walkinCount, checked_in: true, checked_in_at: new Date().toISOString() }])
+      .insert([{ event_id: event.id, guest_name: walkinName.trim(), phone: walkinPhone.trim() || null, epf_no: walkinEpf.trim() || null, guest_count: walkinCount, meal_pref: walkinMeal, checked_in: true, checked_in_at: new Date().toISOString() }])
       .select('*').single()
     setSavingWalkin(false)
     if (!error && data) {
       setGuests(prev => [...prev, data as Guest].sort((a, b) => a.guest_name.localeCompare(b.guest_name)))
-      setWalkinOpen(false); setWalkinName(''); setWalkinPhone(''); setWalkinEpf(''); setWalkinCount(1)
+      setWalkinOpen(false); setWalkinName(''); setWalkinPhone(''); setWalkinEpf(''); setWalkinCount(1); setWalkinMeal(null)
     }
   }
 
@@ -343,7 +352,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
               <div key={g.id} style={{ background: '#fff', borderRadius: 12, padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f2438' }}>{g.guest_name}{g.guest_count > 1 ? ` (+${g.guest_count - 1})` : ''}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f2438' }}>{g.guest_name}{g.guest_count > 1 ? ` (+${g.guest_count - 1})` : ''}{g.meal_pref ? (g.meal_pref === 'veg' ? ' 🥗' : ' 🍗') : ''}</div>
                     <div style={{ fontSize: 11.5, color: '#94a3b8', marginTop: 2 }}>{g.epf_no ? `EPF ${g.epf_no}` : 'no EPF'} · {g.phone || 'no phone'} · Code {g.id.slice(0, 8).toUpperCase()}</div>
                   </div>
                 </div>
@@ -397,7 +406,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                     <div style={{ fontSize: 13.5, color: '#16a34a', fontWeight: 700 }}>Checked in just now</div>
                   </div>
                 )}
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#0f2438', textAlign: 'center' }}>{scannedGuest.guest.guest_name}{scannedGuest.guest.guest_count > 1 ? ` (+${scannedGuest.guest.guest_count - 1})` : ''}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#0f2438', textAlign: 'center' }}>{scannedGuest.guest.guest_name}{scannedGuest.guest.guest_count > 1 ? ` (+${scannedGuest.guest.guest_count - 1})` : ''}{scannedGuest.guest.meal_pref ? (scannedGuest.guest.meal_pref === 'veg' ? ' 🥗' : ' 🍗') : ''}</div>
                 <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 14, textAlign: 'center' }}>
                   {scannedGuest.guest.epf_no ? `EPF ${scannedGuest.guest.epf_no}` : 'no EPF no.'} · {scannedGuest.guest.phone || 'no phone'}
                 </div>
@@ -426,6 +435,11 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
               <button onClick={() => setWalkinCount(c => Math.max(1, c - 1))} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', background: '#f1f5f9', cursor: 'pointer' }}>−</button>
               <span style={{ fontSize: 15, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{walkinCount}</span>
               <button onClick={() => setWalkinCount(c => c + 1)} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', background: '#f1f5f9', cursor: 'pointer' }}>+</button>
+            </div>
+            <div style={{ fontSize: 12.5, color: '#64748b', marginBottom: 8 }}>Meal (optional):</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button onClick={() => setWalkinMeal(m => m === 'veg' ? null : 'veg')} style={{ flex: 1, padding: 10, borderRadius: 8, border: walkinMeal === 'veg' ? `1.5px solid ${ACCENT}` : '1px solid #e2e8f0', background: walkinMeal === 'veg' ? `${ACCENT}11` : '#fff', color: walkinMeal === 'veg' ? ACCENT : '#64748b', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>🥗 Veg</button>
+              <button onClick={() => setWalkinMeal(m => m === 'non-veg' ? null : 'non-veg')} style={{ flex: 1, padding: 10, borderRadius: 8, border: walkinMeal === 'non-veg' ? `1.5px solid ${ACCENT}` : '1px solid #e2e8f0', background: walkinMeal === 'non-veg' ? `${ACCENT}11` : '#fff', color: walkinMeal === 'non-veg' ? ACCENT : '#64748b', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>🍗 Non-Veg</button>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setWalkinOpen(false)} style={{ flex: 1, padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
