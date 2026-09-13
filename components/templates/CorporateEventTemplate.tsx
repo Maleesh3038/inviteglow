@@ -240,12 +240,25 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 // their pass again instead of being asked to RSVP twice.
 function passStorageKey(eventId: string) { return `ig_pass_${eventId}` }
 
-// The QR itself is generated right in the guest's browser (the "qrcode"
-// library, pulled from a CDN at runtime — no npm install / package.json
-// change needed) into a data: URL. That's what makes a real "Download QR"
-// button possible: a data: URL can always be saved with a plain <a
-// download>, unlike an image loaded from a third-party QR API, which most
-// browsers refuse to let a download link save cross-origin.
+// The QR is ALWAYS shown right away as a plain <img> from a public QR
+// image API — this is the part that must never fail, so it never depends
+// on any third-party script actually finishing execution (an <img> only
+// needs the browser to fetch a picture, which works even under stricter
+// CSP setups that block third-party <script> tags).
+//
+// Separately, in the background, we *try* to also generate the same QR
+// locally in the browser (the "qrcode" library, pulled from a CDN at
+// runtime — no npm install needed) into a data: URL. If that succeeds
+// within a few seconds, it powers a real "Download QR" button — a data:
+// URL can always be saved with a plain <a download>, unlike the image API
+// above, which most browsers refuse to let a download link save
+// cross-origin. If it doesn't succeed in time (blocked script, slow
+// network, whatever), we just skip the download button and tell the
+// guest to press-and-hold the QR image instead — the QR itself still
+// displayed correctly the whole time either way.
+function qrImageUrl(text: string, size = 320) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&data=${encodeURIComponent(text)}`
+}
 function loadQRCodeLib(): Promise<any> {
   return new Promise((resolve, reject) => {
     if ((window as any).QRCode) { resolve((window as any).QRCode); return }
@@ -264,16 +277,21 @@ function loadQRCodeLib(): Promise<any> {
     document.head.appendChild(script)
   })
 }
-function useQrDataUrl(text: string): string | null {
+function useDownloadableQr(text: string): string | null {
   const [url, setUrl] = useState<string | null>(null)
   useEffect(() => {
     let cancelled = false
     setUrl(null)
+    // Don't wait forever — if the CDN script hasn't produced anything in
+    // 5s (blocked, slow, whatever), just give up quietly on the download
+    // button. The visible QR image above is unaffected either way.
+    const timeout = setTimeout(() => { cancelled = true }, 5000)
     loadQRCodeLib()
       .then(QRCode => QRCode.toDataURL(text, { width: 320, margin: 2 }))
       .then((dataUrl: string) => { if (!cancelled) setUrl(dataUrl) })
-      .catch(() => { /* leave null — the pass still shows the short code as a manual fallback */ })
-    return () => { cancelled = true }
+      .catch(() => { /* no download button — the QR image is still shown fine */ })
+      .finally(() => clearTimeout(timeout))
+    return () => { cancelled = true; clearTimeout(timeout) }
   }, [text])
   return url
 }
@@ -282,7 +300,7 @@ function EntryPassCard({ passId, name, epfNo, guestCount, primary, primaryLight,
   passId: string; name: string; epfNo: string; guestCount: number; primary: string; primaryLight: string; dark: string; muted: string
 }) {
   const qrData = `INVITEGLOW-GUEST-${passId}`
-  const qrDataUrl = useQrDataUrl(qrData)
+  const qrDataUrl = useDownloadableQr(qrData)
   const shortCode = passId.slice(0, 8).toUpperCase()
   return (
     <div>
@@ -292,24 +310,22 @@ function EntryPassCard({ passId, name, epfNo, guestCount, primary, primaryLight,
       <div style={{ background: dark, borderRadius: 16, padding: "18px 16px", margin: "0 auto" }}>
         <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: primaryLight, fontWeight: 700, marginBottom: 10 }}>Your Entry Pass · What's Next</div>
         <div style={{ background: "#fff", borderRadius: 12, padding: 10, display: "inline-block", width: 180, height: 180, boxSizing: "border-box" }}>
-          {qrDataUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={qrDataUrl} alt="Your entry QR code" width={160} height={160} style={{ display: "block" }} />
-          ) : (
-            <div style={{ width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 11 }}>Generating QR…</div>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrImageUrl(qrData, 320)} alt="Your entry QR code" width={160} height={160} style={{ display: "block" }} />
         </div>
         {epfNo && <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 10 }}>EPF No: {epfNo}</div>}
         <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 4, letterSpacing: "0.15em" }}>Code: {shortCode}</div>
         <div style={{ fontSize: 11.5, color: "#fff", opacity: 0.75, marginTop: 8, lineHeight: 1.6, maxWidth: 260, marginLeft: "auto", marginRight: "auto" }}>
-          Screenshot this now, or download it below. Show it at the entrance for check-in, and again at the meal counter — it's unique to you.
+          Screenshot this now{qrDataUrl ? ", or download it below" : ""}. Show it at the entrance for check-in, and again at the meal counter — it's unique to you.
         </div>
-        {qrDataUrl && (
+        {qrDataUrl ? (
           <a href={qrDataUrl} download={`entry-pass-${shortCode}.png`} style={{
             display: "inline-block", marginTop: 14, padding: "10px 22px", borderRadius: 100,
             background: primaryLight, color: "#1c1400", fontSize: 11, fontWeight: 700, textDecoration: "none",
             letterSpacing: "0.15em", textTransform: "uppercase",
           }}>⬇ Download QR</a>
+        ) : (
+          <div style={{ fontSize: 10.5, color: "#fff", opacity: 0.6, marginTop: 12 }}>Tip: press and hold the QR code to save it.</div>
         )}
       </div>
     </div>
