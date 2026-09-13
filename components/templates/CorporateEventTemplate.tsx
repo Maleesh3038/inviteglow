@@ -310,10 +310,10 @@ function EntryPassCard({ passId, name, epfNo, primary, primaryLight, dark, muted
           <div style={{ fontSize: 10.5, color: muted, marginTop: 10, letterSpacing: "0.12em" }}>Code: {shortCode}</div>
           <button onClick={handleDownload} disabled={downloading} style={{
             display: "inline-flex", alignItems: "center", gap: 8, marginTop: 16, padding: "11px 24px", borderRadius: 100,
-            background: `linear-gradient(135deg,${primaryLight},${primary})`, color: "#fff", border: "none", cursor: "pointer",
+            background: `linear-gradient(135deg,${dark},${primary})`, color: "#fff", border: `1px solid ${primaryLight}99`, cursor: "pointer",
             fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: downloading ? 0.7 : 1,
-            fontFamily: "'Inter',sans-serif",
-          }}>{downloading ? "Saving…" : "⬇ Download Pass"}</button>
+            fontFamily: "'Inter',sans-serif", boxShadow: `0 8px 20px ${dark}40, inset 0 0 0 1px ${primaryLight}22`,
+          }}>{downloading ? "Saving…" : <>⬇ Download Pass</>}</button>
         </div>
       </div>
       <div style={{ fontSize: 11.5, color: muted, marginTop: 16, lineHeight: 1.7, maxWidth: 280, marginLeft: "auto", marginRight: "auto" }}>
@@ -890,7 +890,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
 
         <AnimatePresence>
           {!opened && (
-            <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
+            <motion.div key="cover" exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
               {coverVideoUrl ? (
@@ -957,11 +957,13 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
                   </div>
 
                   <button onClick={handleOpen} style={{
-                    display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
-                    border: "none", borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-                    cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                    display: "inline-flex", alignItems: "center", gap: 10,
+                    background: `linear-gradient(135deg,${DARK},${PRIMARY})`, color: "#fff",
+                    border: `1px solid ${PRIMARY_LIGHT}99`, borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
+                    cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700,
+                    boxShadow: `0 10px 28px rgba(0,0,0,0.45), inset 0 0 0 1px ${PRIMARY_LIGHT}22`,
                   }}>
-                    Open Invitation →
+                    Open Invitation <span style={{ color: PRIMARY_LIGHT }}>→</span>
                   </button>
                   {hasMusic && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>}
                 </motion.div>
@@ -980,7 +982,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
         </AnimatePresence>
 
         {opened && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}>
 
             <div style={{ position: "relative", height: coverVideoUrl ? 520 : W.coverPhoto ? 380 : 260, overflow: "hidden" }}>
               {coverVideoUrl ? (
@@ -1026,7 +1028,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
               const evStartTime = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
               const evTimeDisplay = (couple as any).event_end_time ? `${evStartTime} – ${(couple as any).event_end_time}` : `${evStartTime} Onwards`
               return (
-                <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
                   <div style={sectionEyebrow(PRIMARY)}>{ev.icon} {ev.label}</div>
                   <div style={sectionTitle(DARK)}>Event Details</div>
                   {[
@@ -1062,7 +1064,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking ?? false} askMealPref={couple.ask_meal_pref ?? false} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
                 <div style={sectionEyebrow(PRIMARY)}>Programme</div>
                 <div style={sectionTitle(DARK)}>Event Agenda</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -1087,7 +1089,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             )}
 
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
                 <div style={sectionEyebrow(PRIMARY)}>Seating</div>
                 <div style={sectionTitle(DARK)}>Find Your Seat</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned seat or table</div>
@@ -1096,14 +1098,14 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             )}
 
             {sv.music && hasMusic && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
                 <div style={sectionEyebrow(PRIMARY)}>Now Playing</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
 
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div id="gallery" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={sectionCard} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
                 <div style={sectionEyebrow(PRIMARY)}>Highlights</div>
                 <div style={sectionTitle(DARK)}>Event Highlights</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -1130,7 +1132,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             )}
 
             {sv.thank_you && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}>
                 <div style={sectionEyebrow(PRIMARY)}>A Note of Thanks</div>
                 <div style={sectionTitle(DARK)}>We're Grateful to Have You</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
@@ -1143,7 +1145,10 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
               </motion.div>
             )}
 
-            <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem", textAlign: "center", background: "#fff" }}>
+            {/* Extra bottom padding here (not just on the page) clears the
+                floating pill nav bar below, which is position:fixed and was
+                otherwise sitting right on top of these footer social icons. */}
+            <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6.5rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b0ba" }}>inviteglow.com · Digital Event Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
