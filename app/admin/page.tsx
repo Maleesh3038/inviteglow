@@ -799,10 +799,53 @@ function EventsPicker({ value, onChange, order, onOrderChange }: {
   )
 }
 // ── Single video uploader (used for the Ceylon Elegance hero video) ──
-function VideoUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+function VideoUploader({ value, onChange, hasPoster, onGeneratedPoster }: { value: string; onChange: (url: string) => void; hasPoster?: boolean; onGeneratedPoster?: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  // Best-effort: grab a frame from the video client-side and upload it as a
+  // cover photo, so guests on mobile always have a real image behind the
+  // cover screen. Mobile browsers (especially in-app webviews like
+  // WhatsApp's, and over cellular data) frequently don't paint a single
+  // video frame until the guest interacts with the page — without a cover
+  // photo underneath, that shows up as a blank/black screen. This never
+  // overwrites a cover photo the admin already set.
+  const generateAndUploadThumbnail = async (file: File) => {
+    let objectUrl = ''
+    try {
+      const videoEl = document.createElement('video')
+      videoEl.muted = true
+      videoEl.playsInline = true
+      objectUrl = URL.createObjectURL(file)
+      videoEl.src = objectUrl
+      await new Promise<void>((resolve, reject) => {
+        videoEl.onloadeddata = () => resolve()
+        videoEl.onerror = () => reject(new Error('could not read video for thumbnail'))
+      })
+      videoEl.currentTime = Math.min(0.5, (videoEl.duration || 1) / 4)
+      await new Promise<void>(resolve => { videoEl.onseeked = () => resolve() })
+      const canvas = document.createElement('canvas')
+      canvas.width = videoEl.videoWidth || 720
+      canvas.height = videoEl.videoHeight || 1280
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
+      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.85))
+      if (!blob) return
+      const thumbName = `photos/${Date.now()}-${Math.random().toString(36).slice(2)}-thumb.jpg`
+      const { error: thumbError } = await supabase.storage.from(BUCKET).upload(thumbName, blob, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' })
+      if (!thumbError) {
+        const { data } = supabase.storage.from(BUCKET).getPublicUrl(thumbName)
+        onGeneratedPoster?.(data.publicUrl)
+      }
+    } catch {
+      // Silent — thumbnail generation is a nice-to-have. If it fails
+      // (unsupported codec, browser restrictions, etc.) the admin can still
+      // upload a cover photo manually.
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }
   const handleFile = async (file: File) => {
     setUploading(true)
     setError('')
@@ -823,6 +866,7 @@ function VideoUploader({ value, onChange }: { value: string; onChange: (url: str
     } else {
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
       onChange(data.publicUrl)
+      if (!hasPoster && onGeneratedPoster) generateAndUploadThumbnail(file)
     }
     setUploading(false)
   }
@@ -2109,8 +2153,9 @@ export default function AdminPage() {
                     <PhotoUploader value={eventForm.cover_photo} onChange={url => setEventForm({ ...eventForm, cover_photo: url })} label="Cover Photo (optional)" hint="Leave blank to use a plain navy/gold cover instead of a photo." />
                     <div style={fieldWrap}>
                       <label style={labelStyle}>Intro Video (optional)</label>
-                      <VideoUploader value={eventForm.cover_video_url} onChange={url => setEventForm({ ...eventForm, cover_video_url: url })} />
-                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Shows as a paused frame on the cover — it starts playing the moment the guest taps "Open Invitation". The cover photo above is used as its poster frame while the video loads.</div>
+                      <VideoUploader value={eventForm.cover_video_url} onChange={url => setEventForm({ ...eventForm, cover_video_url: url })}
+                        hasPoster={!!eventForm.cover_photo} onGeneratedPoster={url => setEventForm(f => f.cover_photo ? f : ({ ...f, cover_photo: url }))} />
+                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Shows as a paused frame on the cover — it starts playing the moment the guest taps "Open Invitation". The cover photo above is used as its poster frame while the video loads. If you don't upload a cover photo, one is auto-captured from the video so the cover never shows blank on mobile.</div>
                     </div>
                     <GalleryUploader value={eventForm.gallery} onChange={urls => setEventForm({ ...eventForm, gallery: urls })} />
                   </div>
@@ -2564,8 +2609,9 @@ export default function AdminPage() {
                     label="Couple Photo (Hero Image)" hint="Leave empty to use the default AI-generated photo." />
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Hero Background Video (optional)</label>
-                    <VideoUploader value={(form as any).cover_video_url || ''} onChange={url => setForm({ ...form, cover_video_url: url } as any)} />
-                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Used by video-hero templates (Ceylon Elegance, Eternal Bloom, Noble Salute, Ocean Pearl). Other templates just use the photo above and ignore this.</div>
+                    <VideoUploader value={(form as any).cover_video_url || ''} onChange={url => setForm({ ...form, cover_video_url: url } as any)}
+                      hasPoster={!!form.couple_photo} onGeneratedPoster={url => setForm(f => (f as any).couple_photo ? f : ({ ...f, couple_photo: url } as any))} />
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Used by video-hero templates (Ceylon Elegance, Eternal Bloom, Noble Salute, Ocean Pearl). Other templates just use the photo above and ignore this. If you don't upload a photo, one is auto-captured from the video so the cover never shows blank on mobile.</div>
                   </div>
                 </div>
                 <PhotoUploader value={(form as any).cover_background_image || ''} onChange={url => setForm({ ...form, cover_background_image: url } as any)}
