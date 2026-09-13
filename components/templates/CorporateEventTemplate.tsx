@@ -334,18 +334,33 @@ function RSVP({ coupleId, askDrinking, askMealPref, primary, primaryLight, dark,
   const [formError, setFormError] = useState('')
   const [passId, setPassId] = useState<string | null>(null)
 
-  // Returning guest? Show their existing pass instead of the form again.
+  // Returning guest? Show their existing pass instead of the form again —
+  // but first make sure that pass is still real. If the event admin deleted
+  // this guest from the dashboard (event_guests row is gone), their old QR
+  // is dead and must not keep showing from a stale local cache: clear it
+  // and drop them back to a blank form so they register again from
+  // scratch, getting a brand-new working QR.
   useEffect(() => {
+    let cancelled = false
+    let cached: { passId?: string; name?: string; epfNo?: string } | null = null
     try {
       const raw = localStorage.getItem(passStorageKey(coupleId))
-      if (raw) {
-        const cached = JSON.parse(raw)
-        if (cached?.passId) {
-          setPassId(cached.passId); setName(cached.name || name); setEpfNo(cached.epfNo || '')
-          setFinalResponse("yes"); setStep("done")
-        }
-      }
+      if (raw) cached = JSON.parse(raw)
     } catch { /* ignore — worst case, guest just RSVPs again */ }
+    if (!cached?.passId) return
+    // Show the cached pass immediately so it still feels instant, then
+    // verify in the background.
+    setPassId(cached.passId); setName(cached.name || name); setEpfNo(cached.epfNo || '')
+    setFinalResponse("yes"); setStep("done")
+    ;(async () => {
+      const { data, error } = await supabase.from('event_guests').select('id').eq('id', cached!.passId).maybeSingle()
+      if (cancelled) return
+      if (error || !data) {
+        try { localStorage.removeItem(passStorageKey(coupleId)) } catch { /* ignore */ }
+        setPassId(null); setStep("form"); setName(guestName || ''); setEpfNo('')
+      }
+    })()
+    return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coupleId])
 
