@@ -777,6 +777,18 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const coverVideoRef = useRef<HTMLVideoElement | null>(null)
   const coverVideoUrl = couple.cover_video_url || ''
+  // Some mobile browsers / video encodings never reliably fire the video's
+  // "ended" event (seen on certain Android phones especially), which used
+  // to leave the guest stuck staring at a frozen last frame forever
+  // instead of the invitation auto-opening. These refs back a safety net
+  // (see handleOpen/handleVideoEnded) that forces things open a couple of
+  // seconds after the video should have finished, no matter what.
+  const videoDurationRef = useRef(0)
+  const videoEndedHandledRef = useRef(false)
+  const videoSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => { if (videoSafetyTimerRef.current) clearTimeout(videoSafetyTimerRef.current) }
+  }, [])
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
@@ -800,13 +812,30 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
   const handleOpen = () => {
     if (coverVideoUrl) {
       setVideoPlaying(true)
-      coverVideoRef.current?.play().catch(() => {})
+      videoEndedHandledRef.current = false
+      coverVideoRef.current?.play().catch(() => {
+        // Browser refused to play at all (blocked, unsupported format,
+        // etc.) — don't leave the guest stuck on a black screen.
+        handleVideoEnded()
+      })
+      // Safety net: force the invitation open shortly after the video
+      // should have finished, in case "ended" never fires on this device.
+      const dur = videoDurationRef.current
+      const fallbackMs = (dur && isFinite(dur) && dur > 0 ? dur + 2.5 : 20) * 1000
+      if (videoSafetyTimerRef.current) clearTimeout(videoSafetyTimerRef.current)
+      videoSafetyTimerRef.current = setTimeout(() => handleVideoEnded(), fallbackMs)
     } else {
       setOpened(true)
       audioRef.current?.play().catch(() => {})
     }
   }
   const handleVideoEnded = () => {
+    // Guards against firing twice (ended + pause + timeupdate + the
+    // safety timer can all race to call this) — harmless either way, but
+    // this keeps it to exactly one transition.
+    if (videoEndedHandledRef.current) return
+    videoEndedHandledRef.current = true
+    if (videoSafetyTimerRef.current) { clearTimeout(videoSafetyTimerRef.current); videoSafetyTimerRef.current = null }
     setVideoPlaying(false)
     setOpened(true)
     audioRef.current?.play().catch(() => {})
@@ -872,8 +901,20 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
                       the button's own click handler — a genuine user
                       gesture, so browsers won't block it. */}
                   <video ref={coverVideoRef} playsInline preload="auto" poster={W.coverPhoto || undefined}
-                    onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} }}
+                    onLoadedMetadata={e => {
+                      try { e.currentTarget.currentTime = 0.1 } catch {}
+                      videoDurationRef.current = e.currentTarget.duration
+                    }}
                     onEnded={handleVideoEnded}
+                    onPause={e => { if (e.currentTarget.ended) handleVideoEnded() }}
+                    onTimeUpdate={e => {
+                      // Extra safety net alongside onEnded/onPause — a few
+                      // mobile browsers/encodings don't reliably fire those,
+                      // so also catch it here once playback nears the end.
+                      const v = e.currentTarget
+                      if (videoPlaying && isFinite(v.duration) && v.duration > 0 && v.currentTime >= v.duration - 0.2) handleVideoEnded()
+                    }}
+                    onError={() => handleVideoEnded()}
                     style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                     <source src={coverVideoUrl} type="video/mp4" />
                   </video>
