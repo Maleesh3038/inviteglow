@@ -679,6 +679,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
+  const [videoPlaying, setVideoPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const coverVideoRef = useRef<HTMLVideoElement | null>(null)
   const coverVideoUrl = couple.cover_video_url || ''
@@ -698,13 +699,23 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
   }, [couple])
 
   // The cover video (when there is one) sits paused on its poster frame
-  // until the guest actually taps "Open Invitation" — it should never
-  // autoplay the moment the link loads. Tapping Open starts it playing at
-  // the same moment the invitation opens.
+  // until the guest taps "Open Invitation" — it should never autoplay the
+  // moment the link loads. Tapping Open plays it out fully, right there on
+  // the cover, and only once it finishes does the invitation itself open
+  // (see handleVideoEnded). Without a video, Open just opens straight away.
   const handleOpen = () => {
+    if (coverVideoUrl) {
+      setVideoPlaying(true)
+      coverVideoRef.current?.play().catch(() => {})
+    } else {
+      setOpened(true)
+      audioRef.current?.play().catch(() => {})
+    }
+  }
+  const handleVideoEnded = () => {
+    setVideoPlaying(false)
     setOpened(true)
     audioRef.current?.play().catch(() => {})
-    coverVideoRef.current?.play().catch(() => {})
   }
 
   // A single event day (unlike weddings, corporate events don't have an
@@ -761,14 +772,20 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
 
               {coverVideoUrl ? (
                 <>
-                  {/* Paused on its poster frame — playback only starts once
-                      "Open Invitation" is tapped (see handleOpen). */}
-                  <video ref={coverVideoRef} muted playsInline preload="auto" poster={W.coverPhoto || undefined}
+                  {/* Paused on its poster frame until "Open Invitation" is
+                      tapped. Playing with sound is fine here (unlike a
+                      true autoplay), because play() only ever runs inside
+                      the button's own click handler — a genuine user
+                      gesture, so browsers won't block it. */}
+                  <video ref={coverVideoRef} playsInline preload="auto" poster={W.coverPhoto || undefined}
                     onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} }}
+                    onEnded={handleVideoEnded}
                     style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
                     <source src={coverVideoUrl} type="video/mp4" />
                   </video>
-                  <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,36,56,0.55) 0%, rgba(15,36,56,0.25) 35%, rgba(15,36,56,0.4) 65%, rgba(15,36,56,0.8) 100%)` }} />
+                  {!videoPlaying && (
+                    <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,36,56,0.55) 0%, rgba(15,36,56,0.25) 35%, rgba(15,36,56,0.4) 65%, rgba(15,36,56,0.8) 100%)` }} />
+                  )}
                 </>
               ) : W.coverPhoto ? (
                 <>
@@ -784,34 +801,45 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
                 </>
               )}
 
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
+              {!videoPlaying && (
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
+                  style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
-                  {(couple as any).cover_badge_text || 'Corporate Invitation'}
-                </div>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
+                    {(couple as any).cover_badge_text || 'Corporate Invitation'}
+                  </div>
 
-                <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#ffffff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9)" }}>
-                  {guestName ? `Dear ${guestName}` : 'You Are Invited'}
-                </div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(2.2rem,8vw,3.2rem)", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.title}</div>
-                {W.host && (
-                  <div style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "0.6rem 0 0" }}>Organized by {W.host}</div>
-                )}
+                  <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#ffffff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9)" }}>
+                    {guestName ? `Dear ${guestName}` : 'You Are Invited'}
+                  </div>
+                  <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(2.2rem,8vw,3.2rem)", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.title}</div>
+                  {W.host && (
+                    <div style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "0.6rem 0 0" }}>Organized by {W.host}</div>
+                  )}
 
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
-                  {(couple as any).event_tagline || <>Join us for an evening of celebration,<br />connection, and shared success.</>}
-                </div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                    {(couple as any).event_tagline || <>Join us for an evening of celebration,<br />connection, and shared success.</>}
+                  </div>
 
-                <button onClick={handleOpen} style={{
-                  display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
-                  border: "none", borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                  <button onClick={handleOpen} style={{
+                    display: "inline-flex", alignItems: "center", gap: 10, background: `linear-gradient(135deg,${PRIMARY_LIGHT},${PRIMARY})`, color: "#fff",
+                    border: "none", borderRadius: 100, padding: "13px 26px", fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
+                    cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                  }}>
+                    Open Invitation →
+                  </button>
+                  {hasMusic && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>}
+                </motion.div>
+              )}
+              {videoPlaying && (
+                <button onClick={handleVideoEnded} style={{
+                  position: "absolute", bottom: 24, right: 24, zIndex: 10, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)",
+                  color: "#fff", border: "1px solid rgba(255,255,255,0.4)", borderRadius: 100, padding: "8px 18px", fontSize: 11,
+                  letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 600,
                 }}>
-                  Open Invitation →
+                  Skip →
                 </button>
-                {hasMusic && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>}
-              </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
