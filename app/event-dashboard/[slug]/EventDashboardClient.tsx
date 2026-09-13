@@ -67,7 +67,7 @@ function initials(name: string) {
 // ── Minimal line-icon set — no emoji anywhere in this dashboard. Plain
 // stroke icons in one weight, colored via `color` (defaults to inherit),
 // matching the clean/neutral look used elsewhere in the admin tooling. ──
-type IconName = 'home' | 'users' | 'share' | 'wallet' | 'settings' | 'camera' | 'plus' | 'trash' | 'check' | 'alert' | 'copy' | 'whatsapp' | 'x' | 'chevronRight'
+type IconName = 'home' | 'users' | 'share' | 'wallet' | 'settings' | 'camera' | 'plus' | 'trash' | 'check' | 'alert' | 'copy' | 'whatsapp' | 'x' | 'chevronRight' | 'download'
 function Icon({ name, size = 16, color = 'currentColor' }: { name: IconName; size?: number; color?: string }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -85,6 +85,7 @@ function Icon({ name, size = 16, color = 'currentColor' }: { name: IconName; siz
     case 'whatsapp': return <svg {...common} strokeWidth={1.5}><path d="M4 20l1.3-4A8 8 0 1 1 8.5 19L4 20Z" /><path d="M8.7 8.7c-.2.6-.2 1.7.6 2.9 1 1.6 2.4 2.7 4.2 3.2 1 .3 1.6 0 2-.6l.4-.7" /></svg>
     case 'x': return <svg {...common}><path d="M6 6l12 12M18 6 6 18" /></svg>
     case 'chevronRight': return <svg {...common}><path d="M9 6l6 6-6 6" /></svg>
+    case 'download': return <svg {...common}><path d="M12 4v11" /><path d="M7.5 11.5 12 16l4.5-4.5" /><path d="M4.5 17.5v2a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-2" /></svg>
   }
 }
 
@@ -95,6 +96,8 @@ type EventRow = {
   host?: string | null
   event_date: string
   pin?: string | null
+  ask_drinking?: boolean | null
+  ask_meal_pref?: boolean | null
 }
 type Guest = {
   id: string
@@ -137,6 +140,28 @@ function fmtTime(iso: string | null) {
 function fmtDateTime(iso: string | null) {
   if (!iso) return ''
   return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+// ── CSV export — a plain client-side download, no server round-trip.
+// Used both for the full guest list (a handy offline backup in case the
+// venue's wifi drops mid-event) and for bulk-generated guest links. ──
+function csvEscape(val: string | number) {
+  const s = String(val ?? '')
+  if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"'
+  return s
+}
+function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]) {
+  const csv = [headers, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n')
+  // Leading BOM so Excel opens UTF-8 (Sinhala names etc.) correctly.
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 2000)
+}
+function safeFileName(s: string) {
+  return s.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '') || 'event'
 }
 
 // ── Personalised Guest Link generator ────────────────────────────────
@@ -193,6 +218,87 @@ function GuestLinkGenerator({ event, accent }: { event: EventRow; accent: string
           <Icon name="whatsapp" size={14} color={TEXT_DARK} /> WhatsApp
         </button>
       </div>
+    </div>
+  )
+}
+
+// ── Bulk guest link generation ───────────────────────────────────────
+// For sending links to a whole guest list at once instead of one at a
+// time. WhatsApp itself has no way to auto-send to many numbers without
+// their paid Business API, so this generates every guest's personalised
+// link up front and gives a ready-to-tap "Send" per person (opens that
+// one chat, pre-filled — still one tap each, but no retyping names or
+// links), plus a CSV export of the whole batch for a bulk SMS tool or a
+// WhatsApp broadcast list.
+function BulkGuestLinks({ event, accent }: { event: EventRow; accent: string }) {
+  const [bulkInput, setBulkInput] = useState('')
+  const [rows, setRows] = useState<{ name: string; phone: string; link: string }[]>([])
+
+  const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${event.slug}` : `/invite/${event.slug}`
+
+  const generate = () => {
+    const parsed = bulkInput.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const [namePart, phonePart] = line.split(',')
+      const name = (namePart || '').trim()
+      const phone = (phonePart || '').trim()
+      return { name, phone, link: name ? `${baseUrl}?name=${encodeURIComponent(name)}` : baseUrl }
+    }).filter(r => r.name)
+    setRows(parsed)
+  }
+
+  const waLinkFor = (r: { name: string; phone: string; link: string }) => {
+    const msg = `Hi ${r.name}, you're invited to ${event.title}! Please tap below to view your invitation and confirm your attendance.\n${r.link}`
+    const digits = r.phone.replace(/[^\d+]/g, '').replace(/^\+/, '')
+    return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`
+  }
+
+  const exportLinks = () => {
+    downloadCsv(`${safeFileName(event.title)}-guest-links.csv`, ['Name', 'Phone', 'Link'], rows.map(r => [r.name, r.phone, r.link]))
+  }
+
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '11px 13px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK, boxSizing: 'border-box', background: '#fff' }
+
+  return (
+    <div style={{ background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: 18, marginTop: 14 }}>
+      <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, marginBottom: 4 }}>Bulk Generate Links</div>
+      <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 12, lineHeight: 1.5 }}>
+        Paste your guest list, one per line, as <strong>Name, Phone</strong> (phone is optional). Each guest gets their own personalised link. WhatsApp doesn't allow auto-sending to many numbers at once, so "Send" opens one pre-filled chat at a time — or export everything as a spreadsheet for a bulk SMS tool.
+      </div>
+      <textarea
+        value={bulkInput} onChange={e => setBulkInput(e.target.value)}
+        placeholder={'Nadeesha Perera, 0771234567\nKasun Silva, 0759876543\nAmara Fernando'}
+        style={{ ...inputStyle, minHeight: 100, resize: 'vertical', marginBottom: 10, fontFamily: "'Inter',sans-serif" }}
+      />
+      <div style={{ display: 'flex', gap: 8, marginBottom: rows.length ? 14 : 0 }}>
+        <button onClick={generate} disabled={!bulkInput.trim()} style={{
+          flex: 1, padding: 12, borderRadius: 9, border: 'none', cursor: bulkInput.trim() ? 'pointer' : 'default',
+          background: accent, color: '#fff', fontWeight: 600, fontSize: 13, opacity: bulkInput.trim() ? 1 : 0.4,
+        }}>Generate Links</button>
+        {rows.length > 0 && (
+          <button onClick={exportLinks} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+            <Icon name="download" size={14} /> Export CSV
+          </button>
+        )}
+      </div>
+      {rows.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 2 }}>{rows.length} link{rows.length === 1 ? '' : 's'} generated</div>
+          {rows.map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, border: `1px solid ${BORDER}`, borderRadius: 9, padding: '9px 12px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT_DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
+                <div style={{ fontSize: 11, color: TEXT_MUTED }}>{r.phone || 'no phone'}</div>
+              </div>
+              <a href={waLinkFor(r)} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '7px 11px', borderRadius: 100, border: `1px solid ${BORDER}`,
+                color: TEXT_DARK, fontSize: 11.5, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
+              }}>
+                <Icon name="whatsapp" size={12} /> Send
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -511,7 +617,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   // ── Load event + guest list ──
   useEffect(() => {
     const load = async () => {
-      const { data: ev, error } = await supabase.from('events').select('id,slug,title,host,event_date,pin').eq('slug', slug).single()
+      const { data: ev, error } = await supabase.from('events').select('id,slug,title,host,event_date,pin,ask_drinking,ask_meal_pref').eq('slug', slug).single()
       if (error || !ev) { setNotFound(true); setLoading(false); setCheckingSession(false); return }
       setEvent(ev as EventRow)
       try {
@@ -580,6 +686,21 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
     )
   }, [guests, search])
 
+  // Headcounts for the caterer — counted against every registered guest
+  // (guest_count, not just the primary RSVP name), same as the "Total
+  // Guests" stat above.
+  const cateringSummary = useMemo(() => {
+    const sumWhere = (pred: (g: Guest) => boolean) => guests.filter(pred).reduce((s, g) => s + (g.guest_count || 1), 0)
+    return {
+      veg: sumWhere(g => g.meal_pref === 'veg'),
+      nonVeg: sumWhere(g => g.meal_pref === 'non-veg'),
+      noMealPref: sumWhere(g => !g.meal_pref),
+      drinkingYes: sumWhere(g => g.drinking === 'yes'),
+      drinkingNo: sumWhere(g => g.drinking === 'no'),
+      noDrinkingPref: sumWhere(g => !g.drinking),
+    }
+  }, [guests])
+
   useEffect(() => { guestsRef.current = guests }, [guests])
 
   // Release the camera if the staff member navigates away mid-scan.
@@ -603,6 +724,20 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
     const { error } = await supabase.from('event_guests').delete().eq('id', id)
     setDeletingGuestId(null)
     if (!error) setGuests(prev => prev.filter(g => g.id !== id))
+  }
+
+  const exportGuestsCsv = () => {
+    if (!event) return
+    downloadCsv(
+      `${safeFileName(event.title)}-guests.csv`,
+      ['Name', 'EPF No', 'Phone', 'Guest Count', 'Meal Preference', 'Drinking', 'Checked In', 'Checked In At', 'Meal Claimed', 'Meal Claimed At', 'Code'],
+      guests.map(g => [
+        g.guest_name, g.epf_no || '', g.phone || '', g.guest_count || 1, g.meal_pref || '', g.drinking || '',
+        g.checked_in ? 'Yes' : 'No', g.checked_in_at ? new Date(g.checked_in_at).toLocaleString('en-GB') : '',
+        g.meal_claimed ? 'Yes' : 'No', g.meal_claimed_at ? new Date(g.meal_claimed_at).toLocaleString('en-GB') : '',
+        g.id.slice(0, 8).toUpperCase(),
+      ])
+    )
   }
 
   const handleChangePin = async () => {
@@ -749,6 +884,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   }
   const card: React.CSSProperties = { background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: 18, marginBottom: 14 }
   const settingsInput: React.CSSProperties = { width: '100%', padding: '12px 14px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 15, textAlign: 'center', letterSpacing: '0.2em', marginBottom: 10, boxSizing: 'border-box' }
+  const miniStat: React.CSSProperties = { background: '#f4f5f7', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: TEXT_MUTED, display: 'flex', gap: 6, alignItems: 'center' }
   const mealBadge = (pref: string | null) => pref ? (
     <span style={{ fontSize: 10, fontWeight: 700, color: TEXT_MUTED, border: `1px solid ${BORDER}`, borderRadius: 100, padding: '1px 7px', marginLeft: 6, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
       {pref === 'veg' ? 'Veg' : 'Non-Veg'}
@@ -809,6 +945,27 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                 </button>
               </div>
 
+              {(event.ask_meal_pref || event.ask_drinking) && (
+                <div style={card}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 4 }}>Catering Summary</div>
+                  <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 12 }}>Based on {stats.totalGuests} registered guests — confirm final numbers with your caterer before the event.</div>
+                  {event.ask_meal_pref && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: event.ask_drinking ? 10 : 0 }}>
+                      <div style={miniStat}>Veg <strong style={{ color: TEXT_DARK }}>{cateringSummary.veg}</strong></div>
+                      <div style={miniStat}>Non-Veg <strong style={{ color: TEXT_DARK }}>{cateringSummary.nonVeg}</strong></div>
+                      {cateringSummary.noMealPref > 0 && <div style={miniStat}>Not specified <strong style={{ color: TEXT_DARK }}>{cateringSummary.noMealPref}</strong></div>}
+                    </div>
+                  )}
+                  {event.ask_drinking && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={miniStat}>Drinks: Yes <strong style={{ color: TEXT_DARK }}>{cateringSummary.drinkingYes}</strong></div>
+                      <div style={miniStat}>Drinks: No <strong style={{ color: TEXT_DARK }}>{cateringSummary.drinkingNo}</strong></div>
+                      {cateringSummary.noDrinkingPref > 0 && <div style={miniStat}>Not specified <strong style={{ color: TEXT_DARK }}>{cateringSummary.noDrinkingPref}</strong></div>}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={card}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 12 }}>Recent Check-ins</div>
                 {recentCheckins.length === 0 ? (
@@ -838,10 +995,14 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                   value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, phone, or code..."
                   style={{ flex: 1, padding: '12px 14px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 14, boxSizing: 'border-box', background: '#fff' }}
                 />
-                <button onClick={() => setWalkinOpen(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK, cursor: 'pointer' }}>
+                <button onClick={exportGuestsCsv} title="Export guest list as CSV" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK, cursor: 'pointer' }}>
+                  <Icon name="download" size={16} />
+                </button>
+                <button onClick={() => setWalkinOpen(true)} title="Add walk-in guest" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK, cursor: 'pointer' }}>
                   <Icon name="plus" size={16} />
                 </button>
               </div>
+              <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 12, marginTop: -6 }}>{guests.length} guest{guests.length === 1 ? '' : 's'} registered — export a CSV backup before the event in case of connectivity issues at the venue.</div>
 
               {filtered.length === 0 ? (
                 <div style={{ textAlign: 'center', color: TEXT_MUTED, fontSize: 13, padding: 30 }}>No guests match.</div>
@@ -884,6 +1045,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
           {activeTab === 'share' && (
             <motion.div key="share" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
               <GuestLinkGenerator event={event} accent={ACCENT} />
+              <BulkGuestLinks event={event} accent={ACCENT} />
             </motion.div>
           )}
 
