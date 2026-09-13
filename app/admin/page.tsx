@@ -1345,6 +1345,7 @@ const emptyEventForm = {
   venue_address: '',
   maps_url: '',
   cover_photo: '',
+  cover_video_url: '',
   gallery: [] as string[],
   song_title: '',
   song_artist: '',
@@ -1694,6 +1695,7 @@ export default function AdminPage() {
       venue_address: e.venue_address || '',
       maps_url: e.maps_url || '',
       cover_photo: e.cover_photo || '',
+      cover_video_url: (e as any).cover_video_url || '',
       gallery: Array.isArray((e as any).gallery) ? (e as any).gallery : [],
       song_title: e.song_title || '',
       song_artist: e.song_artist || '',
@@ -1755,6 +1757,7 @@ export default function AdminPage() {
       venue_address: eventForm.venue_address || null,
       maps_url: eventForm.maps_url || null,
       cover_photo: eventForm.cover_photo || null,
+      cover_video_url: eventForm.cover_video_url || null,
       gallery: eventForm.gallery,
       song_title: eventForm.song_title || null,
       song_artist: eventForm.song_artist || null,
@@ -2084,6 +2087,11 @@ export default function AdminPage() {
                       <input style={inputStyle} value={eventForm.maps_url} onChange={e => setEventForm({ ...eventForm, maps_url: e.target.value })} placeholder="https://maps.google.com/..." />
                     </div>
                     <PhotoUploader value={eventForm.cover_photo} onChange={url => setEventForm({ ...eventForm, cover_photo: url })} label="Cover Photo (optional)" hint="Leave blank to use a plain navy/gold cover instead of a photo." />
+                    <div style={fieldWrap}>
+                      <label style={labelStyle}>Intro Video (optional)</label>
+                      <VideoUploader value={eventForm.cover_video_url} onChange={url => setEventForm({ ...eventForm, cover_video_url: url })} />
+                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Shows as a paused frame on the cover — it starts playing the moment the guest taps "Open Invitation". The cover photo above is used as its poster frame while the video loads.</div>
+                    </div>
                     <GalleryUploader value={eventForm.gallery} onChange={urls => setEventForm({ ...eventForm, gallery: urls })} />
                   </div>
                   <div>
