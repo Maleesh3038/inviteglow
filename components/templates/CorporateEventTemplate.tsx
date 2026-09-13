@@ -239,11 +239,50 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 // (localStorage) so a guest who RSVP'd earlier and re-opens the link sees
 // their pass again instead of being asked to RSVP twice.
 function passStorageKey(eventId: string) { return `ig_pass_${eventId}` }
-function EntryPassCard({ passId, name, guestCount, primary, primaryLight, dark, muted }: {
-  passId: string; name: string; guestCount: number; primary: string; primaryLight: string; dark: string; muted: string
+
+// The QR itself is generated right in the guest's browser (the "qrcode"
+// library, pulled from a CDN at runtime — no npm install / package.json
+// change needed) into a data: URL. That's what makes a real "Download QR"
+// button possible: a data: URL can always be saved with a plain <a
+// download>, unlike an image loaded from a third-party QR API, which most
+// browsers refuse to let a download link save cross-origin.
+function loadQRCodeLib(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if ((window as any).QRCode) { resolve((window as any).QRCode); return }
+    const existing = document.querySelector('script[data-qrcodejs]') as HTMLScriptElement | null
+    if (existing) {
+      existing.addEventListener('load', () => resolve((window as any).QRCode))
+      existing.addEventListener('error', () => reject(new Error('QRCode lib failed to load')))
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js'
+    script.async = true
+    script.setAttribute('data-qrcodejs', 'true')
+    script.onload = () => resolve((window as any).QRCode)
+    script.onerror = () => reject(new Error('QRCode lib failed to load'))
+    document.head.appendChild(script)
+  })
+}
+function useQrDataUrl(text: string): string | null {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    setUrl(null)
+    loadQRCodeLib()
+      .then(QRCode => QRCode.toDataURL(text, { width: 320, margin: 2 }))
+      .then((dataUrl: string) => { if (!cancelled) setUrl(dataUrl) })
+      .catch(() => { /* leave null — the pass still shows the short code as a manual fallback */ })
+    return () => { cancelled = true }
+  }, [text])
+  return url
+}
+
+function EntryPassCard({ passId, name, epfNo, guestCount, primary, primaryLight, dark, muted }: {
+  passId: string; name: string; epfNo: string; guestCount: number; primary: string; primaryLight: string; dark: string; muted: string
 }) {
   const qrData = `INVITEGLOW-GUEST-${passId}`
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(qrData)}`
+  const qrDataUrl = useQrDataUrl(qrData)
   const shortCode = passId.slice(0, 8).toUpperCase()
   return (
     <div>
@@ -252,22 +291,35 @@ function EntryPassCard({ passId, name, guestCount, primary, primaryLight, dark, 
       <div style={{ fontSize: 12, color: muted, marginBottom: 16 }}>{guestCount > 1 ? `Party of ${guestCount} confirmed.` : "We look forward to your presence."}</div>
       <div style={{ background: dark, borderRadius: 16, padding: "18px 16px", margin: "0 auto" }}>
         <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: primaryLight, fontWeight: 700, marginBottom: 10 }}>Your Entry Pass · What's Next</div>
-        <div style={{ background: "#fff", borderRadius: 12, padding: 10, display: "inline-block" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrUrl} alt="Your entry QR code" width={180} height={180} style={{ display: "block" }} />
+        <div style={{ background: "#fff", borderRadius: 12, padding: 10, display: "inline-block", width: 180, height: 180, boxSizing: "border-box" }}>
+          {qrDataUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={qrDataUrl} alt="Your entry QR code" width={160} height={160} style={{ display: "block" }} />
+          ) : (
+            <div style={{ width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 11 }}>Generating QR…</div>
+          )}
         </div>
-        <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 10, letterSpacing: "0.15em" }}>Code: {shortCode}</div>
+        {epfNo && <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 10 }}>EPF No: {epfNo}</div>}
+        <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 4, letterSpacing: "0.15em" }}>Code: {shortCode}</div>
         <div style={{ fontSize: 11.5, color: "#fff", opacity: 0.75, marginTop: 8, lineHeight: 1.6, maxWidth: 260, marginLeft: "auto", marginRight: "auto" }}>
-          Screenshot this now. Show it at the entrance for check-in, and again at the meal counter — it's unique to you.
+          Screenshot this now, or download it below. Show it at the entrance for check-in, and again at the meal counter — it's unique to you.
         </div>
+        {qrDataUrl && (
+          <a href={qrDataUrl} download={`entry-pass-${shortCode}.png`} style={{
+            display: "inline-block", marginTop: 14, padding: "10px 22px", borderRadius: 100,
+            background: primaryLight, color: "#1c1400", fontSize: 11, fontWeight: 700, textDecoration: "none",
+            letterSpacing: "0.15em", textTransform: "uppercase",
+          }}>⬇ Download QR</a>
+        )}
       </div>
     </div>
   )
 }
 function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string }) {
-  const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
+  const [name, setName] = useState(guestName || ""); const [epfNo, setEpfNo] = useState(""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
   const [passId, setPassId] = useState<string | null>(null)
   const [passCount, setPassCount] = useState(1)
 
@@ -278,7 +330,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
       if (raw) {
         const cached = JSON.parse(raw)
         if (cached?.passId) {
-          setPassId(cached.passId); setName(cached.name || name); setPassCount(cached.guestCount || 1)
+          setPassId(cached.passId); setName(cached.name || name); setEpfNo(cached.epfNo || ''); setPassCount(cached.guestCount || 1)
           setFinalResponse("yes"); setStep("done")
         }
       }
@@ -290,12 +342,19 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
     setSaving(true)
     await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
     if (response === "yes") {
+      // Upsert on (event_id, epf_no): the EPF number is each guest's unique
+      // identity for this event, so re-submitting with the same EPF number
+      // (say, they came back and RSVP'd again) updates their existing row
+      // instead of creating a second guest / second QR — one EPF, one QR.
       const { data, error } = await supabase.from('event_guests')
-        .insert([{ event_id: coupleId, guest_name: name.trim(), guest_count: count, drinking }])
+        .upsert(
+          [{ event_id: coupleId, epf_no: epfNo.trim(), guest_name: name.trim(), guest_count: count, drinking }],
+          { onConflict: 'event_id,epf_no' }
+        )
         .select('id').single()
       if (!error && data) {
         setPassId(data.id); setPassCount(count)
-        try { localStorage.setItem(passStorageKey(coupleId), JSON.stringify({ passId: data.id, name: name.trim(), guestCount: count })) } catch { /* ignore */ }
+        try { localStorage.setItem(passStorageKey(coupleId), JSON.stringify({ passId: data.id, name: name.trim(), epfNo: epfNo.trim(), guestCount: count })) } catch { /* ignore */ }
       }
     }
     setSaving(false); setFinalResponse(response); setStep("done")
@@ -309,8 +368,15 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
         {step === "form" && (
           <>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
+            <input value={epfNo} onChange={e => setEpfNo(e.target.value)} placeholder="Your EPF No." style={inputStyle} />
+            <div style={{ fontSize: 11, color: muted, marginTop: -6, marginBottom: 12, textAlign: "left" }}>Used to issue your unique entry QR — required to confirm attendance.</div>
+            {formError && <div style={{ fontSize: 11.5, color: "#dc2626", marginBottom: 10, textAlign: "left" }}>{formError}</div>}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => name.trim() && setStep("count")} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Attending</button>
+              <button onClick={() => {
+                if (!name.trim()) { setFormError('Please enter your name.'); return }
+                if (!epfNo.trim()) { setFormError('Please enter your EPF No.'); return }
+                setFormError(''); setStep("count")
+              }} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Attending</button>
               <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: "1px solid #e4dfc0", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Can't Attend"}</button>
             </div>
           </>
@@ -338,7 +404,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
         {step === "done" && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             {finalResponse === "yes" && passId ? (
-              <EntryPassCard passId={passId} name={name} guestCount={passCount} primary={primary} primaryLight={primaryLight} dark={dark} muted={muted} />
+              <EntryPassCard passId={passId} name={name} epfNo={epfNo} guestCount={passCount} primary={primary} primaryLight={primaryLight} dark={dark} muted={muted} />
             ) : finalResponse === "yes" ? (
               <>
                 <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
