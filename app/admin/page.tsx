@@ -2158,6 +2158,7 @@ export default function AdminPage() {
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
                       <input type="checkbox" checked={eventForm.show_seating} onChange={e => setEventForm({ ...eventForm, show_seating: e.target.checked })} /> Show seat/table finder
                     </label>
+                    <SectionTogglesPicker value={eventForm.section_visibility} onChange={v => setEventForm({ ...eventForm, section_visibility: v })} />
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569', marginBottom: 16, cursor: 'pointer' }}>
                       <input type="checkbox" checked={eventForm.enable_guest_wishes} onChange={e => setEventForm({ ...eventForm, enable_guest_wishes: e.target.checked })} /> Enable Guest Messages & Wishes wall
                     </label>
