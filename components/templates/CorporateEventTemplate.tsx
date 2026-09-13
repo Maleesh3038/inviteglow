@@ -38,6 +38,7 @@ type EventInvite = {
   enable_footer_social?: boolean | null
   show_guest_intro?: boolean | null
   ask_drinking?: boolean | null
+  ask_meal_pref?: boolean | null
   thank_you_text?: string | null
   custom_colors?: { primary?: string; primaryLight?: string; dark?: string; cream?: string } | null
 }
@@ -240,104 +241,98 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 // their pass again instead of being asked to RSVP twice.
 function passStorageKey(eventId: string) { return `ig_pass_${eventId}` }
 
-// The QR is ALWAYS shown right away as a plain <img> from a public QR
-// image API — this is the part that must never fail, so it never depends
-// on any third-party script actually finishing execution (an <img> only
-// needs the browser to fetch a picture, which works even under stricter
-// CSP setups that block third-party <script> tags).
-//
-// Separately, in the background, we *try* to also generate the same QR
-// locally in the browser (the "qrcode" library, pulled from a CDN at
-// runtime — no npm install needed) into a data: URL. If that succeeds
-// within a few seconds, it powers a real "Download QR" button — a data:
-// URL can always be saved with a plain <a download>, unlike the image API
-// above, which most browsers refuse to let a download link save
-// cross-origin. If it doesn't succeed in time (blocked script, slow
-// network, whatever), we just skip the download button and tell the
-// guest to press-and-hold the QR image instead — the QR itself still
-// displayed correctly the whole time either way.
+// The QR is a link to a public "pass" page (/pass/<guest id>) rather than
+// a plain data string — so scanning it with ANY ordinary camera app just
+// opens a nicely formatted page showing the guest's name + EPF number
+// (handy for a quick visual check), with no check-in logic attached to
+// it at all. Attendance is only ever counted when THIS event's own
+// check-in dashboard scans the code — that scan is the one place that
+// looks the guest up in `event_guests` and marks them checked in. Opening
+// the plain link never does that.
+function passUrl(passId: string) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${origin}/pass/${passId}`
+}
 function qrImageUrl(text: string, size = 320) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&data=${encodeURIComponent(text)}`
 }
-function loadQRCodeLib(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if ((window as any).QRCode) { resolve((window as any).QRCode); return }
-    const existing = document.querySelector('script[data-qrcodejs]') as HTMLScriptElement | null
-    if (existing) {
-      existing.addEventListener('load', () => resolve((window as any).QRCode))
-      existing.addEventListener('error', () => reject(new Error('QRCode lib failed to load')))
-      return
-    }
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js'
-    script.async = true
-    script.setAttribute('data-qrcodejs', 'true')
-    script.onload = () => resolve((window as any).QRCode)
-    script.onerror = () => reject(new Error('QRCode lib failed to load'))
-    document.head.appendChild(script)
-  })
-}
-function useDownloadableQr(text: string): string | null {
-  const [url, setUrl] = useState<string | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    setUrl(null)
-    // Don't wait forever — if the CDN script hasn't produced anything in
-    // 5s (blocked, slow, whatever), just give up quietly on the download
-    // button. The visible QR image above is unaffected either way.
-    const timeout = setTimeout(() => { cancelled = true }, 5000)
-    loadQRCodeLib()
-      .then(QRCode => QRCode.toDataURL(text, { width: 320, margin: 2 }))
-      .then((dataUrl: string) => { if (!cancelled) setUrl(dataUrl) })
-      .catch(() => { /* no download button — the QR image is still shown fine */ })
-      .finally(() => clearTimeout(timeout))
-    return () => { cancelled = true; clearTimeout(timeout) }
-  }, [text])
-  return url
+// Downloading: fetch the QR image as a blob and save it via an object URL
+// (works on Android Chrome and most desktop browsers) — if that's blocked
+// for any reason, fall back to just opening the image in a new tab, where
+// press-and-hold → Save Image works everywhere, iOS Safari included.
+async function downloadQrImage(url: string, filename: string) {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('bad response')
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl; a.download = filename
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 2000)
+  } catch {
+    window.open(url, '_blank')
+  }
 }
 
-function EntryPassCard({ passId, name, epfNo, guestCount, primary, primaryLight, dark, muted }: {
-  passId: string; name: string; epfNo: string; guestCount: number; primary: string; primaryLight: string; dark: string; muted: string
+function EntryPassCard({ passId, name, epfNo, primary, primaryLight, dark, muted }: {
+  passId: string; name: string; epfNo: string; primary: string; primaryLight: string; dark: string; muted: string
 }) {
-  const qrData = `INVITEGLOW-GUEST-${passId}`
-  const qrDataUrl = useDownloadableQr(qrData)
+  const [downloading, setDownloading] = useState(false)
+  const qrUrl = qrImageUrl(passUrl(passId), 320)
   const shortCode = passId.slice(0, 8).toUpperCase()
+  const handleDownload = async () => {
+    setDownloading(true)
+    await downloadQrImage(qrUrl, `entry-pass-${shortCode}.png`)
+    setDownloading(false)
+  }
   return (
-    <div>
-      <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
-      <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>See you there, {name}!</div>
-      <div style={{ fontSize: 12, color: muted, marginBottom: 16 }}>{guestCount > 1 ? `Party of ${guestCount} confirmed.` : "We look forward to your presence."}</div>
-      <div style={{ background: dark, borderRadius: 16, padding: "18px 16px", margin: "0 auto" }}>
-        <div style={{ fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: primaryLight, fontWeight: 700, marginBottom: 10 }}>Your Entry Pass · What's Next</div>
-        <div style={{ background: "#fff", borderRadius: 12, padding: 10, display: "inline-block", width: 180, height: 180, boxSizing: "border-box" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrImageUrl(qrData, 320)} alt="Your entry QR code" width={160} height={160} style={{ display: "block" }} />
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <div style={{ fontSize: 30, marginBottom: 4 }}>🎉</div>
+      <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.35rem", color: primary, marginBottom: 4 }}>See you there, {name}!</div>
+      <div style={{ fontSize: 12, color: muted, marginBottom: 18 }}>We look forward to your presence.</div>
+
+      {/* Ticket-style entry pass */}
+      <div style={{ borderRadius: 20, overflow: "hidden", boxShadow: `0 14px 34px ${dark}33`, margin: "0 auto", maxWidth: 300 }}>
+        <div style={{ background: `linear-gradient(135deg,${dark},${primary})`, padding: "16px 20px", textAlign: "left" }}>
+          <div style={{ fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: primaryLight, fontWeight: 700 }}>Entry Pass</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginTop: 4 }}>{name}</div>
+          {epfNo && <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>EPF No: {epfNo}</div>}
         </div>
-        {epfNo && <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 10 }}>EPF No: {epfNo}</div>}
-        <div style={{ fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 4, letterSpacing: "0.15em" }}>Code: {shortCode}</div>
-        <div style={{ fontSize: 11.5, color: "#fff", opacity: 0.75, marginTop: 8, lineHeight: 1.6, maxWidth: 260, marginLeft: "auto", marginRight: "auto" }}>
-          Screenshot this now{qrDataUrl ? ", or download it below" : ""}. Show it at the entrance for check-in, and again at the meal counter — it's unique to you.
+        <div style={{
+          borderTop: `2px dashed ${dark}44`, position: "relative", background: "#fff",
+        }} />
+        <div style={{ background: "#fff", padding: "22px 20px 20px", textAlign: "center" }}>
+          <div style={{ background: "#f7f5ef", borderRadius: 14, padding: 12, display: "inline-block" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrUrl} alt="Your entry QR code" width={170} height={170} style={{ display: "block", borderRadius: 6 }} />
+          </div>
+          <div style={{ fontSize: 10.5, color: muted, marginTop: 10, letterSpacing: "0.12em" }}>Code: {shortCode}</div>
+          <button onClick={handleDownload} disabled={downloading} style={{
+            display: "inline-flex", alignItems: "center", gap: 8, marginTop: 16, padding: "11px 24px", borderRadius: 100,
+            background: `linear-gradient(135deg,${primaryLight},${primary})`, color: "#fff", border: "none", cursor: "pointer",
+            fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", opacity: downloading ? 0.7 : 1,
+            fontFamily: "'Inter',sans-serif",
+          }}>{downloading ? "Saving…" : "⬇ Download Pass"}</button>
         </div>
-        {qrDataUrl ? (
-          <a href={qrDataUrl} download={`entry-pass-${shortCode}.png`} style={{
-            display: "inline-block", marginTop: 14, padding: "10px 22px", borderRadius: 100,
-            background: primaryLight, color: "#1c1400", fontSize: 11, fontWeight: 700, textDecoration: "none",
-            letterSpacing: "0.15em", textTransform: "uppercase",
-          }}>⬇ Download QR</a>
-        ) : (
-          <div style={{ fontSize: 10.5, color: "#fff", opacity: 0.6, marginTop: 12 }}>Tip: press and hold the QR code to save it.</div>
-        )}
       </div>
-    </div>
+      <div style={{ fontSize: 11.5, color: muted, marginTop: 16, lineHeight: 1.7, maxWidth: 280, marginLeft: "auto", marginRight: "auto" }}>
+        Screenshot or download this pass. Show it at the entrance for check-in, and again at the meal counter.
+      </div>
+    </motion.div>
   )
 }
-function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string }) {
-  const [name, setName] = useState(guestName || ""); const [epfNo, setEpfNo] = useState(""); const [guestCount, setGuestCount] = useState(1)
-  const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
+
+function RSVP({ coupleId, askDrinking, askMealPref, primary, primaryLight, dark, cream, muted, guestName }: {
+  coupleId: string; askDrinking: boolean; askMealPref: boolean; primary: string; primaryLight: string; dark: string; cream: string; muted: string; guestName: string
+}) {
+  const [name, setName] = useState(guestName || ""); const [epfNo, setEpfNo] = useState("")
+  const [step, setStep] = useState<"form" | "preferences" | "done">("form")
+  const [drinking, setDrinking] = useState<"yes" | "no" | null>(null)
+  const [mealPref, setMealPref] = useState<"veg" | "non-veg" | null>(null)
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
   const [passId, setPassId] = useState<string | null>(null)
-  const [passCount, setPassCount] = useState(1)
 
   // Returning guest? Show their existing pass instead of the form again.
   useEffect(() => {
@@ -346,7 +341,7 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
       if (raw) {
         const cached = JSON.parse(raw)
         if (cached?.passId) {
-          setPassId(cached.passId); setName(cached.name || name); setEpfNo(cached.epfNo || ''); setPassCount(cached.guestCount || 1)
+          setPassId(cached.passId); setName(cached.name || name); setEpfNo(cached.epfNo || '')
           setFinalResponse("yes"); setStep("done")
         }
       }
@@ -354,9 +349,9 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coupleId])
 
-  const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
+  const save = async (response: "yes" | "no") => {
     setSaving(true)
-    await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
+    await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: 1 }])
     if (response === "yes") {
       // Upsert on (event_id, epf_no): the EPF number is each guest's unique
       // identity for this event, so re-submitting with the same EPF number
@@ -364,78 +359,95 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
       // instead of creating a second guest / second QR — one EPF, one QR.
       const { data, error } = await supabase.from('event_guests')
         .upsert(
-          [{ event_id: coupleId, epf_no: epfNo.trim(), guest_name: name.trim(), guest_count: count, drinking }],
+          [{ event_id: coupleId, epf_no: epfNo.trim(), guest_name: name.trim(), guest_count: 1, drinking, meal_pref: mealPref }],
           { onConflict: 'event_id,epf_no' }
         )
         .select('id').single()
       if (!error && data) {
-        setPassId(data.id); setPassCount(count)
-        try { localStorage.setItem(passStorageKey(coupleId), JSON.stringify({ passId: data.id, name: name.trim(), epfNo: epfNo.trim(), guestCount: count })) } catch { /* ignore */ }
+        setPassId(data.id)
+        try { localStorage.setItem(passStorageKey(coupleId), JSON.stringify({ passId: data.id, name: name.trim(), epfNo: epfNo.trim() })) } catch { /* ignore */ }
       }
     }
     setSaving(false); setFinalResponse(response); setStep("done")
   }
+  const needsPreferences = askDrinking || askMealPref
+  const preferencesComplete = (!askDrinking || drinking) && (!askMealPref || mealPref)
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
+  const pillBtn = (active: boolean, onClick: () => void, label: string): React.CSSProperties => ({
+    padding: 13, borderRadius: 10, cursor: "pointer", fontSize: 12.5, fontWeight: 700,
+    background: active ? primary : `${primary}0f`, color: active ? "#fff" : dark,
+    border: active ? `1px solid ${primary}` : `1px solid ${primary}33`,
+  })
   return (
     <div style={{ background: `linear-gradient(135deg,#e9e4d3,${cream})`, padding: "40px 1.5rem", textAlign: "center" }}>
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 8, fontWeight: 700 }}>Kindly RSVP</div>
       <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Be Joining Us?</div>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
-        {step === "form" && (
-          <>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
-            <input value={epfNo} onChange={e => setEpfNo(e.target.value)} placeholder="Your EPF No." style={inputStyle} />
-            <div style={{ fontSize: 11, color: muted, marginTop: -6, marginBottom: 12, textAlign: "left" }}>Used to issue your unique entry QR — required to confirm attendance.</div>
-            {formError && <div style={{ fontSize: 11.5, color: "#dc2626", marginBottom: 10, textAlign: "left" }}>{formError}</div>}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => {
-                if (!name.trim()) { setFormError('Please enter your name.'); return }
-                if (!epfNo.trim()) { setFormError('Please enter your EPF No.'); return }
-                setFormError(''); setStep("count")
-              }} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Attending</button>
-              <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: "1px solid #e4dfc0", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Can't Attend"}</button>
-            </div>
-          </>
-        )}
-        {step === "count" && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div style={{ fontSize: 13, color: dark, fontWeight: 600, marginBottom: 16 }}>How many people, including you?</div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }}>
-              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${primary}1a`, color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>−</button>
-              <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.8rem", color: dark, minWidth: 40 }}>{guestCount}</div>
-              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${primary}1a`, color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>+</button>
-            </div>
-            <button onClick={() => askDrinking ? setStep("drinking") : save("yes", null, guestCount)} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "Continue →"}</button>
-          </motion.div>
-        )}
-        {step === "drinking" && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div style={{ fontSize: 12, color: muted, marginBottom: 14 }}>Will you be having alcohol?</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}1a`, color: primary, border: `1px solid ${primary}44`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</button>
-              <button onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}1a`, color: primary, border: `1px solid ${primary}44`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</button>
-            </div>
-          </motion.div>
-        )}
-        {step === "done" && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            {finalResponse === "yes" && passId ? (
-              <EntryPassCard passId={passId} name={name} epfNo={epfNo} guestCount={passCount} primary={primary} primaryLight={primaryLight} dark={dark} muted={muted} />
-            ) : finalResponse === "yes" ? (
-              <>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>See you there, {name}!</div>
-                <div style={{ fontSize: 12, color: muted }}>{guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We look forward to your presence."}</div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🙏</div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>We'll miss you, {name}.</div>
-                <div style={{ fontSize: 12, color: muted }}>Thank you for letting us know.</div>
-              </>
-            )}
-          </motion.div>
-        )}
+      <div style={{ background: "#fff", borderRadius: 18, padding: 26, maxWidth: 380, margin: "0 auto", boxShadow: "0 8px 28px rgba(0,0,0,0.07)" }}>
+        <AnimatePresence mode="wait">
+          {step === "form" && (
+            <motion.div key="form" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.25 }}>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
+              <input value={epfNo} onChange={e => setEpfNo(e.target.value)} placeholder="Your EPF No." style={inputStyle} />
+              <div style={{ fontSize: 11, color: muted, marginTop: -6, marginBottom: 12, textAlign: "left" }}>Used to issue your unique entry QR — required to confirm attendance.</div>
+              {formError && <div style={{ fontSize: 11.5, color: "#dc2626", marginBottom: 10, textAlign: "left" }}>{formError}</div>}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <button onClick={() => {
+                  if (!name.trim()) { setFormError('Please enter your name.'); return }
+                  if (!epfNo.trim()) { setFormError('Please enter your EPF No.'); return }
+                  setFormError('')
+                  needsPreferences ? setStep("preferences") : save("yes")
+                }} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Attending</button>
+                <button onClick={() => name.trim() && save("no")} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: "1px solid #e4dfc0", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Can't Attend"}</button>
+              </div>
+            </motion.div>
+          )}
+          {step === "preferences" && (
+            <motion.div key="preferences" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.25 }} style={{ textAlign: "left" }}>
+              {askDrinking && (
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontSize: 12.5, color: dark, fontWeight: 600, marginBottom: 10 }}>Will you be having alcohol?</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <button onClick={() => setDrinking("yes")} style={pillBtn(drinking === "yes", () => setDrinking("yes"), "Yes")}>🍷 Yes</button>
+                    <button onClick={() => setDrinking("no")} style={pillBtn(drinking === "no", () => setDrinking("no"), "No")}>🥤 No</button>
+                  </div>
+                </div>
+              )}
+              {askMealPref && (
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 12.5, color: dark, fontWeight: 600, marginBottom: 10 }}>Meal preference?</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <button onClick={() => setMealPref("veg")} style={pillBtn(mealPref === "veg", () => setMealPref("veg"), "Veg")}>🥗 Veg</button>
+                    <button onClick={() => setMealPref("non-veg")} style={pillBtn(mealPref === "non-veg", () => setMealPref("non-veg"), "Non-Veg")}>🍗 Non-Veg</button>
+                  </div>
+                </div>
+              )}
+              <button onClick={() => save("yes")} disabled={saving || !preferencesComplete} style={{
+                width: "100%", padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none",
+                cursor: preferencesComplete ? "pointer" : "default", fontSize: 12, fontWeight: 700, marginTop: 14,
+                opacity: saving || !preferencesComplete ? 0.5 : 1,
+              }}>{saving ? "..." : "Confirm RSVP →"}</button>
+            </motion.div>
+          )}
+          {step === "done" && (
+            <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
+              {finalResponse === "yes" && passId ? (
+                <EntryPassCard passId={passId} name={name} epfNo={epfNo} primary={primary} primaryLight={primaryLight} dark={dark} muted={muted} />
+              ) : finalResponse === "yes" ? (
+                <>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
+                  <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>See you there, {name}!</div>
+                  <div style={{ fontSize: 12, color: muted }}>We look forward to your presence.</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>🙏</div>
+                  <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>We'll miss you, {name}.</div>
+                  <div style={{ fontSize: 12, color: muted }}>Thank you for letting us know.</div>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
@@ -1006,7 +1018,7 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
               </div>
             )}
 
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking ?? false} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking ?? false} askMealPref={couple.ask_meal_pref ?? false} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
