@@ -774,6 +774,16 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
+  // Mobile browsers (especially in-app webviews like WhatsApp's, and over
+  // cellular data) often don't decode/paint a single video frame until the
+  // user actually interacts with the page — so a bare <video> can render as
+  // solid black/blank for the whole time the guest is looking at the cover.
+  // We keep the video's opacity at 0 until it proves it has a real frame
+  // ready (onLoadedData/onCanPlay), so the cover photo underneath — which
+  // <img> renders far more reliably than <video> — stays visible the entire
+  // time instead of a blank screen.
+  const [coverVideoReady, setCoverVideoReady] = useState(false)
+  const [heroVideoReady, setHeroVideoReady] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const coverVideoRef = useRef<HTMLVideoElement | null>(null)
   const coverVideoUrl = couple.cover_video_url || ''
@@ -893,41 +903,51 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {coverVideoUrl ? (
+              {(coverVideoUrl || W.coverPhoto) ? (
                 <>
-                  {/* Paused on its poster frame until "Open Invitation" is
-                      tapped. Playing with sound is fine here (unlike a
-                      true autoplay), because play() only ever runs inside
-                      the button's own click handler — a genuine user
-                      gesture, so browsers won't block it. */}
-                  <video ref={coverVideoRef} playsInline preload="auto" poster={W.coverPhoto || undefined}
-                    onLoadedMetadata={e => {
-                      try { e.currentTarget.currentTime = 0.1 } catch {}
-                      videoDurationRef.current = e.currentTarget.duration
-                    }}
-                    onEnded={handleVideoEnded}
-                    onPause={e => { if (e.currentTarget.ended) handleVideoEnded() }}
-                    onTimeUpdate={e => {
-                      // Extra safety net alongside onEnded/onPause — a few
-                      // mobile browsers/encodings don't reliably fire those,
-                      // so also catch it here once playback nears the end.
-                      const v = e.currentTarget
-                      if (videoPlaying && isFinite(v.duration) && v.duration > 0 && v.currentTime >= v.duration - 0.2) handleVideoEnded()
-                    }}
-                    onError={() => handleVideoEnded()}
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}>
-                    <source src={coverVideoUrl} type="video/mp4" />
-                  </video>
+                  {/* Guaranteed-visible base layer: a plain <img> paints far
+                      more reliably than <video> on mobile, especially inside
+                      in-app browsers (WhatsApp etc.) and over cellular data.
+                      This sits underneath the video and stays visible for as
+                      long as the video hasn't proven it has a frame ready. */}
+                  {W.coverPhoto && (
+                    <img src={W.coverPhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                  )}
+                  {coverVideoUrl && (
+                    /* Paused on its poster frame until "Open Invitation" is
+                       tapped. Playing with sound is fine here (unlike a
+                       true autoplay), because play() only ever runs inside
+                       the button's own click handler — a genuine user
+                       gesture, so browsers won't block it. Kept transparent
+                       until a real frame is ready so it never blanks out the
+                       photo underneath. */
+                    <video ref={coverVideoRef} playsInline preload="auto" poster={W.coverPhoto || undefined}
+                      onLoadedMetadata={e => {
+                        try { e.currentTarget.currentTime = 0.1 } catch {}
+                        videoDurationRef.current = e.currentTarget.duration
+                      }}
+                      onLoadedData={() => setCoverVideoReady(true)}
+                      onCanPlay={() => setCoverVideoReady(true)}
+                      onPlaying={() => setCoverVideoReady(true)}
+                      onEnded={handleVideoEnded}
+                      onPause={e => { if (e.currentTarget.ended) handleVideoEnded() }}
+                      onTimeUpdate={e => {
+                        // Extra safety net alongside onEnded/onPause — a few
+                        // mobile browsers/encodings don't reliably fire those,
+                        // so also catch it here once playback nears the end.
+                        const v = e.currentTarget
+                        if (!coverVideoReady) setCoverVideoReady(true)
+                        if (videoPlaying && isFinite(v.duration) && v.duration > 0 && v.currentTime >= v.duration - 0.2) handleVideoEnded()
+                      }}
+                      onError={() => handleVideoEnded()}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: coverVideoReady ? 1 : 0, transition: "opacity 0.5s ease" }}>
+                      <source src={coverVideoUrl} type="video/mp4" />
+                    </video>
+                  )}
                   {!videoPlaying && (
                     <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,36,56,0.55) 0%, rgba(15,36,56,0.25) 35%, rgba(15,36,56,0.4) 65%, rgba(15,36,56,0.8) 100%)` }} />
                   )}
-                </>
-              ) : W.coverPhoto ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={W.coverPhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
-                  <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(15,36,56,0.55) 0%, rgba(15,36,56,0.25) 35%, rgba(15,36,56,0.4) 65%, rgba(15,36,56,0.8) 100%)` }} />
                 </>
               ) : (
                 <>
@@ -990,23 +1010,28 @@ function CorporateEventInner({ couple }: { couple: EventInvite }) {
                 showed before "disappearing" under that fade. Now both get
                 the same generous height, so the photo stays clearly visible. */}
             <div style={{ position: "relative", height: hasVisualCover ? 520 : 260, overflow: "hidden" }}>
-              {coverVideoUrl ? (
+              {(coverVideoUrl || W.coverPhoto) ? (
                 <>
-                  {/* By the time this renders the guest has already tapped
-                      Open Invitation, so this instance autoplays and loops. */}
-                  <video autoPlay muted playsInline preload="auto" poster={W.coverPhoto || undefined}
-                    onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} }}
-                    onEnded={e => { const v = e.currentTarget; v.currentTime = 0.1; v.play().catch(() => {}) }}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}>
-                    <source src={coverVideoUrl} type="video/mp4" />
-                  </video>
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(247,245,239,1) 0%,rgba(15,36,56,0.15) 55%,rgba(15,36,56,0.4) 100%)" }} />
-                </>
-              ) : W.coverPhoto ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={W.coverPhoto} alt={W.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                  {W.coverPhoto && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={W.coverPhoto} alt={W.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
+                  )}
+                  {coverVideoUrl && (
+                    /* By the time this renders the guest has already tapped
+                        Open Invitation, so this instance autoplays and loops.
+                        Kept transparent until a real frame is ready so it
+                        never blanks out the photo underneath on mobile. */
+                    <video autoPlay muted playsInline preload="auto" poster={W.coverPhoto || undefined}
+                      onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} }}
+                      onLoadedData={() => setHeroVideoReady(true)}
+                      onCanPlay={() => setHeroVideoReady(true)}
+                      onPlaying={() => setHeroVideoReady(true)}
+                      onEnded={e => { const v = e.currentTarget; v.currentTime = 0.1; v.play().catch(() => {}) }}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: heroVideoReady ? 1 : 0, transition: "opacity 0.5s ease" }}>
+                      <source src={coverVideoUrl} type="video/mp4" />
+                    </video>
+                  )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(247,245,239,1) 0%,rgba(15,36,56,0.15) 55%,rgba(15,36,56,0.4) 100%)" }} />
                 </>
               ) : (
