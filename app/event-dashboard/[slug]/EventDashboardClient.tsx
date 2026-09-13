@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 
 // ── Event-day Check-in Dashboard ─────────────────────────────────────
@@ -11,6 +12,9 @@ import { supabase } from '@/lib/supabase'
 // already collected in the Admin → Event form for each event), remembered
 // per-browser via sessionStorage — same lightweight pattern as the Admin
 // panel's own password gate. There's no separate staff login system.
+// Staff can change the PIN themselves from the Settings tab (they must
+// know the current one), and an admin can always force-reset it from the
+// Admin panel regardless.
 //
 // Data model: every guest who RSVPs "Attending" on the invitation gets a
 // row in `event_guests` (see event_guests_migration.sql), and that row's
@@ -22,7 +26,15 @@ import { supabase } from '@/lib/supabase'
 // name) looks the guest up and marks them checked in at the door, and
 // marks their meal claimed at the food counter — each guest's QR is
 // unique to them, so one QR can't be reused by someone else at either
-// station.
+// station. Staff can also remove a guest entirely (e.g. a duplicate
+// walk-in entry) from the Guests tab.
+//
+// Layout: a tab strip (Overview / Guests / Budget / Settings), similar to
+// the couple's own wedding dashboard, keeps the growing feature set
+// organised instead of piling everything onto one long page. The Budget
+// tab is a lightweight expense tracker for the event's own spending
+// (see add_event_budget.sql for its table), separate from any couple's
+// wedding budget.
 
 const PREFIX = 'INVITEGLOW-GUEST-'
 function extractGuestId(decoded: string): string | null {
@@ -34,6 +46,13 @@ function extractGuestId(decoded: string): string | null {
   // Backward-compat: older QR codes encoded as INVITEGLOW-GUEST-<id>.
   if (trimmed.startsWith(PREFIX)) return trimmed.slice(PREFIX.length)
   return null
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 type EventRow = {
@@ -73,6 +92,288 @@ function fmtTime(iso: string | null) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
+function fmtDateTime(iso: string | null) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+// ── Event Budget Tracker ──────────────────────────────────────────────
+// A lightweight expense tracker scoped to one event (see
+// add_event_budget.sql for the `event_budget_items` table). Separate from
+// the couple-dashboard's own wedding budget tracker — different table,
+// different owner (event vs couple) — but the same idea: log planned vs.
+// paid amounts per line item so the organiser can see spend at a glance.
+type EventBudgetItem = {
+  id: string
+  event_id: string
+  category: string
+  item_name: string
+  vendor: string | null
+  estimated_cost: number
+  paid_amount: number
+  due_date: string | null
+  status: 'pending' | 'partial' | 'paid'
+  notes: string | null
+  created_at: string
+}
+const BUDGET_CATEGORIES = [
+  { key: 'venue', label: 'Venue', icon: '🏛️' },
+  { key: 'catering', label: 'Catering', icon: '🍽️' },
+  { key: 'decor', label: 'Decor', icon: '💐' },
+  { key: 'entertainment', label: 'Entertainment', icon: '🎵' },
+  { key: 'av', label: 'AV & Equipment', icon: '🎤' },
+  { key: 'giveaways', label: 'Giveaways & Prizes', icon: '🎁' },
+  { key: 'transport', label: 'Transport', icon: '🚗' },
+  { key: 'staffing', label: 'Staffing', icon: '🧑‍💼' },
+  { key: 'other', label: 'Other', icon: '📦' },
+]
+const categoryMeta = (key: string) => BUDGET_CATEGORIES.find(c => c.key === key) || BUDGET_CATEGORIES[BUDGET_CATEGORIES.length - 1]
+const emptyBudgetForm = {
+  category: 'venue', item_name: '', vendor: '', estimated_cost: '', paid_amount: '', due_date: '', status: 'pending' as EventBudgetItem['status'], notes: '',
+}
+
+function EventBudgetManager({ eventId, accent }: { eventId: string; accent: string }) {
+  const [items, setItems] = useState<EventBudgetItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyBudgetForm)
+  const [saving, setSaving] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [totalBudgetInput, setTotalBudgetInput] = useState('')
+  const [totalBudget, setTotalBudget] = useState<number | null>(null)
+
+  const TEXT_DARK = '#0f2438'
+  const TEXT_MUTED = '#7c8a99'
+  const BORDER = '#e2e8f0'
+
+  const load = async () => {
+    const { data } = await supabase.from('event_budget_items').select('*').eq('event_id', eventId).order('created_at', { ascending: true })
+    if (data) setItems(data as EventBudgetItem[])
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [eventId])
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage?.getItem?.(`event-budget-target-${eventId}`)
+      if (saved) { setTotalBudget(parseFloat(saved)); setTotalBudgetInput(saved) }
+    } catch { /* ignore */ }
+  }, [eventId])
+  const saveTotalBudget = () => {
+    const val = parseFloat(totalBudgetInput)
+    if (!isNaN(val) && val > 0) {
+      setTotalBudget(val)
+      try { window.localStorage?.setItem?.(`event-budget-target-${eventId}`, String(val)) } catch { /* ignore */ }
+    }
+  }
+
+  const totalEstimated = items.reduce((s, i) => s + (i.estimated_cost || 0), 0)
+  const totalPaid = items.reduce((s, i) => s + (i.paid_amount || 0), 0)
+  const totalRemaining = totalEstimated - totalPaid
+  const budgetTarget = totalBudget ?? totalEstimated
+  const usedPct = budgetTarget > 0 ? Math.min(100, Math.round((totalEstimated / budgetTarget) * 100)) : 0
+  const fmt = (n: number) => `LKR ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+
+  const resetForm = () => { setForm(emptyBudgetForm); setEditingId(null); setShowForm(false) }
+  const startEdit = (item: EventBudgetItem) => {
+    setForm({
+      category: item.category, item_name: item.item_name, vendor: item.vendor || '',
+      estimated_cost: String(item.estimated_cost ?? ''), paid_amount: String(item.paid_amount ?? ''),
+      due_date: item.due_date || '', status: item.status, notes: item.notes || '',
+    })
+    setEditingId(item.id)
+    setShowForm(true)
+  }
+  const handleSaveItem = async () => {
+    if (!form.item_name.trim()) return
+    setSaving(true)
+    const payload = {
+      event_id: eventId,
+      category: form.category,
+      item_name: form.item_name.trim(),
+      vendor: form.vendor.trim() || null,
+      estimated_cost: parseFloat(form.estimated_cost) || 0,
+      paid_amount: parseFloat(form.paid_amount) || 0,
+      due_date: form.due_date || null,
+      status: form.status,
+      notes: form.notes.trim() || null,
+    }
+    const { error } = editingId
+      ? await supabase.from('event_budget_items').update(payload).eq('id', editingId)
+      : await supabase.from('event_budget_items').insert([payload])
+    setSaving(false)
+    if (!error) { resetForm(); load() }
+  }
+  const handleDeleteItem = async (id: string, name: string) => {
+    if (!confirm(`Remove "${name}" from the budget?`)) return
+    setBusyId(id)
+    const { error } = await supabase.from('event_budget_items').delete().eq('id', id)
+    setBusyId(null)
+    if (!error) setItems(prev => prev.filter(i => i.id !== id))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '10px 12px', borderRadius: 9, border: `1px solid ${BORDER}`,
+    fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", background: '#fff', color: TEXT_DARK, boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = { fontSize: 10.5, fontWeight: 600, color: TEXT_MUTED, marginBottom: 5, display: 'block' }
+  const statusMeta: Record<EventBudgetItem['status'], { label: string; bg: string; color: string }> = {
+    pending: { label: 'Pending', bg: '#fef3c7', color: '#b45309' },
+    partial: { label: 'Partially Paid', bg: '#dbeafe', color: '#1d4ed8' },
+    paid: { label: 'Paid in Full', bg: '#dcfce7', color: '#16a34a' },
+  }
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: 40, color: TEXT_MUTED, fontSize: 13 }}>Loading budget…</div>
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 14 }}>
+        <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: 10, color: TEXT_MUTED, fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estimated</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: TEXT_DARK }}>{fmt(totalEstimated)}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Paid</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>{fmt(totalPaid)}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: 10, color: totalRemaining > 0 ? '#dc2626' : TEXT_MUTED, fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Balance Due</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: totalRemaining > 0 ? '#dc2626' : TEXT_DARK }}>{fmt(Math.max(0, totalRemaining))}</div>
+        </div>
+      </div>
+
+      <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: TEXT_DARK }}>Overall Budget Goal (optional)</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input value={totalBudgetInput} onChange={e => setTotalBudgetInput(e.target.value.replace(/[^\d.]/g, ''))}
+              placeholder="e.g. 500000" style={{ ...inputStyle, width: 130, padding: '7px 10px', fontSize: 12.5 }} />
+            <button onClick={saveTotalBudget} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: accent, color: '#fff', fontSize: 12, fontWeight: 700 }}>Set</button>
+          </div>
+        </div>
+        {budgetTarget > 0 && (
+          <>
+            <div style={{ height: 8, background: '#f1f5f9', borderRadius: 100, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${usedPct}%`, background: usedPct >= 100 ? '#dc2626' : `linear-gradient(90deg,${accent},${ACCENT_LIGHT})`, borderRadius: 100, transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>{fmt(totalEstimated)} planned of {fmt(budgetTarget)} goal ({usedPct}%)</div>
+          </>
+        )}
+      </div>
+
+      {showForm ? (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', marginBottom: 14 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, marginBottom: 14 }}>{editingId ? 'Edit Expense' : 'Add Expense'}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Category</label>
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+                {BUDGET_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Item / Service Name</label>
+              <input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} placeholder="e.g. Sound System" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={labelStyle}>Vendor (optional)</label>
+            <input value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. ABC Events" style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Estimated Cost (LKR)</label>
+              <input value={form.estimated_cost} onChange={e => setForm({ ...form, estimated_cost: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Paid / Advance (LKR)</label>
+              <input value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Due Date</label>
+              <input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Payment Status</label>
+              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as EventBudgetItem['status'] })} style={inputStyle}>
+                <option value="pending">Pending</option>
+                <option value="partial">Partially Paid</option>
+                <option value="paid">Paid in Full</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Notes (optional)</label>
+            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contract details, contact info, etc." style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleSaveItem} disabled={saving || !form.item_name.trim()} style={{
+              flex: 1, padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer', background: accent, color: '#fff',
+              fontWeight: 700, fontSize: 13, opacity: (saving || !form.item_name.trim()) ? 0.6 : 1,
+            }}>{saving ? 'Saving...' : editingId ? 'Update Expense' : 'Add Expense'}</button>
+            <button onClick={resetForm} style={{ padding: '12px 18px', borderRadius: 10, border: `1px solid ${BORDER}`, cursor: 'pointer', background: '#fff', color: TEXT_MUTED, fontWeight: 600, fontSize: 13 }}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowForm(true)} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: 13, borderRadius: 12,
+          border: `1.5px dashed ${accent}`, cursor: 'pointer', background: `${accent}0d`, color: accent, fontWeight: 700, fontSize: 13, marginBottom: 14,
+        }}>+ Add Expense</button>
+      )}
+
+      {items.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 34, background: '#fff', borderRadius: 14, color: TEXT_MUTED, fontSize: 13 }}>No expenses added yet.</div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {items.map(item => {
+            const meta = categoryMeta(item.category)
+            const sMeta = statusMeta[item.status]
+            const balance = (item.estimated_cost || 0) - (item.paid_amount || 0)
+            return (
+              <div key={item.id} style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: '#f7f5ef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>{meta.icon}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK }}>{item.item_name}</div>
+                      <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>
+                        {meta.label}{item.vendor ? ` · ${item.vendor}` : ''}{item.due_date ? ` · Due ${new Date(item.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 700, background: sMeta.bg, color: sMeta.color, whiteSpace: 'nowrap' }}>{sMeta.label}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 12, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 42 }}>
+                  <span>Est: <strong style={{ color: TEXT_DARK }}>{fmt(item.estimated_cost || 0)}</strong></span>
+                  <span>Paid: <strong style={{ color: '#16a34a' }}>{fmt(item.paid_amount || 0)}</strong></span>
+                  {balance > 0 && <span>Balance: <strong style={{ color: '#dc2626' }}>{fmt(balance)}</strong></span>}
+                </div>
+                {item.notes && <div style={{ fontSize: 11.5, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 42, fontStyle: 'italic' }}>{item.notes}</div>}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button onClick={() => startEdit(item)} style={{ padding: '5px 12px', borderRadius: 100, border: `1px solid ${BORDER}`, cursor: 'pointer', background: '#f8fafc', color: TEXT_MUTED, fontSize: 11, fontWeight: 600 }}>Edit</button>
+                  <button onClick={() => handleDeleteItem(item.id, item.item_name)} disabled={busyId === item.id} style={{ padding: '5px 12px', borderRadius: 100, border: '1px solid #fecaca', cursor: 'pointer', background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 600, opacity: busyId === item.id ? 0.6 : 1 }}>{busyId === item.id ? 'Removing...' : 'Delete'}</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const TABS = [
+  { key: 'overview', label: 'Overview', icon: '🏠' },
+  { key: 'guests', label: 'Guests', icon: '👥' },
+  { key: 'budget', label: 'Budget', icon: '💰' },
+  { key: 'settings', label: 'Settings', icon: '⚙️' },
+] as const
+type TabKey = typeof TABS[number]['key']
 
 export default function EventDashboardClient({ slug }: { slug: string }) {
   const [checkingSession, setCheckingSession] = useState(true)
@@ -86,6 +387,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [search, setSearch] = useState('')
+  const [activeTab, setActiveTab] = useState<TabKey>('overview')
 
   const [scanOpen, setScanOpen] = useState(false)
   const [scanMsg, setScanMsg] = useState('')
@@ -102,6 +404,14 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   const [walkinCount, setWalkinCount] = useState(1)
   const [walkinMeal, setWalkinMeal] = useState<'veg' | 'non-veg' | null>(null)
   const [savingWalkin, setSavingWalkin] = useState(false)
+
+  const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null)
+
+  const [pinCurrent, setPinCurrent] = useState('')
+  const [pinNew, setPinNew] = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
+  const [pinMsg, setPinMsg] = useState('')
+  const [changingPin, setChangingPin] = useState(false)
 
   const sessionKey = `ig_dash_unlock_${slug}`
 
@@ -161,6 +471,13 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
     return { registrations: guests.length, totalGuests, checkedIn, checkedInGuests, meals }
   }, [guests])
 
+  const recentCheckins = useMemo(() => {
+    return guests
+      .filter(g => g.checked_in && g.checked_in_at)
+      .sort((a, b) => (a.checked_in_at! < b.checked_in_at! ? 1 : -1))
+      .slice(0, 6)
+  }, [guests])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return guests
@@ -186,6 +503,29 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   }
   const toggleCheckIn = (g: Guest) => patchGuest(g.id, g.checked_in ? { checked_in: false, checked_in_at: null } : { checked_in: true, checked_in_at: new Date().toISOString() })
   const toggleMeal = (g: Guest) => patchGuest(g.id, g.meal_claimed ? { meal_claimed: false, meal_claimed_at: null } : { meal_claimed: true, meal_claimed_at: new Date().toISOString() })
+
+  const handleDeleteGuest = async (id: string, name: string) => {
+    if (!confirm(`Remove ${name} from the guest list? This can't be undone.`)) return
+    setDeletingGuestId(id)
+    const { error } = await supabase.from('event_guests').delete().eq('id', id)
+    setDeletingGuestId(null)
+    if (!error) setGuests(prev => prev.filter(g => g.id !== id))
+  }
+
+  const handleChangePin = async () => {
+    if (!event) return
+    setPinMsg('')
+    if (pinCurrent.trim() !== (event.pin || '')) { setPinMsg('Current PIN is incorrect.'); return }
+    if (!/^\d{4}$/.test(pinNew)) { setPinMsg('New PIN must be exactly 4 digits.'); return }
+    if (pinNew !== pinConfirm) { setPinMsg("New PIN and confirmation don't match."); return }
+    setChangingPin(true)
+    const { error } = await supabase.from('events').update({ pin: pinNew }).eq('id', event.id)
+    setChangingPin(false)
+    if (error) { setPinMsg('Could not update PIN: ' + error.message); return }
+    setEvent(prev => prev ? { ...prev, pin: pinNew } : prev)
+    setPinCurrent(''); setPinNew(''); setPinConfirm('')
+    setPinMsg('✓ PIN updated. Share the new PIN with staff before their next login.')
+  }
 
   // ── QR camera scanning ──────────────────────────────────────────────
   // No npm dependency needed: the decoder (jsQR) is pulled in from a CDN
@@ -309,6 +649,15 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
     )
   }
 
+  const avatarStyle: React.CSSProperties = {
+    width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+    background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', fontWeight: 800, fontSize: 13,
+  }
+  const card: React.CSSProperties = { background: '#fff', borderRadius: 14, padding: 18, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', marginBottom: 14 }
+  const settingsInput: React.CSSProperties = { width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 15, textAlign: 'center', letterSpacing: '0.2em', marginBottom: 10, boxSizing: 'border-box' }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f7f5ef', fontFamily: "'Inter',sans-serif" }}>
       <div style={{ background: ACCENT, color: '#fff', padding: '18px 20px' }}>
@@ -317,59 +666,142 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
         {event.host && <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>Organized by {event.host}</div>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: 10, padding: '16px 16px 0' }}>
-        {[
-          ['Registered', stats.registrations],
-          ['Total Guests', stats.totalGuests],
-          ['Checked In', stats.checkedIn],
-          ['Meals Given', stats.meals],
-        ].map(([label, val]) => (
-          <div key={label as string} style={{ background: '#fff', borderRadius: 12, padding: '14px 12px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: ACCENT }}>{val}</div>
-            <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-          </div>
-        ))}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#f7f5ef', padding: '12px 16px 8px', borderBottom: '1px solid #ece4d2' }}>
+        <div style={{ display: 'flex', gap: 4, background: '#ece7d9', borderRadius: 100, padding: 4, maxWidth: 460, margin: '0 auto', overflowX: 'auto' }}>
+          {TABS.map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+              flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 8px', borderRadius: 100,
+              border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+              background: activeTab === tab.key ? '#fff' : 'transparent',
+              color: activeTab === tab.key ? ACCENT : '#8a7d5f',
+              boxShadow: activeTab === tab.key ? '0 2px 8px rgba(15,23,42,0.1)' : 'none',
+              transition: 'all 0.15s',
+            }}>
+              <span>{tab.icon}</span><span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, padding: 16, flexWrap: 'wrap' }}>
-        <button onClick={startScan} style={{ flex: '1 1 160px', padding: '13px 16px', borderRadius: 10, border: 'none', background: ACCENT_LIGHT, color: '#1c1400', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>📷 Scan QR</button>
-        <button onClick={() => setWalkinOpen(true)} style={{ flex: '1 1 160px', padding: '13px 16px', borderRadius: 10, border: `1.5px solid ${ACCENT}`, background: '#fff', color: ACCENT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>+ Add Walk-in Guest</button>
-      </div>
-
-      <div style={{ padding: '0 16px 16px' }}>
-        <input
-          value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, phone, or code..."
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box', background: '#fff' }}
-        />
-      </div>
-
-      <div style={{ padding: '0 16px 100px' }}>
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: 30 }}>No guests match.</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filtered.map(g => (
-              <div key={g.id} style={{ background: '#fff', borderRadius: 12, padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f2438' }}>{g.guest_name}{g.guest_count > 1 ? ` (+${g.guest_count - 1})` : ''}{g.meal_pref ? (g.meal_pref === 'veg' ? ' 🥗' : ' 🍗') : ''}</div>
-                    <div style={{ fontSize: 11.5, color: '#94a3b8', marginTop: 2 }}>{g.epf_no ? `EPF ${g.epf_no}` : 'no EPF'} · {g.phone || 'no phone'} · Code {g.id.slice(0, 8).toUpperCase()}</div>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '16px 16px 100px' }}>
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div key="overview" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: 10, marginBottom: 16 }}>
+                {[
+                  ['Registered', stats.registrations],
+                  ['Total Guests', stats.totalGuests],
+                  ['Checked In', stats.checkedIn],
+                  ['Meals Given', stats.meals],
+                ].map(([label, val]) => (
+                  <div key={label as string} style={{ background: '#fff', borderRadius: 12, padding: '14px 12px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: ACCENT }}>{val}</div>
+                    <div style={{ fontSize: 10.5, color: '#64748b', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                  <button onClick={() => toggleCheckIn(g)} style={{
-                    flex: 1, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                    background: g.checked_in ? '#16a34a1a' : `${ACCENT}14`, color: g.checked_in ? '#16a34a' : ACCENT,
-                  }}>{g.checked_in ? `✓ Checked In · ${fmtTime(g.checked_in_at)}` : 'Check In'}</button>
-                  <button onClick={() => toggleMeal(g)} style={{
-                    flex: 1, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                    background: g.meal_claimed ? '#c9a2271a' : `${ACCENT}14`, color: g.meal_claimed ? '#946f00' : ACCENT,
-                  }}>{g.meal_claimed ? `✓ Meal Given · ${fmtTime(g.meal_claimed_at)}` : 'Mark Meal'}</button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+
+              <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+                <button onClick={startScan} style={{ flex: '1 1 160px', padding: '13px 16px', borderRadius: 10, border: 'none', background: ACCENT_LIGHT, color: '#1c1400', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>📷 Scan QR</button>
+                <button onClick={() => setWalkinOpen(true)} style={{ flex: '1 1 160px', padding: '13px 16px', borderRadius: 10, border: `1.5px solid ${ACCENT}`, background: '#fff', color: ACCENT, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>+ Add Walk-in Guest</button>
+              </div>
+
+              <div style={card}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f2438', marginBottom: 12 }}>Recent Check-ins</div>
+                {recentCheckins.length === 0 ? (
+                  <div style={{ fontSize: 12.5, color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>No one has checked in yet.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {recentCheckins.map(g => (
+                      <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ ...avatarStyle, width: 32, height: 32, fontSize: 11 }}>{initials(g.guest_name)}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0f2438', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.guest_name}{g.meal_pref ? (g.meal_pref === 'veg' ? ' 🥗' : ' 🍗') : ''}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>{fmtDateTime(g.checked_in_at)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'guests' && (
+            <motion.div key="guests" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <input
+                  value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, phone, or code..."
+                  style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14, boxSizing: 'border-box', background: '#fff' }}
+                />
+                <button onClick={() => setWalkinOpen(true)} style={{ padding: '0 16px', borderRadius: 10, border: `1.5px solid ${ACCENT}`, background: '#fff', color: ACCENT, fontWeight: 700, fontSize: 18, cursor: 'pointer' }}>+</button>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: 30 }}>No guests match.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {filtered.map(g => (
+                    <div key={g.id} style={{ background: '#fff', borderRadius: 12, padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
+                          <div style={avatarStyle}>{initials(g.guest_name)}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: '#0f2438' }}>{g.guest_name}{g.guest_count > 1 ? ` (+${g.guest_count - 1})` : ''}{g.meal_pref ? (g.meal_pref === 'veg' ? ' 🥗' : ' 🍗') : ''}</div>
+                            <div style={{ fontSize: 11.5, color: '#94a3b8', marginTop: 2 }}>{g.epf_no ? `EPF ${g.epf_no}` : 'no EPF'} · {g.phone || 'no phone'} · Code {g.id.slice(0, 8).toUpperCase()}</div>
+                          </div>
+                        </div>
+                        <button onClick={() => handleDeleteGuest(g.id, g.guest_name)} disabled={deletingGuestId === g.id} title="Remove guest" style={{
+                          background: 'transparent', border: 'none', cursor: 'pointer', color: '#cbd5e1', fontSize: 15, padding: 4, lineHeight: 1, flexShrink: 0,
+                          opacity: deletingGuestId === g.id ? 0.4 : 1,
+                        }}>🗑</button>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button onClick={() => toggleCheckIn(g)} style={{
+                          flex: 1, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                          background: g.checked_in ? '#16a34a1a' : `${ACCENT}14`, color: g.checked_in ? '#16a34a' : ACCENT,
+                        }}>{g.checked_in ? `✓ Checked In · ${fmtTime(g.checked_in_at)}` : 'Check In'}</button>
+                        <button onClick={() => toggleMeal(g)} style={{
+                          flex: 1, padding: '9px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                          background: g.meal_claimed ? '#c9a2271a' : `${ACCENT}14`, color: g.meal_claimed ? '#946f00' : ACCENT,
+                        }}>{g.meal_claimed ? `✓ Meal Given · ${fmtTime(g.meal_claimed_at)}` : 'Mark Meal'}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'budget' && (
+            <motion.div key="budget" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              <EventBudgetManager eventId={event.id} accent={ACCENT} />
+            </motion.div>
+          )}
+
+          {activeTab === 'settings' && (
+            <motion.div key="settings" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              <div style={card}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f2438', marginBottom: 12 }}>Event Details</div>
+                <div style={{ fontSize: 13, color: '#475569', marginBottom: 6 }}><strong>Title:</strong> {event.title}</div>
+                {event.host && <div style={{ fontSize: 13, color: '#475569', marginBottom: 6 }}><strong>Organized by:</strong> {event.host}</div>}
+                <div style={{ fontSize: 13, color: '#475569' }}><strong>Link:</strong> /{event.slug}</div>
+              </div>
+
+              <div style={card}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0f2438', marginBottom: 4 }}>Change Dashboard PIN</div>
+                <div style={{ fontSize: 11.5, color: '#94a3b8', marginBottom: 14 }}>You'll need to share the new PIN with anyone else using this dashboard. Forgot it entirely? Ask an admin to reset it from the Admin panel.</div>
+                <input type="password" inputMode="numeric" placeholder="Current PIN" maxLength={4} value={pinCurrent} onChange={e => setPinCurrent(e.target.value.replace(/\D/g, '').slice(0, 4))} style={settingsInput} />
+                <input type="password" inputMode="numeric" placeholder="New 4-digit PIN" maxLength={4} value={pinNew} onChange={e => setPinNew(e.target.value.replace(/\D/g, '').slice(0, 4))} style={settingsInput} />
+                <input type="password" inputMode="numeric" placeholder="Confirm new PIN" maxLength={4} value={pinConfirm} onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))} style={settingsInput} />
+                {pinMsg && <div style={{ fontSize: 12.5, marginBottom: 10, color: pinMsg.startsWith('✓') ? '#16a34a' : '#dc2626' }}>{pinMsg}</div>}
+                <button onClick={handleChangePin} disabled={changingPin} style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: ACCENT, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: changingPin ? 0.6 : 1 }}>
+                  {changingPin ? 'Updating...' : 'Update PIN'}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {scanOpen && (
@@ -402,8 +834,9 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '4px 0 10px' }}>
+                    <div style={{ ...avatarStyle, margin: '0 auto 8px' }}>{initials(scannedGuest.guest.guest_name)}</div>
                     <div style={{ fontSize: 22, marginBottom: 4 }}>✅</div>
-                    <div style={{ fontSize: 13.5, color: '#16a34a', fontWeight: 700 }}>Checked in just now</div>
+                    <div style={{ fontSize: 13.5, color: '#16a34a', fontWeight: 700 }}>Welcome, {scannedGuest.guest.guest_name.split(' ')[0]}!</div>
                   </div>
                 )}
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#0f2438', textAlign: 'center' }}>{scannedGuest.guest.guest_name}{scannedGuest.guest.guest_count > 1 ? ` (+${scannedGuest.guest.guest_count - 1})` : ''}{scannedGuest.guest.meal_pref ? (scannedGuest.guest.meal_pref === 'veg' ? ' 🥗' : ' 🍗') : ''}</div>
