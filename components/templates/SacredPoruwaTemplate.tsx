@@ -1217,22 +1217,61 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Wedding Note Section — plain white card, matching the rest
-                of the template's sections exactly (eyebrow, title, dark
-                text on white). No photo background. */}
+            {/* Wedding Note Section — deliberately made to stand out from
+                the plain white cards around it: a soft golden-tinted
+                background, a gold accent bar across the top, a glowing
+                icon badge, and any fully-CAPS line (e.g. "KINDLY, NO
+                MONETARY GIFTS") automatically rendered as its own bold
+                badge instead of blending into the italic paragraph — so
+                this note reads as a highlighted moment on the page, not
+                just another section. */}
             {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
-              <motion.div style={{ ...cardStyle(), textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={eyebrow(`${PRIMARY}aa`)}>💌 A Note For You</div>
+              <motion.div
+                style={{
+                  ...cardStyle(),
+                  textAlign: "center",
+                  background: `linear-gradient(180deg, ${PRIMARY_LIGHT}2e 0%, #fff 58%)`,
+                  border: `1px solid ${PRIMARY_LIGHT}80`,
+                  boxShadow: `0 12px 36px ${PRIMARY}26, 0 2px 20px rgba(0,0,0,0.06)`,
+                }}
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              >
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, transparent, ${PRIMARY}, ${PRIMARY_LIGHT}, ${PRIMARY}, transparent)` }} />
+                <div style={{
+                  width: 44, height: 44, borderRadius: "50%",
+                  background: `radial-gradient(circle at 35% 30%, #fff8e0, ${PRIMARY_LIGHT})`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 19, margin: "4px auto 12px", boxShadow: `0 4px 14px ${PRIMARY}40`,
+                }}>💌</div>
+                <div style={eyebrow(`${PRIMARY}aa`)}>A Note For You</div>
                 {guestName && (
                   <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, marginBottom: 8, fontWeight: 600 }}>
                     Dear {guestName}
                   </div>
                 )}
-                <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", maxWidth: 340, margin: "0 auto 18px" }}>
-                  {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
+                <div style={{ maxWidth: 340, margin: "0 auto 16px" }}>
+                  {(couple as any).wedding_note_text.split('\n').map((raw: string, i: number) => {
+                    const line = raw.trim()
+                    if (!line) return null
+                    const isEmphasis = line === line.toUpperCase() && /[A-Z]/.test(line)
+                    if (isEmphasis) {
+                      return (
+                        <div key={i} style={{
+                          display: "inline-block", margin: "10px 4px 2px", padding: "8px 16px",
+                          borderRadius: 100, border: `1px solid ${PRIMARY}55`, background: `${PRIMARY_LIGHT}26`,
+                          fontSize: 11, letterSpacing: "0.15em", fontWeight: 700, color: PRIMARY,
+                        }}>{line}</div>
+                      )
+                    }
+                    return (
+                      <div key={i} style={{ fontSize: "0.95rem", color: DARK, opacity: 0.85, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", marginBottom: 4 }}>
+                        {line}
+                      </div>
+                    )
+                  })}
                 </div>
-                <div style={{ display: "flex", justifyContent: "center" }}><LotusIcon color={PRIMARY} size={26} opacity={0.85} /></div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.7rem", color: PRIMARY, marginTop: 14 }}>
+                <div style={{ display: "flex", justifyContent: "center" }}><LotusIcon color={PRIMARY} size={28} opacity={0.9} /></div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 14 }}>
                   {W.bride}<span style={{ margin: "0 8px" }}>&amp;</span>{W.groom}
                 </div>
               </motion.div>
