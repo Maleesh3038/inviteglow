@@ -613,6 +613,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
+  // Tracks whether the cover photo (couple's own upload, or the bundled
+  // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
+  // the static default asset is missing from this deployment — we stop
+  // retrying and switch to a decorative gradient instead of leaving a flat,
+  // empty dark rectangle behind the text (which is what guests were seeing).
+  const [coverPhotoOk, setCoverPhotoOk] = useState(true)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ts = useTextStyles(couple)
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -736,9 +742,23 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
               style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
 
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
-                onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
+              {coverPhotoOk ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
+                  onError={e => {
+                    const img = e.currentTarget as HTMLImageElement
+                    if (img.src.endsWith(DEFAULT_PHOTO)) { setCoverPhotoOk(false); return }
+                    img.src = DEFAULT_PHOTO
+                  }} />
+              ) : (
+                // Neither the couple's photo nor the bundled default photo
+                // could load — a decorative gradient so the cover never
+                // shows as a flat, empty block behind the text.
+                <>
+                  <div style={{ position: "absolute", inset: 0, zIndex: 1, background: `radial-gradient(ellipse 90% 70% at 50% 20%, ${PRIMARY} 0%, ${DARK} 70%)` }} />
+                  <div style={{ position: "absolute", inset: 0, zIndex: 1, backgroundImage: `radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)`, backgroundSize: "28px 28px" }} />
+                </>
+              )}
               {coverVideoUrl && (
                 // No `autoPlay` here on purpose — it used to start decoding
                 // and playing the instant the cover mounted, so the video
