@@ -740,7 +740,15 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               {coverVideoUrl && (
-                <video ref={videoRef} muted autoPlay loop playsInline preload="auto"
+                // No `autoPlay` here on purpose — it used to start decoding
+                // and playing the instant the cover mounted, so the video
+                // would silently fade in over the photo before the guest
+                // ever tapped anything. Now it stays paused (and invisible,
+                // via opacity 0) until handleOpen() calls videoRef.play()
+                // inside the button's own click handler — a real user
+                // gesture — so playback only ever starts once "Open
+                // Invitation" is tapped.
+                <video ref={videoRef} muted loop playsInline preload="auto"
                   onPlaying={e => { e.currentTarget.style.opacity = "1" }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
