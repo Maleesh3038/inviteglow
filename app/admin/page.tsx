@@ -1798,7 +1798,7 @@ export default function AdminPage() {
       paid_amount: (e as any).paid_amount != null ? String((e as any).paid_amount) : '',
       package_tier: ((e as any).package_tier ?? '') as '' | 'starter' | 'premium' | 'luxury',
       admin_notes: (e as any).admin_notes || '',
-    })
+    } as any)
     setEditingEvent(e.id)
     setActiveTab('events')
   }
