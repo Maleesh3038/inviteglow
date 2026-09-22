@@ -1591,7 +1591,7 @@ export default function AdminPage() {
       groom_bank_account_name: (c as any).groom_bank_account_name ?? '',
       groom_bank_account_number: (c as any).groom_bank_account_number ?? '',
       is_locked: (c as any).is_locked ?? false,
-    })
+    } as any)
     setEditing(c.id)
     setActiveTab('couples')
   }
