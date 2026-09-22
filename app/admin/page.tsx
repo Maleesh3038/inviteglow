@@ -1414,6 +1414,7 @@ const emptyEventForm = {
   paid_amount: '',
   package_tier: '' as '' | 'starter' | 'premium' | 'luxury',
   admin_notes: '',
+  is_locked: false,
 }
 type EventRow = typeof emptyEventForm & { id: string; created_at?: string; page_views?: number }
 export default function AdminPage() {
@@ -1589,6 +1590,7 @@ export default function AdminPage() {
       groom_bank_name: (c as any).groom_bank_name ?? '',
       groom_bank_account_name: (c as any).groom_bank_account_name ?? '',
       groom_bank_account_number: (c as any).groom_bank_account_number ?? '',
+      is_locked: (c as any).is_locked ?? false,
     })
     setEditing(c.id)
     setActiveTab('couples')
@@ -1670,6 +1672,7 @@ export default function AdminPage() {
       groom_bank_name: (form as any).groom_bank_name || null,
       groom_bank_account_name: (form as any).groom_bank_account_name || null,
       groom_bank_account_number: (form as any).groom_bank_account_number || null,
+      is_locked: (form as any).is_locked || false,
     }
     let error
     if (editing === 'new') {
@@ -1705,6 +1708,26 @@ export default function AdminPage() {
       alert(`New PIN for ${coupleLabel}: ${newPin}\n\nShare this with the couple — their dashboard link stays the same.`)
     } else {
       alert('Could not reset PIN: ' + error.message)
+    }
+  }
+  // ── Lock / Unlock an invitation ──
+  // Once a couple's invitation is finished and delivered, locking it stops
+  // the "Edit Invitation" form from accidentally overwriting their content
+  // (colors, text, photos, etc.) — the fields grey out until someone
+  // deliberately unlocks it again. Note this protects the couple's saved
+  // DATA only: it can't freeze the shared template's code, so a future
+  // bug fix or design change made to a template file will still apply to
+  // every invitation using that template, locked or not.
+  const [togglingLockId, setTogglingLockId] = useState<string | null>(null)
+  const toggleLock = async (id: string, nextLocked: boolean) => {
+    setTogglingLockId(id)
+    const { error } = await supabase.from('couples').update({ is_locked: nextLocked }).eq('id', id)
+    setTogglingLockId(null)
+    if (!error) {
+      setForm(f => ({ ...f, is_locked: nextLocked } as any))
+      loadCouples()
+    } else {
+      alert('Could not update lock status: ' + error.message)
     }
   }
   // ── Event tab — its own list/form/handlers, backed by the `events` table ──
@@ -2433,11 +2456,38 @@ export default function AdminPage() {
             )}
             {/* FORM */}
             {editing && (
-              <div style={{ background: '#fff', borderRadius: 16, padding: 28, marginBottom: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: '#0f172a' }}>
-                  {editing === 'new' ? 'Create New Invitation' : 'Edit Invitation'}
-                </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ position: 'relative', background: '#fff', borderRadius: 16, padding: 28, marginBottom: 24, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                    {editing === 'new' ? 'Create New Invitation' : 'Edit Invitation'}
+                  </h2>
+                  {editing !== 'new' && (
+                    <button type="button" disabled={togglingLockId === editing}
+                      onClick={() => {
+                        const nextLocked = !(form as any).is_locked
+                        if (nextLocked && !confirm('Lock this invitation? The form will grey out until you unlock it again — this protects it from accidental edits once it\'s delivered to the couple.')) return
+                        toggleLock(editing as string, nextLocked)
+                      }}
+                      style={{
+                        padding: '8px 16px', borderRadius: 100, border: (form as any).is_locked ? 'none' : '1px solid #e2e8f0', cursor: 'pointer',
+                        background: (form as any).is_locked ? '#16a34a' : '#f8fafc', color: (form as any).is_locked ? '#fff' : '#475569',
+                        fontSize: 12.5, fontWeight: 600, opacity: togglingLockId === editing ? 0.6 : 1,
+                      }}>
+                      {togglingLockId === editing ? 'Updating...' : (form as any).is_locked ? '🔒 Locked — Click to Unlock' : '🔓 Lock This Invitation'}
+                    </button>
+                  )}
+                </div>
+                {(form as any).is_locked && (
+                  <div style={{
+                    position: 'absolute', inset: 0, zIndex: 5, borderRadius: 16,
+                    background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 90,
+                  }}>
+                    <div style={{ background: '#0f172a', color: '#fff', padding: '10px 18px', borderRadius: 10, fontSize: 12.5, fontWeight: 500, maxWidth: 320, textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.25)' }}>
+                      🔒 This invitation is locked. Click "Unlock" above to make changes.
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, opacity: (form as any).is_locked ? 0.5 : 1 }}>
                   <div style={fieldWrap}>
                     <label style={labelStyle}>Unique Link Slug *</label>
                     <input style={inputStyle} placeholder="amara-roshan" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} />
@@ -3031,6 +3081,11 @@ export default function AdminPage() {
                                 </div>
                               )
                             })()}
+                            {(c as any).is_locked && (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#16a34a', background: '#16a34a1a', padding: '3px 10px', borderRadius: 100 }}>
+                                🔒 Locked
+                              </div>
+                            )}
                           </div>
                           <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
                             <a href={`/invite/${c.slug}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: ACCENT, textDecoration: 'none', fontWeight: 500 }}>
