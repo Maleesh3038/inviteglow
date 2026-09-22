@@ -10,6 +10,7 @@ import GoldenGardenTemplate from '@/components/templates/GoldenGardenTemplate'
 import OceanPearlTemplate from '@/components/templates/OceanPearlTemplate'
 import SunsetShoresTemplate from '@/components/templates/SunsetShoresTemplate'
 import SacredPoruwaTemplate from '@/components/templates/SacredPoruwaTemplate'
+import DriedBloomRomanceTemplate from '@/components/templates/DriedBloomRomanceTemplate'
 import TraditionalCeylonTemplate from '@/components/templates/TraditionalCeylonTemplate'
 import BlushBlossomTemplate from '@/components/templates/BlushBlossomTemplate'
 import CeylonEleganceTemplate from '@/components/templates/CeylonEleganceTemplate'
@@ -88,6 +89,8 @@ export default function InviteClient({ slug }: { slug: string }) {
       return <SunsetShoresTemplate couple={couple} />
     case 'sacred-poruwa':
       return <SacredPoruwaTemplate couple={couple} />
+    case 'dried-bloom-romance':
+      return <DriedBloomRomanceTemplate couple={couple} />
     case 'traditional-ceylon':
       return <TraditionalCeylonTemplate couple={couple} />
     case 'blush-blossom':
