@@ -783,6 +783,12 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   }
 
   const handleSave = async () => {
+    // Belt-and-braces: even if the greyed-out overlay is somehow bypassed,
+    // a locked invitation's data can't be written from here.
+    if ((couple as any).is_locked) {
+      setMessage('This invitation is locked. Please contact us to make changes.')
+      return
+    }
     setSaving(true)
     setMessage('')
 
@@ -822,11 +828,22 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 
   const resetColors = () => setColors(templateDefault)
 
+  const isLocked = !!(couple as any).is_locked
   return (
-    <div style={{ background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 2px 20px rgba(15,23,42,0.06)' }}>
+    <div style={{ position: 'relative', background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 2px 20px rgba(15,23,42,0.06)' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <div style={{ fontSize: 16, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 4 }}>Edit Your Invitation</div>
-      <div style={{ fontSize: 12, color: PANEL_TEXT_MUTED, marginBottom: 20 }}>Changes apply instantly to your live invitation link.</div>
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 4 }}>Edit Your Invitation</div>
+        <div style={{ fontSize: 12, color: PANEL_TEXT_MUTED, marginBottom: isLocked ? 12 : 20 }}>Changes apply instantly to your live invitation link.</div>
+        {isLocked && (
+          <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 10, background: '#fef3c7', border: '1px solid #fde68a', fontSize: 12.5, color: '#92400e', lineHeight: 1.6 }}>
+            🔒 Your invitation has been finalized and locked. Please contact us if you'd like to make further changes.
+          </div>
+        )}
+      </div>
+      {isLocked && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 5, borderRadius: 18, background: 'rgba(255,255,255,0.55)' }} />
+      )}
 
       <div style={fieldWrap}>
         <label style={labelStyle}>Couple Photo</label>
@@ -1104,75 +1121,10 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // The photo/GIF the couple uploaded as their "Share Preview" (falls back to
-  // their Couple Photo). We pre-fetch this into a real File as soon as it's
-  // known — not on click — because the Web Share API below only lets you
-  // attach a file+text as ONE WhatsApp message (photo with the message as its
-  // caption, matching what real invitation senders do) when navigator.share()
-  // is called quickly, ideally with the file already in hand.
-  // Only ever the photo/GIF the couple explicitly uploaded in the Edit tab's
-  // "WhatsApp Share Preview" field — no fallback to their Couple Photo (that
-  // was silently attaching every couple's invitation background photo to
-  // this WhatsApp share even when they never opted into sharing an image
-  // here, which isn't what they asked for).
-  const sharePreviewUrl: string = (couple as any).share_preview_url || ''
-  const [previewFile, setPreviewFile] = useState<File | null>(null)
-  const [nativeShareReady, setNativeShareReady] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    if (!sharePreviewUrl) { setPreviewFile(null); return }
-    fetch(`/api/media-proxy?url=${encodeURIComponent(sharePreviewUrl)}`)
-      .then(res => res.blob())
-      .then(blob => {
-        if (cancelled) return
-        const isGif = sharePreviewUrl.toLowerCase().includes('.gif')
-        const type = isGif ? 'image/gif' : (blob.type || 'image/jpeg')
-        const ext = isGif ? 'gif' : (type.split('/')[1] || 'jpg')
-        setPreviewFile(new File([blob], `invitation.${ext}`, { type }))
-      })
-      .catch(() => setPreviewFile(null))
-    return () => { cancelled = true }
-  }, [sharePreviewUrl])
-
-  useEffect(() => {
-    const canShareFiles = typeof navigator !== 'undefined' && !!(navigator as any).canShare && !!previewFile
-      && (navigator as any).canShare({ files: [previewFile] })
-    setNativeShareReady(!!canShareFiles)
-  }, [previewFile])
-
-  // Tries to send the photo/GIF and the message as ONE WhatsApp message (the
-  // photo becomes the message, the text becomes its caption — exactly how a
-  // normal person shares a photo+message on WhatsApp). This uses the Web
-  // Share API's file-sharing support, which works on modern mobile browsers
-  // (Android Chrome, iOS Safari) when the OS share sheet includes WhatsApp.
-  // There is no equivalent for desktop browsers or older mobile browsers, so
-  // those fall back to the old text-plus-link-only flow automatically.
-  const shareWhatsApp = async () => {
+  const shareWhatsApp = () => {
     if (!guestName.trim()) return
-    const text = `${personalizedMessage}\n${generatedLink}`
-    if (nativeShareReady && previewFile) {
-      try {
-        await (navigator as any).share({ files: [previewFile], text })
-        return
-      } catch {
-        // User cancelled the native share sheet, or it failed for some other
-        // reason — fall through to the plain link share below instead of
-        // leaving the button looking like it did nothing.
-      }
-    }
-    const msg = encodeURIComponent(text)
+    const msg = encodeURIComponent(`${personalizedMessage}\n${generatedLink}`)
     window.open(`https://wa.me/?text=${msg}`, '_blank')
-  }
-
-  // Manual fallback for when native file-sharing isn't available (desktop
-  // browsers, mainly): opens the photo/GIF directly in a new tab —
-  // synchronously in the click handler, so it's never blocked as a popup —
-  // so the couple can long-press/right-click → Save it and attach it
-  // themselves in the same WhatsApp chat.
-  const downloadSharePreview = () => {
-    if (!sharePreviewUrl) return
-    window.open(sharePreviewUrl, '_blank', 'noopener')
   }
 
   const saveMessage = async () => {
@@ -1240,33 +1192,6 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
           WhatsApp
         </button>
       </div>
-
-      {sharePreviewUrl && nativeShareReady && (
-        <div style={{ marginTop: 12, fontSize: 11, color: "#166534", display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon name="check" size={12} color="#166534" />
-          Your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} will be sent together with the message as one WhatsApp share.
-        </div>
-      )}
-
-      {sharePreviewUrl && !nativeShareReady && (
-        <div style={{ marginTop: 12, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={sharePreviewUrl} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
-            <div style={{ fontSize: 11.5, color: "#92400e", lineHeight: 1.6 }}>
-              This browser can't auto-attach your {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'photo'} to the message (works best on a phone). Tap <strong>WhatsApp</strong> to send the text, then tap <strong>Open {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'}</strong> below, press-and-hold (or right-click) it to save it, and attach it in the same chat.
-            </div>
-          </div>
-          <button onClick={downloadSharePreview} type="button" style={{
-            marginTop: 10, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-            padding: "9px", borderRadius: 8, border: "1px solid #fde68a", background: "#fff", color: "#92400e",
-            fontWeight: 600, fontSize: 12.5, cursor: "pointer",
-          }}>
-            <Icon name="camera" size={13} color="#92400e" />
-            Open {sharePreviewUrl.toLowerCase().includes('.gif') ? 'GIF' : 'Photo'} to Save
-          </button>
-        </div>
-      )}
     </div>
   )
 }
