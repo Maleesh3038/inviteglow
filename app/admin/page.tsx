@@ -19,6 +19,7 @@ const TEMPLATES = [
   { id: 'crimson-royale', name: 'Crimson Royale', tag: 'Regal & Bold', photo: '', demoSlug: '', color: '#8b1a2b', category: 'wedding' },
   { id: 'kanchi-vivaha', name: 'Kanchi Vivaha', tag: 'Tamil Wedding', photo: '', demoSlug: '', color: '#9b2c2c', category: 'wedding' },
   { id: 'ceremonial-guard', name: 'Ceremonial Guard', tag: 'Lavender Ceremony', photo: '', demoSlug: '', color: '#8B7BB8', category: 'wedding' },
+  { id: 'dried-bloom-romance', name: 'Dried Bloom Romance', tag: 'Wax Seal & Dried Florals', photo: '', demoSlug: '', color: '#c98a93', category: 'wedding' },
   { id: 'corporate-event', name: 'Corporate Event', tag: 'Office & Corporate', photo: '', demoSlug: '', color: '#1c3d5a', category: 'event' },
 ]
 const CATEGORY_LABELS: Record<string, string> = { wedding: 'Wedding', event: 'Event', birthday: 'Birthday' }
