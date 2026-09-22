@@ -22,10 +22,6 @@ import FooterSocial from '@/components/shared/FooterSocial'
 
 const DEFAULT_COVER_BG = '/images/blush-blossom-cover-bg.png'
 
-// Shared box background for every card in the template (was plain white,
-// now a deeper light-purple tint per request).
-const PURPLE_BOX = '#e9d9f0'
-
 const DEFAULT_COLORS: Required<CoupleColors> = {
   primary: '#c1876d',
   primaryLight: '#f4e6d9',
@@ -263,7 +259,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
         background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: `1px solid ${dark}14`,
-        boxShadow: `0 10px 30px ${dark}30`, padding: '10px 18px', paddingRight: 56, position: 'relative',
+        boxShadow: `0 10px 30px ${dark}30`, padding: '10px 18px', position: 'relative',
       }}>
         {hasWishes && iconBtn(() => bbScrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
         {iconBtn(() => bbScrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
@@ -278,6 +274,9 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
             <span style={{ fontSize: 8 }}>Location</span>
           </a>
         )}
+
+        {/* Reserves room in the flex flow so no icon ever sits under the raised music button */}
+        <div style={{ width: 44, flexShrink: 0 }} />
 
         <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
           position: 'absolute', right: 4, top: -16,
@@ -407,9 +406,9 @@ function pickTimelineIcon(eventName: string): IconName {
 
 // Custom player UI wrapping a shared <audio> ref — replaces the plain
 // native browser controls with something that matches the theme.
-function MusicPlayer({ audioRef, title, artist, primary, primaryLight, dark }: {
+function MusicPlayer({ audioRef, title, artist, primary, primaryLight, dark, boxBg }: {
   audioRef: React.RefObject<HTMLAudioElement | null>
-  title?: string; artist?: string; primary: string; primaryLight: string; dark: string
+  title?: string; artist?: string; primary: string; primaryLight: string; dark: string; boxBg: string
 }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -440,7 +439,7 @@ function MusicPlayer({ audioRef, title, artist, primary, primaryLight, dark }: {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 14, background: PURPLE_BOX, borderRadius: 16,
+      display: 'flex', alignItems: 'center', gap: 14, background: boxBg, borderRadius: 16,
       padding: '14px 18px', boxShadow: `0 4px 18px ${dark}14`, textAlign: 'left',
     }}>
       <button onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} style={{
@@ -622,8 +621,8 @@ function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: 
   )
 }
 
-function WishesWall({ coupleId, primary, primaryLight, dark }: {
-  coupleId: string; primary: string; primaryLight: string; dark: string
+function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
+  coupleId: string; primary: string; primaryLight: string; dark: string; boxBg: string
 }) {
   const [wishes, setWishes] = useState<Wish[]>([])
   const [loading, setLoading] = useState(true)
@@ -689,7 +688,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark }: {
     }
   }
 
-  const card: React.CSSProperties = { background: PURPLE_BOX, borderRadius: 16, boxShadow: `0 4px 18px ${dark}12` }
+  const card: React.CSSProperties = { background: boxBg, borderRadius: 16, boxShadow: `0 4px 18px ${dark}12` }
 
   return (
     <div>
@@ -831,8 +830,8 @@ function Reveal({ id, mt = 56, wide = false, children }: { id?: string; mt?: num
 // wishes wall, the music player, etc). Previously all of that lived in the
 // same giant component as the RSVP state, so every keystroke re-rendered
 // the entire invitation and typing felt laggy/unresponsive on slower phones.
-function RsvpBlock({ couple, colors, guestName }: {
-  couple: Couple; colors: { primary: string; primaryLight: string; dark: string }; guestName: string
+function RsvpBlock({ couple, colors, boxBg, guestName }: {
+  couple: Couple; colors: { primary: string; primaryLight: string; dark: string }; boxBg: string; guestName: string
 }) {
   const [showRsvpForm, setShowRsvpForm] = useState(false)
   const [guestNameInput, setGuestNameInput] = useState(guestName)
@@ -874,7 +873,7 @@ function RsvpBlock({ couple, colors, guestName }: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textTransform: 'uppercase',
   }
   const cardStyle: React.CSSProperties = {
-    background: PURPLE_BOX, borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
+    background: boxBg, borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
   }
   const iconBadge: React.CSSProperties = {
     width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
@@ -919,7 +918,7 @@ function RsvpBlock({ couple, colors, guestName }: {
             </button>
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
               padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
-              background: PURPLE_BOX, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: boxBg, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
               boxShadow: `0 4px 14px ${colors.dark}0d`,
             }}>Back to Top Details</button>
           </div>
@@ -1016,6 +1015,15 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const [introGone, setIntroGone] = useState(!(guestName && introEnabled))
 
   const colors = sanitizeColors(couple.custom_colors)
+  // The card/box backgrounds (event details, map card, name band, timeline
+  // dots, etc.) used to be a hardcoded light-purple regardless of the
+  // couple's own color choices — that's the bug we're fixing. But most
+  // couples never open Customise Colors at all, so to avoid changing every
+  // other invitation's look overnight, these boxes only switch to the
+  // couple's chosen Light Accent once they've actually set one themselves;
+  // otherwise they keep the original light-purple default exactly as before.
+  const hasCustomPrimaryLight = !!(couple.custom_colors?.primaryLight && HEX_RE.test(couple.custom_colors.primaryLight))
+  const boxBg = hasCustomPrimaryLight ? colors.primaryLight : '#e9d9f0'
   const ts = useTextStyles(couple)
   const initials = getInitials(couple.bride, couple.groom)
   const badgeText = (couple as any).cover_badge_text || 'WEDDING INVITATION'
@@ -1067,7 +1075,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
     color: colors.primary, fontWeight: 700,
   }
   const cardStyle: React.CSSProperties = {
-    background: PURPLE_BOX, borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
+    background: boxBg, borderRadius: 16, boxShadow: `0 4px 18px ${colors.dark}12`,
   }
   const iconBadge: React.CSSProperties = {
     width: 34, height: 34, borderRadius: '50%', background: colors.primaryLight,
@@ -1138,7 +1146,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   border, no heavy blossom clutter in the corners. */}
               <div style={{
                 borderRadius: 20, overflow: 'hidden', position: 'relative',
-                background: `linear-gradient(165deg, #fff 0%, ${PURPLE_BOX} 100%)`,
+                background: `linear-gradient(165deg, #fff 0%, ${boxBg} 100%)`,
                 boxShadow: '0 24px 70px rgba(0,0,0,0.32)', border: `1px solid ${colors.primaryLight}`,
               }}>
                 <div style={{ height: 58 }} />
@@ -1221,7 +1229,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   <Icon name="photo" size={38} color={colors.primary} />
                 </div>
               )}
-              <div style={{ background: PURPLE_BOX, padding: '15px 12px 13px', textAlign: 'center' }}>
+              <div style={{ background: boxBg, padding: '15px 12px 13px', textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
                   <span style={ts('bride_name')}>{couple.bride}</span> &amp; <span style={ts('groom_name')}>{couple.groom}</span>
                 </div>
@@ -1288,7 +1296,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                       {mapsLinkHref && (
                         <a href={mapsLinkHref} target="_blank" rel="noopener noreferrer" style={{
                           position: 'absolute', top: 8, left: 8, fontSize: 10, fontWeight: 700,
-                          background: PURPLE_BOX, padding: '5px 12px', borderRadius: 100,
+                          background: boxBg, padding: '5px 12px', borderRadius: 100,
                           color: colors.dark, textDecoration: 'none', boxShadow: `0 2px 8px ${colors.dark}22`,
                         }}>
                           Open in Maps ↗
@@ -1358,7 +1366,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 {couple.timeline.map((t, i) => (
                   <div key={i} style={{ display: 'flex', gap: 18, marginBottom: i < couple.timeline.length - 1 ? 30 : 0, position: 'relative' }}>
                     <div style={{
-                      width: 64, height: 64, borderRadius: '50%', background: PURPLE_BOX, border: `2px solid ${colors.primaryLight}`,
+                      width: 64, height: 64, borderRadius: '50%', background: boxBg, border: `2px solid ${colors.primaryLight}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 14px ${colors.dark}12`,
                       position: 'relative', zIndex: 1,
                     }}>
@@ -1383,7 +1391,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 6, marginBottom: 20 }}>
                 Share your wishes and blessings with {couple.bride} &amp; {couple.groom}.
               </p>
-              <WishesWall coupleId={couple.id} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} />
+              <WishesWall coupleId={couple.id} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} boxBg={boxBg} />
             </Reveal>
           )}
 
@@ -1442,6 +1450,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                         primary={colors.primary}
                         primaryLight={colors.primaryLight}
                         dark={colors.dark}
+                        boxBg={boxBg}
                       />
                     </>
                   )}
@@ -1489,7 +1498,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
             {/* RSVP — isolated into its own component (see RsvpBlock above) so
                 typing here doesn't re-render the whole invitation. */}
-            <RsvpBlock couple={couple} colors={colors} guestName={guestName} />
+            <RsvpBlock couple={couple} colors={colors} boxBg={boxBg} guestName={guestName} />
 
             {/* Footer flourish — matches the reference's closing monogram section */}
             <div style={{ ...BB_WRAP, marginTop: 50, textAlign: 'center', position: 'relative', zIndex: 1 }}>
