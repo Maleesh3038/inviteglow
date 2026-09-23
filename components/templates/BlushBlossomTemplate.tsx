@@ -147,7 +147,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
         style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
-          Dear <span style={{ color: primary, fontWeight: 600 }}>{guestName}</span>,
+          Dear {guestName},
         </div>
       </motion.div>
 
