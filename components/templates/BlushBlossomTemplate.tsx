@@ -1213,13 +1213,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             </h1>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.primary, margin: '0 auto 10px' }} />
             {guestName && (
-              <div style={{
-                display: 'inline-block', marginTop: 14, padding: '11px 26px', borderRadius: 100,
-                background: colors.primaryLight, border: `1px solid ${colors.primary}40`,
-                boxShadow: `0 4px 14px ${colors.primary}22`,
-              }}>
-                <span style={{ fontSize: 21, fontFamily: "'Cormorant Garamond',serif", fontWeight: 800, color: colors.primary, fontStyle: 'italic' }}>Dear {guestName},</span>
-              </div>
+              <p style={{ marginTop: 14, fontSize: 21, fontFamily: "'Cormorant Garamond',serif", fontWeight: 800, color: colors.primary, fontStyle: 'italic' }}>
+                Dear {guestName},
+              </p>
             )}
           </div>
 
