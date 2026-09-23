@@ -1209,13 +1209,18 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Heading */}
           <div style={{ ...BB_WRAP, textAlign: 'center' }}>
             <h1 style={{ ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
-              {(couple as any).invitation_heading || 'Bless with Love & Joy'}
+              {(couple as any).invitation_heading || 'Blesses with Love & Joy'}
             </h1>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.primary, margin: '0 auto 10px' }} />
-            <p style={{ ...ts('tagline'), fontSize: 12.5, color: colors.dark, opacity: 0.6 }}>
-              {(couple as any).invitation_subheading || 'Together with love, joy and blessings'}
-            </p>
-            {guestName && <p style={{ fontSize: 16, fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: colors.primary, fontStyle: 'italic', marginTop: 10 }}>Dear {guestName},</p>}
+            {guestName && (
+              <div style={{
+                display: 'inline-block', marginTop: 14, padding: '9px 22px', borderRadius: 100,
+                background: colors.primaryLight, border: `1px solid ${colors.primary}40`,
+                boxShadow: `0 4px 14px ${colors.primary}22`,
+              }}>
+                <span style={{ fontSize: 16, fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: colors.primary, fontStyle: 'italic' }}>Dear {guestName},</span>
+              </div>
+            )}
           </div>
 
           {/* Couple photo card */}
