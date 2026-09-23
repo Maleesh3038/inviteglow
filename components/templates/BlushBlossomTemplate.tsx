@@ -1209,13 +1209,13 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Heading */}
           <div style={{ ...BB_WRAP, textAlign: 'center' }}>
             <h1 style={{ ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
-              {(couple as any).invitation_heading || 'Together with Love'}
+              {(couple as any).invitation_heading || 'Bless with Love & Joy'}
             </h1>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.primary, margin: '0 auto 10px' }} />
             <p style={{ ...ts('tagline'), fontSize: 12.5, color: colors.dark, opacity: 0.6 }}>
               {(couple as any).invitation_subheading || 'Together with love, joy and blessings'}
             </p>
-            {guestName && <p style={{ fontSize: 12, color: colors.primary, fontStyle: 'italic', marginTop: 8 }}>Dear {guestName},</p>}
+            {guestName && <p style={{ fontSize: 16, fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: colors.primary, fontStyle: 'italic', marginTop: 10 }}>Dear {guestName},</p>}
           </div>
 
           {/* Couple photo card */}
