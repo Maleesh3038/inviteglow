@@ -123,10 +123,198 @@ function useTextStyles(couple: any) {
   }
 }
 
+// ── Bilingual UI toggle (English / Sinhala) — translates the template's own
+// fixed labels only (headings, buttons, placeholders). Any text the couple
+// types themselves in the admin panel (intro text, notes, venue names, etc.)
+// is left exactly as they wrote it, since they can already type it in
+// whichever language they like. ──
+type Lang = 'en' | 'si'
+const TXT: Record<Lang, Record<string, string>> = {
+  en: {
+    youAreInvited: "You're Invited",
+    skip: 'Skip →',
+    dear: 'Dear',
+    engagement: 'Engagement',
+    eventDetails: 'Event Details',
+    homecoming: 'Homecoming',
+    wishes: 'Wishes',
+    saveDate: 'Save Date',
+    gallery: 'Gallery',
+    rsvp: 'RSVP',
+    contact: 'Contact',
+    location: 'Location',
+    days: 'DAYS',
+    hours: 'HOURS',
+    minutes: 'MINUTES',
+    seconds: 'SECONDS',
+    leaveWish: 'Leave a Wish',
+    yourName: 'Your name',
+    writeWishes: 'Write your wishes for the couple...',
+    addPhotos: 'Add photos or a video (optional)',
+    filesSelectedAddMore: 'files selected — add more',
+    fileSelectedAddMore: 'file selected — add more',
+    sendWish: 'Send Wish',
+    sending: 'Sending...',
+    thankYouWish: 'Thank you for your wish!',
+    onWallBelow: "It's now on the wall below.",
+    leaveAnother: 'Leave another wish',
+    pleaseNameMessage: 'Please add your name and a message.',
+    somethingWrong: 'Something went wrong — please try again.',
+    loadingWishes: 'Loading wishes...',
+    beFirstWish: 'Be the first to leave a wish!',
+    wish: 'Wish',
+    wishesPlural: 'Wishes',
+    previous: '← Previous',
+    next: 'Next →',
+    thankYouExcl: 'Thank you!',
+    responseRecorded: 'Your response has been recorded.',
+    confirmPrompt: 'Please confirm your attendance by clicking the button below.',
+    confirmAttendance: 'Confirm Attendance',
+    backToTop: 'Back to Top Details',
+    accept: 'Accept',
+    decline: 'Decline',
+    numberOfGuests: 'Number of guests',
+    drinkingQ: 'Will you be drinking alcohol?',
+    yes: 'Yes',
+    no: 'No',
+    pleaseNameAttend: 'Please add your name and select attending or not.',
+    submitting: 'Submitting...',
+    weddingInvitation: 'WEDDING INVITATION',
+    togetherWith: 'together with',
+    openInvitation: 'Open Invitation',
+    defaultHeading: 'Blesses with Love & Joy',
+    invitationHeading: 'Invitation',
+    lovingInvitation: 'A Loving Invitation From Our Family',
+    defaultFamilyInvite: 'We warmly invite you to join us as we celebrate the beautiful beginning of our lifelong bond.',
+    venueLocationTime: 'Venue, Location and Time Details',
+    openInMaps: 'Open in Maps ↗',
+    locationTBA: 'Location to be announced',
+    venueTBA: 'Venue to be announced',
+    dateLabel: 'DATE',
+    timeLabel: 'TIME',
+    venueLabel: 'VENUE',
+    tba: 'To be announced',
+    onwards: 'Onwards',
+    ourMoments: 'Our Moments',
+    dayEvents: "The Day's Events",
+    wishesForUs: 'Wishes for Us',
+    shareWishes: 'Share your wishes and blessings with',
+    justAFewMore: 'Just a Few More',
+    countingDays: 'We are counting the days until our beautiful celebration.',
+    ourSong: 'Our Song',
+    getInTouch: 'Get In Touch',
+    inquiriesText: 'For inquiries, feel free to contact us at the below numbers.',
+    noteForYou: 'A Note For You',
+    thankYouHeading: 'Thank You',
+    defaultThankYou: 'Thank you for being part of our journey. Your presence means the world to us.',
+    loveBloomEternal: 'May our love bloom eternal',
+  },
+  si: {
+    youAreInvited: 'ඔබට ආරාධනා කර සිටී',
+    skip: 'මඟහරින්න →',
+    dear: 'ආදරණීය',
+    engagement: 'විවාහ නියම කිරීම',
+    eventDetails: 'මංගල උත්සවය',
+    homecoming: 'ගෙදර ආපසු ඊම',
+    wishes: 'සුබ පැතුම්',
+    saveDate: 'දිනය',
+    gallery: 'ඡායාරූප',
+    rsvp: 'පිළිතුර',
+    contact: 'සම්බන්ධතා',
+    location: 'ස්ථානය',
+    days: 'දින',
+    hours: 'පැය',
+    minutes: 'මිනිත්තු',
+    seconds: 'තත්පර',
+    leaveWish: 'සුබ පැතුමක් තබන්න',
+    yourName: 'ඔබේ නම',
+    writeWishes: 'යුවළට ඔබේ සුබ පැතුම් ලියන්න...',
+    addPhotos: 'ඡායාරූප හෝ වීඩියෝවක් එක් කරන්න (අත්‍යවශ්‍ය නොවේ)',
+    filesSelectedAddMore: 'ගොනු තෝරා ඇත — තවත් එක් කරන්න',
+    fileSelectedAddMore: 'ගොනුව තෝරා ඇත — තවත් එක් කරන්න',
+    sendWish: 'සුබ පැතුම යවන්න',
+    sending: 'යවමින්...',
+    thankYouWish: 'ඔබේ සුබ පැතුමට ස්තූතියි!',
+    onWallBelow: 'එය දැන් පහත බිත්තියේ දැක ගත හැක.',
+    leaveAnother: 'තවත් සුබ පැතුමක් තබන්න',
+    pleaseNameMessage: 'කරුණාකර ඔබේ නම සහ පණිවිඩයක් ඇතුළත් කරන්න.',
+    somethingWrong: 'යමක් වැරදී ඇත — කරුණාකර නැවත උත්සාහ කරන්න.',
+    loadingWishes: 'සුබ පැතුම් පූරණය වෙමින්...',
+    beFirstWish: 'පළමු සුබ පැතුම තබන්නා වන්න!',
+    wish: 'සුබ පැතුම',
+    wishesPlural: 'සුබ පැතුම්',
+    previous: '← පෙර',
+    next: 'ඊළඟ →',
+    thankYouExcl: 'ස්තූතියි!',
+    responseRecorded: 'ඔබේ පිළිතුර සටහන් කර ඇත.',
+    confirmPrompt: 'කරුණාකර පහත බොත්තම ඔබා ඔබේ පැමිණීම තහවුරු කරන්න.',
+    confirmAttendance: 'පැමිණීම තහවුරු කරන්න',
+    backToTop: 'ඉහළ විස්තර වෙත',
+    accept: 'එකඟයි',
+    decline: 'එකඟ නැත',
+    numberOfGuests: 'ආගන්තුකයන් ගණන',
+    drinkingQ: 'ඔබ මත්පැන් පානය කරනවාද?',
+    yes: 'ඔව්',
+    no: 'නැත',
+    pleaseNameAttend: 'කරුණාකර ඔබේ නම ඇතුළත් කර පැමිණීම තෝරන්න.',
+    submitting: 'යවමින්...',
+    weddingInvitation: 'විවාහ ආරාධනා පත්‍රය',
+    togetherWith: 'සමඟ',
+    openInvitation: 'ආරාධනය විවෘත කරන්න',
+    defaultHeading: 'ආදරයෙන් හා සතුටින් සමන්විතයි',
+    invitationHeading: 'ආරාධනාව',
+    lovingInvitation: 'අපගේ පවුලෙන් ආදරණීය ආරාධනාවක්',
+    defaultFamilyInvite: 'අපගේ ජීවිත කාලය පුරාම පවතින බැඳීමේ අලංකාර ආරම්භය සමරන අවස්ථාවට එක් වන ලෙස අපි ඔබට හෘදයාංගමව ආරාධනා කරමු.',
+    venueLocationTime: 'ස්ථානය, පිහිටීම සහ වේලා විස්තර',
+    openInMaps: 'සිතියමේ විවෘත කරන්න ↗',
+    locationTBA: 'ස්ථානය පසුව දැනුම් දෙනු ලැබේ',
+    venueTBA: 'ස්ථානය පසුව දැනුම් දෙනු ලැබේ',
+    dateLabel: 'දිනය',
+    timeLabel: 'වේලාව',
+    venueLabel: 'ස්ථානය',
+    tba: 'පසුව දැනුම් දෙනු ලැබේ',
+    onwards: 'සිට',
+    ourMoments: 'අපගේ මොහොත්',
+    dayEvents: 'දිනයේ සිදුවීම්',
+    wishesForUs: 'අපට සුබ පැතුම්',
+    shareWishes: 'ඔබේ සුබ පැතුම් සහ ආශිර්වාද බෙදා ගන්න',
+    justAFewMore: 'තව ටිකයි',
+    countingDays: 'අපගේ අලංකාර උත්සවය දක්වා දින ගණන් කරමින් සිටිමු.',
+    ourSong: 'අපගේ ගීතය',
+    getInTouch: 'සම්බන්ධ වන්න',
+    inquiriesText: 'විමසීම් සඳහා, කරුණාකර පහත අංක ඔස්සේ අප හා සම්බන්ධ වන්න.',
+    noteForYou: 'ඔබ වෙනුවෙන් සටහනක්',
+    thankYouHeading: 'ස්තූතියි',
+    defaultThankYou: 'අපගේ මෙම ගමනේ කොටසක් වූ ඔබට ස්තූතියි. ඔබේ පැමිණීම අපට ලොකු දෙයක්.',
+    loveBloomEternal: 'අපගේ ආදරය සදාකල් පිබිදේවා',
+  },
+}
+
+// Small fixed top-right pill to switch the template's own labels between
+// English and Sinhala — same pattern as the Golden Poruwa template.
+function LangToggle({ lang, setLang, dark }: { lang: Lang; setLang: React.Dispatch<React.SetStateAction<Lang>>; dark: string }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 14, right: 14, zIndex: 150,
+      display: 'flex', background: 'rgba(255,255,255,0.92)', borderRadius: 100,
+      boxShadow: `0 4px 14px ${dark}22`, padding: 3, fontSize: 11, fontWeight: 700,
+      fontFamily: "'Inter',sans-serif",
+    }}>
+      {(['en', 'si'] as Lang[]).map(l => (
+        <button key={l} onClick={() => setLang(l)} style={{
+          border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: 100,
+          background: lang === l ? dark : 'transparent',
+          color: lang === l ? '#fff' : dark, transition: 'background 0.2s',
+        }}>{l === 'en' ? 'EN' : 'සිං'}</button>
+      ))}
+    </div>
+  )
+}
+
 // ── Guest intro screen — soft blush/lavender shimmer, "Dear [Name]," shown
 // for ~5s before the envelope cover. Toggle via couple.show_guest_intro. ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, t }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; t: (k: string) => string
 }) {
   return (
     <motion.div
@@ -147,7 +335,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }}
         style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
-          Dear {guestName},
+          {t('dear')} {guestName},
         </div>
       </motion.div>
 
@@ -156,7 +344,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 
       <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
         style={{ fontSize: 10, textTransform: "uppercase", color: `${primary}cc`, fontFamily: "'Inter',sans-serif" }}>
-        You're Invited
+        {t('youAreInvited')}
       </motion.div>
 
       <motion.div style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100 }}
@@ -164,16 +352,18 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 
       <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 2 }} onClick={onDone}
         style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
-        Skip →
+        {t('skip')}
       </motion.button>
     </motion.div>
   )
 }
 
-const EVENT_LABELS: Record<'engagement' | 'wedding' | 'homecoming', { title: string }> = {
-  engagement: { title: 'Engagement' },
-  wedding: { title: 'Event Details' },
-  homecoming: { title: 'Homecoming' },
+function eventLabels(t: (k: string) => string): Record<'engagement' | 'wedding' | 'homecoming', { title: string }> {
+  return {
+    engagement: { title: t('engagement') },
+    wedding: { title: t('eventDetails') },
+    homecoming: { title: t('homecoming') },
+  }
 }
 
 // ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
@@ -223,8 +413,8 @@ function bbScrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, hasContact, audioRef }: {
-  primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; hasContact: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGallery, hasContact, audioRef, t }: {
+  primary: string; primaryLight: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; hasContact: boolean; audioRef: React.RefObject<HTMLAudioElement | null>; t: (k: string) => string
 }) {
   const [playing, setPlaying] = useState(false)
   useEffect(() => {
@@ -261,17 +451,17 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
         background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: `1px solid ${dark}14`,
         boxShadow: `0 10px 30px ${dark}30`, padding: '10px 18px', position: 'relative',
       }}>
-        {hasWishes && iconBtn(() => bbScrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
-        {iconBtn(() => bbScrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
-        {hasGallery && iconBtn(() => bbScrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
-        {iconBtn(() => bbScrollToId('rsvp-form'), 'RSVP', <><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" /></>, 'rsvp')}
-        {hasContact && iconBtn(() => bbScrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {hasWishes && iconBtn(() => bbScrollToId('wishes'), t('wishes'), <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(() => bbScrollToId('savethedate'), t('saveDate'), <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(() => bbScrollToId('gallery'), t('gallery'), <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {iconBtn(() => bbScrollToId('rsvp-form'), t('rsvp'), <><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" /></>, 'rsvp')}
+        {hasContact && iconBtn(() => bbScrollToId('contact'), t('contact'), <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
         {mapsUrl && (
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8, textDecoration: 'none', padding: '2px 4px' }}>
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
             </svg>
-            <span style={{ fontSize: 8 }}>Location</span>
+            <span style={{ fontSize: 8 }}>{t('location')}</span>
           </a>
         )}
 
@@ -459,9 +649,9 @@ function MusicPlayer({ audioRef, title, artist, primary, primaryLight, dark, box
   )
 }
 
-function CountdownDisplay({ targetDate, dark, primary, primaryLight }: { targetDate?: string; dark: string; primary: string; primaryLight: string }) {
+function CountdownDisplay({ targetDate, dark, primary, primaryLight, t }: { targetDate?: string; dark: string; primary: string; primaryLight: string; t: (k: string) => string }) {
   const countdown = useCountdown(targetDate)
-  const items: [string, number][] = [['DAYS', countdown.d], ['HOURS', countdown.h], ['MINUTES', countdown.m], ['SECONDS', countdown.s]]
+  const items: [string, number][] = [[t('days'), countdown.d], [t('hours'), countdown.h], [t('minutes'), countdown.m], [t('seconds'), countdown.s]]
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
       {items.map(([label, value], i) => (
@@ -621,8 +811,8 @@ function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: 
   )
 }
 
-function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
-  coupleId: string; primary: string; primaryLight: string; dark: string; boxBg: string
+function WishesWall({ coupleId, primary, primaryLight, dark, boxBg, t }: {
+  coupleId: string; primary: string; primaryLight: string; dark: string; boxBg: string; t: (k: string) => string
 }) {
   const [wishes, setWishes] = useState<Wish[]>([])
   const [loading, setLoading] = useState(true)
@@ -662,7 +852,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
 
   const submit = async () => {
     if (!name.trim() || !message.trim()) {
-      setError('Please add your name and a message.')
+      setError(t('pleaseNameMessage'))
       return
     }
     setSubmitting(true)
@@ -682,7 +872,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
       setFiles([])
       setDone(true)
     } catch {
-      setError('Something went wrong — please try again.')
+      setError(t('somethingWrong'))
     } finally {
       setSubmitting(false)
     }
@@ -696,22 +886,22 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
       <div style={{ ...card, padding: '18px 16px', textAlign: 'left', marginBottom: 22 }}>
         {done ? (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>Thank you for your wish!</div>
-            <div style={{ fontSize: 12, color: dark, opacity: 0.6, marginTop: 4 }}>It's now on the wall below.</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>{t('thankYouWish')}</div>
+            <div style={{ fontSize: 12, color: dark, opacity: 0.6, marginTop: 4 }}>{t('onWallBelow')}</div>
             <button onClick={() => setDone(false)} style={{
               marginTop: 12, padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
               background: primaryLight, color: dark, fontSize: 12, fontWeight: 700,
-            }}>Leave another wish</button>
+            }}>{t('leaveAnother')}</button>
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: dark, marginBottom: 10 }}>Leave a Wish</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: dark, marginBottom: 10 }}>{t('leaveWish')}</div>
             <input
-              value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
+              value={name} onChange={e => setName(e.target.value)} placeholder={t('yourName')}
               style={{ width: '100%', padding: '10px 13px', borderRadius: 10, border: `1px solid ${primaryLight}`, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif" }}
             />
             <textarea
-              value={message} onChange={e => setMessage(e.target.value)} placeholder="Write your wishes for the couple..." rows={3}
+              value={message} onChange={e => setMessage(e.target.value)} placeholder={t('writeWishes')} rows={3}
               style={{ width: '100%', padding: '10px 13px', borderRadius: 10, border: `1px solid ${primaryLight}`, fontSize: 13, outline: 'none', marginBottom: 10, boxSizing: 'border-box', fontFamily: "'Inter',sans-serif", resize: 'vertical' }}
             />
             <label style={{
@@ -719,7 +909,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
               padding: '9px 13px', borderRadius: 10, border: `1px dashed ${primary}`, cursor: 'pointer', marginBottom: files.length ? 6 : 10,
             }}>
               <Icon name="photo" size={15} color={primary} />
-              {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected — add more` : 'Add photos or a video (optional)'}
+              {files.length ? `${files.length} ${files.length > 1 ? t('filesSelectedAddMore') : t('fileSelectedAddMore')}` : t('addPhotos')}
               <input type="file" accept="image/*,video/*" multiple
                 onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])].slice(0, 6))}
                 style={{ display: 'none' }} />
@@ -741,7 +931,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
             <button onClick={submit} disabled={submitting} style={{
               width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
               background: dark, color: '#fff', fontWeight: 700, fontSize: 13, opacity: submitting ? 0.6 : 1,
-            }}>{submitting ? 'Sending...' : 'Send Wish'}</button>
+            }}>{submitting ? t('sending') : t('sendWish')}</button>
           </>
         )}
       </div>
@@ -750,13 +940,13 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
           "N Comments" layout: rows separated by dividers rather than each
           wish getting its own boxed card, plus numbered pagination. */}
       {loading ? (
-        <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Loading wishes...</div>
+        <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>{t('loadingWishes')}</div>
       ) : wishes.length === 0 ? (
-        <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>Be the first to leave a wish!</div>
+        <div style={{ fontSize: 12, color: dark, opacity: 0.5, textAlign: 'center' }}>{t('beFirstWish')}</div>
       ) : (
         <div style={{ ...card, padding: '20px 18px', textAlign: 'left' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: dark, textAlign: 'center', marginBottom: 18 }}>
-            {wishes.length} {wishes.length === 1 ? 'Wish' : 'Wishes'}
+            {wishes.length} {wishes.length === 1 ? t('wish') : t('wishesPlural')}
           </div>
           <div>
             {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => {
@@ -783,7 +973,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{
                 background: 'transparent', border: 'none', cursor: page === 0 ? 'default' : 'pointer',
                 fontSize: 12, fontWeight: 700, color: primary, opacity: page === 0 ? 0.35 : 1,
-              }}>← Previous</button>
+              }}>{t('previous')}</button>
               {Array.from({ length: Math.ceil(wishes.length / PER_PAGE) }).map((_, i) => (
                 <button key={i} onClick={() => setPage(i)} style={{
                   background: 'transparent', border: 'none', cursor: 'pointer',
@@ -797,7 +987,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg }: {
                 disabled={(page + 1) * PER_PAGE >= wishes.length} style={{
                 background: 'transparent', border: 'none', cursor: (page + 1) * PER_PAGE >= wishes.length ? 'default' : 'pointer',
                 fontSize: 12, fontWeight: 700, color: primary, opacity: (page + 1) * PER_PAGE >= wishes.length ? 0.35 : 1,
-              }}>Next →</button>
+              }}>{t('next')}</button>
             </div>
           )}
         </div>
@@ -830,8 +1020,8 @@ function Reveal({ id, mt = 56, wide = false, children }: { id?: string; mt?: num
 // wishes wall, the music player, etc). Previously all of that lived in the
 // same giant component as the RSVP state, so every keystroke re-rendered
 // the entire invitation and typing felt laggy/unresponsive on slower phones.
-function RsvpBlock({ couple, colors, boxBg, guestName }: {
-  couple: Couple; colors: { primary: string; primaryLight: string; dark: string }; boxBg: string; guestName: string
+function RsvpBlock({ couple, colors, boxBg, guestName, t }: {
+  couple: Couple; colors: { primary: string; primaryLight: string; dark: string }; boxBg: string; guestName: string; t: (k: string) => string
 }) {
   const [showRsvpForm, setShowRsvpForm] = useState(false)
   const [guestNameInput, setGuestNameInput] = useState(guestName)
@@ -850,7 +1040,7 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
 
   const submitRsvp = async () => {
     if (!guestNameInput.trim() || !response) {
-      setRsvpMessage('Please add your name and select attending or not.')
+      setRsvpMessage(t('pleaseNameAttend'))
       return
     }
     setSubmitting(true)
@@ -863,7 +1053,7 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
       drinking: couple.ask_drinking && response === 'yes' ? drinking || null : null,
     }])
     setSubmitting(false)
-    if (error) setRsvpMessage('Something went wrong — please try again.')
+    if (error) setRsvpMessage(t('somethingWrong'))
     else setSubmitted(true)
   }
 
@@ -898,13 +1088,13 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
 
       {submitted ? (
         <div>
-          <div style={{ fontSize: 13.5, color: colors.dark, fontWeight: 700 }}>Thank you!</div>
-          <div style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6, marginTop: 4 }}>Your response has been recorded.</div>
+          <div style={{ fontSize: 13.5, color: colors.dark, fontWeight: 700 }}>{t('thankYouExcl')}</div>
+          <div style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6, marginTop: 4 }}>{t('responseRecorded')}</div>
         </div>
       ) : !showRsvpForm ? (
         <>
           <p style={{ fontSize: 13, color: colors.dark, opacity: 0.75, marginBottom: 20, fontWeight: 600 }}>
-            Please confirm your attendance by clicking the button below.
+            {t('confirmPrompt')}
           </p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => setShowRsvpForm(true)} style={{
@@ -914,20 +1104,20 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
               boxShadow: `0 8px 20px ${colors.primary}55`,
             }}>
               <Icon name="check" size={13} color="#fff" />
-              Confirm Attendance
+              {t('confirmAttendance')}
             </button>
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
               padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
               background: boxBg, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
               boxShadow: `0 4px 14px ${colors.dark}0d`,
-            }}>Back to Top Details</button>
+            }}>{t('backToTop')}</button>
           </div>
         </>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...cardStyle, padding: '20px 18px', textAlign: 'left' }}>
           <input
             value={guestNameInput} onChange={e => setGuestNameInput(e.target.value)}
-            placeholder="Your name"
+            placeholder={t('yourName')}
             style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1px solid ${colors.primaryLight}`, fontSize: 13.5, outline: 'none', marginBottom: 12, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }}
           />
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -936,17 +1126,17 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               background: response === 'yes' ? colors.primary : colors.primaryLight,
               color: response === 'yes' ? '#fff' : colors.dark,
-            }}><Icon name="check" size={13} color={response === 'yes' ? '#fff' : colors.dark} />Accept</button>
+            }}><Icon name="check" size={13} color={response === 'yes' ? '#fff' : colors.dark} />{t('accept')}</button>
             <button type="button" onClick={() => setResponse('no')} style={{
               flex: 1, padding: '11px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               background: response === 'no' ? colors.dark : colors.primaryLight,
               color: response === 'no' ? '#fff' : colors.dark,
-            }}><Icon name="cross" size={13} color={response === 'no' ? '#fff' : colors.dark} />Decline</button>
+            }}><Icon name="cross" size={13} color={response === 'no' ? '#fff' : colors.dark} />{t('decline')}</button>
           </div>
           {response === 'yes' && (
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Number of guests</label>
+              <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>{t('numberOfGuests')}</label>
               <input type="text" inputMode="numeric" pattern="[0-9]*" value={guestCount}
                 onChange={e => {
                   const v = e.target.value
@@ -958,16 +1148,16 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
           )}
           {response === 'yes' && couple.ask_drinking && (
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>Will you be drinking alcohol?</label>
+              <label style={{ fontSize: 10.5, color: colors.dark, opacity: 0.6, display: 'block', marginBottom: 4, fontWeight: 600 }}>{t('drinkingQ')}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={() => setDrinking('yes')} style={{
                   flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
                   background: drinking === 'yes' ? colors.primary : colors.primaryLight, color: drinking === 'yes' ? '#fff' : colors.dark,
-                }}>Yes</button>
+                }}>{t('yes')}</button>
                 <button type="button" onClick={() => setDrinking('no')} style={{
                   flex: 1, padding: '9px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
                   background: drinking === 'no' ? colors.primary : colors.primaryLight, color: drinking === 'no' ? '#fff' : colors.dark,
-                }}>No</button>
+                }}>{t('no')}</button>
               </div>
             </div>
           )}
@@ -975,12 +1165,12 @@ function RsvpBlock({ couple, colors, boxBg, guestName }: {
           <button onClick={submitRsvp} disabled={submitting} style={{
             width: '100%', padding: 13, borderRadius: 10, border: 'none', cursor: 'pointer',
             background: colors.dark, color: '#fff', fontWeight: 700, fontSize: 13.5, opacity: submitting ? 0.6 : 1,
-          }}>{submitting ? 'Submitting...' : 'Confirm Attendance'}</button>
+          }}>{submitting ? t('submitting') : t('confirmAttendance')}</button>
           <div style={{ textAlign: 'center', marginTop: 12 }}>
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
               padding: '9px 20px', borderRadius: 100, border: `1px solid ${colors.dark}`,
               background: 'transparent', color: colors.dark, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
-            }}>Back to Top Details</button>
+            }}>{t('backToTop')}</button>
           </div>
         </motion.div>
       )}
@@ -1014,6 +1204,8 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   // "Dear [Name]" text and the cover's content overlap.
   const [introGone, setIntroGone] = useState(!(guestName && introEnabled))
 
+  const [lang, setLang] = useState<Lang>('en')
+  const t = (key: string) => TXT[lang][key] || TXT.en[key] || key
   const colors = sanitizeColors(couple.custom_colors)
   // The card/box backgrounds (event details, map card, name band, timeline
   // dots, etc.) used to be a hardcoded light-purple regardless of the
@@ -1026,9 +1218,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
   const boxBg = hasCustomPrimaryLight ? colors.primaryLight : '#e9d9f0'
   const ts = useTextStyles(couple)
   const initials = getInitials(couple.bride, couple.groom)
-  const badgeText = (couple as any).cover_badge_text || 'WEDDING INVITATION'
+  const badgeText = (couple as any).cover_badge_text || t('weddingInvitation')
   const familyInvitationText = (couple as any).family_invitation_text
-  const togetherWithText = (couple as any).together_with_text || 'together with'
+  const togetherWithText = (couple as any).together_with_text || t('togetherWith')
   const thankYouText = (couple as any).thank_you_text
   const brideFamily = couple.bride_family
   const groomFamily = couple.groom_family
@@ -1056,10 +1248,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
       Array.isArray((couple as any).events_order) && (couple as any).events_order.length === 3
         ? (couple as any).events_order
         : ['engagement', 'wedding', 'homecoming']
+    const labels = eventLabels(t)
     return order
       .filter(k => ev[k]?.enabled)
-      .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || EVENT_LABELS[k].title }))
-  }, [couple])
+      .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || labels[k].title }))
+  }, [couple, lang])
 
   const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
@@ -1114,9 +1307,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
       <FallingPetals color={colors.primary} />
 
+      <LangToggle lang={lang} setLang={setLang} dark={colors.dark} />
+
       <AnimatePresence onExitComplete={() => setIntroGone(true)}>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} cream={colors.cream} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} cream={colors.cream} t={t} />
         )}
       </AnimatePresence>
 
@@ -1179,7 +1374,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                       cursor: flapOpen ? 'default' : 'pointer', boxShadow: `0 10px 26px ${colors.primary}55`,
                       fontFamily: "'Inter',sans-serif",
                     }}>
-                    Open Invitation
+                    {t('openInvitation')}
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                   </motion.button>
                 </div>
@@ -1209,11 +1404,11 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Heading */}
           <div style={{ ...BB_WRAP, textAlign: 'center' }}>
             <h1 style={{ ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
-              {(couple as any).invitation_heading || 'Blesses with Love & Joy'}
+              {(couple as any).invitation_heading || t('defaultHeading')}
             </h1>
             {guestName && (
               <p style={{ marginTop: 14, fontSize: 21, fontFamily: "'Cormorant Garamond',serif", fontWeight: 800, color: colors.primary, fontStyle: 'italic' }}>
-                Dear {guestName},
+                {t('dear')} {guestName},
               </p>
             )}
           </div>
@@ -1247,16 +1442,16 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
           {/* Invitation — no card, floats on the page */}
           <Reveal id="invitation">
-            <div style={capsHeading}>Invitation</div>
+            <div style={capsHeading}>{t('invitationHeading')}</div>
             {divider}
             {(brideFamily || groomFamily) && (
               <p style={{ fontSize: 12.5, color: colors.dark, opacity: 0.9, marginBottom: 8, fontWeight: 600 }}>
                 {groomFamily} {togetherWithText} {brideFamily}
               </p>
             )}
-            <div style={{ ...eyebrow, marginBottom: 10 }}>A Loving Invitation From Our Family</div>
+            <div style={{ ...eyebrow, marginBottom: 10 }}>{t('lovingInvitation')}</div>
             <p style={{ ...ts('message'), fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
-              {familyInvitationText || 'We warmly invite you to join us as we celebrate the beautiful beginning of our lifelong bond.'}
+              {familyInvitationText || t('defaultFamilyInvite')}
             </p>
           </Reveal>
 
@@ -1281,7 +1476,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             return (
               <Reveal key={ev.key} wide>
                 <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{ev.title}</div>
-                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, margin: '6px 0 18px' }}>Venue, Location and Time Details</p>
+                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, margin: '6px 0 18px' }}>{t('venueLocationTime')}</p>
 
                 <div className="bb-event-row">
                 <div style={{ ...cardStyle, overflow: 'hidden', textAlign: 'left', marginBottom: 10 }}>
@@ -1299,27 +1494,27 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                           background: boxBg, padding: '5px 12px', borderRadius: 100,
                           color: colors.dark, textDecoration: 'none', boxShadow: `0 2px 8px ${colors.dark}22`,
                         }}>
-                          Open in Maps ↗
+                          {t('openInMaps')}
                         </a>
                       )}
                     </div>
                   ) : (
                     <div style={{ height: 100, background: colors.primaryLight, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       <Icon name="pin" size={22} color={colors.primary} />
-                      <span style={{ fontSize: 10.5, color: colors.dark, opacity: 0.55 }}>Location to be announced</span>
+                      <span style={{ fontSize: 10.5, color: colors.dark, opacity: 0.55 }}>{t('locationTBA')}</span>
                     </div>
                   )}
                   <div style={{ padding: '12px 16px' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: colors.dark }}>{ev.venue || 'Venue to be announced'}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: colors.dark }}>{ev.venue || t('venueTBA')}</div>
                     {ev.venue_address && <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginTop: 2 }}>{ev.venue_address}</div>}
                   </div>
                 </div>
 
                 <div style={{ ...cardStyle, padding: '16px 18px', textAlign: 'left' }}>
                   {[
-                    { icon: 'calendar' as const, label: 'DATE', value: ev.date ? new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'To be announced', tsKey: '' },
-                    { icon: 'clock' as const, label: 'TIME', value: (ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'To be announced') + ' Onwards', tsKey: '' },
-                    { icon: 'pin' as const, label: 'VENUE', value: ev.venue || 'Venue to be announced', sub: ev.venue_address, tsKey: 'venue_name', subTsKey: 'venue_address' },
+                    { icon: 'calendar' as const, label: t('dateLabel'), value: ev.date ? new Date(ev.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : t('tba'), tsKey: '' },
+                    { icon: 'clock' as const, label: t('timeLabel'), value: (ev.date ? new Date(ev.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : t('tba')) + ' ' + t('onwards'), tsKey: '' },
+                    { icon: 'pin' as const, label: t('venueLabel'), value: ev.venue || t('venueTBA'), sub: ev.venue_address, tsKey: 'venue_name', subTsKey: 'venue_address' },
                   ].map((row, i, arr) => (
                     <div key={row.label} style={{
                       display: 'flex', gap: 12, paddingBottom: i < arr.length - 1 ? 14 : 0, marginBottom: i < arr.length - 1 ? 14 : 0,
@@ -1342,7 +1537,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Gallery — card, since it's an image grid */}
           {(section.gallery ?? true) && couple.gallery && couple.gallery.length > 0 && (
             <Reveal id="gallery">
-              <div style={capsHeading}>Our Moments</div>
+              <div style={capsHeading}>{t('ourMoments')}</div>
               {divider}
               {/* Single column, full-width — every photo shows at its own
                   natural proportions (no cropping) and stacks cleanly on a
@@ -1359,7 +1554,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           {/* Timeline — big vertical timeline with connecting line + icon circles */}
           {(section.timeline ?? true) && couple.timeline && couple.timeline.length > 0 && (
             <Reveal>
-              <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />The Day's Events</div>
+              <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('dayEvents')}</div>
               {divider}
               <div style={{ position: 'relative', textAlign: 'left', marginTop: 20, paddingLeft: 10 }}>
                 <div style={{ position: 'absolute', left: 41, top: 34, bottom: 34, width: 2, background: colors.primaryLight }} />
@@ -1386,12 +1581,12 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
               hidden entirely when the couple turns it off from admin */}
           {((couple as any).enable_guest_wishes ?? false) && (
             <Reveal wide id="wishes">
-              <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Wishes for Us</div>
+              <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('wishesForUs')}</div>
               {divider}
               <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 6, marginBottom: 20 }}>
-                Share your wishes and blessings with {couple.bride} &amp; {couple.groom}.
+                {t('shareWishes')} {couple.bride} &amp; {couple.groom}.
               </p>
-              <WishesWall coupleId={couple.id} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} boxBg={boxBg} />
+              <WishesWall coupleId={couple.id} primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} boxBg={boxBg} t={t} />
             </Reveal>
           )}
 
@@ -1420,19 +1615,19 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             {/* Countdown — big 2x2 grid */}
             {(section.countdown ?? true) && (
               <Reveal mt={80} id="savethedate">
-                <div style={{ ...capsHeading, ...ts('countdown_label') }}><Icon name="heart" size={12} color={colors.primary} />Just a Few More</div>
+                <div style={{ ...capsHeading, ...ts('countdown_label') }}><Icon name="heart" size={12} color={colors.primary} />{t('justAFewMore')}</div>
                 {divider}
                 <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 16, marginBottom: 20 }}>
-                  We are counting the days until our beautiful celebration.
+                  {t('countingDays')}
                 </p>
-                <CountdownDisplay targetDate={couple.wedding_date} dark={colors.dark} primary={colors.primary} primaryLight={colors.primaryLight} />
+                <CountdownDisplay targetDate={couple.wedding_date} dark={colors.dark} primary={colors.primary} primaryLight={colors.primaryLight} t={t} />
               </Reveal>
             )}
 
             {/* Music — no card wrapper, but the player itself has one */}
             {(section.music ?? true) && couple.song_url && (
               <Reveal>
-                <div style={capsHeading}><Icon name="music" size={12} color={colors.primary} />Our Song</div>
+                <div style={capsHeading}><Icon name="music" size={12} color={colors.primary} />{t('ourSong')}</div>
                 <div style={{ marginTop: 16 }}>
                   {couple.song_url.includes('youtube.com') || couple.song_url.includes('youtu.be') ? (
                     <div style={{ borderRadius: 14, overflow: 'hidden' }}>
@@ -1461,9 +1656,9 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             {/* Contact Numbers — collected once here instead of repeated per event */}
             {contactList.length > 0 && (
               <Reveal id="contact">
-                <div style={capsHeading}><Icon name="phone" size={12} color={colors.primary} />Get In Touch</div>
+                <div style={capsHeading}><Icon name="phone" size={12} color={colors.primary} />{t('getInTouch')}</div>
                 {divider}
-                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginBottom: 16 }}>For inquiries, feel free to contact us at the below numbers.</p>
+                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginBottom: 16 }}>{t('inquiriesText')}</p>
                 <div style={{ display: 'grid', gap: 10, textAlign: 'left' }}>
                   {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={colors.primary} dark={colors.dark} />)}
                 </div>
@@ -1474,10 +1669,10 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 the page" style used by Invitation/Thank You. */}
             {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
               <Reveal>
-                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />A Note For You</div>
+                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('noteForYou')}</div>
                 {divider}
                 {guestName && (
-                  <p style={{ fontSize: 11.5, color: colors.primary, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Dear {guestName}</p>
+                  <p style={{ fontSize: 11.5, color: colors.primary, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{t('dear')} {guestName}</p>
                 )}
                 <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic' }}>
                   {(couple as any).wedding_note_text.split('\n').map((l: string, i: number, arr: string[]) => <span key={i}>{l}{i < arr.length - 1 && <br />}</span>)}
@@ -1488,17 +1683,17 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             {/* Thank you — no card */}
             {(section.thank_you ?? true) && (
               <Reveal>
-                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />Thank You</div>
+                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('thankYouHeading')}</div>
                 {divider}
                 <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
-                  {thankYouText || 'Thank you for being part of our journey. Your presence means the world to us.'}
+                  {thankYouText || t('defaultThankYou')}
                 </p>
               </Reveal>
             )}
 
             {/* RSVP — isolated into its own component (see RsvpBlock above) so
                 typing here doesn't re-render the whole invitation. */}
-            <RsvpBlock couple={couple} colors={colors} boxBg={boxBg} guestName={guestName} />
+            <RsvpBlock couple={couple} colors={colors} boxBg={boxBg} guestName={guestName} t={t} />
 
             {/* Footer flourish — matches the reference's closing monogram section */}
             <div style={{ ...BB_WRAP, marginTop: 50, textAlign: 'center', position: 'relative', zIndex: 1 }}>
@@ -1515,7 +1710,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 <Icon name="heart" size={9} color={colors.primary} />
               </div>
               <p style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 12 }}>
-                May our love bloom eternal
+                {t('loveBloomEternal')}
               </p>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={colors.primary} background={`${colors.primary}14`} />}
             </div>
@@ -1531,6 +1726,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
           hasGallery={(section.gallery ?? true) && !!(couple.gallery && couple.gallery.length > 0)}
           hasContact={contactList.length > 0}
           audioRef={audioRef}
+          t={t}
         />
       )}
     </div>
