@@ -1259,6 +1259,17 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                 video cuts to right after the cover video is tapped
                 open — no second video repeat, no button row here. */}
             <div style={{ position: "relative", padding: "0 1.5rem", overflow: "hidden" }}>
+              {/* Soft couple-photo backdrop — faded well into the blush
+                  tone so it reads as warmth/texture behind the names,
+                  never competing with the text on top of it. */}
+              <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 30%", opacity: 0.22, filter: "blur(1.5px) saturate(0.85)" }}
+                  onError={e => { e.currentTarget.style.display = "none" }} />
+                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}b3 0%, ${CREAM}e6 35%, ${CREAM} 78%)` }} />
+              </div>
+
+              <div style={{ position: "relative", zIndex: 1 }}>
               <div style={{ display: "flex", justifyContent: "center", marginTop: -30, marginBottom: -22 }}>
                 <MandalaMedallion size={186} color={PRIMARY} />
               </div>
@@ -1303,6 +1314,7 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
 
               <div style={{ marginTop: 22, marginLeft: -24, marginRight: -24 }}>
                 <LotusBranchDivider color={PRIMARY} />
+              </div>
               </div>
             </div>
 
