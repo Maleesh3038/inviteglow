@@ -1310,14 +1310,19 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                     identifiable picture — this keeps it elegant whatever
                     photo the couple uploads (illustrated avatar or real). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.4, filter: "blur(18px) saturate(0.75)", transform: "scale(1.25)" }}
+                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.58, filter: "blur(3px) saturate(0.9)", transform: "scale(1.06)" }}
                   onError={e => { e.currentTarget.style.display = "none" }} />
-                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}b3 0%, ${CREAM}c7 28%, ${CREAM}e8 62%, ${CREAM} 88%)` }} />
+                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}80 0%, ${CREAM}8c 30%, ${CREAM}c2 64%, ${CREAM}f0 90%)` }} />
               </div>
 
               <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "center", marginTop: -30, marginBottom: -22 }}>
-                <MandalaMedallion size={186} color={PRIMARY} />
+              {/* Only the lower ~55% of the mandala shows, cropped at the
+                  top of the section, like an ornament peeking in from
+                  above rather than a complete circle floating on its own. */}
+              <div style={{ height: 104, overflow: "hidden", display: "flex", justifyContent: "center", marginBottom: -6 }}>
+                <div style={{ position: "relative", top: -82 }}>
+                  <MandalaMedallion size={186} color={PRIMARY} />
+                </div>
               </div>
 
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}
