@@ -282,36 +282,64 @@ function GoldMedallion({ initials, size = 54 }: { initials: string; size?: numbe
 // recurring decorative anchor at the top of each blush-background
 // section (echoing the gold mandala arch seen in the reference). Only
 // the top half is normally visible, peeking in from above the section. ──
+// A scalloped "lace" ring: the radius wobbles sinusoidally around a
+// base value, `teeth` times per revolution, tracing a fine, dense
+// gear/lace-doily edge in a single stroked path — this is what gives
+// MandalaMedallion below its intricate, hand-drawn lace look without
+// needing hundreds of individually hand-placed shapes.
+function scallopRing(r: number, amp: number, teeth: number, phase = 0): string {
+  const steps = teeth * 10
+  let d = ''
+  for (let i = 0; i <= steps; i++) {
+    const theta = (i / steps) * Math.PI * 2
+    const rad = r + amp * Math.cos(teeth * theta + phase)
+    const x = 100 + rad * Math.cos(theta)
+    const y = 100 + rad * Math.sin(theta)
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2) + ' '
+  }
+  return d + 'Z'
+}
+
 function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?: string }) {
+  // Dots sitting at the outward tip of each scallop tooth, for the
+  // little jewelled/beaded look lace mandalas have at each ring.
+  const tipDots = (r: number, amp: number, teeth: number, dotR: number, opacity: number) =>
+    Array.from({ length: teeth }).map((_, i) => {
+      const theta = (i / teeth) * Math.PI * 2
+      const x = 100 + (r + amp) * Math.cos(theta), y = 100 + (r + amp) * Math.sin(theta)
+      return <circle key={i} cx={x} cy={y} r={dotR} fill={color} opacity={opacity} />
+    })
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", opacity: 0.6 }}>
-      {/* Outer fine rings */}
-      <circle cx="100" cy="100" r="99" fill="none" stroke={color} strokeWidth="0.6" opacity="0.35" />
-      <circle cx="100" cy="100" r="92" fill="none" stroke={color} strokeWidth="1.2" opacity="0.6" />
-      {/* Compass tick marks between the two outer rings */}
-      {Array.from({ length: 36 }).map((_, i) => {
-        const angle = (i / 36) * Math.PI * 2
+    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", opacity: 0.62 }}>
+      {/* Outermost fine lace scallop, dense little teeth */}
+      <path d={scallopRing(94, 3, 60)} fill="none" stroke={color} strokeWidth="0.6" opacity="0.4" />
+      {tipDots(94, 3, 60, 0.6, 0.45)}
+      {/* A plain ring just inside it */}
+      <circle cx="100" cy="100" r="88" fill="none" stroke={color} strokeWidth="0.5" opacity="0.35" />
+      {/* Second lace scallop, slightly bigger teeth */}
+      <path d={scallopRing(80, 5, 36)} fill="none" stroke={color} strokeWidth="0.8" opacity="0.55" />
+      {tipDots(80, 5, 36, 1, 0.6)}
+      {/* Compass tick marks between the lace rings */}
+      {Array.from({ length: 24 }).map((_, i) => {
+        const angle = (i / 24) * Math.PI * 2
         const long = i % 3 === 0
-        const r1 = long ? 82 : 87, r2 = 92
+        const r1 = long ? 68 : 72, r2 = 78
         const x1 = 100 + Math.cos(angle) * r1, y1 = 100 + Math.sin(angle) * r1
         const x2 = 100 + Math.cos(angle) * r2, y2 = 100 + Math.sin(angle) * r2
-        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={long ? 1 : 0.6} opacity={long ? 0.6 : 0.35} />
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={long ? 0.9 : 0.5} opacity={long ? 0.55 : 0.3} />
       })}
+      {/* Third lace scallop, bigger petal-like teeth */}
+      <path d={scallopRing(60, 7, 20)} fill="none" stroke={color} strokeWidth="1" opacity="0.6" />
+      {tipDots(60, 7, 20, 1.2, 0.65)}
       {/* 8 small diamonds at the cardinal/ordinal points */}
       {Array.from({ length: 8 }).map((_, i) => {
         const angle = (i / 8) * Math.PI * 2
-        const x = 100 + Math.cos(angle) * 76, y = 100 + Math.sin(angle) * 76
-        return <rect key={i} x={x - 2.2} y={y - 2.2} width="4.4" height="4.4" transform={`rotate(45 ${x} ${y})`} fill={color} opacity="0.55" />
-      })}
-      {/* Mid ring with a fine scalloped edge */}
-      <circle cx="100" cy="100" r="66" fill="none" stroke={color} strokeWidth="0.8" opacity="0.5" />
-      {Array.from({ length: 16 }).map((_, i) => {
-        const angle = (i / 16) * Math.PI * 2
-        const x = 100 + Math.cos(angle) * 66, y = 100 + Math.sin(angle) * 66
-        return <circle key={i} cx={x} cy={y} r="1.5" fill={color} opacity="0.5" />
+        const x = 100 + Math.cos(angle) * 50, y = 100 + Math.sin(angle) * 50
+        return <rect key={i} x={x - 2} y={y - 2} width="4" height="4" transform={`rotate(45 ${x} ${y})`} fill={color} opacity="0.5" />
       })}
       {/* Inner ring framing the lotus */}
-      <circle cx="100" cy="100" r="44" fill="none" stroke={color} strokeWidth="1" opacity="0.55" />
+      <circle cx="100" cy="100" r="42" fill="none" stroke={color} strokeWidth="1" opacity="0.55" />
+      <path d={scallopRing(42, 2.2, 30)} fill="none" stroke={color} strokeWidth="0.5" opacity="0.4" />
       <svg x={66} y={66} width={68} height={68} viewBox="0 0 64 64">
         <path d="M32 54c0-14 0-26 0-38" fill="none" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.55" />
         {[0, 1, 2, 3, 4].map(i => {
