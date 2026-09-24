@@ -359,6 +359,20 @@ function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?:
   )
 }
 
+// ── A small corner flourish — an L-shaped fine gold line with a
+// jewelled dot at the point, used at the four corners of the ornate
+// frame around the couple's names, echoing engraved wedding
+// stationery corners. ──
+function CornerFlourish({ color = GOLD, size = 20, rotate = 0 }: { color?: string; size?: number; rotate?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" style={{ display: "block", transform: `rotate(${rotate}deg)` }}>
+      <path d="M1 8 C1 3, 3 1, 8 1" fill="none" stroke={color} strokeWidth="1" opacity="0.65" strokeLinecap="round" />
+      <path d="M1 13 C1 5, 5 1, 13 1" fill="none" stroke={color} strokeWidth="0.6" opacity="0.4" strokeLinecap="round" />
+      <circle cx="1" cy="1" r="1.8" fill={color} opacity="0.75" />
+    </svg>
+  )
+}
+
 // ── A small ornamental flourish — a short gold line / tiny filled
 // lotus bud / short line — used above section eyebrows in place of an
 // emoji, so the decorative language stays consistent (gold line-art
@@ -1296,31 +1310,45 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                     identifiable picture — this keeps it elegant whatever
                     photo the couple uploads (illustrated avatar or real). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.4, filter: "blur(18px) saturate(0.75)", transform: "scale(1.25)" }}
+                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.4, filter: "blur(7px) saturate(0.85)", transform: "scale(1.12)" }}
                   onError={e => { e.currentTarget.style.display = "none" }} />
-                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}b3 0%, ${CREAM}c7 28%, ${CREAM}e8 62%, ${CREAM} 88%)` }} />
+                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}a3 0%, ${CREAM}a8 30%, ${CREAM}d8 64%, ${CREAM} 90%)` }} />
               </div>
 
               <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "center", marginTop: -30, marginBottom: -22 }}>
+              <div style={{ position: "relative", display: "flex", justifyContent: "center", marginTop: -30, marginBottom: -22, zIndex: 2 }}>
+                {/* Soft gold glow behind the medallion for extra depth */}
+                <div style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: `radial-gradient(circle, ${PRIMARY}30 0%, transparent 70%)`, filter: "blur(4px)" }} />
                 <MandalaMedallion size={186} color={PRIMARY} />
               </div>
 
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}
-                style={{ textAlign: "center", paddingTop: 14 }}>
-                {guestName && (
-                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${PRIMARY}cc`, marginBottom: 14, fontWeight: 700 }}>{t('dear')} {guestName}</div>
-                )}
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: "2.3rem", color: PRIMARY, lineHeight: 1.3, letterSpacing: "0.01em" }}>
-                  {W.bride}
-                  <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.55, fontStyle: "italic", fontWeight: 400, margin: "6px 0" }}>{(couple as any).together_with_text || t('togetherWith')}</div>
-                  {W.groom}
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", margin: "18px 0" }}><Flourish color={PRIMARY} /></div>
-                <div style={{ color: DARK, opacity: 0.8, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", maxWidth: 300, marginLeft: "auto", marginRight: "auto" }}>
-                  {W.introText}
-                </div>
-              </motion.div>
+              {/* Ornate double-line frame around the couple's names — the
+                  medallion above overlaps its top edge like a wax seal
+                  breaking a card border, echoing engraved wedding
+                  stationery rather than a plain text block. */}
+              <div style={{ position: "relative", margin: "0 6px", padding: "34px 18px 26px", border: `1px solid ${PRIMARY}45`, borderRadius: 6 }}>
+                <div style={{ position: "absolute", inset: 5, border: `1px solid ${PRIMARY}22`, borderRadius: 4, pointerEvents: "none" }} />
+                <div style={{ position: "absolute", top: -1, left: -1 }}><CornerFlourish color={PRIMARY} rotate={0} /></div>
+                <div style={{ position: "absolute", top: -1, right: -1 }}><CornerFlourish color={PRIMARY} rotate={90} /></div>
+                <div style={{ position: "absolute", bottom: -1, right: -1 }}><CornerFlourish color={PRIMARY} rotate={180} /></div>
+                <div style={{ position: "absolute", bottom: -1, left: -1 }}><CornerFlourish color={PRIMARY} rotate={270} /></div>
+
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}
+                  style={{ textAlign: "center", position: "relative" }}>
+                  {guestName && (
+                    <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${PRIMARY}cc`, marginBottom: 14, fontWeight: 700 }}>{t('dear')} {guestName}</div>
+                  )}
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: "2.3rem", color: PRIMARY, lineHeight: 1.3, letterSpacing: "0.01em" }}>
+                    {W.bride}
+                    <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.55, fontStyle: "italic", fontWeight: 400, margin: "6px 0" }}>{(couple as any).together_with_text || t('togetherWith')}</div>
+                    {W.groom}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", margin: "18px 0" }}><Flourish color={PRIMARY} /></div>
+                  <div style={{ color: DARK, opacity: 0.8, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", maxWidth: 300, marginLeft: "auto", marginRight: "auto" }}>
+                    {W.introText}
+                  </div>
+                </motion.div>
+              </div>
 
               {(W.brideFamilyName || W.groomFamilyName) && (
                 <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
