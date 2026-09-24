@@ -1264,9 +1264,9 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                   never competing with the text on top of it. */}
               <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 30%", opacity: 0.22, filter: "blur(1.5px) saturate(0.85)" }}
+                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.5, filter: "saturate(0.9)" }}
                   onError={e => { e.currentTarget.style.display = "none" }} />
-                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}b3 0%, ${CREAM}e6 35%, ${CREAM} 78%)` }} />
+                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}99 0%, ${CREAM}b3 30%, ${CREAM}e0 62%, ${CREAM} 88%)` }} />
               </div>
 
               <div style={{ position: "relative", zIndex: 1 }}>
