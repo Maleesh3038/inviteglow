@@ -283,26 +283,37 @@ function GoldMedallion({ initials, size = 54 }: { initials: string; size?: numbe
 // section (echoing the gold mandala arch seen in the reference). Only
 // the top half is normally visible, peeking in from above the section. ──
 function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?: string }) {
-  const rings = [0.98, 0.86, 0.74]
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", opacity: 0.55 }}>
-      {rings.map((r, i) => (
-        <circle key={i} cx="100" cy="100" r={100 * r} fill="none" stroke={color} strokeWidth={i === 0 ? 1.4 : 0.8} opacity={0.7 - i * 0.15} />
-      ))}
-      {Array.from({ length: 24 }).map((_, i) => {
-        const angle = (i / 24) * Math.PI * 2
-        const x1 = 100 + Math.cos(angle) * 74, y1 = 100 + Math.sin(angle) * 74
-        const x2 = 100 + Math.cos(angle) * 98, y2 = 100 + Math.sin(angle) * 98
-        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1" opacity="0.5" />
+    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", opacity: 0.6 }}>
+      {/* Outer fine rings */}
+      <circle cx="100" cy="100" r="99" fill="none" stroke={color} strokeWidth="0.6" opacity="0.35" />
+      <circle cx="100" cy="100" r="92" fill="none" stroke={color} strokeWidth="1.2" opacity="0.6" />
+      {/* Compass tick marks between the two outer rings */}
+      {Array.from({ length: 36 }).map((_, i) => {
+        const angle = (i / 36) * Math.PI * 2
+        const long = i % 3 === 0
+        const r1 = long ? 82 : 87, r2 = 92
+        const x1 = 100 + Math.cos(angle) * r1, y1 = 100 + Math.sin(angle) * r1
+        const x2 = 100 + Math.cos(angle) * r2, y2 = 100 + Math.sin(angle) * r2
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={long ? 1 : 0.6} opacity={long ? 0.6 : 0.35} />
       })}
-      {Array.from({ length: 12 }).map((_, i) => {
-        const angle = (i / 12) * Math.PI * 2
-        const x = 100 + Math.cos(angle) * 86, y = 100 + Math.sin(angle) * 86
-        return <circle key={i} cx={x} cy={y} r="2.6" fill={color} opacity="0.65" />
+      {/* 8 small diamonds at the cardinal/ordinal points */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2
+        const x = 100 + Math.cos(angle) * 76, y = 100 + Math.sin(angle) * 76
+        return <rect key={i} x={x - 2.2} y={y - 2.2} width="4.4" height="4.4" transform={`rotate(45 ${x} ${y})`} fill={color} opacity="0.55" />
       })}
-      <circle cx="100" cy="100" r="46" fill="none" stroke={color} strokeWidth="1" opacity="0.5" />
-      <svg x={68} y={68} width={64} height={64} viewBox="0 0 64 64">
-        <path d="M32 54c0-14 0-26 0-38" fill="none" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.6" />
+      {/* Mid ring with a fine scalloped edge */}
+      <circle cx="100" cy="100" r="66" fill="none" stroke={color} strokeWidth="0.8" opacity="0.5" />
+      {Array.from({ length: 16 }).map((_, i) => {
+        const angle = (i / 16) * Math.PI * 2
+        const x = 100 + Math.cos(angle) * 66, y = 100 + Math.sin(angle) * 66
+        return <circle key={i} cx={x} cy={y} r="1.5" fill={color} opacity="0.5" />
+      })}
+      {/* Inner ring framing the lotus */}
+      <circle cx="100" cy="100" r="44" fill="none" stroke={color} strokeWidth="1" opacity="0.55" />
+      <svg x={66} y={66} width={68} height={68} viewBox="0 0 64 64">
+        <path d="M32 54c0-14 0-26 0-38" fill="none" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.55" />
         {[0, 1, 2, 3, 4].map(i => {
           const angle = (i - 2) * 26
           return (
@@ -314,8 +325,22 @@ function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?:
             />
           )
         })}
-        <circle cx="32" cy="40" r="3.2" fill={color} opacity="0.85" />
+        <circle cx="32" cy="40" r="3" fill={color} opacity="0.85" />
       </svg>
+    </svg>
+  )
+}
+
+// ── A small ornamental flourish — a short gold line / diamond / short
+// line — used above section eyebrows in place of an emoji, so the
+// decorative language stays consistent (fine gold line-art) rather
+// than mixing in flat colour emoji. ──
+function Flourish({ color = GOLD, width = 70 }: { color?: string; width?: number }) {
+  return (
+    <svg width={width} height={10} viewBox="0 0 70 10" style={{ display: "block", margin: "0 auto" }}>
+      <line x1="0" y1="5" x2="28" y2="5" stroke={color} strokeWidth="0.8" opacity="0.55" />
+      <rect x="33" y="3" width="4" height="4" transform="rotate(45 35 5)" fill={color} opacity="0.75" />
+      <line x1="42" y1="5" x2="70" y2="5" stroke={color} strokeWidth="0.8" opacity="0.55" />
     </svg>
   )
 }
@@ -324,20 +349,27 @@ function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?:
 // lotus flowers and leaves spanning the section width, echoing the
 // botanical illustration bordering each section in the reference. ──
 function LotusBranchDivider({ color = GOLD, flip = false }: { color?: string; flip?: boolean }) {
+  // Each flower is a small bouquet of soft, rounded petal loops (not
+  // pointed triangles) rising from a single gently curved stem line,
+  // reading as hand-drawn botanical line-art rather than a repeating
+  // geometric pattern.
   const flowers = [
-    { x: 20, s: 0.8 }, { x: 60, s: 1.1 }, { x: 110, s: 0.7 }, { x: 160, s: 1.2 },
-    { x: 210, s: 0.75 }, { x: 260, s: 1 }, { x: 300, s: 0.65 },
+    { x: 26, s: 0.7, h: 30 }, { x: 66, s: 1.05, h: 44 }, { x: 112, s: 0.6, h: 22 },
+    { x: 162, s: 1.15, h: 50 }, { x: 208, s: 0.65, h: 26 }, { x: 254, s: 1, h: 42 },
+    { x: 296, s: 0.6, h: 24 },
   ]
+  const petal = (rot: number, len: number, w: number) =>
+    `M0 0 C ${w} ${-len * 0.35}, ${w} ${-len * 0.75}, 0 ${-len} C ${-w} ${-len * 0.75}, ${-w} ${-len * 0.35}, 0 0 Z`
   return (
-    <svg width="100%" height="64" viewBox="0 0 320 64" preserveAspectRatio="xMidYMax slice"
-      style={{ display: "block", transform: flip ? "scaleY(-1)" : undefined, opacity: 0.55 }}>
-      <path d="M0 58 C 60 46, 120 54, 160 44 C 200 54, 260 46, 320 58" fill="none" stroke={color} strokeWidth="1" opacity="0.5" />
+    <svg width="100%" height="58" viewBox="0 0 320 58" preserveAspectRatio="xMidYMax slice"
+      style={{ display: "block", transform: flip ? "scaleY(-1)" : undefined, opacity: 0.5 }}>
+      <path d="M0 52 C 50 44, 100 50, 160 40 C 220 50, 270 44, 320 52" fill="none" stroke={color} strokeWidth="0.9" opacity="0.45" strokeLinecap="round" />
       {flowers.map((f, i) => (
-        <g key={i} transform={`translate(${f.x} ${58 - f.s * 8}) scale(${f.s})`}>
-          <path d="M0 20 C-5 12,-8 4,-4 -6 C0 2,0 10,0 20 C0 10,0 2,4 -6 C8 4,5 12,0 20 Z" fill="none" stroke={color} strokeWidth="1.1" opacity="0.75" />
-          <path d="M-9 20 C-13 15,-14 9,-10 2 C-6 8,-7 15,-9 20 Z" fill="none" stroke={color} strokeWidth="0.9" opacity="0.6" />
-          <path d="M9 20 C13 15,14 9,10 2 C6 8,7 15,9 20 Z" fill="none" stroke={color} strokeWidth="0.9" opacity="0.6" />
-          <circle cx="0" cy="18" r="1.6" fill={color} opacity="0.7" />
+        <g key={i} transform={`translate(${f.x} ${52 - (f.h - 30) * 0.22}) scale(${f.s})`} opacity={0.55 + (i % 2) * 0.15}>
+          <path d={petal(0, f.h, 5)} fill="none" stroke={color} strokeWidth="1" transform={`rotate(-14) translate(-4 0)`} />
+          <path d={petal(0, f.h * 0.82, 4.2)} fill="none" stroke={color} strokeWidth="1" />
+          <path d={petal(0, f.h, 5)} fill="none" stroke={color} strokeWidth="1" transform={`rotate(14) translate(4 0)`} />
+          <circle cx="0" cy="-2" r="1.5" fill={color} opacity="0.8" />
         </g>
       ))}
     </svg>
@@ -1217,41 +1249,43 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                 video cuts to right after the cover video is tapped
                 open — no second video repeat, no button row here. */}
             <div style={{ position: "relative", padding: "0 1.5rem", overflow: "hidden" }}>
-              <div style={{ display: "flex", justifyContent: "center", marginTop: -36, marginBottom: -18 }}>
-                <MandalaMedallion size={190} color={PRIMARY} />
+              <div style={{ display: "flex", justifyContent: "center", marginTop: -30, marginBottom: -22 }}>
+                <MandalaMedallion size={186} color={PRIMARY} />
               </div>
 
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}
-                style={{ textAlign: "center", paddingTop: 8 }}>
+                style={{ textAlign: "center", paddingTop: 14 }}>
                 {guestName && (
-                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${PRIMARY}cc`, marginBottom: 10, fontWeight: 700 }}>{t('dear')} {guestName}</div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${PRIMARY}cc`, marginBottom: 14, fontWeight: 700 }}>{t('dear')} {guestName}</div>
                 )}
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: "2.1rem", color: PRIMARY, lineHeight: 1.35 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: "2.3rem", color: PRIMARY, lineHeight: 1.3, letterSpacing: "0.01em" }}>
                   {W.bride}
-                  <div style={{ fontSize: "1rem", color: DARK, opacity: 0.6, fontStyle: "italic", margin: "2px 0" }}>{(couple as any).together_with_text || t('togetherWith')}</div>
+                  <div style={{ fontSize: "0.95rem", color: DARK, opacity: 0.55, fontStyle: "italic", fontWeight: 400, margin: "6px 0" }}>{(couple as any).together_with_text || t('togetherWith')}</div>
                   {W.groom}
                 </div>
-                <div style={{ color: DARK, opacity: 0.8, lineHeight: 1.85, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", marginTop: 18, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>
+                <div style={{ display: "flex", justifyContent: "center", margin: "18px 0" }}><Flourish color={PRIMARY} /></div>
+                <div style={{ color: DARK, opacity: 0.8, lineHeight: 1.9, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", maxWidth: 300, marginLeft: "auto", marginRight: "auto" }}>
                   {W.introText}
                 </div>
               </motion.div>
 
               {(W.brideFamilyName || W.groomFamilyName) && (
                 <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                  style={{ textAlign: "center", marginTop: 30 }}>
-                  <div style={eyebrow(`${PRIMARY}aa`)}>💐 {t('ourFamilies')}</div>
-                  <div style={{ fontSize: 14, color: DARK, lineHeight: 2 }}>
-                    {W.groomFamilyName && <div style={{ fontWeight: 700 }}>{W.groomFamilyName}</div>}
+                  style={{ textAlign: "center", marginTop: 40 }}>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}><Flourish color={`${PRIMARY}bb`} width={56} /></div>
+                  <div style={{ ...eyebrow(`${PRIMARY}aa`), marginBottom: 12 }}>{t('ourFamilies')}</div>
+                  <div style={{ fontSize: 14.5, color: DARK, lineHeight: 2.1, fontFamily: "'Cormorant Garamond',serif" }}>
+                    {W.groomFamilyName && <div style={{ fontWeight: 700, fontSize: 16 }}>{W.groomFamilyName}</div>}
                     {W.groomFamilyName && W.brideFamilyName && (
-                      <div style={{ fontSize: 11, color: MUTED, margin: "2px 0" }}>{t('togetherWith')}</div>
+                      <div style={{ fontSize: 11, color: MUTED, margin: "3px 0", fontFamily: "'Inter',sans-serif", opacity: 0.85 }}>{t('togetherWith')}</div>
                     )}
-                    {W.brideFamilyName && <div style={{ fontWeight: 700 }}>{W.brideFamilyName}</div>}
+                    {W.brideFamilyName && <div style={{ fontWeight: 700, fontSize: 16 }}>{W.brideFamilyName}</div>}
                     {(() => {
                       const txt = (couple as any).family_invitation_text
                       const trimmed = (txt || '').trim()
                       if (!trimmed) return null
                       const lines = trimmed.split('\n')
-                      return <div style={{ color: MUTED, marginTop: 8, fontSize: 12.5 }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</div>
+                      return <div style={{ color: MUTED, marginTop: 10, fontSize: 12.5, fontFamily: "'Inter',sans-serif", fontStyle: "normal" }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</div>
                     })()}
                   </div>
                 </motion.div>
