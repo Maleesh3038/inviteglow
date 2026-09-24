@@ -1211,7 +1211,6 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <h1 style={{ ...ts('subtitle'), fontFamily: "'Cormorant Garamond',serif", fontSize: '1.7rem', fontWeight: 700, color: colors.dark, marginBottom: 6 }}>
               {(couple as any).invitation_heading || 'Blesses with Love & Joy'}
             </h1>
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: colors.primary, margin: '0 auto 10px' }} />
             {guestName && (
               <p style={{ marginTop: 14, fontSize: 21, fontFamily: "'Cormorant Garamond',serif", fontWeight: 800, color: colors.primary, fontStyle: 'italic' }}>
                 Dear {guestName},
