@@ -331,16 +331,26 @@ function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?:
   )
 }
 
-// ── A small ornamental flourish — a short gold line / diamond / short
-// line — used above section eyebrows in place of an emoji, so the
-// decorative language stays consistent (fine gold line-art) rather
-// than mixing in flat colour emoji. ──
+// ── A small ornamental flourish — a short gold line / tiny filled
+// lotus bud / short line — used above section eyebrows in place of an
+// emoji, so the decorative language stays consistent (gold line-art
+// with one small solid-colour accent) rather than mixing in flat
+// colour emoji. The little flower is filled, not just outlined, so it
+// reads as a warm spot of colour against the line-art around it. ──
 function Flourish({ color = GOLD, width = 70 }: { color?: string; width?: number }) {
+  const mid = width / 2
+  const gap = 9
   return (
-    <svg width={width} height={10} viewBox="0 0 70 10" style={{ display: "block", margin: "0 auto" }}>
-      <line x1="0" y1="5" x2="28" y2="5" stroke={color} strokeWidth="0.8" opacity="0.55" />
-      <rect x="33" y="3" width="4" height="4" transform="rotate(45 35 5)" fill={color} opacity="0.75" />
-      <line x1="42" y1="5" x2="70" y2="5" stroke={color} strokeWidth="0.8" opacity="0.55" />
+    <svg width={width} height={14} viewBox={`0 0 ${width} 14`} style={{ display: "block", margin: "0 auto" }}>
+      <line x1="0" y1="7" x2={mid - gap} y2="7" stroke={color} strokeWidth="0.8" opacity="0.5" />
+      <line x1={mid + gap} y1="7" x2={width} y2="7" stroke={color} strokeWidth="0.8" opacity="0.5" />
+      {/* Tiny filled lotus bud — 5 solid petals around a solid centre */}
+      <g transform={`translate(${mid} 7)`}>
+        {[0, 72, 144, 216, 288].map(a => (
+          <ellipse key={a} cx="0" cy="-3.4" rx="1.7" ry="3.2" fill={color} opacity="0.8" transform={`rotate(${a})`} />
+        ))}
+        <circle cx="0" cy="0" r="1.6" fill={color} />
+      </g>
     </svg>
   )
 }
