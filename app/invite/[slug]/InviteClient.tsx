@@ -20,6 +20,7 @@ import CrimsonRoyaleTemplate from '@/components/templates/CrimsonRoyaleTemplate'
 import KanchiVivahaTemplate from '@/components/templates/KanchiVivahaTemplate'
 import CeremonialGuardTemplate from '@/components/templates/CeremonialGuardTemplate'
 import CorporateEventTemplate from '@/components/templates/CorporateEventTemplate'
+import GoldenPoruwaTemplate from '@/components/templates/GoldenPoruwaTemplate'
 
 export default function InviteClient({ slug }: { slug: string }) {
   const [couple, setCouple] = useState<Couple | null>(null)
@@ -107,6 +108,8 @@ export default function InviteClient({ slug }: { slug: string }) {
       return <KanchiVivahaTemplate couple={couple} />
     case 'ceremonial-guard':
       return <CeremonialGuardTemplate couple={couple} />
+    case 'golden-poruwa':
+      return <GoldenPoruwaTemplate couple={couple} />
     // NOTE: 'corporate-event' invitations live in the `events` table, not
     // `couples` — they're handled by the `eventRow` branch above, before
     // this switch ever runs.
