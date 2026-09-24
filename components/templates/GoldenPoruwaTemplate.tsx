@@ -24,19 +24,23 @@ const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
 
+// Palette matches the reference video's look: a soft blush-cream
+// backdrop, warm gold-brown headings, deep coffee-brown body text —
+// no maroon/red anywhere, unlike this codebase's other Kandyan-themed
+// templates.
 const DEFAULT_PALETTE = {
   primary: "#b8863d",
   primaryLight: "#f1dfb8",
-  dark: "#5c1f2e",
-  cream: "#fdf6ec",
-  muted: "#a68a6a",
+  dark: "#6b4423",
+  cream: "#f8e9da",
+  muted: "#a4886a",
 }
-// Foil gold + poruwa maroon are fixed material colours, not couple-
-// adjustable brand colours — gold leaf and lacquer-red read as gold
-// and maroon whatever the couple's chosen accent colour is.
+// Foil gold + deep coffee-brown are fixed material colours, not
+// couple-adjustable brand colours — gold leaf and dark shadow read as
+// gold and brown whatever the couple's chosen accent colour is.
 const GOLD = "#c9a15a"
 const GOLD_LIGHT = "#eeda9f"
-const MAROON = "#4a1720"
+const MAROON = "#3d2712"
 
 // ── Bilingual UI text — a Sinhala / English toggle for all the fixed
 // template labels (headings, buttons, form prompts). Content the
@@ -266,7 +270,7 @@ function GoldMedallion({ initials, size = 54 }: { initials: string; size?: numbe
       width: size, height: size, borderRadius: "50%",
       background: `radial-gradient(circle at 32% 28%, ${GOLD_LIGHT}, ${GOLD} 70%, #93712f 100%)`,
       display: "flex", alignItems: "center", justifyContent: "center",
-      boxShadow: `0 3px 10px rgba(74,23,32,0.4), inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 3px rgba(255,255,255,0.4)`,
+      boxShadow: `0 3px 10px rgba(61,39,18,0.4), inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 3px rgba(255,255,255,0.4)`,
       border: "1px solid rgba(255,255,255,0.3)",
     }}>
       <span style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 700, fontSize: size * 0.34, color: "#fff8e8", textShadow: "0 1px 2px rgba(0,0,0,0.35)" }}>{initials}</span>
@@ -274,15 +278,68 @@ function GoldMedallion({ initials, size = 54 }: { initials: string; size?: numbe
   )
 }
 
-// ── Ornamental corner bracket — thin gold lines framing the cover,
-// echoing traditional Kandyan poruwa-arch decoration. ──
-function CornerOrnament({ flip = false }: { flip?: boolean }) {
+// ── Gold mandala medallion — a large ornate circular arch motif, the
+// recurring decorative anchor at the top of each blush-background
+// section (echoing the gold mandala arch seen in the reference). Only
+// the top half is normally visible, peeking in from above the section. ──
+function MandalaMedallion({ size = 200, color = GOLD }: { size?: number; color?: string }) {
+  const rings = [0.98, 0.86, 0.74]
   return (
-    <svg width={64} height={64} viewBox="0 0 64 64" style={{ transform: flip ? "scaleX(-1)" : undefined, display: "block" }}>
-      <path d="M4 40 C4 16 16 4 40 4" fill="none" stroke={GOLD_LIGHT} strokeWidth="1.3" opacity="0.8" />
-      <path d="M4 28 C4 14 14 4 28 4" fill="none" stroke={GOLD_LIGHT} strokeWidth="1" opacity="0.5" />
-      <circle cx="4" cy="40" r="2.2" fill={GOLD_LIGHT} opacity="0.8" />
-      <circle cx="40" cy="4" r="2.2" fill={GOLD_LIGHT} opacity="0.8" />
+    <svg width={size} height={size} viewBox="0 0 200 200" style={{ display: "block", opacity: 0.55 }}>
+      {rings.map((r, i) => (
+        <circle key={i} cx="100" cy="100" r={100 * r} fill="none" stroke={color} strokeWidth={i === 0 ? 1.4 : 0.8} opacity={0.7 - i * 0.15} />
+      ))}
+      {Array.from({ length: 24 }).map((_, i) => {
+        const angle = (i / 24) * Math.PI * 2
+        const x1 = 100 + Math.cos(angle) * 74, y1 = 100 + Math.sin(angle) * 74
+        const x2 = 100 + Math.cos(angle) * 98, y2 = 100 + Math.sin(angle) * 98
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1" opacity="0.5" />
+      })}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i / 12) * Math.PI * 2
+        const x = 100 + Math.cos(angle) * 86, y = 100 + Math.sin(angle) * 86
+        return <circle key={i} cx={x} cy={y} r="2.6" fill={color} opacity="0.65" />
+      })}
+      <circle cx="100" cy="100" r="46" fill="none" stroke={color} strokeWidth="1" opacity="0.5" />
+      <svg x={68} y={68} width={64} height={64} viewBox="0 0 64 64">
+        <path d="M32 54c0-14 0-26 0-38" fill="none" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0.6" />
+        {[0, 1, 2, 3, 4].map(i => {
+          const angle = (i - 2) * 26
+          return (
+            <path key={i}
+              d="M32 40 C24 34 20 24 24 12 C28 20 32 28 32 40 C32 28 36 20 40 12 C44 24 40 34 32 40 Z"
+              fill="none" stroke={color} strokeWidth="1.1"
+              transform={`rotate(${angle} 32 40)`}
+              opacity={0.6 + (2 - Math.abs(i - 2)) * 0.13}
+            />
+          )
+        })}
+        <circle cx="32" cy="40" r="3.2" fill={color} opacity="0.85" />
+      </svg>
+    </svg>
+  )
+}
+
+// ── Lotus branch divider — a wide, hand-drawn-style line-art row of
+// lotus flowers and leaves spanning the section width, echoing the
+// botanical illustration bordering each section in the reference. ──
+function LotusBranchDivider({ color = GOLD, flip = false }: { color?: string; flip?: boolean }) {
+  const flowers = [
+    { x: 20, s: 0.8 }, { x: 60, s: 1.1 }, { x: 110, s: 0.7 }, { x: 160, s: 1.2 },
+    { x: 210, s: 0.75 }, { x: 260, s: 1 }, { x: 300, s: 0.65 },
+  ]
+  return (
+    <svg width="100%" height="64" viewBox="0 0 320 64" preserveAspectRatio="xMidYMax slice"
+      style={{ display: "block", transform: flip ? "scaleY(-1)" : undefined, opacity: 0.55 }}>
+      <path d="M0 58 C 60 46, 120 54, 160 44 C 200 54, 260 46, 320 58" fill="none" stroke={color} strokeWidth="1" opacity="0.5" />
+      {flowers.map((f, i) => (
+        <g key={i} transform={`translate(${f.x} ${58 - f.s * 8}) scale(${f.s})`}>
+          <path d="M0 20 C-5 12,-8 4,-4 -6 C0 2,0 10,0 20 C0 10,0 2,4 -6 C8 4,5 12,0 20 Z" fill="none" stroke={color} strokeWidth="1.1" opacity="0.75" />
+          <path d="M-9 20 C-13 15,-14 9,-10 2 C-6 8,-7 15,-9 20 Z" fill="none" stroke={color} strokeWidth="0.9" opacity="0.6" />
+          <path d="M9 20 C13 15,14 9,10 2 C6 8,7 15,9 20 Z" fill="none" stroke={color} strokeWidth="0.9" opacity="0.6" />
+          <circle cx="0" cy="18" r="1.6" fill={color} opacity="0.7" />
+        </g>
+      ))}
     </svg>
   )
 }
@@ -493,13 +550,13 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
     <div style={{ background: `linear-gradient(135deg,${primaryLight}55,${cream})`, padding: "2.5rem 1.5rem", textAlign: "center" }}>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "2rem", color: dark, marginBottom: 6 }}>{t('kindlyRsvp')}</div>
       <div style={{ fontSize: 12, color: muted, marginBottom: 20 }}>{t('rsvpSub')}</div>
-      <div style={{ background: "#fff", borderRadius: 16, padding: "1.5rem", maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(74,23,32,0.08)" }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "1.5rem", maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(61,39,18,0.08)" }}>
         {step === "form" && (<>
           <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${primary}99`, marginBottom: 8, textAlign: "left" }}>{t('yourName')}</div>
           <input value={name} onChange={e => setName(e.target.value)} placeholder={t('enterYourName')} style={inp} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button onClick={handleAccept} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `linear-gradient(135deg,${primary},${GOLD})`, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : t('joyfullyAccept')}</button>
-            <button onClick={handleDecline} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primaryLight}55`, color: primary, border: "none", cursor: "pointer", fontSize: 13, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : t('regretfullyDecline')}</button>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button onClick={handleAccept} disabled={saving} style={{ width: "100%", padding: 14, borderRadius: 12, background: `linear-gradient(135deg,${primary},${GOLD})`, color: "#fff", border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 600, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : t('joyfullyAccept')}</button>
+            <button onClick={handleDecline} disabled={saving} style={{ width: "100%", padding: 14, borderRadius: 12, background: "#fff", color: primary, border: `1.5px solid ${primaryLight}`, cursor: "pointer", fontSize: 13.5, fontWeight: 600, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : t('regretfullyDecline')}</button>
           </div>
         </>)}
         {step === "count" && (
@@ -731,7 +788,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted, t }: 
 
   return (
     <div>
-      <div style={{ background: "#fff", borderRadius: 16, padding: '18px 16px', textAlign: 'left', marginBottom: 18, boxShadow: "0 4px 20px rgba(74,23,32,0.06)" }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: '18px 16px', textAlign: 'left', marginBottom: 18, boxShadow: "0 4px 20px rgba(61,39,18,0.06)" }}>
         {done ? (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>{t('thankYouForWish')}</div>
@@ -829,7 +886,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted, t }: 
 }
 
 // ── Card + section styles ──
-const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(74,23,32,0.08)", position: "relative", overflow: "hidden" })
+const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(61,39,18,0.08)", position: "relative", overflow: "hidden" })
 const eyebrow = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 600 })
 const heading = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.7rem", color: dark, textAlign: "center", marginBottom: "1.4rem" })
 
@@ -838,7 +895,7 @@ function ContactRow({ name, phone, primary }: { name: string; phone: string; pri
   const digitsOnly = phone.replace(/\D/g, '')
   const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px', boxShadow: '0 2px 10px rgba(74,23,32,0.05)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px', boxShadow: '0 2px 10px rgba(61,39,18,0.05)' }}>
       <div style={{ minWidth: 0 }}>
         {name ? (
           <>
@@ -911,8 +968,8 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, hasContac
     <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100 }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
-        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(74,23,32,0.08)',
-        boxShadow: '0 10px 30px rgba(74,23,32,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
+        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(61,39,18,0.08)',
+        boxShadow: '0 10px 30px rgba(61,39,18,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
       }}>
         {hasWishes && iconBtn(() => scrollToId('wishes'), t('navWishes'), <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
         {iconBtn(() => scrollToId('savethedate'), t('navSaveDate'), <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
@@ -933,7 +990,7 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, hasContac
           width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
           background: `linear-gradient(135deg,${primary},${GOLD})`, color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          boxShadow: '0 6px 16px rgba(74,23,32,0.35)',
+          boxShadow: '0 6px 16px rgba(61,39,18,0.35)',
         }}>
           {playing ? (
             <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -1073,18 +1130,20 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
         )}
       </AnimatePresence>
 
-      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(74,23,32,0.12)", position: "relative" }}>
+      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(61,39,18,0.12)", position: "relative" }}>
 
         {/* ══ COVER — cinematic golden poruwa hero video, plays from load ══ */}
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.6 }}
               style={{
-                minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
+                minHeight: "100vh", display: "flex", flexDirection: "column",
                 position: "relative", overflow: "hidden", background: MAROON,
               }}>
 
-              {/* Cinematic hero video / fallback backdrop */}
+              {/* Cinematic hero video — fills the whole screen, exactly like the
+                  reference: the poruwa arch, couple and dancers ARE the frame,
+                  so no extra decorative borders are layered on top of it. */}
               {coverVideoUrl && heroVideoOk ? (
                 <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto}
                   onError={() => setHeroVideoOk(false)}
@@ -1104,55 +1163,46 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 90% 70% at 50% 30%, ${PRIMARY} 0%, ${MAROON} 75%)` }} />
               )}
 
-              {/* Dark cinematic gradient for text legibility */}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,7,10,0.55) 0%, rgba(20,7,10,0.15) 30%, rgba(20,7,10,0.35) 65%, rgba(20,7,10,0.85) 100%)` }} />
-              <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)`, backgroundSize: "24px 24px", zIndex: 1 }} />
-              <FloatingPetals count={14} color={GOLD_LIGHT} />
+              {/* Gentle top+bottom darkening only — just enough for the text
+                  and button to read clearly, without flattening the video. */}
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,7,10,0.5) 0%, rgba(20,7,10,0.05) 22%, rgba(20,7,10,0.05) 70%, rgba(20,7,10,0.6) 100%)` }} />
+              <FloatingPetals count={8} color={GOLD_LIGHT} />
 
-              {/* Ornamental corners */}
-              <div style={{ position: "absolute", top: 18, left: 18, zIndex: 6 }}><CornerOrnament /></div>
-              <div style={{ position: "absolute", top: 18, right: 18, zIndex: 6 }}><CornerOrnament flip /></div>
-
-              {/* Text content */}
+              {/* Text sits near the top, under the poruwa arch — matching the
+                  reference's layout — with the button pinned to the bottom. */}
               <motion.div
-                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                style={{ textAlign: "center", width: "88%", maxWidth: 360, position: "relative", zIndex: 10, padding: "0 1rem 3rem" }}
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                style={{ textAlign: "center", width: "90%", maxWidth: 360, position: "relative", zIndex: 10, padding: "3rem 1rem 0", margin: "0 auto" }}
               >
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-                  <LotusIcon color={GOLD_LIGHT} size={38} opacity={0.95} />
-                </div>
-
-                <div style={{ fontSize: 10, letterSpacing: "0.5em", textTransform: "uppercase", color: GOLD_LIGHT, marginBottom: "0.9rem" }}>
+                <div style={{ fontSize: 15, letterSpacing: "0.08em", color: "#fff", marginBottom: "0.5rem", fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
                   {t('weddingInvitation')}
                 </div>
 
                 {guestName && (
-                  <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "0.6rem", fontWeight: 700 }}>{t('dear')} {guestName}</div>
+                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD_LIGHT, marginBottom: "0.4rem", fontWeight: 700 }}>{t('dear')} {guestName}</div>
                 )}
 
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,10vw,4rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
-                  {W.bride}
-                  <span style={{ display: "block", fontSize: "1.8rem", color: GOLD_LIGHT, margin: "0.2rem 0" }}>&amp;</span>
-                  {W.groom}
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: "clamp(1.5rem,6vw,2.1rem)", color: GOLD_LIGHT, lineHeight: 1.3, textShadow: "0 2px 14px rgba(0,0,0,0.5)" }}>
+                  {W.bride} <span style={{ color: "#fff", fontWeight: 400 }}>&amp;</span> {W.groom}
                 </div>
-
-                <div style={{ height: 1, width: 50, background: `${GOLD_LIGHT}aa`, margin: "18px auto" }} />
-
-                <button onClick={handleOpen} style={{
-                  display: "inline-flex", alignItems: "center", gap: 10,
-                  background: `linear-gradient(135deg,${GOLD},#a9803f)`, color: MAROON,
-                  border: `1px solid ${GOLD_LIGHT}`, borderRadius: 100, padding: "13px 28px",
-                  fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700,
-                  boxShadow: `0 10px 26px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.25)`,
-                }}>
-                  {t('openInvitation')} <span>→</span>
-                </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.75)", marginTop: 12 }}>🎵 {t('tapToBegin')}</div>
               </motion.div>
 
-              <div style={{ position: "absolute", bottom: 18, left: 18, zIndex: 6, transform: "scaleY(-1)" }}><CornerOrnament /></div>
-              <div style={{ position: "absolute", bottom: 18, right: 18, zIndex: 6, transform: "scaleY(-1)" }}><CornerOrnament flip /></div>
+              <motion.div
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8 }}
+                style={{ position: "relative", zIndex: 10, marginTop: "auto", textAlign: "center", padding: "0 1.5rem 2.6rem" }}
+              >
+                <button onClick={handleOpen} style={{
+                  width: "100%", maxWidth: 300,
+                  background: "rgba(255,251,244,0.92)", color: MAROON,
+                  border: "none", borderRadius: 14, padding: "15px 24px",
+                  fontSize: 12.5, letterSpacing: "0.1em",
+                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700,
+                  boxShadow: "0 10px 26px rgba(0,0,0,0.35)",
+                }}>
+                  {t('openInvitation')}
+                </button>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.8)", marginTop: 10 }}>🎵 {t('tapToBegin')}</div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1161,72 +1211,56 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            {/* Hero */}
-            <div style={{ position: "relative", height: 480, overflow: "hidden" }}>
-              {coverVideoUrl && heroVideoOk ? (
-                <video autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} onError={() => setHeroVideoOk(false)} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
-                  <source src={coverVideoUrl} type="video/mp4" />
-                </video>
-              ) : heroPhotoOk ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
-                  onError={e => {
-                    const img = e.currentTarget as HTMLImageElement
-                    if (img.src.endsWith(DEFAULT_PHOTO)) { setHeroPhotoOk(false); return }
-                    img.src = DEFAULT_PHOTO
-                  }} />
-              ) : (
-                <>
-                  <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 90% 70% at 50% 20%, ${PRIMARY} 0%, ${MAROON} 70%)` }} />
-                  <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)`, backgroundSize: "28px 28px" }} />
-                </>
-              )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(20,7,10,0.1) 55%,rgba(20,7,10,0.35) 100%)` }} />
-
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || t('togetherWithFamilies')}</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,9vw,4.2rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.35)" }}>
-                    {W.bride}
-                    <span style={{ display: "block", fontSize: "2rem", color: GOLD_LIGHT, margin: "0.2rem 0" }}>&amp;</span>
-                    {W.groom}
-                  </div>
-                  <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                    <a href="#rsvp" style={{ background: `linear-gradient(135deg,${GOLD},#a9803f)`, color: MAROON, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 700 }}>{t('rsvp')}</a>
-                    <a href={normalizeMapsUrl(eventsList[0]?.maps_url || couple.maps_url || '')} target="_blank" rel="noopener noreferrer"
-                      style={{ background: "rgba(0,0,0,0.2)", backdropFilter: "blur(8px)", color: "#fff", border: `1.5px solid ${GOLD_LIGHT}`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>{t('location')}</a>
-                  </div>
-                </motion.div>
+            {/* Names + Family — a plain blush section (no white card), a
+                gold mandala peeking from the top and a lotus branch
+                closing the bottom, exactly the layout the reference
+                video cuts to right after the cover video is tapped
+                open — no second video repeat, no button row here. */}
+            <div style={{ position: "relative", padding: "0 1.5rem", overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginTop: -36, marginBottom: -18 }}>
+                <MandalaMedallion size={190} color={PRIMARY} />
               </div>
-            </div>
 
-            {/* Intro line */}
-            <div style={{ textAlign: "center", padding: "1.6rem 1.5rem 0.4rem" }}>
-              <div style={{ color: DARK, opacity: 0.8, lineHeight: 1.85, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1rem" }}>
-                {W.introText}
-              </div>
-            </div>
-
-            {/* Family card */}
-            {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={eyebrow(`${PRIMARY}aa`)}>💐 {t('ourFamilies')}</div>
-                <div style={{ textAlign: "center", padding: "16px 14px", background: `${PRIMARY_LIGHT}33`, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 1.9 }}>
-                  {W.groomFamilyName && <div style={{ fontWeight: 700 }}>{W.groomFamilyName}</div>}
-                  {W.groomFamilyName && W.brideFamilyName && (
-                    <div style={{ fontSize: 11, color: MUTED, margin: "2px 0" }}>{(couple as any).together_with_text || t('togetherWith')}</div>
-                  )}
-                  {W.brideFamilyName && <div style={{ fontWeight: 700 }}>{W.brideFamilyName}</div>}
-                  {(() => {
-                    const txt = (couple as any).family_invitation_text
-                    const trimmed = (txt || '').trim()
-                    if (!trimmed) return null
-                    const lines = trimmed.split('\n')
-                    return <div style={{ color: MUTED, marginTop: 8 }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</div>
-                  })()}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7 }}
+                style={{ textAlign: "center", paddingTop: 8 }}>
+                {guestName && (
+                  <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: `${PRIMARY}cc`, marginBottom: 10, fontWeight: 700 }}>{t('dear')} {guestName}</div>
+                )}
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontSize: "2.1rem", color: PRIMARY, lineHeight: 1.35 }}>
+                  {W.bride}
+                  <div style={{ fontSize: "1rem", color: DARK, opacity: 0.6, fontStyle: "italic", margin: "2px 0" }}>{(couple as any).together_with_text || t('togetherWith')}</div>
+                  {W.groom}
+                </div>
+                <div style={{ color: DARK, opacity: 0.8, lineHeight: 1.85, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "0.95rem", marginTop: 18, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>
+                  {W.introText}
                 </div>
               </motion.div>
-            )}
+
+              {(W.brideFamilyName || W.groomFamilyName) && (
+                <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                  style={{ textAlign: "center", marginTop: 30 }}>
+                  <div style={eyebrow(`${PRIMARY}aa`)}>💐 {t('ourFamilies')}</div>
+                  <div style={{ fontSize: 14, color: DARK, lineHeight: 2 }}>
+                    {W.groomFamilyName && <div style={{ fontWeight: 700 }}>{W.groomFamilyName}</div>}
+                    {W.groomFamilyName && W.brideFamilyName && (
+                      <div style={{ fontSize: 11, color: MUTED, margin: "2px 0" }}>{t('togetherWith')}</div>
+                    )}
+                    {W.brideFamilyName && <div style={{ fontWeight: 700 }}>{W.brideFamilyName}</div>}
+                    {(() => {
+                      const txt = (couple as any).family_invitation_text
+                      const trimmed = (txt || '').trim()
+                      if (!trimmed) return null
+                      const lines = trimmed.split('\n')
+                      return <div style={{ color: MUTED, marginTop: 8, fontSize: 12.5 }}>{lines.map((l: string, i: number) => <span key={i}>{l}{i < lines.length - 1 && <br />}</span>)}</div>
+                    })()}
+                  </div>
+                </motion.div>
+              )}
+
+              <div style={{ marginTop: 22, marginLeft: -24, marginRight: -24 }}>
+                <LotusBranchDivider color={PRIMARY} />
+              </div>
+            </div>
 
             {/* Events */}
             {eventsList.map(ev => {
@@ -1330,7 +1364,7 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={heading(DARK)}>{t('momentsOfLove')}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}55`, aspectRatio: i === 0 ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(74,23,32,0.12)" }}>
+                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}55`, aspectRatio: i === 0 ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(61,39,18,0.12)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
                     </div>
@@ -1357,7 +1391,7 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
                   ...cardStyle(), textAlign: "center",
                   background: `linear-gradient(180deg, ${PRIMARY_LIGHT}44 0%, #fff 58%)`,
                   border: `1px solid ${GOLD}55`,
-                  boxShadow: `0 12px 36px ${PRIMARY}26, 0 2px 20px rgba(74,23,32,0.06)`,
+                  boxShadow: `0 12px 36px ${PRIMARY}26, 0 2px 20px rgba(61,39,18,0.06)`,
                 }}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               >
