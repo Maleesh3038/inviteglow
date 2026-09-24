@@ -1262,11 +1262,15 @@ function GoldenPoruwaInner({ couple }: { couple: Couple }) {
               {/* Soft couple-photo backdrop — faded well into the blush
                   tone so it reads as warmth/texture behind the names,
                   never competing with the text on top of it. */}
-              <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+              <div style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden" }}>
+                {/* Heavily blurred + scaled up so the photo reads as a soft
+                    warm glow of colour behind the linework, not a sharp,
+                    identifiable picture — this keeps it elegant whatever
+                    photo the couple uploads (illustrated avatar or real). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.5, filter: "saturate(0.9)" }}
+                <img src={W.couplePhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", opacity: 0.4, filter: "blur(18px) saturate(0.75)", transform: "scale(1.25)" }}
                   onError={e => { e.currentTarget.style.display = "none" }} />
-                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}99 0%, ${CREAM}b3 30%, ${CREAM}e0 62%, ${CREAM} 88%)` }} />
+                <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${CREAM}b3 0%, ${CREAM}c7 28%, ${CREAM}e8 62%, ${CREAM} 88%)` }} />
               </div>
 
               <div style={{ position: "relative", zIndex: 1 }}>
