@@ -634,7 +634,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
         input::placeholder, textarea::placeholder { color: #a8bccf; }
         .fc-blossom { position: absolute; top: -20px; opacity: 0; display: block; animation-name: fc-fall; animation-timing-function: linear; animation-iteration-count: infinite; }
         @keyframes fc-fall {
@@ -709,7 +709,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                   <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#ffffff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9)" }}>
                     {guestName ? `Dear ${guestName}` : 'First Holy Communion'}
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.6rem,10vw,3.6rem)", color: "#fff", lineHeight: 1.1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.childName}</div>
+                  <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "clamp(2.2rem,8.5vw,3.1rem)", color: "#fff", lineHeight: 1.2, textShadow: "0 4px 24px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.7)" }}>{W.childName}</div>
                   <div style={{ fontSize: 11.5, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "0.5rem 0 0" }}>{W.relationLine}</div>
                   {W.host && (
                     <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(255,255,255,0.8)", margin: "0.4rem 0 0" }}>With the Blessing of {W.host}</div>
@@ -764,7 +764,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                 <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 90% 70% at 50% 0%, ${PRIMARY}33 0%, ${CREAM} 75%)` }} />
               )}
               <div style={{ position: "absolute", left: 0, right: 0, bottom: 20, textAlign: "center", zIndex: 2 }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.2rem", color: hasVisualCover ? "#fff" : DARK, textShadow: hasVisualCover ? "0 3px 14px rgba(0,0,0,0.5)" : "none" }}>{W.childName}</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "1.7rem", color: hasVisualCover ? "#fff" : DARK, textShadow: hasVisualCover ? "0 3px 14px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.7)" : "none" }}>{W.childName}</div>
                 {W.host && (
                   <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: hasVisualCover ? "rgba(255,255,255,0.85)" : MUTED, marginTop: 4 }}>With the Blessing of {W.host}</div>
                 )}
@@ -784,7 +784,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                 <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: "2.1rem", color: PRIMARY, letterSpacing: '0.04em', marginTop: 2 }}>COMMUNION</div>
                 <div style={{ fontSize: 11.5, letterSpacing: "0.22em", textTransform: "uppercase", color: MUTED, marginTop: 8 }}>{W.relationLine}</div>
                 <GoldDivider color={PRIMARY_LIGHT} />
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "3rem", color: DARK }}>{W.childName}</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "2.3rem", color: DARK }}>{W.childName}</div>
                 <p style={{ fontSize: 13.5, color: DARK, opacity: 0.75, lineHeight: 1.9, marginTop: 20, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   We joyfully invite you to witness {firstName} receive the Holy Eucharist for the first time — a blessed milestone in faith and love.
                 </p>
@@ -893,7 +893,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 16 }}>
                   <div style={{ fontSize: 11, color: MUTED }}>With love and gratitude,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.childName}</div>
+                  <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 4 }}>{W.childName}</div>
                 </div>
               </motion.div>
             )}
