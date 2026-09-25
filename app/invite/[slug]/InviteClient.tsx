@@ -21,6 +21,7 @@ import KanchiVivahaTemplate from '@/components/templates/KanchiVivahaTemplate'
 import CeremonialGuardTemplate from '@/components/templates/CeremonialGuardTemplate'
 import CorporateEventTemplate from '@/components/templates/CorporateEventTemplate'
 import GoldenPoruwaTemplate from '@/components/templates/GoldenPoruwaTemplate'
+import FirstCommunionTemplate from '@/components/templates/FirstCommunionTemplate'
 
 export default function InviteClient({ slug }: { slug: string }) {
   const [couple, setCouple] = useState<Couple | null>(null)
@@ -61,7 +62,16 @@ export default function InviteClient({ slug }: { slug: string }) {
     )
   }
   if (eventRow) {
-    return <CorporateEventTemplate couple={eventRow} />
+    // Events support their own template picker too (see AdminPage's
+    // TEMPLATES list, category: 'event') — default to Corporate Event
+    // for older rows created before this switch existed.
+    switch (eventRow.template) {
+      case 'first-communion':
+        return <FirstCommunionTemplate couple={eventRow} />
+      case 'corporate-event':
+      default:
+        return <CorporateEventTemplate couple={eventRow} />
+    }
   }
   if (notFound || !couple) {
     return (
