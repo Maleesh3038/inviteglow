@@ -2246,9 +2246,22 @@ export default function AdminPage() {
                       <input type="checkbox" checked={eventForm.ask_meal_pref} onChange={e => setEventForm({ ...eventForm, ask_meal_pref: e.target.checked })} /> Ask guests for Veg / Non-Veg meal preference during RSVP
                     </label>
 
-                    <div style={fieldWrap}>
-                      <label style={labelStyle}>Background Music URL (optional)</label>
-                      <input style={inputStyle} value={eventForm.song_url} onChange={e => setEventForm({ ...eventForm, song_url: e.target.value })} placeholder="Leave blank for a silent invite" />
+                    <div style={{ background: '#fdf2f8', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#be185d', marginBottom: 10 }}>
+                        <Icon name="music" size={14} color="#be185d" /> Background Music (optional)
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                        <div>
+                          <label style={labelStyle}>Song Title</label>
+                          <input style={inputStyle} placeholder="Leave empty for default" value={eventForm.song_title} onChange={e => setEventForm({ ...eventForm, song_title: e.target.value })} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Artist</label>
+                          <input style={inputStyle} placeholder="Leave empty for default" value={eventForm.song_artist} onChange={e => setEventForm({ ...eventForm, song_artist: e.target.value })} />
+                        </div>
+                      </div>
+                      <MusicUploader value={eventForm.song_url} onChange={url => setEventForm({ ...eventForm, song_url: url })} />
+                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Leave blank for a silent invite. Plays automatically (with the video, or right on "Open Invitation" if there's no video) once the guest opens it.</div>
                     </div>
                     <div style={fieldWrap}>
                       <label style={labelStyle}>Thank You Note (optional)</label>
