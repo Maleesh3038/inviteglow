@@ -706,7 +706,6 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                     {guestName ? `Dear ${guestName}` : 'First Holy Communion'}
                   </div>
                   <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "clamp(2.2rem,8.5vw,3.1rem)", color: "#fff", lineHeight: 1.2, textShadow: "0 4px 24px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.7)" }}>{W.childName}</div>
-                  <div style={{ fontSize: 11.5, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY_LIGHT, margin: "0.5rem 0 0" }}>{W.relationLine}</div>
                   {W.host && (
                     <div style={{ fontSize: 11, letterSpacing: "0.08em", color: "rgba(255,255,255,0.8)", margin: "0.4rem 0 0" }}>With the Blessing of {W.host}</div>
                   )}
