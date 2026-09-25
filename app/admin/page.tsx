@@ -22,6 +22,7 @@ const TEMPLATES = [
   { id: 'dried-bloom-romance', name: 'Dried Bloom Romance', tag: 'Wax Seal & Dried Florals', photo: '', demoSlug: '', color: '#c98a93', category: 'wedding' },
   { id: 'golden-poruwa', name: 'Golden Poruwa', tag: 'Cinematic Gold Video', photo: '', demoSlug: '', color: '#b8863d', category: 'wedding' },
   { id: 'corporate-event', name: 'Corporate Event', tag: 'Office & Corporate', photo: '', demoSlug: '', color: '#1c3d5a', category: 'event' },
+  { id: 'first-communion', name: 'First Holy Communion', tag: 'Blue & Gold Blessing', photo: '', demoSlug: '', color: '#7fa8c9', category: 'event' },
 ]
 const CATEGORY_LABELS: Record<string, string> = { wedding: 'Wedding', event: 'Event', birthday: 'Birthday' }
 const BUCKET = 'wedding-photos'
