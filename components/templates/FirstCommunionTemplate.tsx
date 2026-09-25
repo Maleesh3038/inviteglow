@@ -788,6 +788,15 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                 <p style={{ fontSize: 13.5, color: DARK, opacity: 0.75, lineHeight: 1.9, marginTop: 20, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   We joyfully invite you to witness {firstName} receive the Holy Eucharist for the first time — a blessed milestone in faith and love.
                 </p>
+                {contactList.length > 0 && (
+                  <>
+                    <GoldDivider color={PRIMARY_LIGHT} width={56} />
+                    <div style={{ fontSize: 10.5, letterSpacing: "0.28em", textTransform: "uppercase", color: MUTED }}>RSVP To {contactList[0].name}</div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 6, fontSize: 15, fontWeight: 700, color: PRIMARY }}>
+                      <span aria-hidden="true">📞</span> {contactList[0].phone}
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
 
