@@ -582,6 +582,11 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
     if (coverVideoUrl) {
       setVideoPlaying(true)
       videoEndedHandledRef.current = false
+      // Intro video plays muted (silent) — the uploaded background music,
+      // not the video's own sound, is what guests hear, starting the
+      // instant they tap "Open Invitation" (a genuine user gesture, so
+      // autoplay-with-sound isn't blocked).
+      audioRef.current?.play().catch(() => {})
       coverVideoRef.current?.play().catch(() => { handleVideoEnded() })
       const dur = videoDurationRef.current
       const fallbackMs = (dur && isFinite(dur) && dur > 0 ? dur + 2.5 : 20) * 1000
@@ -659,7 +664,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                     <img src={W.coverPhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none" }} />
                   )}
                   {coverVideoUrl && (
-                    <video ref={coverVideoRef} playsInline preload="auto" poster={W.coverPhoto || undefined}
+                    <video ref={coverVideoRef} playsInline muted preload="auto" poster={W.coverPhoto || undefined}
                       onLoadedMetadata={e => { try { e.currentTarget.currentTime = 0.1 } catch {} ; videoDurationRef.current = e.currentTarget.duration }}
                       onLoadedData={() => setCoverVideoReady(true)}
                       onCanPlay={() => setCoverVideoReady(true)}
