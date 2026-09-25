@@ -702,8 +702,11 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                     <GoldCross size={44} color={PRIMARY_LIGHT} />
                   </div>
 
-                  <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#ffffff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9)" }}>
-                    {guestName ? `Dear ${guestName}` : 'First Holy Communion'}
+                  <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#ffffff", marginBottom: "0.5rem", textShadow: "0 2px 10px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.9)" }}>
+                    First Holy Communion
+                  </div>
+                  <div style={{ fontSize: 9.5, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.6rem" }}>
+                    {W.relationLine}
                   </div>
                   <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "clamp(2.2rem,8.5vw,3.1rem)", color: "#fff", lineHeight: 1.2, textShadow: "0 4px 24px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.7)" }}>{W.childName}</div>
                   {W.host && (
