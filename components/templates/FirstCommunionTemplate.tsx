@@ -698,10 +698,6 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                   style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.28)" }}>
-                    {(couple as any).cover_badge_text || 'Sacred Celebration'}
-                  </div>
-
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
                     <GoldCross size={44} color={PRIMARY_LIGHT} />
                   </div>
