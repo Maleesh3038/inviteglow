@@ -514,7 +514,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
         {hasWishes && iconBtn(() => scrollToId('wishes'), 'Blessings', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
         {iconBtn(() => scrollToId('savethedate'), 'The Day', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
         {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
-        {hasContact && iconBtn(() => scrollToId('contact'), 'RSVP To', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {hasContact && iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
         {mapsUrl && (
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8, textDecoration: 'none', padding: '2px 4px' }}>
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
@@ -788,15 +788,6 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                 <p style={{ fontSize: 13.5, color: DARK, opacity: 0.75, lineHeight: 1.9, marginTop: 20, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   We joyfully invite you to witness {firstName} receive the Holy Eucharist for the first time — a blessed milestone in faith and love.
                 </p>
-                {contactList.length > 0 && (
-                  <>
-                    <GoldDivider color={PRIMARY_LIGHT} width={56} />
-                    <div style={{ fontSize: 10.5, letterSpacing: "0.28em", textTransform: "uppercase", color: MUTED }}>RSVP To {contactList[0].name}</div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 6, fontSize: 15, fontWeight: 700, color: PRIMARY }}>
-                      <span aria-hidden="true">📞</span> {contactList[0].phone}
-                    </div>
-                  </>
-                )}
               </div>
             </motion.div>
 
@@ -883,8 +874,8 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
 
             {contactList.length > 0 && (
               <div id="contact" style={sectionCard}>
-                <div style={sectionEyebrow(PRIMARY)}>Kindly Confirm</div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.5rem", color: DARK, textAlign: "center", marginBottom: 20 }}>RSVP To</div>
+                <div style={sectionEyebrow(PRIMARY)}>Get In Touch</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "1.5rem", color: DARK, textAlign: "center", marginBottom: 20 }}>Contact Numbers</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {contactList.map((c, i) => (
                     <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} dark={DARK} muted={MUTED} cream={CREAM} />
