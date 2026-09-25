@@ -1,6 +1,23 @@
 "use client"
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase, Couple, RSVP, Review } from '@/lib/supabase'
+// ── Sri Lanka is fixed UTC+5:30, no DST — events_table_migration.sql
+// defines `event_date` as `timestamptz`, so a naive "YYYY-MM-DDTHH:mm"
+// string from a <input type="datetime-local"> (which carries no
+// timezone of its own) gets interpreted by Postgres using its own
+// session timezone (UTC on Supabase), silently shifting every event by
+// 5.5 hours. These two helpers pin it to Colombo time on the way in
+// and back out, so what the admin types is what guests see.
+function colomboLocalInputToISO(local: string): string {
+  return local ? `${local}:00+05:30` : local
+}
+function isoToColomboLocalInput(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const colombo = new Date(d.getTime() + 5.5 * 60 * 60 * 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${colombo.getUTCFullYear()}-${pad(colombo.getUTCMonth() + 1)}-${pad(colombo.getUTCDate())}T${pad(colombo.getUTCHours())}:${pad(colombo.getUTCMinutes())}`
+}
 const TEMPLATES = [
   { id: 'floral-romance', name: 'Floral Romance', tag: 'Most Popular', photo: '/images/hero-floral.png', demoSlug: 'kavindi-malina', color: '#c4607a', category: 'wedding' },
   { id: 'elegant-photo', name: 'Elegant Photo Hero', tag: 'Classic', photo: '/images/hero-elegant.png', demoSlug: 'sheneli-kevin', color: '#a8895a', category: 'wedding' },
@@ -1760,7 +1777,7 @@ export default function AdminPage() {
       host: e.host || '',
       event_tagline: e.event_tagline || '',
       cover_badge_text: e.cover_badge_text || '',
-      event_date: (e as any).event_date ? (e as any).event_date.slice(0, 16) : '',
+      event_date: (e as any).event_date ? isoToColomboLocalInput((e as any).event_date) : '',
       event_end_time: (e as any).event_end_time || '',
       time_format: ((e as any).time_format === '24h' ? '24h' : '12h') as '12h' | '24h',
       venue: e.venue || '',
@@ -1824,7 +1841,7 @@ export default function AdminPage() {
       host: eventForm.host || null,
       event_tagline: eventForm.event_tagline || null,
       cover_badge_text: eventForm.cover_badge_text || null,
-      event_date: eventForm.event_date,
+      event_date: colomboLocalInputToISO(eventForm.event_date),
       event_end_time: eventForm.event_end_time || null,
       time_format: eventForm.time_format || '12h',
       venue: eventForm.venue || null,
