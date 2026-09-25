@@ -2141,6 +2141,12 @@ export default function AdminPage() {
                       <input style={inputStyle} value={eventForm.slug} onChange={e => setEventForm({ ...eventForm, slug: e.target.value })} placeholder="annual-day-2026" />
                     </div>
                     <div style={fieldWrap}>
+                      <label style={labelStyle}>Template</label>
+                      <select style={inputStyle} value={eventForm.template} onChange={e => setEventForm({ ...eventForm, template: e.target.value })}>
+                        {TEMPLATES.filter(t => (t.category || 'wedding') === 'event').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <div style={fieldWrap}>
                       <label style={labelStyle}>Event Title *</label>
                       <input style={inputStyle} value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} placeholder="Annual Excellence Awards 2026" />
                     </div>
