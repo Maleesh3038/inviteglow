@@ -96,6 +96,7 @@ type EventRow = {
   host?: string | null
   event_date: string
   pin?: string | null
+  template?: string | null
   ask_drinking?: boolean | null
   ask_meal_pref?: boolean | null
   whatsapp_invite_message?: string | null
@@ -623,6 +624,11 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   const [authChecking, setAuthChecking] = useState(false)
 
   const [event, setEvent] = useState<EventRow | null>(null)
+  // The EPF/QR entry-pass fields and meal check-off below are a Corporate
+  // Event-specific check-in workflow — not relevant on a family/religious
+  // event's dashboard like First Holy Communion, where guests never submit
+  // an EPF number and there's no catered-meal handout to track.
+  const isCorporate = event?.template === 'corporate-event'
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -658,7 +664,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
   // ── Load event + guest list ──
   useEffect(() => {
     const load = async () => {
-      const { data: ev, error } = await supabase.from('events').select('id,slug,title,host,event_date,pin,ask_drinking,ask_meal_pref,whatsapp_invite_message').eq('slug', slug).single()
+      const { data: ev, error } = await supabase.from('events').select('id,slug,title,host,event_date,pin,template,ask_drinking,ask_meal_pref,whatsapp_invite_message').eq('slug', slug).single()
       if (error || !ev) { setNotFound(true); setLoading(false); setCheckingSession(false); return }
       setEvent(ev as EventRow)
       try {
@@ -1058,7 +1064,9 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                             <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                               {g.guest_name}{g.guest_count > 1 ? ` (+${g.guest_count - 1})` : ''}{mealBadge(g.meal_pref)}
                             </div>
-                            <div style={{ fontSize: 11.5, color: TEXT_MUTED, marginTop: 2 }}>{g.epf_no ? `EPF ${g.epf_no}` : 'no EPF'} · {g.phone || 'no phone'} · Code {g.id.slice(0, 8).toUpperCase()}</div>
+                            <div style={{ fontSize: 11.5, color: TEXT_MUTED, marginTop: 2 }}>
+                              {isCorporate ? <>{g.epf_no ? `EPF ${g.epf_no}` : 'no EPF'} · {g.phone || 'no phone'} · Code {g.id.slice(0, 8).toUpperCase()}</> : (g.phone || 'no phone')}
+                            </div>
                           </div>
                         </div>
                         <button onClick={() => handleDeleteGuest(g.id, g.guest_name)} disabled={deletingGuestId === g.id} title="Remove guest" style={{
@@ -1071,10 +1079,12 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
                           border: `1px solid ${g.checked_in ? SUCCESS : BORDER}`, background: g.checked_in ? '#f0fdf4' : '#fff', color: g.checked_in ? SUCCESS : TEXT_DARK,
                         }}>{g.checked_in && <Icon name="check" size={13} color={SUCCESS} />}{g.checked_in ? `Checked In · ${fmtTime(g.checked_in_at)}` : 'Check In'}</button>
-                        <button onClick={() => toggleMeal(g)} style={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                          border: `1px solid ${g.meal_claimed ? ACCENT : BORDER}`, background: g.meal_claimed ? '#f4f5f7' : '#fff', color: g.meal_claimed ? ACCENT : TEXT_DARK,
-                        }}>{g.meal_claimed && <Icon name="check" size={13} color={ACCENT} />}{g.meal_claimed ? `Meal Given · ${fmtTime(g.meal_claimed_at)}` : 'Mark Meal'}</button>
+                        {event?.ask_meal_pref && (
+                          <button onClick={() => toggleMeal(g)} style={{
+                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                            border: `1px solid ${g.meal_claimed ? ACCENT : BORDER}`, background: g.meal_claimed ? '#f4f5f7' : '#fff', color: g.meal_claimed ? ACCENT : TEXT_DARK,
+                          }}>{g.meal_claimed && <Icon name="check" size={13} color={ACCENT} />}{g.meal_claimed ? `Meal Given · ${fmtTime(g.meal_claimed_at)}` : 'Mark Meal'}</button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1159,14 +1169,16 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                   {scannedGuest.guest.guest_name}{scannedGuest.guest.guest_count > 1 ? ` (+${scannedGuest.guest.guest_count - 1})` : ''}{mealBadge(scannedGuest.guest.meal_pref)}
                 </div>
                 <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 14, textAlign: 'center' }}>
-                  {scannedGuest.guest.epf_no ? `EPF ${scannedGuest.guest.epf_no}` : 'no EPF no.'} · {scannedGuest.guest.phone || 'no phone'}
+                  {isCorporate ? <>{scannedGuest.guest.epf_no ? `EPF ${scannedGuest.guest.epf_no}` : 'no EPF no.'} · {scannedGuest.guest.phone || 'no phone'}</> : (scannedGuest.guest.phone || 'no phone')}
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                  <button onClick={() => { toggleMeal(scannedGuest.guest); setScannedGuest({ ...scannedGuest, guest: { ...scannedGuest.guest, meal_claimed: !scannedGuest.guest.meal_claimed } }) }} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
-                    border: `1px solid ${scannedGuest.guest.meal_claimed ? ACCENT : BORDER}`, background: scannedGuest.guest.meal_claimed ? '#f4f5f7' : '#fff', color: scannedGuest.guest.meal_claimed ? ACCENT : TEXT_DARK,
-                  }}>{scannedGuest.guest.meal_claimed && <Icon name="check" size={13} color={ACCENT} />}{scannedGuest.guest.meal_claimed ? `Meal Given · ${fmtTime(scannedGuest.guest.meal_claimed_at)}` : 'Mark Meal'}</button>
-                </div>
+                {event?.ask_meal_pref && (
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                    <button onClick={() => { toggleMeal(scannedGuest.guest); setScannedGuest({ ...scannedGuest, guest: { ...scannedGuest.guest, meal_claimed: !scannedGuest.guest.meal_claimed } }) }} style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                      border: `1px solid ${scannedGuest.guest.meal_claimed ? ACCENT : BORDER}`, background: scannedGuest.guest.meal_claimed ? '#f4f5f7' : '#fff', color: scannedGuest.guest.meal_claimed ? ACCENT : TEXT_DARK,
+                    }}>{scannedGuest.guest.meal_claimed && <Icon name="check" size={13} color={ACCENT} />}{scannedGuest.guest.meal_claimed ? `Meal Given · ${fmtTime(scannedGuest.guest.meal_claimed_at)}` : 'Mark Meal'}</button>
+                  </div>
+                )}
                 <button onClick={resumeScan} style={{ width: '100%', padding: 10, borderRadius: 8, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>Scan Next Guest</button>
               </div>
             )}
