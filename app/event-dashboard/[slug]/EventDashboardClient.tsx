@@ -973,8 +973,8 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                 {[
                   ['Registered', stats.registrations],
                   ['Total Guests', stats.totalGuests],
-                  ['Checked In', stats.checkedIn],
-                  ['Meals Given', stats.meals],
+                  ...(isCorporate ? [['Checked In', stats.checkedIn]] : []),
+                  ...(event.ask_meal_pref ? [['Meals Given', stats.meals]] : []),
                 ].map(([label, val]) => (
                   <div key={label as string} style={{ background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: '14px 12px', textAlign: 'center' }}>
                     <div style={{ fontSize: 21, fontWeight: 700, color: TEXT_DARK }}>{val}</div>
@@ -984,11 +984,13 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
               </div>
 
               <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
-                <button onClick={startScan} style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '13px 16px', borderRadius: 10, border: 'none', background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
-                  <Icon name="camera" size={15} color="#fff" /> Scan QR
-                </button>
+                {isCorporate && (
+                  <button onClick={startScan} style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '13px 16px', borderRadius: 10, border: 'none', background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                    <Icon name="camera" size={15} color="#fff" /> Scan QR
+                  </button>
+                )}
                 <button onClick={() => setWalkinOpen(true)} style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '13px 16px', borderRadius: 10, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
-                  <Icon name="plus" size={15} /> Add Walk-in Guest
+                  <Icon name="plus" size={15} /> {isCorporate ? 'Add Walk-in Guest' : 'Add Guest'}
                 </button>
               </div>
 
@@ -1013,6 +1015,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                 </div>
               )}
 
+              {isCorporate && (
               <div style={card}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 12 }}>Recent Check-ins</div>
                 {recentCheckins.length === 0 ? (
@@ -1032,6 +1035,7 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                   </div>
                 )}
               </div>
+              )}
             </motion.div>
           )}
 
@@ -1074,17 +1078,22 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                           opacity: deletingGuestId === g.id ? 0.4 : 1,
                         }}><Icon name="trash" size={15} /></button>
                       </div>
+                      {(isCorporate || event?.ask_meal_pref) && (
                       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                        <button onClick={() => toggleCheckIn(g)} style={{
-                          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                          border: `1px solid ${g.checked_in ? SUCCESS : BORDER}`, background: g.checked_in ? '#f0fdf4' : '#fff', color: g.checked_in ? SUCCESS : TEXT_DARK,
-                        }}>{g.checked_in && <Icon name="check" size={13} color={SUCCESS} />}{g.checked_in ? `Checked In · ${fmtTime(g.checked_in_at)}` : 'Check In'}</button>
+                        {isCorporate && (
+                          <button onClick={() => toggleCheckIn(g)} style={{
+                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                            border: `1px solid ${g.checked_in ? SUCCESS : BORDER}`, background: g.checked_in ? '#f0fdf4' : '#fff', color: g.checked_in ? SUCCESS : TEXT_DARK,
+                          }}>{g.checked_in && <Icon name="check" size={13} color={SUCCESS} />}{g.checked_in ? `Checked In · ${fmtTime(g.checked_in_at)}` : 'Check In'}</button>
+                        )}
                         {event?.ask_meal_pref && (
                           <button onClick={() => toggleMeal(g)} style={{
                             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
                             border: `1px solid ${g.meal_claimed ? ACCENT : BORDER}`, background: g.meal_claimed ? '#f4f5f7' : '#fff', color: g.meal_claimed ? ACCENT : TEXT_DARK,
                           }}>{g.meal_claimed && <Icon name="check" size={13} color={ACCENT} />}{g.meal_claimed ? `Meal Given · ${fmtTime(g.meal_claimed_at)}` : 'Mark Meal'}</button>
                         )}
+                      </div>
+                      )}
                       </div>
                     </div>
                   ))}
