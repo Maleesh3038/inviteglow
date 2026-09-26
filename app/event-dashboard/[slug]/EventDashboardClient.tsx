@@ -1094,7 +1094,6 @@ export default function EventDashboardClient({ slug }: { slug: string }) {
                         )}
                       </div>
                       )}
-                      </div>
                     </div>
                   ))}
                 </div>
