@@ -249,8 +249,21 @@ function RSVP({ coupleId, primary, primaryLight, dark, cream, muted, guestName }
   const save = async (response: "yes" | "no") => {
     if (!name.trim()) { setFormError('Please enter your name.'); return }
     setFormError(''); setSaving(true)
-    await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, guest_count: response === 'yes' ? clampedGuestCount() : 1 }])
-    setSaving(false); setFinalResponse(response); setStep("done")
+    const count = response === 'yes' ? clampedGuestCount() : 1
+    const { error: rsvpError } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, guest_count: count }])
+    // The Event Check-in dashboard (/event-dashboard/[slug]) counts and lists
+    // guests from `event_guests`, not `rsvps` — that's the table Corporate
+    // Event's RSVP writes to as well. This template's simpler RSVP (no
+    // EPF/QR) still needs to add a row here on "yes", or a family member
+    // confirming attendance would never show up on that dashboard's count.
+    let guestError = null
+    if (response === 'yes') {
+      const { error } = await supabase.from('event_guests').insert([{ event_id: coupleId, guest_name: name.trim(), guest_count: count }])
+      guestError = error
+    }
+    setSaving(false)
+    if (rsvpError && guestError) { setFormError("Couldn't save your RSVP — please check your connection and try again."); return }
+    setFinalResponse(response); setStep("done")
   }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }
   return (
@@ -706,7 +719,7 @@ function FirstCommunionInner({ couple }: { couple: EventInvite }) {
                     First Holy Communion
                   </div>
                   <div style={{ fontSize: 9.5, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.6rem" }}>
-                    {W.relationLine}
+                    Of
                   </div>
                   <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontStyle: "italic", fontSize: "clamp(2.2rem,8.5vw,3.1rem)", color: "#fff", lineHeight: 1.2, textShadow: "0 4px 24px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.7)" }}>{W.childName}</div>
                   {W.host && (
