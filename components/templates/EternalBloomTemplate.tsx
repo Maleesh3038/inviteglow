@@ -740,7 +740,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: "13vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -774,7 +774,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
               )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.3) 0%, rgba(20,16,8,0.15) 25%, rgba(20,16,8,0.35) 50%, rgba(20,16,8,0.65) 85%, rgba(20,16,8,0.78) 100%)`, zIndex: 3 }} />
+              {/* Reshaped so the top band (behind the eyebrow + names, now
+                  moved up to clear the couple's photo below) stays dark
+                  enough to read, the middle band stays light so the actual
+                  photo of the couple is still clearly visible, and it
+                  darkens again near the bottom for the button. */}
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.58) 0%, rgba(20,16,8,0.4) 20%, rgba(20,16,8,0.14) 40%, rgba(20,16,8,0.12) 65%, rgba(20,16,8,0.5) 85%, rgba(20,16,8,0.75) 100%)`, zIndex: 3 }} />
 
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
