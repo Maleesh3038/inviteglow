@@ -799,11 +799,17 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                     <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)", fontWeight: 600 }}>{guestName}</div>
                   </>
                 )}
+              </motion.div>
 
+              {/* Button now anchored near the bottom of the cover, over the
+                  path/ground area of the photo, well clear of the names
+                  block pinned up top — instead of sitting right under the
+                  names. */}
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: "9%", textAlign: "center", zIndex: 10, padding: "0 1rem" }}>
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.95)", color: "#1a1408",
                   border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", marginTop: guestName ? 32 : "5.5rem",
+                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                   opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
                 }}>
                   {videoPlaying ? "Playing..." : "Open Invitation →"}
@@ -811,7 +817,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 {!videoPlaying && (
                   <div style={{ fontSize: 9, color: "rgba(255,255,255,0.85)", marginTop: 14, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>🎵 Tap to begin — with music</div>
                 )}
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
