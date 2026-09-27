@@ -740,7 +740,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: "17vh" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: "21vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -805,7 +805,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                   path/ground area of the photo, well clear of the names
                   block pinned up top — instead of sitting right under the
                   names. */}
-              <div style={{ position: "absolute", left: 0, right: 0, bottom: "17%", textAlign: "center", zIndex: 10, padding: "0 1rem" }}>
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: "25%", textAlign: "center", zIndex: 10, padding: "0 1rem" }}>
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.95)", color: "#1a1408",
                   border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
