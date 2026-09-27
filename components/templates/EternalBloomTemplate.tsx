@@ -803,7 +803,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <button onClick={handleOpen} disabled={videoPlaying} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.95)", color: "#1a1408",
                   border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", marginTop: guestName ? 8 : "1.5rem",
+                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", marginTop: guestName ? 32 : "5.5rem",
                   opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
                 }}>
                   {videoPlaying ? "Playing..." : "Open Invitation →"}
