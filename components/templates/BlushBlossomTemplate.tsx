@@ -1023,7 +1023,6 @@ function Reveal({ id, mt = 56, wide = false, children }: { id?: string; mt?: num
 function RsvpBlock({ couple, colors, boxBg, guestName, t }: {
   couple: Couple; colors: { primary: string; primaryLight: string; dark: string }; boxBg: string; guestName: string; t: (k: string) => string
 }) {
-  const [showRsvpForm, setShowRsvpForm] = useState(false)
   const [guestNameInput, setGuestNameInput] = useState(guestName)
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   // Kept as a string (not a number) while the field is being edited, so the
@@ -1091,28 +1090,6 @@ function RsvpBlock({ couple, colors, boxBg, guestName, t }: {
           <div style={{ fontSize: 13.5, color: colors.dark, fontWeight: 700 }}>{t('thankYouExcl')}</div>
           <div style={{ fontSize: 12.5, color: colors.dark, opacity: 0.6, marginTop: 4 }}>{t('responseRecorded')}</div>
         </div>
-      ) : !showRsvpForm ? (
-        <>
-          <p style={{ fontSize: 13, color: colors.dark, opacity: 0.75, marginBottom: 20, fontWeight: 600 }}>
-            {t('confirmPrompt')}
-          </p>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => setShowRsvpForm(true)} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '13px 26px', borderRadius: 100, border: 'none', cursor: 'pointer',
-              background: colors.primary, color: '#fff', fontWeight: 700, fontSize: 13.5,
-              boxShadow: `0 8px 20px ${colors.primary}55`,
-            }}>
-              <Icon name="check" size={13} color="#fff" />
-              {t('confirmAttendance')}
-            </button>
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{
-              padding: '13px 22px', borderRadius: 100, border: `1.5px solid ${colors.primaryLight}`,
-              background: boxBg, color: colors.dark, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              boxShadow: `0 4px 14px ${colors.dark}0d`,
-            }}>{t('backToTop')}</button>
-          </div>
-        </>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...cardStyle, padding: '20px 18px', textAlign: 'left' }}>
           <input
