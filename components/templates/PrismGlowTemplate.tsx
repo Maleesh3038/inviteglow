@@ -20,10 +20,10 @@ import FooterSocial from '@/components/shared/FooterSocial'
  */
 
 const DEFAULT_COLORS: Required<CoupleColors> = {
-  primary: '#e8432f',
-  primaryLight: '#ffe3a8',
-  dark: '#15151f',
-  cream: '#f6f3ec',
+  primary: '#a87b3f',
+  primaryLight: '#f3e6c8',
+  dark: '#4a3220',
+  cream: '#fdfaf3',
 }
 
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
@@ -154,6 +154,8 @@ const TXT: Record<Lang, Record<string, string>> = {
     submitting: 'Submitting...',
     weddingInvitation: 'WEDDING INVITATION',
     togetherWith: 'together with',
+    requestPresence: 'Request the honour of your presence',
+    atWeddingOfChildren: 'At the wedding of their children',
     openInvitation: 'Open Invitation',
     defaultHeading: 'Blesses with Love & Joy',
     invitationHeading: 'Invitation',
@@ -231,6 +233,8 @@ const TXT: Record<Lang, Record<string, string>> = {
     submitting: 'යවමින්...',
     weddingInvitation: 'විවාහ ආරාධනා පත්‍රය',
     togetherWith: 'සමඟ',
+    requestPresence: 'ඔබේ පැමිණීම ගෞරවයෙන් අයැදිමු',
+    atWeddingOfChildren: 'ඔවුන්ගේ දරුවන්ගේ විවාහ මංගල්‍යයට',
     openInvitation: 'ආරාධනය විවෘත කරන්න',
     defaultHeading: 'ආදරයෙන් හා සතුටින් සමන්විතයි',
     invitationHeading: 'ආරාධනාව',
@@ -473,19 +477,64 @@ function Icon({ name, size = 16, color }: { name: IconName; size?: number; color
   }
 }
 
-// ── Geometric motifs (replace the floral Blossom/Vine/Medallion set) ──
+// ── Motifs ──
 function GeoMark({ size = 14, color }: { size?: number; color: string }) {
   return <div style={{ width: size, height: size, background: color, transform: 'rotate(45deg)', flexShrink: 0 }} />
 }
 
+// A slim gold hairline with a small rotated-diamond flourish at its
+// center — the section divider used throughout the page.
 function GeoDivider({ primary, dark, primaryLight }: { primary: string; dark: string; primaryLight: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, margin: '12px auto' }}>
-      <div style={{ width: 16, height: 5, background: primary }} />
-      <div style={{ width: 5, height: 5, background: dark, transform: 'rotate(45deg)' }} />
-      <div style={{ width: 16, height: 5, background: primaryLight }} />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '12px auto', maxWidth: 200 }}>
+      <div style={{ flex: 1, height: 1, background: primary, opacity: 0.5 }} />
+      <div style={{ width: 6, height: 6, background: primary, transform: 'rotate(45deg)' }} />
+      <div style={{ flex: 1, height: 1, background: primary, opacity: 0.5 }} />
     </div>
   )
+}
+
+// Gold vine-and-blossom corner flourish, matching a classic formal
+// invitation card frame — used at the top-left and bottom-right corners
+// of the cover, exactly like the reference card. `flip` mirrors it both
+// ways to sit correctly in the opposite corner.
+function FloralCorner({ color, size = 130, flip = false }: { color: string; size?: number; flip?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 140 140" fill="none"
+      style={{ transform: flip ? 'rotate(180deg)' : undefined, display: 'block' }}>
+      <path d="M6 6C40 8 60 26 58 54C74 40 100 34 130 38" stroke={color} strokeWidth="1.6" opacity="0.85" />
+      <path d="M6 6C10 34 26 56 54 58" stroke={color} strokeWidth="1.6" opacity="0.85" />
+      {[
+        { cx: 22, cy: 14, r: 5 }, { cx: 40, cy: 10, r: 3.4 }, { cx: 14, cy: 32, r: 4 },
+        { cx: 66, cy: 30, r: 3.2 }, { cx: 90, cy: 34, r: 4.2 }, { cx: 112, cy: 40, r: 3 },
+        { cx: 34, cy: 46, r: 3 }, { cx: 12, cy: 50, r: 2.6 },
+      ].map((c, i) => (
+        <g key={i}>
+          <circle cx={c.cx} cy={c.cy} r={c.r} fill={color} opacity="0.18" />
+          <circle cx={c.cx} cy={c.cy} r={c.r * 0.4} fill={color} opacity="0.7" />
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+// Splits an ISO date into the pieces a formal card's date block needs —
+// big month name, weekday, day-with-ordinal, year, time — matching the
+// "OCTOBER / THURSDAY 29TH 2026 / FROM 9.00 AM ONWARDS" reference layout.
+function formatFormalDate(iso?: string) {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return null
+  const day = d.getDate()
+  const ordinal = day % 10 === 1 && day !== 11 ? 'ST' : day % 10 === 2 && day !== 12 ? 'ND' : day % 10 === 3 && day !== 13 ? 'RD' : 'TH'
+  return {
+    month: d.toLocaleDateString('en-US', { month: 'long' }).toUpperCase(),
+    weekday: d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase(),
+    day: String(day),
+    ordinal,
+    year: String(d.getFullYear()),
+    time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toUpperCase(),
+  }
 }
 
 // Large rotated-square (diamond) monogram frame — used both as the cover's
@@ -527,55 +576,6 @@ function FloatingGeo({ primary, primaryLight }: { primary: string; primaryLight:
           )}
         </span>
       ))}
-    </div>
-  )
-}
-
-// ── The particle/glow intro — scattered glowing dots converge into a ring
-// around the couple's monogram, which then locks into the geometric frame.
-// Pure CSS/framer-motion (no <canvas>), computed once per mount so the
-// layout never jitters on re-render. ──
-function useGlowParticles(count: number) {
-  return useMemo(() => {
-    const arr: { angle: number; radius: number; startX: number; startY: number; size: number; delay: number; hue: 'primary' | 'light' }[] = []
-    for (let i = 0; i < count; i++) {
-      const angle = (360 / count) * i + (Math.random() * 10 - 5)
-      arr.push({
-        angle,
-        radius: 108 + Math.random() * 14,
-        startX: (Math.random() - 0.5) * 340,
-        startY: (Math.random() - 0.5) * 340,
-        size: 3 + Math.random() * 4,
-        delay: Math.random() * 0.7,
-        hue: Math.random() > 0.5 ? 'primary' : 'light',
-      })
-    }
-    return arr
-  }, [count])
-}
-
-function GlowParticles({ primary, primaryLight }: { primary: string; primaryLight: string }) {
-  const particles = useGlowParticles(26)
-  return (
-    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-      {particles.map((p, i) => {
-        const rad = (p.angle * Math.PI) / 180
-        const targetX = Math.cos(rad) * p.radius
-        const targetY = Math.sin(rad) * p.radius
-        const color = p.hue === 'primary' ? primary : primaryLight
-        return (
-          <motion.span
-            key={i}
-            initial={{ x: p.startX, y: p.startY, opacity: 0, scale: 0.4 }}
-            animate={{ x: targetX, y: targetY, opacity: [0, 1, 0.75], scale: [0.4, 1.3, 1] }}
-            transition={{ duration: 1.6, delay: p.delay, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: 'absolute', width: p.size, height: p.size, borderRadius: '50%',
-              background: color, boxShadow: `0 0 ${p.size * 3}px ${color}`,
-            }}
-          />
-        )
-      })}
     </div>
   )
 }
@@ -1158,6 +1158,14 @@ export default function PrismGlowTemplate({ couple }: { couple: Couple }) {
 
   const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
+  // The event shown on the cover's formal date/venue block — prefer the
+  // "wedding" event itself, fall back to whichever event is enabled, and
+  // finally to the couple's own wedding_date if no events were set up.
+  const coverEvent = enabledEvents.find(e => e.key === 'wedding') || enabledEvents[0]
+  const coverDate = formatFormalDate(coverEvent?.date || couple.wedding_date)
+  const coverVenue = coverEvent?.venue
+  const coverVenueAddress = coverEvent?.venue_address
+
   const capsHeading: React.CSSProperties = {
     fontFamily: "'Syne',sans-serif", fontSize: 18, fontWeight: 800, letterSpacing: '0.03em',
     color: colors.dark, textAlign: 'center',
@@ -1178,7 +1186,7 @@ export default function PrismGlowTemplate({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: '100vh', background: colors.cream, position: 'relative', overflowX: 'hidden' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
         html, body { background: ${colors.cream} !important; margin: 0; overflow-x: hidden; }
         .pg-shape {
           position: absolute; top: -24px; opacity: 0; display: block;
@@ -1212,55 +1220,107 @@ export default function PrismGlowTemplate({ couple }: { couple: Couple }) {
         )}
       </AnimatePresence>
 
-      {/* ───────── COVER — particle/glow reveal ───────── */}
+      {/* ───────── COVER — formal gold-frame card, matching the printed-card
+          reference: cream paper, thin gold rule, gold floral flourishes in
+          the top-left and bottom-right corners, classic formal wording. ───────── */}
       <AnimatePresence>
         {!opened && introGone && (
           <motion.div key="cover"
-            exit={{ opacity: 0, scale: 3.2, transition: { duration: 0.7, ease: [0.7, 0, 0.9, 0.2] } }}
+            exit={{ opacity: 0, scale: 1.04, transition: { duration: 0.5, ease: 'easeIn' } }}
             style={{
               position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `radial-gradient(circle at 50% 38%, ${colors.dark}f2 0%, ${colors.dark} 60%)`,
-              overflow: 'hidden',
+              background: colors.cream, overflow: 'hidden', padding: '5vh 5vw',
             }}>
             {(couple as any).cover_background_image && (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={(couple as any).cover_background_image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.16, mixBlendMode: 'luminosity' }} />
+              <img src={(couple as any).cover_background_image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.05 }} />
             )}
 
-            <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
-              style={{ position: 'relative', zIndex: 1, width: '86%', maxWidth: 320, textAlign: 'center' }}>
+            <motion.div initial={{ y: 18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }}
+              style={{
+                position: 'relative', zIndex: 1, width: '100%', maxWidth: 380, maxHeight: '100%', overflowY: 'auto',
+                background: '#fff', border: `1.5px solid ${colors.primary}`, boxShadow: `0 20px 60px ${colors.dark}22`,
+              }}>
+              <div style={{ position: 'absolute', inset: 8, border: `1px solid ${colors.primary}66`, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', top: -2, left: -2 }}><FloralCorner color={colors.primary} size={118} /></div>
+              <div style={{ position: 'absolute', bottom: -2, right: -2 }}><FloralCorner color={colors.primary} size={118} flip /></div>
 
-              <div style={{ position: 'relative', width: 190, height: 190, margin: '0 auto 20px' }}>
-                <GlowParticles primary={colors.primary} primaryLight={colors.primaryLight} />
-                <motion.div initial={{ scale: 0.5, opacity: 0, rotate: -20 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} transition={{ duration: 0.8, delay: 1.3, ease: [0.16, 1, 0.3, 1] }}>
-                  <GeoMonogram initials={initials} primary={colors.primary} primaryLight={colors.primaryLight} size={190} />
-                </motion.div>
-              </div>
+              <div style={{ position: 'relative', padding: '46px 28px 38px', textAlign: 'center' }}>
+                {(brideFamily || groomFamily) && (
+                  <div style={{ marginBottom: 14 }}>
+                    {groomFamily && <div style={{ fontSize: 13, fontWeight: 800, color: colors.dark, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{groomFamily}</div>}
+                    <div style={{ fontSize: 11, color: colors.dark, opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '3px 0' }}>{togetherWithText}</div>
+                    {brideFamily && <div style={{ fontSize: 13, fontWeight: 800, color: colors.dark, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{brideFamily}</div>}
+                  </div>
+                )}
 
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 1.9 }}>
-                <div style={{ fontSize: 10.5, letterSpacing: '0.32em', fontWeight: 800, color: colors.primary, marginBottom: 10, textTransform: 'uppercase' }}>{badgeText}</div>
-                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 'clamp(1.6rem,7vw,2.1rem)', color: '#fff', lineHeight: 1.15 }}>
-                  {couple.bride} <span style={{ color: colors.primary }}>&amp;</span> {couple.groom}
+                <div style={{ fontSize: 12, color: colors.dark, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: 1.7 }}>
+                  {t('requestPresence')}{guestName ? '' : ' of'}
                 </div>
-              </motion.div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 4, paddingBottom: 8, borderBottom: guestName ? 'none' : `1px dotted ${colors.primary}88`, display: 'inline-block', minWidth: guestName ? undefined : 180 }}>
+                  {guestName || ' '}
+                </div>
 
-              <motion.button
-                onClick={handleOpenClick}
-                aria-label="Open invitation"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 2.3 }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 9, marginTop: 28,
-                  padding: '14px 30px', borderRadius: 11, border: 'none',
-                  background: colors.primary,
-                  color: '#fff', fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase',
-                  cursor: 'pointer', boxShadow: `0 12px 30px ${colors.primary}55`,
-                  fontFamily: "'Inter',sans-serif",
-                }}>
-                {t('openInvitation')}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-              </motion.button>
+                <div style={{ margin: '18px auto', maxWidth: 220, height: 1, borderTop: `1px dashed ${colors.primary}66` }} />
+
+                <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>{t('atWeddingOfChildren')}</div>
+
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 'clamp(2.2rem,10vw,2.9rem)', color: colors.primary, lineHeight: 1.25 }}>
+                  {couple.bride} &amp;
+                </div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 'clamp(2.2rem,10vw,2.9rem)', color: colors.primary, lineHeight: 1.25, marginBottom: 20 }}>
+                  {couple.groom}
+                </div>
+
+                {coverDate && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: '1.5rem', color: colors.dark, letterSpacing: '0.06em' }}>{coverDate.month}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 8 }}>
+                      <div style={{ flex: 1, maxWidth: 44, height: 1, background: colors.dark, opacity: 0.4 }} />
+                      <div style={{ fontSize: 12, fontWeight: 700, color: colors.dark, letterSpacing: '0.05em' }}>{coverDate.weekday}</div>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: '2.1rem', fontWeight: 800, color: colors.primary, lineHeight: 1 }}>{coverDate.day}<sup style={{ fontSize: '0.9rem' }}>{coverDate.ordinal}</sup></div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: colors.dark, letterSpacing: '0.05em' }}>{coverDate.year}</div>
+                      <div style={{ flex: 1, maxWidth: 44, height: 1, background: colors.dark, opacity: 0.4 }} />
+                    </div>
+                    <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 10 }}>{t('onwards').startsWith('O') ? `FROM ${coverDate.time} ${t('onwards').toUpperCase()}` : `${coverDate.time} ${t('onwards')}`}</div>
+                  </div>
+                )}
+
+                {coverVenue && (
+                  <div style={{ marginBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: colors.primary }}>{t('venueLabel') === 'VENUE' ? `At ${coverVenue}` : coverVenue}</div>
+                    {coverVenueAddress && <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.7, marginTop: 2 }}>{coverVenueAddress}</div>}
+                  </div>
+                )}
+
+                {contactList.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: colors.dark, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 6 }}>{t('rsvp')}</div>
+                    {contactList.map((c, i) => (
+                      <div key={i} style={{ fontSize: 12, color: colors.dark, opacity: 0.85, lineHeight: 1.8 }}>
+                        {c.name ? `${c.name}  ${c.phone}` : c.phone}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <motion.button
+                  onClick={handleOpenClick}
+                  aria-label="Open invitation"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 9, marginTop: 26,
+                    padding: '13px 28px', borderRadius: 4, border: 'none',
+                    background: colors.primary,
+                    color: '#fff', fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase',
+                    cursor: 'pointer', boxShadow: `0 10px 26px ${colors.primary}44`,
+                    fontFamily: "'Inter',sans-serif",
+                  }}>
+                  {t('openInvitation')}
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}
