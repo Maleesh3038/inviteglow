@@ -157,6 +157,7 @@ const TXT: Record<Lang, Record<string, string>> = {
     requestPresence: 'Request the honour of your presence',
     atWeddingOfChildren: 'At the wedding of their children',
     openInvitation: 'Open Invitation',
+    tapToOpen: 'Tap To Open',
     defaultHeading: 'Blesses with Love & Joy',
     invitationHeading: 'Invitation',
     lovingInvitation: 'A Loving Invitation From Our Family',
@@ -236,6 +237,7 @@ const TXT: Record<Lang, Record<string, string>> = {
     requestPresence: 'ඔබේ පැමිණීම ගෞරවයෙන් අයැදිමු',
     atWeddingOfChildren: 'ඔවුන්ගේ දරුවන්ගේ විවාහ මංගල්‍යයට',
     openInvitation: 'ආරාධනය විවෘත කරන්න',
+    tapToOpen: 'විවෘත කිරීමට තට්ටු කරන්න',
     defaultHeading: 'ආදරයෙන් හා සතුටින් සමන්විතයි',
     invitationHeading: 'ආරාධනාව',
     lovingInvitation: 'අපගේ පවුලෙන් ආදරණීය ආරාධනාවක්',
@@ -535,6 +537,100 @@ function formatFormalDate(iso?: string) {
     year: String(d.getFullYear()),
     time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toUpperCase(),
   }
+}
+
+// ───────── Envelope-opening intro ─────────
+// Sits in front of the formal cover card. Shows a closed velvet-look
+// envelope (flap + wax seal, monogram card peeking out above it) on the
+// cream background; tapping plays a short flap-open + card-slide-out
+// sequence, then hands off to the formal card cover via onOpen().
+function EnvelopeIntro({ bride, groom, initials, primary, primaryLight, dark, cream, t, onOpen }: {
+  bride?: string; groom?: string; initials: string; primary: string; primaryLight: string; dark: string; cream: string
+  t: (key: string) => string; onOpen: () => void
+}) {
+  const [stage, setStage] = useState<'closed' | 'opening'>('closed')
+  const handleClick = () => {
+    if (stage === 'opening') return
+    setStage('opening')
+    setTimeout(onOpen, 1100)
+  }
+  return (
+    <motion.div
+      key="envelope"
+      exit={{ opacity: 0, transition: { duration: 0.35 } }}
+      onClick={handleClick}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 51, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', background: cream, overflow: 'hidden',
+        padding: '6vh 8vw', cursor: stage === 'closed' ? 'pointer' : 'default',
+      }}>
+      <div style={{ position: 'absolute', top: -12, left: -12, opacity: 0.5, pointerEvents: 'none' }}><FloralCorner color={primary} size={126} /></div>
+      <div style={{ position: 'absolute', bottom: -12, right: -12, opacity: 0.5, pointerEvents: 'none' }}><FloralCorner color={primary} size={126} flip /></div>
+
+      <motion.div
+        animate={{ opacity: stage === 'closed' ? 1 : 0, y: stage === 'closed' ? 0 : -10 }}
+        transition={{ duration: 0.4 }}
+        style={{ textAlign: 'center', marginBottom: 28, position: 'relative', zIndex: 1 }}>
+        <div style={{ fontSize: 10.5, letterSpacing: '0.28em', textTransform: 'uppercase', color: primary, fontWeight: 800, marginBottom: 10 }}>{t('weddingInvitation')}</div>
+        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 'clamp(1.8rem,7vw,2.3rem)', color: dark, lineHeight: 1.2 }}>
+          {bride} &amp; {groom}
+        </div>
+      </motion.div>
+
+      <div style={{ position: 'relative', width: 236, height: 176, perspective: 900 }}>
+        {/* card peeking out — slides up and away once the flap opens */}
+        <motion.div
+          animate={stage === 'opening' ? { y: -210, scale: 1.05 } : { y: 0, scale: 1 }}
+          transition={{ duration: 0.6, delay: stage === 'opening' ? 0.45 : 0, ease: 'easeOut' }}
+          style={{
+            position: 'absolute', left: '50%', top: 6, transform: 'translateX(-50%)', zIndex: 3,
+            width: 172, height: 128, background: '#fff', border: `1px solid ${primary}55`,
+            boxShadow: `0 10px 26px ${dark}26`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', border: `1.4px solid ${primary}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: "'Great Vibes',cursive", fontSize: 19, color: primary,
+          }}>{initials}</div>
+        </motion.div>
+
+        {/* envelope body */}
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 26, zIndex: 2, background: dark, boxShadow: `0 16px 36px ${dark}55` }} />
+
+        {/* envelope flap — flips open on tap */}
+        <motion.div
+          animate={{ rotateX: stage === 'opening' ? -168 : 0, opacity: stage === 'opening' ? 0 : 1 }}
+          transition={{ duration: 0.5, ease: 'easeIn' }}
+          style={{
+            position: 'absolute', top: 26, left: 0, right: 0, height: 96, zIndex: 4,
+            transformStyle: 'preserve-3d', transformOrigin: 'top center',
+            clipPath: 'polygon(0 0, 100% 0, 50% 100%)',
+            background: `linear-gradient(160deg, ${dark}, ${primary})`,
+          }}
+        />
+
+        {/* wax seal */}
+        <motion.div
+          animate={{ opacity: stage === 'opening' ? 0 : 1, scale: stage === 'opening' ? 0.4 : 1 }}
+          transition={{ duration: 0.28 }}
+          style={{
+            position: 'absolute', top: 82, left: '50%', transform: 'translateX(-50%)', zIndex: 5,
+            width: 42, height: 42, borderRadius: '50%', background: primaryLight,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 3px 9px ${dark}44`, border: `1px solid ${primary}55`,
+          }}>
+          <span style={{ fontFamily: "'Great Vibes',cursive", fontSize: 17, color: primary }}>{initials}</span>
+        </motion.div>
+      </div>
+
+      <motion.div
+        animate={{ opacity: stage === 'closed' ? [0.45, 1, 0.45] : 0 }}
+        transition={{ duration: 1.8, repeat: Infinity }}
+        style={{ marginTop: 32, fontSize: 10.5, letterSpacing: '0.24em', textTransform: 'uppercase', color: dark, fontWeight: 700, position: 'relative', zIndex: 1 }}>
+        {t('tapToOpen')}
+      </motion.div>
+    </motion.div>
+  )
 }
 
 // Large rotated-square (diamond) monogram frame — used both as the cover's
@@ -1103,6 +1199,7 @@ function RsvpBlock({ couple, colors, guestName, t }: {
 
 export default function PrismGlowTemplate({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
+  const [envelopeOpened, setEnvelopeOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const handleOpenClick = () => { setOpened(true) }
   useEffect(() => {
@@ -1220,11 +1317,23 @@ export default function PrismGlowTemplate({ couple }: { couple: Couple }) {
         )}
       </AnimatePresence>
 
+      {/* ───────── ENVELOPE — closed velvet envelope + wax seal; tap plays the
+          flap-open + card-slide-out sequence, then reveals the formal cover. ───────── */}
+      <AnimatePresence>
+        {!opened && introGone && !envelopeOpened && (
+          <EnvelopeIntro
+            bride={couple.bride} groom={couple.groom} initials={initials}
+            primary={colors.primary} primaryLight={colors.primaryLight} dark={colors.dark} cream={colors.cream}
+            t={t} onOpen={() => setEnvelopeOpened(true)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ───────── COVER — formal gold-frame card, matching the printed-card
           reference: cream paper, thin gold rule, gold floral flourishes in
           the top-left and bottom-right corners, classic formal wording. ───────── */}
       <AnimatePresence>
-        {!opened && introGone && (
+        {!opened && introGone && envelopeOpened && (
           <motion.div key="cover"
             exit={{ opacity: 0, scale: 1.04, transition: { duration: 0.5, ease: 'easeIn' } }}
             style={{
