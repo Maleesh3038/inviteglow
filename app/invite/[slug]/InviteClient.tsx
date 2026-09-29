@@ -22,6 +22,7 @@ import CeremonialGuardTemplate from '@/components/templates/CeremonialGuardTempl
 import CorporateEventTemplate from '@/components/templates/CorporateEventTemplate'
 import GoldenPoruwaTemplate from '@/components/templates/GoldenPoruwaTemplate'
 import FirstCommunionTemplate from '@/components/templates/FirstCommunionTemplate'
+import PrismGlowTemplate from '@/components/templates/PrismGlowTemplate'
 
 export default function InviteClient({ slug }: { slug: string }) {
   const [couple, setCouple] = useState<Couple | null>(null)
@@ -120,6 +121,8 @@ export default function InviteClient({ slug }: { slug: string }) {
       return <CeremonialGuardTemplate couple={couple} />
     case 'golden-poruwa':
       return <GoldenPoruwaTemplate couple={couple} />
+    case 'prism-glow':
+      return <PrismGlowTemplate couple={couple} />
     // NOTE: 'corporate-event' invitations live in the `events` table, not
     // `couples` — they're handled by the `eventRow` branch above, before
     // this switch ever runs.
