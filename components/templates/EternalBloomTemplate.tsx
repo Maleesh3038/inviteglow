@@ -659,11 +659,15 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     userStartedRef.current = true
 
     if (coverVideoUrl) {
-      // Play the cover video for a short ~5s preview; the invitation opens
-      // once that preview finishes (or the clip itself ends, if shorter).
+      // Play the cover video all the way through — the invitation only
+      // opens once the clip's own `ended` event fires (see the video's
+      // onEnded below). A generous safety timeout is still kept as a
+      // fallback in case a video fails to fire `ended` (e.g. a stream
+      // that never resolves its duration), so a guest is never stuck
+      // looking at a frozen cover forever.
       setVideoPlaying(true)
       videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
-      videoTimerRef.current = setTimeout(handleVideoEnded, 5000)
+      videoTimerRef.current = setTimeout(handleVideoEnded, 30000)
     } else {
       handleVideoEnded()
     }
@@ -773,9 +777,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 // via opacity 0) until handleOpen() calls videoRef.play()
                 // inside the button's own click handler — a real user
                 // gesture — so playback only ever starts once "Open
-                // Invitation" is tapped.
-                <video ref={videoRef} muted loop playsInline preload="auto"
+                // Invitation" is tapped. No `loop` either — it plays once,
+                // start to finish, and `onEnded` is what opens the
+                // invitation (see handleVideoEnded).
+                <video ref={videoRef} muted playsInline preload="auto"
                   onPlaying={e => { e.currentTarget.style.opacity = "1" }}
+                  onEnded={handleVideoEnded}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
                 </video>
