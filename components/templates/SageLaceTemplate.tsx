@@ -612,6 +612,15 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
 const lacePattern = (color: string, opacity = 0.5) =>
   `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cg fill='none' stroke='${encodeURIComponent(color)}' stroke-width='0.75' opacity='${opacity}'%3E%3Ccircle cx='22' cy='22' r='3'/%3E%3Ccircle cx='0' cy='0' r='2.2'/%3E%3Ccircle cx='44' cy='0' r='2.2'/%3E%3Ccircle cx='0' cy='44' r='2.2'/%3E%3Ccircle cx='44' cy='44' r='2.2'/%3E%3Cpath d='M22 10 L26 18 L34 22 L26 26 L22 34 L18 26 L10 22 L18 18 Z'/%3E%3C/g%3E%3C/svg%3E")`
 
+// A raised, white-on-white embossed floral border — like paper that's been
+// blind-stamped with a lace pattern, exactly the full-page side border in
+// the invitation.lk reference video. Built as one tileable SVG with a dual
+// feDropShadow filter (a soft white highlight + a soft grey shadow on each
+// petal) to fake the carved/raised paper look purely in a background-image,
+// so it works as a continuous border running the whole length of the page.
+const EMBOSSED_LACE_BORDER =
+  `#fdfcf7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cdefs%3E%3Cfilter id='e' x='-60%25' y='-60%25' width='220%25' height='220%25'%3E%3CfeDropShadow dx='-0.6' dy='-0.6' stdDeviation='0.5' flood-color='%23ffffff' flood-opacity='0.95'/%3E%3CfeDropShadow dx='0.7' dy='0.7' stdDeviation='0.5' flood-color='%23b9c2a8' flood-opacity='0.55'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23e)' fill='none' stroke='%23eef1e6' stroke-width='1'%3E%3Cg transform='translate(22,24)'%3E%3Ccircle r='3.2'/%3E%3Cpath d='M0,-11 C4.5,-7 4.5,-2 0,0 C-4.5,-2 -4.5,-7 0,-11Z'/%3E%3Cpath d='M0,11 C4.5,7 4.5,2 0,0 C-4.5,2 -4.5,7 0,11Z'/%3E%3Cpath d='M-11,0 C-7,4.5 -2,4.5 0,0 C-2,-4.5 -7,-4.5 -11,0Z'/%3E%3Cpath d='M11,0 C7,4.5 2,4.5 0,0 C2,-4.5 7,-4.5 11,0Z'/%3E%3Cpath d='M-7.5,-7.5 C-4,-6 -2,-4 0,0 C-4,-2 -6,-4 -7.5,-7.5Z'/%3E%3Cpath d='M7.5,7.5 C4,6 2,4 0,0 C4,2 6,4 7.5,7.5Z'/%3E%3Cpath d='M-7.5,7.5 C-4,6 -2,4 0,0 C-4,2 -6,4 -7.5,7.5Z'/%3E%3Cpath d='M7.5,-7.5 C4,-6 2,-4 0,0 C4,-2 6,-4 7.5,-7.5Z'/%3E%3C/g%3E%3Cpath d='M22,24 C40,14 44,44 72,70' stroke-width='0.8'/%3E%3Cg transform='translate(74,72)'%3E%3Ccircle r='3.2'/%3E%3Cpath d='M0,-11 C4.5,-7 4.5,-2 0,0 C-4.5,-2 -4.5,-7 0,-11Z'/%3E%3Cpath d='M0,11 C4.5,7 4.5,2 0,0 C-4.5,2 -4.5,7 0,11Z'/%3E%3Cpath d='M-11,0 C-7,4.5 -2,4.5 0,0 C-2,-4.5 -7,-4.5 -11,0Z'/%3E%3Cpath d='M11,0 C7,4.5 2,4.5 0,0 C2,-4.5 7,-4.5 11,0Z'/%3E%3C/g%3E%3Cg transform='translate(8,78) scale(0.55)'%3E%3Ccircle r='3.2'/%3E%3Cpath d='M0,-11 C4.5,-7 4.5,-2 0,0 C-4.5,-2 -4.5,-7 0,-11Z'/%3E%3Cpath d='M0,11 C4.5,7 4.5,2 0,0 C-4.5,2 -4.5,7 0,11Z'/%3E%3Cpath d='M-11,0 C-7,4.5 -2,4.5 0,0 C-2,-4.5 -7,-4.5 -11,0Z'/%3E%3Cpath d='M11,0 C7,4.5 2,4.5 0,0 C2,-4.5 7,-4.5 11,0Z'/%3E%3C/g%3E%3Cg transform='translate(88,10) scale(0.5)'%3E%3Ccircle r='3.2'/%3E%3Cpath d='M0,-11 C4.5,-7 4.5,-2 0,0 C-4.5,-2 -4.5,-7 0,-11Z'/%3E%3Cpath d='M0,11 C4.5,7 4.5,2 0,0 C-4.5,2 -4.5,7 0,11Z'/%3E%3Cpath d='M-11,0 C-7,4.5 -2,4.5 0,0 C-2,-4.5 -7,-4.5 -11,0Z'/%3E%3Cpath d='M11,0 C7,4.5 2,4.5 0,0 C2,-4.5 7,-4.5 11,0Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat`
+
 // A thick patterned "lace" border wrapping a clean white inset panel —
 // used for the cover and the formal invitation card. Forwards motion
 // props so it can drop straight into the existing whileInView animation
@@ -900,7 +909,9 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
         {/* ══ INVITATION ══ */}
         {opened && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}
+            style={{ background: EMBOSSED_LACE_BORDER, backgroundSize: "100px 100px", padding: "0 18px" }}>
+            <div style={{ background: CREAM, position: "relative" }}>
 
             {/* Formal invitation card — lace-framed, matching the reference
                 design: monogram, "with hearts full of love", parents'
@@ -1153,6 +1164,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b89e" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
+            </div>
             </div>
           </motion.div>
         )}
