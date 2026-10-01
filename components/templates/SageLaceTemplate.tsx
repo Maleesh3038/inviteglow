@@ -619,7 +619,7 @@ const lacePattern = (color: string, opacity = 0.5) =>
 // petal) to fake the carved/raised paper look purely in a background-image,
 // so it works as a continuous border running the whole length of the page.
 const EMBOSSED_LACE_BORDER =
-  `#fdfcf7 url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2742%27%20height%3D%2758%27%20viewBox%3D%270%200%2042%2058%27%3E%3Cdefs%3E%3Cfilter%20id%3D%27e%27%20x%3D%27-80%25%27%20y%3D%27-80%25%27%20width%3D%27260%25%27%20height%3D%27260%25%27%3E%3CfeDropShadow%20dx%3D%27-0.7%27%20dy%3D%27-0.7%27%20stdDeviation%3D%270.5%27%20flood-color%3D%27%23ffffff%27%20flood-opacity%3D%270.95%27%2F%3E%3CfeDropShadow%20dx%3D%270.9%27%20dy%3D%270.9%27%20stdDeviation%3D%270.6%27%20flood-color%3D%27%23a9b596%27%20flood-opacity%3D%270.75%27%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%27url%28%23e%29%27%20fill%3D%27%23eef1e4%27%20stroke%3D%27%23eef1e4%27%20stroke-width%3D%270.6%27%3E%3Cpath%20d%3D%27M21%2C0%20L21%2C10%27%20stroke-width%3D%271.1%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M21%2C48%20L21%2C58%27%20stroke-width%3D%271.1%27%20fill%3D%27none%27%2F%3E%3Cg%20transform%3D%27translate%2821%2C29%29%27%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%280%29%27%2F%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%2860%29%27%2F%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%28120%29%27%2F%3E%3Ccircle%20r%3D%273%27%20fill%3D%27%23e3e8d6%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M21%2C14%20C14%2C16%2012%2C22%2015%2C27%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M21%2C14%20C28%2C16%2030%2C22%2027%2C27%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M21%2C44%20C14%2C42%2012%2C36%2015%2C31%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M21%2C44%20C28%2C42%2030%2C36%2027%2C31%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cg%20transform%3D%27translate%288%2C15%29%20scale%280.5%29%27%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%2F%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%2872%29%27%2F%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%28144%29%27%2F%3E%3Ccircle%20r%3D%273%27%20fill%3D%27%23e3e8d6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2834%2C43%29%20scale%280.5%29%27%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%2F%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%2872%29%27%2F%3E%3Cellipse%20rx%3D%273.6%27%20ry%3D%277.2%27%20transform%3D%27rotate%28144%29%27%2F%3E%3Ccircle%20r%3D%273%27%20fill%3D%27%23e3e8d6%27%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") repeat`
+  `#fdfcf7 url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2726%27%20height%3D%2736%27%20viewBox%3D%270%200%2026%2036%27%3E%3Cdefs%3E%3Cfilter%20id%3D%27e%27%20x%3D%27-80%25%27%20y%3D%27-80%25%27%20width%3D%27260%25%27%20height%3D%27260%25%27%3E%3CfeDropShadow%20dx%3D%27-0.7%27%20dy%3D%27-0.7%27%20stdDeviation%3D%270.5%27%20flood-color%3D%27%23ffffff%27%20flood-opacity%3D%270.95%27%2F%3E%3CfeDropShadow%20dx%3D%270.9%27%20dy%3D%270.9%27%20stdDeviation%3D%270.6%27%20flood-color%3D%27%23a9b596%27%20flood-opacity%3D%270.8%27%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20filter%3D%27url%28%23e%29%27%20fill%3D%27%23eef1e4%27%20stroke%3D%27%23eef1e4%27%20stroke-width%3D%270.6%27%3E%3Cpath%20d%3D%27M13%2C0%20L13%2C36%27%20stroke-width%3D%271.2%27%20fill%3D%27none%27%2F%3E%3Cg%20transform%3D%27translate%2813%2C18%29%27%3E%3Cellipse%20rx%3D%274%27%20ry%3D%278%27%20transform%3D%27rotate%280%29%27%2F%3E%3Cellipse%20rx%3D%274%27%20ry%3D%278%27%20transform%3D%27rotate%2860%29%27%2F%3E%3Cellipse%20rx%3D%274%27%20ry%3D%278%27%20transform%3D%27rotate%28120%29%27%2F%3E%3Ccircle%20r%3D%273.1%27%20fill%3D%27%23e3e8d6%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M13%2C6%20C8%2C7.5%206%2C10.5%207.5%2C14%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M13%2C6%20C18%2C7.5%2020%2C10.5%2018.5%2C14%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M13%2C30%20C8%2C28.5%206%2C25.5%207.5%2C22%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M13%2C30%20C18%2C28.5%2020%2C25.5%2018.5%2C22%27%20stroke-width%3D%271%27%20fill%3D%27none%27%2F%3E%3Ccircle%20cx%3D%2713%27%20cy%3D%272%27%20r%3D%271.4%27%2F%3E%3Ccircle%20cx%3D%2713%27%20cy%3D%2734%27%20r%3D%271.4%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") repeat`
 
 // A thick patterned "lace" border wrapping a clean white inset panel —
 // used for the cover and the formal invitation card. Forwards motion
@@ -910,8 +910,21 @@ function SageLaceInner({ couple }: { couple: Couple }) {
         {/* ══ INVITATION ══ */}
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}
-            style={{ background: EMBOSSED_LACE_BORDER, backgroundSize: "42px 58px", padding: "0 26px" }}>
-            <div style={{ background: CREAM, position: "relative" }}>
+            style={{ position: "relative" }}>
+
+            {/* Fixed embossed lace frame — pinned to the screen so it never
+                moves; only the invitation content below scrolls underneath
+                it, exactly like the reference video's border. */}
+            <div aria-hidden style={{
+              position: "fixed", top: 0, bottom: 0, left: "50%", transform: "translateX(-50%)",
+              width: "min(480px, 100%)", display: "flex", justifyContent: "space-between",
+              pointerEvents: "none", zIndex: 5,
+            }}>
+              <div style={{ width: 26, height: "100%", background: EMBOSSED_LACE_BORDER, backgroundSize: "26px 36px" }} />
+              <div style={{ width: 26, height: "100%", background: EMBOSSED_LACE_BORDER, backgroundSize: "26px 36px" }} />
+            </div>
+
+            <div style={{ background: CREAM, position: "relative", padding: "0 26px" }}>
 
             {/* Formal invitation card — lace-framed, matching the reference
                 design: monogram, "with hearts full of love", parents'
