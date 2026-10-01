@@ -1306,6 +1306,14 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
             exit={{ opacity: 0, transition: { duration: 0.5, delay: 0.1 } }}
             style={{ position: 'fixed', inset: 0, zIndex: 50, overflow: 'hidden', background: colors.dark }}>
 
+            {/* Photo priority: the standard "Couple Photo (Hero Image)"
+                field (couple_photo) is what the admin's "Cover / Intro
+                Media" uploader — and its hint text — actually points
+                couples to for exactly this ("that photo becomes the intro
+                directly"), so it's checked first. cover_background_image
+                (BlushBlossom's own older, separate field) is still
+                honoured as a fallback for anyone who used that one instead,
+                before finally falling back to the stock default. */}
             {(couple as any).cover_video_url ? (
               <video
                 autoPlay loop muted playsInline preload="auto"
@@ -1315,7 +1323,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
             ) : (
               <div style={{
                 position: 'absolute', inset: 0,
-                backgroundImage: `url(${(couple as any).cover_background_image || DEFAULT_COVER_BG})`,
+                backgroundImage: `url(${couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG})`,
                 backgroundSize: 'cover', backgroundPosition: 'center',
               }} />
             )}
