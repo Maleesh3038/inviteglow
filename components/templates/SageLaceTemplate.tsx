@@ -901,10 +901,10 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 names, the formal wording, the couple's names in script,
                 and the formal date block, all inside one lace-bordered
                 panel instead of a separate photo hero + two plain cards. */}
-            <div style={{ padding: "24px 16px 4px" }}>
+            <div style={{ padding: "24px 16px 20px" }}>
               <LaceFrame primary={PRIMARY} primaryLight={PRIMARY_LIGHT} frame={11} radius={24}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={{ padding: "34px 24px 30px", textAlign: "center" }}>
+                <div style={{ padding: "34px 24px 44px", textAlign: "center" }}>
                   <div style={{
                     width: 54, height: 54, borderRadius: "50%", margin: "0 auto 16px", border: `1.4px solid ${PRIMARY}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
@@ -933,10 +933,10 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIMARY }} />
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.4 }} />
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 22 }}>{W.groom}</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 26 }}>{W.groom}</div>
 
                   {coverFormalDate && (
-                    <div style={{ marginBottom: coverEvent?.venue ? 14 : 0 }}>
+                    <div style={{ marginBottom: coverEvent?.venue ? 20 : 0 }}>
                       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: "1.2rem", color: DARK }}>{coverFormalDate.month}</div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
                         <div style={{ fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: "0.06em" }}>{coverFormalDate.weekday}</div>
@@ -950,11 +950,17 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   )}
 
                   {coverEvent?.venue && (
-                    <div>
+                    <div style={{ marginBottom: 6 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: PRIMARY }}>{coverEvent.venue}</div>
                       {coverEvent.venue_address && <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>{coverEvent.venue_address}</div>}
                     </div>
                   )}
+
+                  <div style={{ margin: "22px auto 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, maxWidth: 120 }}>
+                    <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY, opacity: 0.6 }} />
+                    <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
+                  </div>
                 </div>
               </LaceFrame>
             </div>
