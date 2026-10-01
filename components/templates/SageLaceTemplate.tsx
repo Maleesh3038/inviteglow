@@ -636,7 +636,7 @@ function LaceFrame({ primary, primaryLight, children, frame = 10, radius = 22, s
 // a faint lace-texture wash (instead of Floral Romance's lotus) and a thin
 // sage hairline border framing it. ──
 const cardStyle = (primary: string): React.CSSProperties => ({
-  background: `#fff ${lacePattern(primary, 0.22)} repeat`, backgroundSize: "40px 40px",
+  background: `#fff ${lacePattern(primary, 0.07)} repeat`, backgroundSize: "40px 40px",
   margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", border: `1px solid ${primary}22`,
   boxShadow: "0 2px 20px rgba(45,61,40,0.06)", position: "relative", overflow: "hidden",
 })
@@ -718,19 +718,20 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   }
 
   // Video-cover open flow: no button anywhere — tapping the envelope
-  // itself starts the clip (with its own sound), and the invitation opens
-  // the moment the video finishes. A generous safety timeout covers the
-  // rare case where the `ended` event never fires, so a guest is never
-  // left staring at a frozen frame.
+  // itself starts the clip (background music starts at the very same
+  // moment, right alongside it), and the invitation opens the moment the
+  // video finishes. A generous safety timeout covers the rare case where
+  // the `ended` event never fires, so a guest is never left staring at a
+  // frozen frame.
   const handleVideoEnded = () => {
     if (videoEndedRef.current) return
     videoEndedRef.current = true
-    audioRef.current?.play().catch(() => {})
     setOpened(true)
   }
   const handleVideoTap = () => {
     if (videoPlaying) return
     setVideoPlaying(true)
+    audioRef.current?.play().catch(() => {})
     videoRef.current?.play().catch(() => handleVideoEnded())
     setTimeout(handleVideoEnded, 15000)
   }
@@ -950,12 +951,6 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                       {coverFormalDate.month} <span style={{ color: PRIMARY, fontWeight: 700 }}>&middot; {coverFormalDate.day}{coverFormalDate.ordinal}</span> {coverFormalDate.year}
                     </div>
                   )}
-
-                  <div style={{ margin: "20px auto 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, maxWidth: 120 }}>
-                    <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
-                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY, opacity: 0.6 }} />
-                    <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
-                  </div>
                 </div>
               </LaceFrame>
             </div>
