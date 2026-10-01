@@ -698,10 +698,15 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   // and fades away to reveal the invitation. Music starts immediately
   // inside this click handler — a real user gesture — so mobile browsers
   // allow it.
+  // Tapping the closed envelope swings its four flaps out to the edges
+  // (see the cover below), then — once they've cleared the screen — the
+  // whole scene fades and the real invitation is revealed. Music starts
+  // immediately inside this click handler — a real user gesture — so
+  // mobile browsers allow it.
   const handleOpen = () => {
     audioRef.current?.play().catch(() => {})
     setFlapOpen(true)
-    setTimeout(() => setLetterOut(true), 400)
+    setTimeout(() => setLetterOut(true), 550)
     setTimeout(() => setOpened(true), 950)
   }
 
@@ -771,91 +776,99 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
 
-        {/* ══ COVER — a small envelope scene, like the reference video:
-            the whole card acts as the envelope, with a little flap + wax
-            seal on top. Tapping "Open Invitation" flips the flap open,
-            then the card slides up and fades away. ══ */}
+        {/* ══ COVER — a full-bleed embossed floral envelope, like the
+            reference: the whole screen IS the closed envelope (four
+            triangular flaps meeting at the centre, each carrying the
+            lace/floral emboss texture). Tapping it swings all four flaps
+            away to their edges, then the scene fades into the invitation. ══ */}
         <AnimatePresence>
           {!opened && (
-            <motion.div key="cover" exit={{ opacity: 0, transition: { duration: 0.5, delay: 0.15 } }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", background: CREAM, padding: "6vh 7vw" }}>
+            <motion.div key="cover" onClick={handleOpen}
+              exit={{ opacity: 0, transition: { duration: 0.4, delay: 0.1 } }}
+              style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: DARK, cursor: flapOpen ? "default" : "pointer" }}>
 
-              {/* Faint all-over lace texture wash on the cream background —
-                  the cream/sage, lace-doily feel from the reference design. */}
-              <div style={{ position: "absolute", inset: 0, backgroundImage: lacePattern(PRIMARY, 0.16), backgroundSize: "44px 44px", zIndex: 0 }} />
-
+              {/* Four envelope flaps — clipped triangles pointing to the
+                  centre, each a slightly different sage tone (as in the
+                  reference photo) with the lace/floral texture embossed
+                  on top. They swing out to top / bottom / left / right. */}
               <motion.div
-                initial={{ y: 18, opacity: 0 }}
-                animate={{ y: letterOut ? -170 : 0, opacity: letterOut ? 0 : 1, scale: flapOpen && !letterOut ? 0.97 : 1 }}
-                transition={{
-                  y: { duration: letterOut ? 0.55 : 0.6, ease: letterOut ? "easeIn" : "easeOut" },
-                  opacity: { duration: letterOut ? 0.5 : 0.6, ease: "easeOut", delay: letterOut ? 0.05 : 0 },
-                  scale: { duration: 0.35, ease: "easeIn" },
+                animate={{ y: flapOpen ? "-120%" : 0 }}
+                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1] }}
+                style={{
+                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 0, 100% 0, 50% 50%)",
+                  background: `linear-gradient(165deg, ${PRIMARY_LIGHT}, ${PRIMARY})`,
+                  backgroundImage: `${lacePattern("#f4f1e4", 0.4)}`, backgroundSize: "60px 60px, 100% 100%",
                 }}
-                style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 320, perspective: 900 }}>
+              />
+              <motion.div
+                animate={{ y: flapOpen ? "120%" : 0 }}
+                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1], delay: 0.08 }}
+                style={{
+                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 100%, 100% 100%, 50% 50%)",
+                  background: `linear-gradient(15deg, ${DARK}, ${PRIMARY})`,
+                  backgroundImage: `${lacePattern("#f4f1e4", 0.32)}`, backgroundSize: "60px 60px, 100% 100%",
+                }}
+              />
+              <motion.div
+                animate={{ x: flapOpen ? "-120%" : 0 }}
+                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1], delay: 0.04 }}
+                style={{
+                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 0, 0 100%, 50% 50%)",
+                  background: `linear-gradient(200deg, ${PRIMARY_LIGHT}, ${PRIMARY})`,
+                  backgroundImage: `${lacePattern("#f4f1e4", 0.36)}`, backgroundSize: "60px 60px, 100% 100%",
+                }}
+              />
+              <motion.div
+                animate={{ x: flapOpen ? "120%" : 0 }}
+                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1], delay: 0.04 }}
+                style={{
+                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(100% 0, 100% 100%, 50% 50%)",
+                  background: `linear-gradient(340deg, ${PRIMARY}, ${DARK})`,
+                  backgroundImage: `${lacePattern("#f4f1e4", 0.32)}`, backgroundSize: "60px 60px, 100% 100%",
+                }}
+              />
 
-                <div style={{ position: "relative", background: "#fff", borderRadius: 20, boxShadow: `0 18px 44px ${DARK}1f`, border: `1px solid ${PRIMARY}22`, overflow: "hidden" }}>
-                  {/* spacer — the flap sits over this strip */}
-                  <div style={{ height: 46 }} />
-                  <div style={{ padding: "4px 26px 28px", textAlign: "center" }}>
-                    <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.38em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, marginBottom: 10 }}>{(couple as any).cover_badge_text || "You Are Invited"}</div>
-                    {coverFormalDate && (
-                      <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, fontWeight: 600, marginBottom: 10 }}>
-                        {coverFormalDate.month} {coverFormalDate.day}, {coverFormalDate.year}
-                      </div>
-                    )}
-                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: DARK, lineHeight: 1.1 }}>
-                      <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
-                    </div>
-                    {guestName && (
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: PRIMARY, marginTop: 8 }}>Dear {guestName},</div>
-                    )}
+              {/* Fold-seam lines — the faint X crease where the four
+                  flaps meet, exactly like the embossed paper in the
+                  reference photo. Fades with the flaps as they open. */}
+              <motion.svg animate={{ opacity: flapOpen ? 0 : 1 }} transition={{ duration: 0.3 }}
+                viewBox="0 0 100 100" preserveAspectRatio="none"
+                style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", width: "100%", height: "100%" }}>
+                <line x1="0" y1="0" x2="50" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="0.3" />
+                <line x1="100" y1="0" x2="50" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="0.3" />
+                <line x1="0" y1="100" x2="50" y2="50" stroke="rgba(0,0,0,0.2)" strokeWidth="0.3" />
+                <line x1="100" y1="100" x2="50" y2="50" stroke="rgba(0,0,0,0.2)" strokeWidth="0.3" />
+              </motion.svg>
 
-                    <div style={{ margin: "16px 0 18px" }}><LeafDivider color={PRIMARY} size={15} /></div>
-
-                    <motion.button onClick={handleOpen} disabled={flapOpen}
-                      whileTap={{ scale: 0.94 }}
-                      whileHover={{ scale: 1.03 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 10, background: PRIMARY, color: "#fff",
-                        border: "none", borderRadius: 100, padding: "13px 28px", fontSize: 10.5, letterSpacing: "0.26em", textTransform: "uppercase",
-                        cursor: flapOpen ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: `0 10px 24px ${PRIMARY}44`,
-                      }}>
-                      Open Invitation →
-                    </motion.button>
-                    <div style={{ fontSize: 9, color: MUTED, marginTop: 12, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
-                  </div>
+              {/* Centred text sitting on the closed envelope, fading away
+                  the instant the flaps start to swing open. */}
+              <motion.div
+                animate={{ opacity: flapOpen ? 0 : 1, scale: flapOpen ? 0.9 : 1 }}
+                transition={{ duration: 0.35 }}
+                style={{
+                  position: "absolute", inset: 0, zIndex: 3, display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 9vw",
+                }}>
+                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.38em", textTransform: "uppercase", color: CREAM, fontWeight: 700, marginBottom: 14, opacity: 0.9 }}>{(couple as any).cover_badge_text || "You Are Invited"}</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1.15, textShadow: `0 2px 14px ${DARK}66` }}>
+                  <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: CREAM }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                 </div>
+                {coverFormalDate && (
+                  <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: CREAM, opacity: 0.85, fontWeight: 600, marginTop: 12 }}>
+                    {coverFormalDate.month} {coverFormalDate.day}, {coverFormalDate.year}
+                  </div>
+                )}
+                {guestName && (
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: CREAM, marginTop: 10, opacity: 0.9 }}>Dear {guestName},</div>
+                )}
 
-                {/* Flap — a little triangular envelope lid on top of the
-                    card, outside the clipped panel so its 3D open
-                    animation is never cut off. */}
                 <motion.div
-                  animate={{ rotateX: flapOpen ? -160 : 0 }}
-                  transition={{ duration: 0.5, ease: [0.45, 0, 0.55, 1] }}
-                  style={{
-                    position: "absolute", top: 0, left: 0, right: 0, height: 44, zIndex: 2,
-                    background: `linear-gradient(160deg, ${PRIMARY}, ${PRIMARY_LIGHT})`,
-                    clipPath: "polygon(0 0, 50% 100%, 100% 0)", transformOrigin: "top center", transformStyle: "preserve-3d",
-                    borderTopLeftRadius: 18, borderTopRightRadius: 18,
-                  }}
-                />
-
-                {/* Wax seal, sitting at the flap's tip */}
-                <motion.div
-                  animate={{ opacity: flapOpen ? 0 : 1, scale: flapOpen ? 0.5 : 1 }}
-                  transition={{ duration: 0.28 }}
-                  style={{
-                    position: "absolute", top: 26, left: "50%", transform: "translateX(-50%)", zIndex: 3,
-                    width: 32, height: 32, borderRadius: "50%", background: PRIMARY_LIGHT,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: `0 3px 8px ${DARK}33`, border: `1px solid ${PRIMARY}55`,
-                  }}>
-                  <svg width={13} height={13} viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} />
-                  </svg>
+                  animate={{ opacity: [0.55, 1, 0.55] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ fontSize: 9.5, color: CREAM, marginTop: 28, letterSpacing: "0.3em", textTransform: "uppercase", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>
+                  ✦ Tap to Open ✦
                 </motion.div>
+                <div style={{ fontSize: 9, color: CREAM, marginTop: 10, letterSpacing: "0.05em", opacity: 0.75 }}>🎵 with music</div>
               </motion.div>
             </motion.div>
           )}
