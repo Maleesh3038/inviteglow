@@ -1231,8 +1231,6 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
       .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || labels[k].title }))
   }, [couple, lang])
 
-  const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-
   // ── style tokens ──
   const capsHeading: React.CSSProperties = {
     fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 700, letterSpacing: '0.12em',
@@ -1369,32 +1367,10 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
             )}
           </div>
 
-          {/* Couple photo card */}
-          <div style={{ ...BB_WRAP, marginTop: 22 }}>
-            <div style={{ ...cardStyle, overflow: 'hidden' }}>
-              {couple.couple_photo ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={couple.couple_photo} alt={`${couple.bride} & ${couple.groom}`} style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', display: 'block' }} />
-              ) : (
-                <div style={{ width: '100%', aspectRatio: '3/4', background: colors.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="photo" size={38} color={colors.primary} />
-                </div>
-              )}
-              <div style={{ background: boxBg, padding: '15px 12px 13px', textAlign: 'center' }}>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: '1.9rem', color: colors.dark, lineHeight: 1.1 }}>
-                  <span style={ts('bride_name')}>{couple.bride}</span> &amp; <span style={ts('groom_name')}>{couple.groom}</span>
-                </div>
-                <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, color: colors.dark, opacity: 0.6, marginTop: 5 }}>{badgeText}</div>
-              </div>
-            </div>
-            <button onClick={() => scrollToId('invitation')} aria-label="Scroll down" style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '14px auto 0', width: 30, height: 30, borderRadius: '50%',
-              background: colors.dark, border: 'none', cursor: 'pointer',
-            }}>
-              <Icon name="chevronDown" size={14} color="#fff" />
-            </button>
-          </div>
+          {/* No couple-photo card here on purpose — that photo already
+              shows on the intro cover (before "Open Invitation" is
+              tapped), so repeating it again right after opening was just
+              showing the same picture twice back to back. */}
 
           {/* Invitation — no card, floats on the page */}
           <Reveal id="invitation">
