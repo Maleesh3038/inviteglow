@@ -1010,10 +1010,27 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg, t }: {
 
 const BB_WRAP: React.CSSProperties = { maxWidth: 420, margin: '0 auto', padding: '0 24px' }
 
-function Reveal({ id, mt = 56, wide = false, children }: { id?: string; mt?: number; wide?: boolean; children: React.ReactNode }) {
+function Reveal({ id, mt = 56, wide = false, color, children }: { id?: string; mt?: number; wide?: boolean; color?: string; children: React.ReactNode }) {
   return (
     <div id={id} className={wide ? 'bb-wrap-wide' : undefined}
       style={{ ...(wide ? {} : BB_WRAP), marginTop: mt, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      {/* Soft background wash + a small flower ornament above the section —
+          every section used to float on the bare page with nothing marking
+          where it started, which read as plain/empty. This gives each one
+          a gentle backdrop and a little decoration up top, without going
+          back to the old heavy card boxes. */}
+      {color && (
+        <div aria-hidden style={{
+          position: 'absolute', top: -20, left: '50%', transform: 'translateX(-50%)',
+          width: '140%', maxWidth: 480, height: 'calc(100% + 60px)', zIndex: -1, pointerEvents: 'none',
+          background: `radial-gradient(ellipse 60% 55% at 50% 10%, ${color}14 0%, transparent 70%)`,
+        }} />
+      )}
+      {color && (
+        <div aria-hidden style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+          <Blossom size={18} color={color} />
+        </div>
+      )}
       {children}
     </div>
   )
@@ -1074,7 +1091,7 @@ function RsvpBlock({ couple, colors, boxBg, guestName, t }: {
   }
 
   return (
-    <Reveal id="rsvp-form">
+    <Reveal color={colors.primary} id="rsvp-form">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 220, margin: '0 auto 22px' }}>
         <div style={{ flex: 1, height: 1, background: colors.primary, opacity: 0.25 }} />
         <div style={{ width: 5, height: 5, borderRadius: '50%', background: colors.primary }} />
@@ -1373,7 +1390,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
               showing the same picture twice back to back. */}
 
           {/* Invitation — no card, floats on the page */}
-          <Reveal id="invitation">
+          <Reveal color={colors.primary} id="invitation">
             <div style={capsHeading}>{t('invitationHeading')}</div>
             {divider}
             {(brideFamily || groomFamily) && (
@@ -1406,7 +1423,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
               : mapQuery ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : undefined
             const mapsLinkHref = ev.maps_url || (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : undefined)
             return (
-              <Reveal key={ev.key} wide>
+              <Reveal color={colors.primary} key={ev.key} wide>
                 <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{ev.title}</div>
                 <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, margin: '6px 0 18px' }}>{t('venueLocationTime')}</p>
 
@@ -1462,13 +1479,21 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
                   ))}
                 </div>
                 </div>
+
+                {/* A small flourish under the map + details row, so that
+                    block doesn't just end abruptly. */}
+                <div aria-hidden style={{ marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <div style={{ width: 24, height: 1, background: colors.primary, opacity: 0.35 }} />
+                  <Blossom size={13} color={colors.primary} />
+                  <div style={{ width: 24, height: 1, background: colors.primary, opacity: 0.35 }} />
+                </div>
               </Reveal>
             )
           })}
 
           {/* Gallery — card, since it's an image grid */}
           {(section.gallery ?? true) && couple.gallery && couple.gallery.length > 0 && (
-            <Reveal id="gallery">
+            <Reveal color={colors.primary} id="gallery">
               <div style={capsHeading}>{t('ourMoments')}</div>
               {divider}
               {/* Single column, full-width — every photo shows at its own
@@ -1485,7 +1510,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
 
           {/* Timeline — big vertical timeline with connecting line + icon circles */}
           {(section.timeline ?? true) && couple.timeline && couple.timeline.length > 0 && (
-            <Reveal>
+            <Reveal color={colors.primary}>
               <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('dayEvents')}</div>
               {divider}
               <div style={{ position: 'relative', textAlign: 'left', marginTop: 20, paddingLeft: 10 }}>
@@ -1512,7 +1537,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
           {/* Guest Wishes Wall — everyone can read it, everyone can add to it,
               hidden entirely when the couple turns it off from admin */}
           {((couple as any).enable_guest_wishes ?? false) && (
-            <Reveal wide id="wishes">
+            <Reveal color={colors.primary} wide id="wishes">
               <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('wishesForUs')}</div>
               {divider}
               <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 6, marginBottom: 20 }}>
@@ -1546,7 +1571,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
 
             {/* Countdown — big 2x2 grid */}
             {(section.countdown ?? true) && (
-              <Reveal mt={80} id="savethedate">
+              <Reveal color={colors.primary} mt={80} id="savethedate">
                 <div style={{ ...capsHeading, ...ts('countdown_label') }}><Icon name="heart" size={12} color={colors.primary} />{t('justAFewMore')}</div>
                 {divider}
                 <p style={{ fontSize: 13, color: colors.dark, opacity: 0.6, marginTop: 16, marginBottom: 20 }}>
@@ -1558,7 +1583,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
 
             {/* Music — no card wrapper, but the player itself has one */}
             {(section.music ?? true) && couple.song_url && (
-              <Reveal>
+              <Reveal color={colors.primary}>
                 <div style={capsHeading}><Icon name="music" size={12} color={colors.primary} />{t('ourSong')}</div>
                 <div style={{ marginTop: 16 }}>
                   {couple.song_url.includes('youtube.com') || couple.song_url.includes('youtu.be') ? (
@@ -1587,7 +1612,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
 
             {/* Contact Numbers — collected once here instead of repeated per event */}
             {contactList.length > 0 && (
-              <Reveal id="contact">
+              <Reveal color={colors.primary} id="contact">
                 <div style={capsHeading}><Icon name="phone" size={12} color={colors.primary} />{t('getInTouch')}</div>
                 {divider}
                 <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, marginBottom: 16 }}>{t('inquiriesText')}</p>
@@ -1600,7 +1625,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
             {/* Wedding Note — no card, matching the template's "floats on
                 the page" style used by Invitation/Thank You. */}
             {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
-              <Reveal>
+              <Reveal color={colors.primary}>
                 <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('noteForYou')}</div>
                 {divider}
                 {guestName && (
@@ -1614,7 +1639,7 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
 
             {/* Thank you — no card */}
             {(section.thank_you ?? true) && (
-              <Reveal>
+              <Reveal color={colors.primary}>
                 <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{t('thankYouHeading')}</div>
                 {divider}
                 <p style={{ fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
