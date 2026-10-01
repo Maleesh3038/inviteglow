@@ -1321,49 +1321,9 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
             )}
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)' }} />
 
+            {/* No text at all on this cover by design — just the couple's
+                own uploaded photo/video and the Open Invitation button. */}
             <div style={{ position: 'relative', zIndex: 1, minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 64px', textAlign: 'center' }}>
-              <div style={{
-                width: 58, height: 58, borderRadius: '50%', margin: '0 0 18px',
-                background: 'rgba(255,255,255,0.14)', border: '1.4px solid rgba(255,255,255,0.75)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(2px)',
-              }}>
-                <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, letterSpacing: 2, color: '#fff' }}>{initials}</span>
-              </div>
-              <div style={{ fontSize: 11, letterSpacing: '0.28em', fontWeight: 700, color: '#fff', marginBottom: 8, textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>{badgeText}</div>
-              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 34, color: '#fff', marginBottom: 14, textShadow: '0 2px 14px rgba(0,0,0,0.35)' }}>
-                {couple.bride} &amp; {couple.groom}
-              </div>
-
-              {/* Venue, right on the cover alongside the couple's names —
-                  uses whichever event the admin has enabled first (the
-                  wedding event if it's on), same data as the Event Details
-                  card further down. Tappable straight to Maps when a link
-                  is set. */}
-              {(() => {
-                const coverEvent = enabledEvents.find(e => e.key === 'wedding') || enabledEvents[0]
-                if (!coverEvent?.venue) return null
-                const pin = (
-                  <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
-                  </svg>
-                )
-                const content = (
-                  <>
-                    {pin}
-                    <span style={{ fontSize: 12.5, letterSpacing: '0.04em' }}>{coverEvent.venue}</span>
-                  </>
-                )
-                const sharedStyle: React.CSSProperties = {
-                  display: 'inline-flex', alignItems: 'center', gap: 6, color: '#fff',
-                  textShadow: '0 2px 10px rgba(0,0,0,0.3)', marginBottom: 26, textDecoration: 'none',
-                }
-                return coverEvent.maps_url ? (
-                  <a href={coverEvent.maps_url} target="_blank" rel="noopener noreferrer" style={sharedStyle}>{content}</a>
-                ) : (
-                  <div style={sharedStyle}>{content}</div>
-                )
-              })()}
-
               <motion.button
                 onClick={handleOpenClick}
                 aria-label="Open invitation"
