@@ -792,35 +792,39 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   opacity: { duration: letterOut ? 0.5 : 0.6, ease: "easeOut", delay: letterOut ? 0.05 : 0 },
                   scale: { duration: 0.35, ease: "easeIn" },
                 }}
-                style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 300, perspective: 900 }}>
+                style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 320, perspective: 900 }}>
 
-                <div style={{ position: "relative", background: "#fff", borderRadius: 18, boxShadow: `0 16px 40px ${DARK}1a`, border: `1px solid ${PRIMARY}22` }}>
+                <div style={{ position: "relative", background: "#fff", borderRadius: 20, boxShadow: `0 18px 44px ${DARK}1f`, border: `1px solid ${PRIMARY}22`, overflow: "hidden" }}>
                   {/* spacer — the flap sits over this strip */}
-                  <div style={{ height: 44 }} />
-                  <div style={{ padding: "6px 26px 34px", textAlign: "center" }}>
-                    <div style={{ ...ts('subtitle'), fontSize: 10.5, letterSpacing: "0.4em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, marginBottom: 14 }}>{(couple as any).cover_badge_text || "You Are Invited"}</div>
-                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: DARK, lineHeight: 1.15 }}>
-                      <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
-                    </div>
+                  <div style={{ height: 46 }} />
+                  <div style={{ padding: "4px 26px 28px", textAlign: "center" }}>
+                    <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.38em", textTransform: "uppercase", color: PRIMARY, fontWeight: 700, marginBottom: 10 }}>{(couple as any).cover_badge_text || "You Are Invited"}</div>
                     {coverFormalDate && (
-                      <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, marginTop: 10, fontWeight: 600 }}>
+                      <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, fontWeight: 600, marginBottom: 10 }}>
                         {coverFormalDate.month} {coverFormalDate.day}, {coverFormalDate.year}
                       </div>
                     )}
+                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: DARK, lineHeight: 1.1 }}>
+                      <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
+                    </div>
                     {guestName && (
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.1rem", color: PRIMARY, marginTop: 10 }}>Dear {guestName},</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: PRIMARY, marginTop: 8 }}>Dear {guestName},</div>
                     )}
 
-                    <div style={{ margin: "20px 0" }}><LeafDivider color={PRIMARY} size={16} /></div>
+                    <div style={{ margin: "16px 0 18px" }}><LeafDivider color={PRIMARY} size={15} /></div>
 
-                    <button onClick={handleOpen} disabled={flapOpen} style={{
-                      display: "inline-flex", alignItems: "center", gap: 10, background: PRIMARY, color: "#fff",
-                      border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                      cursor: flapOpen ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: `0 10px 26px ${PRIMARY}44`,
-                    }}>
+                    <motion.button onClick={handleOpen} disabled={flapOpen}
+                      whileTap={{ scale: 0.94 }}
+                      whileHover={{ scale: 1.03 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 10, background: PRIMARY, color: "#fff",
+                        border: "none", borderRadius: 100, padding: "13px 28px", fontSize: 10.5, letterSpacing: "0.26em", textTransform: "uppercase",
+                        cursor: flapOpen ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: `0 10px 24px ${PRIMARY}44`,
+                      }}>
                       Open Invitation →
-                    </button>
-                    <div style={{ fontSize: 9, color: MUTED, marginTop: 14, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
+                    </motion.button>
+                    <div style={{ fontSize: 9, color: MUTED, marginTop: 12, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
                   </div>
                 </div>
 
