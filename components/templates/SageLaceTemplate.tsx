@@ -910,7 +910,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             <div style={{ padding: "24px 16px 20px" }}>
               <LaceFrame primary={PRIMARY} primaryLight={PRIMARY_LIGHT} frame={11} radius={24}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={{ padding: "34px 24px 44px", textAlign: "center" }}>
+                <div style={{ padding: "34px 24px 38px", textAlign: "center" }}>
                   <div style={{
                     width: 54, height: 54, borderRadius: "50%", margin: "0 auto 16px", border: `1.4px solid ${PRIMARY}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
@@ -939,16 +939,25 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIMARY }} />
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.4 }} />
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 26 }}>{W.groom}</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 20 }}>{W.groom}</div>
 
-                  {/* Just the month and the day here — the full date,
+                  {/* A small flourish anchors the date to the names above
+                      it, instead of it floating alone in blank space.
+                      Just the month and the day here — the full date,
                       time and venue are already laid out in the "Wedding
                       Ceremony" card right below, so this stays a simple,
                       elegant one-line save-the-date instead of repeating
                       everything twice. */}
                   {coverFormalDate && (
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.15rem", color: DARK }}>
-                      {coverFormalDate.month} <span style={{ color: PRIMARY, fontWeight: 700 }}>&middot; {coverFormalDate.day}{coverFormalDate.ordinal}</span> {coverFormalDate.year}
+                    <div>
+                      <div style={{ margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, maxWidth: 100 }}>
+                        <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
+                        <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY, opacity: 0.6 }} />
+                        <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
+                      </div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: DARK }}>
+                        {coverFormalDate.month} <span style={{ fontStyle: "normal", color: PRIMARY, fontWeight: 700 }}>&middot; {coverFormalDate.day}{coverFormalDate.ordinal}</span> {coverFormalDate.year}
+                      </div>
                     </div>
                   )}
                 </div>
