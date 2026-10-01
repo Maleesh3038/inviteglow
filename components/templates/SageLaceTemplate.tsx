@@ -954,28 +954,58 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                         <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
                       </div>
 
-                      <div style={{ fontSize: 10, letterSpacing: "0.32em", textTransform: "uppercase", color: MUTED, fontWeight: 600, marginBottom: 6 }}>
+                      {/* Date "ticket" row — weekday / big day / time in
+                          three columns separated by hairlines, exactly
+                          like the invitation.lk reference photo. */}
+                      <div style={{ fontSize: 10, letterSpacing: "0.32em", textTransform: "uppercase", color: MUTED, fontWeight: 600, marginBottom: 10 }}>
                         {coverFormalDate.month}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
-                        <div style={{ width: 62, fontSize: 9.5, letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, textAlign: "right", lineHeight: 1.4 }}>{coverFormalDate.weekday}</div>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 14 }}>
+                        <div style={{ width: 58, paddingTop: 6, fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: MUTED, textAlign: "right" }}>{coverFormalDate.weekday}</div>
+                        <div style={{ width: 1, alignSelf: "stretch", background: `${PRIMARY}33` }} />
                         <div style={{ textAlign: "center" }}>
                           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: "2.5rem", color: PRIMARY, lineHeight: 1 }}>{coverFormalDate.day}<span style={{ fontSize: "1.1rem", verticalAlign: "super" }}>{coverFormalDate.ordinal}</span></div>
                           <div style={{ fontSize: 9.5, color: MUTED, marginTop: 4, letterSpacing: "0.1em" }}>{coverFormalDate.year}</div>
                         </div>
-                        <div style={{ width: 62, fontSize: 9.5, letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, textAlign: "left", lineHeight: 1.4 }}>{coverFormalDate.time}</div>
+                        <div style={{ width: 1, alignSelf: "stretch", background: `${PRIMARY}33` }} />
+                        <div style={{ width: 58, paddingTop: 6, fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: MUTED, textAlign: "left" }}>{coverFormalDate.time}</div>
                       </div>
 
                       {coverEvent?.venue && (
-                        <div style={{ marginTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                        <div style={{ marginTop: 22, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
                           <svg width={15} height={15} viewBox="0 0 24 24" fill="none">
                             <path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" stroke={PRIMARY} strokeWidth="1.4" />
                             <circle cx="12" cy="10" r="2.6" stroke={PRIMARY} strokeWidth="1.4" />
                           </svg>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: DARK }}>{coverEvent.venue}</div>
-                          {coverEvent.venue_address && <div style={{ fontSize: 11, color: MUTED }}>{coverEvent.venue_address}</div>}
+                          <div style={{ fontSize: 13, fontWeight: 700, color: DARK, letterSpacing: "0.02em" }}>{coverEvent.venue.toUpperCase()}</div>
+                          {coverEvent.venue_address && <div style={{ fontSize: 11, fontWeight: 600, color: MUTED, letterSpacing: "0.02em" }}>{coverEvent.venue_address.toUpperCase()}</div>}
                         </div>
                       )}
+
+                      {/* "Just married" flourish — a decorative closing
+                          line matching the reference's bottom half, with
+                          the full date repeated underneath. Both lines of
+                          text are configurable per couple, defaulting to
+                          the reference's own wording. */}
+                      <div style={{ marginTop: 34 }}>
+                        <div style={{ fontSize: 9.5, letterSpacing: "0.3em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>
+                          {(couple as any).cover_flourish_eyebrow || "With Joy & Love"}
+                        </div>
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: "1.3rem", letterSpacing: "0.06em", textTransform: "uppercase", color: DARK }}>
+                          {(couple as any).cover_flourish_text || "Just Married"}
+                        </div>
+                        <div style={{ margin: "14px auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, maxWidth: 90 }}>
+                          <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
+                          <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY, opacity: 0.6 }} />
+                          <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
+                        </div>
+                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: DARK, marginBottom: 10 }}>
+                          {(couple as any).cover_flourish_subtext || "Today is the day!"}
+                        </div>
+                        <div style={{ fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: MUTED, lineHeight: 1.6 }}>
+                          {coverFormalDate.weekday}, {coverFormalDate.month} {coverFormalDate.day}{coverFormalDate.ordinal}<br />{coverFormalDate.year}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
