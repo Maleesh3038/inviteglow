@@ -935,28 +935,18 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   </div>
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 26 }}>{W.groom}</div>
 
+                  {/* Just the month and the day here — the full date,
+                      time and venue are already laid out in the "Wedding
+                      Ceremony" card right below, so this stays a simple,
+                      elegant one-line save-the-date instead of repeating
+                      everything twice. */}
                   {coverFormalDate && (
-                    <div style={{ marginBottom: coverEvent?.venue ? 20 : 0 }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: "1.2rem", color: DARK }}>{coverFormalDate.month}</div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
-                        <div style={{ fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: "0.06em" }}>{coverFormalDate.weekday}</div>
-                        <div style={{ width: 3, height: 3, borderRadius: "50%", background: PRIMARY }} />
-                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.3rem", fontWeight: 700, color: PRIMARY }}>{coverFormalDate.day}{coverFormalDate.ordinal}</div>
-                        <div style={{ width: 3, height: 3, borderRadius: "50%", background: PRIMARY }} />
-                        <div style={{ fontSize: 11, color: MUTED }}>{coverFormalDate.year}</div>
-                      </div>
-                      <div style={{ fontSize: 10.5, color: MUTED, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 8 }}>From {coverFormalDate.time} Onwards</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.15rem", color: DARK }}>
+                      {coverFormalDate.month} <span style={{ color: PRIMARY, fontWeight: 700 }}>&middot; {coverFormalDate.day}{coverFormalDate.ordinal}</span> {coverFormalDate.year}
                     </div>
                   )}
 
-                  {coverEvent?.venue && (
-                    <div style={{ marginBottom: 6 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: PRIMARY }}>{coverEvent.venue}</div>
-                      {coverEvent.venue_address && <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>{coverEvent.venue_address}</div>}
-                    </div>
-                  )}
-
-                  <div style={{ margin: "22px auto 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, maxWidth: 120 }}>
+                  <div style={{ margin: "20px auto 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, maxWidth: 120 }}>
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
                     <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY, opacity: 0.6 }} />
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
