@@ -736,17 +736,22 @@ function SageLaceInner({ couple }: { couple: Couple }) {
     videoEndedRef.current = true
     setOpened(true)
   }
+  // The cover <video> below briefly auto-plays (muted) the instant it
+  // mounts and is then immediately paused again by onCoverVideoPlaying —
+  // just so the phone actually decodes and paints a real first frame as
+  // its thumbnail, instead of a blank black box. It never visibly moves
+  // before this tap. Tapping is what makes it play for real, with sound,
+  // from the beginning.
+  const handleCoverVideoPlaying = () => {
+    const v = videoRef.current
+    if (v && !videoPlaying) v.pause()
+  }
   const handleVideoTap = () => {
     if (videoPlaying) return
     setVideoPlaying(true)
     audioRef.current?.play().catch(() => {})
     const v = videoRef.current
     if (v) {
-      // Switch from the silent looping preview (see the <video> below) to
-      // a real, full-volume, play-once-through clip, restarted from the
-      // beginning — then `ended` (handleVideoEnded) is what opens the
-      // invitation.
-      v.loop = false
       v.muted = false
       v.currentTime = 0
       v.play().catch(() => handleVideoEnded())
@@ -838,23 +843,26 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   each with their own different video, so a single baked-in
                   poster photo would always belong to only one couple's clip
                   and show as a wrong/stale thumbnail for everyone else.
-                  Instead, the clip autoplays muted + looping the instant it
-                  mounts — a silent preview — so its own first frame (and
-                  real motion) is guaranteed to actually render on phones.
-                  Relying only on preload="auto" to paint a still frame
-                  (the old approach) worked on desktop but showed a blank/
-                  black screen on many mobile browsers, which won't decode
-                  or paint a paused, never-played video. Tapping it (see
-                  handleVideoTap) unmutes, restarts from 0 and turns off
-                  looping so it plays once through with sound, then opens
-                  the invitation. */}
+                  Instead the clip briefly auto-plays muted the instant it
+                  mounts, which is immediately caught by onPlaying below and
+                  paused again — just enough for the phone to actually
+                  decode and paint its own real first frame as a still
+                  thumbnail. It never visibly plays/moves before being
+                  tapped. Relying only on preload="auto" (the old approach)
+                  worked on desktop but showed a blank/black screen on many
+                  mobile browsers, which won't decode or paint a paused,
+                  never-played video — this play-then-instantly-pause trick
+                  is what actually forces that first frame to render.
+                  Tapping it (see handleVideoTap) unmutes, restarts from 0
+                  and lets it play once through with sound, then opens the
+                  invitation. */}
               <video
                 ref={videoRef}
                 autoPlay
-                loop
                 muted
                 playsInline
                 preload="auto"
+                onPlaying={handleCoverVideoPlaying}
                 onEnded={handleVideoEnded}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
               >
