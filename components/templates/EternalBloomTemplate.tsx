@@ -331,9 +331,9 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
             <div style={{ position: "relative", marginBottom: 6 }}>
               <select value={guestCount} onChange={e => setGuestCount(Number(e.target.value))}
                 style={{
-                  width: "100%", textAlign: "center", textAlignLast: "center", fontFamily: "'Cormorant Garamond',serif",
-                  fontSize: "1.8rem", color: dark, background: `${primary}0d`, border: `1px solid ${primary}33`,
-                  borderRadius: 12, padding: "12px 0", outline: "none", cursor: "pointer",
+                  width: "100%", textAlign: "center", textAlignLast: "center", fontFamily: "'Inter',sans-serif",
+                  fontSize: "1.1rem", fontWeight: 700, color: dark, background: `${primary}0d`, border: `1px solid ${primary}33`,
+                  borderRadius: 10, padding: "8px 0", outline: "none", cursor: "pointer",
                   WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
                 }}>
                 {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
