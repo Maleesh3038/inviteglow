@@ -740,7 +740,19 @@ function SageLaceInner({ couple }: { couple: Couple }) {
     if (videoPlaying) return
     setVideoPlaying(true)
     audioRef.current?.play().catch(() => {})
-    videoRef.current?.play().catch(() => handleVideoEnded())
+    const v = videoRef.current
+    if (v) {
+      // Switch from the silent looping preview (see the <video> below) to
+      // a real, full-volume, play-once-through clip, restarted from the
+      // beginning — then `ended` (handleVideoEnded) is what opens the
+      // invitation.
+      v.loop = false
+      v.muted = false
+      v.currentTime = 0
+      v.play().catch(() => handleVideoEnded())
+    } else {
+      handleVideoEnded()
+    }
     setTimeout(handleVideoEnded, 15000)
   }
 
@@ -826,11 +838,21 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   each with their own different video, so a single baked-in
                   poster photo would always belong to only one couple's clip
                   and show as a wrong/stale thumbnail for everyone else.
-                  preload="auto" loads the real video immediately so its own
-                  first frame appears, against the dark backdrop while it
-                  loads. */}
+                  Instead, the clip autoplays muted + looping the instant it
+                  mounts — a silent preview — so its own first frame (and
+                  real motion) is guaranteed to actually render on phones.
+                  Relying only on preload="auto" to paint a still frame
+                  (the old approach) worked on desktop but showed a blank/
+                  black screen on many mobile browsers, which won't decode
+                  or paint a paused, never-played video. Tapping it (see
+                  handleVideoTap) unmutes, restarts from 0 and turns off
+                  looping so it plays once through with sound, then opens
+                  the invitation. */}
               <video
                 ref={videoRef}
+                autoPlay
+                loop
+                muted
                 playsInline
                 preload="auto"
                 onEnded={handleVideoEnded}
