@@ -693,21 +693,17 @@ function SageLaceInner({ couple }: { couple: Couple }) {
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
 
-  // A small envelope scene, like the reference video's intro: tapping
-  // "Open Invitation" flips the little flap open, then the card slides up
-  // and fades away to reveal the invitation. Music starts immediately
-  // inside this click handler — a real user gesture — so mobile browsers
-  // allow it.
-  // Tapping the closed envelope swings its four flaps out to the edges
-  // (see the cover below), then — once they've cleared the screen — the
-  // whole scene fades and the real invitation is revealed. Music starts
-  // immediately inside this click handler — a real user gesture — so
-  // mobile browsers allow it.
+  // Tapping the closed envelope swings its four flaps out to the edges,
+  // slowly and gently (see the cover below) — and the invitation is
+  // mounted right as the flaps finish clearing, so it's sitting there
+  // "inside" the moment the paper is gone, with no blank gap in between.
+  // Music starts immediately inside this click handler — a real user
+  // gesture — so mobile browsers allow it.
   const handleOpen = () => {
     audioRef.current?.play().catch(() => {})
     setFlapOpen(true)
-    setTimeout(() => setLetterOut(true), 550)
-    setTimeout(() => setOpened(true), 950)
+    setTimeout(() => setLetterOut(true), 900)
+    setTimeout(() => setOpened(true), 1300)
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -784,16 +780,18 @@ function SageLaceInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" onClick={handleOpen}
-              exit={{ opacity: 0, transition: { duration: 0.4, delay: 0.1 } }}
-              style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: DARK, cursor: flapOpen ? "default" : "pointer" }}>
+              exit={{ opacity: 0, transition: { duration: 0.7, ease: "easeInOut" } }}
+              style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: CREAM, cursor: flapOpen ? "default" : "pointer" }}>
 
               {/* Four envelope flaps — clipped triangles pointing to the
                   centre, each a slightly different sage tone (as in the
                   reference photo) with the lace/floral texture embossed
-                  on top. They swing out to top / bottom / left / right. */}
+                  on top. They swing out to top / bottom / left / right,
+                  slowly and gently, revealing the cream page — and the
+                  invitation mounted on it — right underneath. */}
               <motion.div
                 animate={{ y: flapOpen ? "-120%" : 0 }}
-                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1] }}
+                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1] }}
                 style={{
                   position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 0, 100% 0, 50% 50%)",
                   background: `linear-gradient(165deg, ${PRIMARY_LIGHT}, ${PRIMARY})`,
@@ -802,7 +800,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               />
               <motion.div
                 animate={{ y: flapOpen ? "120%" : 0 }}
-                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1], delay: 0.08 }}
+                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1], delay: 0.16 }}
                 style={{
                   position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 100%, 100% 100%, 50% 50%)",
                   background: `linear-gradient(15deg, ${DARK}, ${PRIMARY})`,
@@ -811,7 +809,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               />
               <motion.div
                 animate={{ x: flapOpen ? "-120%" : 0 }}
-                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1], delay: 0.04 }}
+                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1], delay: 0.08 }}
                 style={{
                   position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 0, 0 100%, 50% 50%)",
                   background: `linear-gradient(200deg, ${PRIMARY_LIGHT}, ${PRIMARY})`,
@@ -820,7 +818,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               />
               <motion.div
                 animate={{ x: flapOpen ? "120%" : 0 }}
-                transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1], delay: 0.04 }}
+                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1], delay: 0.08 }}
                 style={{
                   position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(100% 0, 100% 100%, 50% 50%)",
                   background: `linear-gradient(340deg, ${PRIMARY}, ${DARK})`,
@@ -843,8 +841,8 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               {/* Centred text sitting on the closed envelope, fading away
                   the instant the flaps start to swing open. */}
               <motion.div
-                animate={{ opacity: flapOpen ? 0 : 1, scale: flapOpen ? 0.9 : 1 }}
-                transition={{ duration: 0.35 }}
+                animate={{ opacity: flapOpen ? 0 : 1, scale: flapOpen ? 0.92 : 1 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
                 style={{
                   position: "absolute", inset: 0, zIndex: 3, display: "flex", flexDirection: "column",
                   alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 9vw",
