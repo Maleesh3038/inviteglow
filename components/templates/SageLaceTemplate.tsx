@@ -772,101 +772,73 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
 
-        {/* ══ COVER — a full-bleed embossed floral envelope, like the
-            reference: the whole screen IS the closed envelope (four
-            triangular flaps meeting at the centre, each carrying the
-            lace/floral emboss texture). Tapping it swings all four flaps
-            away to their edges, then the scene fades into the invitation. ══ */}
+        {/* ══ COVER — a single kraft-paper envelope with a gold wax seal,
+            resting on a dark moss background, exactly like the reference
+            photo. No text at all on it — just the envelope. Tapping it
+            opens the flap and reveals the invitation directly. ══ */}
         <AnimatePresence>
           {!opened && (
-            <motion.div key="cover" onClick={handleOpen}
-              exit={{ opacity: 0, transition: { duration: 0.7, ease: "easeInOut" } }}
-              style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: CREAM, cursor: flapOpen ? "default" : "pointer" }}>
+            <motion.div key="cover"
+              exit={{ opacity: 0, transition: { duration: 0.6, ease: "easeInOut" } }}
+              style={{
+                minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+                position: "relative", overflow: "hidden", padding: "10vw",
+                background: `radial-gradient(ellipse 80% 55% at 28% 18%, ${PRIMARY}4d, transparent 65%), linear-gradient(155deg, ${DARK}, #1c2518)`,
+              }}>
 
-              {/* Four envelope flaps — clipped triangles pointing to the
-                  centre, each a slightly different sage tone (as in the
-                  reference photo) with the lace/floral texture embossed
-                  on top. They swing out to top / bottom / left / right,
-                  slowly and gently, revealing the cream page — and the
-                  invitation mounted on it — right underneath. */}
-              <motion.div
-                animate={{ y: flapOpen ? "-120%" : 0 }}
-                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1] }}
-                style={{
-                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 0, 100% 0, 50% 50%)",
-                  background: `linear-gradient(165deg, ${PRIMARY_LIGHT}, ${PRIMARY})`,
-                  backgroundImage: `${lacePattern("#f4f1e4", 0.4)}`, backgroundSize: "60px 60px, 100% 100%",
-                }}
-              />
-              <motion.div
-                animate={{ y: flapOpen ? "120%" : 0 }}
-                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1], delay: 0.16 }}
-                style={{
-                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 100%, 100% 100%, 50% 50%)",
-                  background: `linear-gradient(15deg, ${DARK}, ${PRIMARY})`,
-                  backgroundImage: `${lacePattern("#f4f1e4", 0.32)}`, backgroundSize: "60px 60px, 100% 100%",
-                }}
-              />
-              <motion.div
-                animate={{ x: flapOpen ? "-120%" : 0 }}
-                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1], delay: 0.08 }}
-                style={{
-                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(0 0, 0 100%, 50% 50%)",
-                  background: `linear-gradient(200deg, ${PRIMARY_LIGHT}, ${PRIMARY})`,
-                  backgroundImage: `${lacePattern("#f4f1e4", 0.36)}`, backgroundSize: "60px 60px, 100% 100%",
-                }}
-              />
-              <motion.div
-                animate={{ x: flapOpen ? "120%" : 0 }}
-                transition={{ duration: 1.15, ease: [0.76, 0, 0.24, 1], delay: 0.08 }}
-                style={{
-                  position: "absolute", inset: 0, zIndex: 1, clipPath: "polygon(100% 0, 100% 100%, 50% 50%)",
-                  background: `linear-gradient(340deg, ${PRIMARY}, ${DARK})`,
-                  backgroundImage: `${lacePattern("#f4f1e4", 0.32)}`, backgroundSize: "60px 60px, 100% 100%",
-                }}
-              />
+              {/* Soft dappled light, echoing the leaf-shadow in the reference photo */}
+              <div style={{
+                position: "absolute", inset: 0, opacity: 0.35, mixBlendMode: "multiply", pointerEvents: "none",
+                backgroundImage: `linear-gradient(112deg, transparent 22%, #000 24%, transparent 27%), linear-gradient(112deg, transparent 38%, #000 40%, transparent 44%), linear-gradient(112deg, transparent 55%, #000 57%, transparent 62%)`,
+              }} />
 
-              {/* Fold-seam lines — the faint X crease where the four
-                  flaps meet, exactly like the embossed paper in the
-                  reference photo. Fades with the flaps as they open. */}
-              <motion.svg animate={{ opacity: flapOpen ? 0 : 1 }} transition={{ duration: 0.3 }}
-                viewBox="0 0 100 100" preserveAspectRatio="none"
-                style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", width: "100%", height: "100%" }}>
-                <line x1="0" y1="0" x2="50" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="0.3" />
-                <line x1="100" y1="0" x2="50" y2="50" stroke="rgba(255,255,255,0.3)" strokeWidth="0.3" />
-                <line x1="0" y1="100" x2="50" y2="50" stroke="rgba(0,0,0,0.2)" strokeWidth="0.3" />
-                <line x1="100" y1="100" x2="50" y2="50" stroke="rgba(0,0,0,0.2)" strokeWidth="0.3" />
-              </motion.svg>
-
-              {/* Centred text sitting on the closed envelope, fading away
-                  the instant the flaps start to swing open. */}
               <motion.div
-                animate={{ opacity: flapOpen ? 0 : 1, scale: flapOpen ? 0.92 : 1 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                style={{
-                  position: "absolute", inset: 0, zIndex: 3, display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 9vw",
-                }}>
-                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.38em", textTransform: "uppercase", color: CREAM, fontWeight: 700, marginBottom: 14, opacity: 0.9 }}>{(couple as any).cover_badge_text || "You Are Invited"}</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1.15, textShadow: `0 2px 14px ${DARK}66` }}>
-                  <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: CREAM }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
+                onClick={handleOpen}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: letterOut ? -50 : 0, opacity: letterOut ? 0 : 1, scale: flapOpen ? (letterOut ? 0.93 : 1.03) : 1 }}
+                transition={{ duration: letterOut ? 0.6 : 0.7, ease: "easeInOut" }}
+                style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 360, perspective: 1100, cursor: flapOpen ? "default" : "pointer" }}>
+
+                {/* Envelope body — kraft/ivory paper with a faint grain,
+                    and the two lower corner flaps peeking out underneath,
+                    just like the closed envelope in the photo. */}
+                <div style={{ position: "relative", aspectRatio: "3 / 2", borderRadius: 4, overflow: "hidden", boxShadow: "0 30px 70px rgba(0,0,0,0.5)" }}>
+                  <div style={{ position: "absolute", inset: 0, background: `linear-gradient(170deg, #fdfcf5, ${CREAM})`, backgroundImage: lacePattern(PRIMARY, 0.05), backgroundSize: "46px 46px" }} />
+                  <div style={{ position: "absolute", left: 0, bottom: 0, width: "58%", height: "58%", clipPath: "polygon(0 100%, 0 0, 100% 100%)", background: `linear-gradient(135deg, #fdfcf5, #efe8d6)`, boxShadow: `inset 1px 0 0 ${DARK}14` }} />
+                  <div style={{ position: "absolute", right: 0, bottom: 0, width: "58%", height: "58%", clipPath: "polygon(100% 100%, 100% 0, 0 100%)", background: `linear-gradient(225deg, #fdfcf5, #efe8d6)`, boxShadow: `inset -1px 0 0 ${DARK}14` }} />
                 </div>
-                {coverFormalDate && (
-                  <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: CREAM, opacity: 0.85, fontWeight: 600, marginTop: 12 }}>
-                    {coverFormalDate.month} {coverFormalDate.day}, {coverFormalDate.year}
-                  </div>
-                )}
-                {guestName && (
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.05rem", color: CREAM, marginTop: 10, opacity: 0.9 }}>Dear {guestName},</div>
-                )}
 
+                {/* Top flap — hinges open from the envelope's top edge */}
                 <motion.div
-                  animate={{ opacity: [0.55, 1, 0.55] }}
-                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ fontSize: 9.5, color: CREAM, marginTop: 28, letterSpacing: "0.3em", textTransform: "uppercase", fontFamily: "'Inter',sans-serif", fontWeight: 600 }}>
-                  ✦ Tap to Open ✦
+                  animate={{ rotateX: flapOpen ? -170 : 0 }}
+                  transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+                  style={{
+                    position: "absolute", top: 0, left: 0, right: 0, height: "64%", zIndex: 2,
+                    clipPath: "polygon(0 0, 100% 0, 50% 100%)", transformOrigin: "top center", transformStyle: "preserve-3d",
+                    background: `linear-gradient(175deg, #fefdf8, #f7f3e7)`,
+                    backgroundImage: lacePattern(PRIMARY, 0.05), backgroundSize: "46px 46px, 100% 100%",
+                    boxShadow: "0 8px 18px rgba(0,0,0,0.14)",
+                  }}
+                />
+
+                {/* Gold wax seal with an embossed leaf sprig, sitting where
+                    the flap's point meets the envelope — tap it to open. */}
+                <motion.div
+                  animate={{ opacity: flapOpen ? 0 : 1, scale: flapOpen ? 0.55 : 1 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 3,
+                    width: 54, height: 54, borderRadius: "50%",
+                    background: "radial-gradient(circle at 34% 28%, #ecc873, #b5872f)",
+                    boxShadow: "0 5px 12px rgba(0,0,0,0.38), inset 0 1px 1px rgba(255,255,255,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4c-1.3 2.6-3.6 3.4-3.6 6.6a3.6 3.6 0 007.2 0c0-3.2-2.3-4-3.6-6.6z" fill="#6e4f16" opacity={0.85} />
+                    <path d="M12 10.6V19" stroke="#6e4f16" strokeWidth="0.9" opacity={0.7} strokeLinecap="round" />
+                    <path d="M12 14l-2.4 1.6M12 16.2l2.4 1.6" stroke="#6e4f16" strokeWidth="0.7" opacity={0.6} strokeLinecap="round" />
+                  </svg>
                 </motion.div>
-                <div style={{ fontSize: 9, color: CREAM, marginTop: 10, letterSpacing: "0.05em", opacity: 0.75 }}>🎵 with music</div>
               </motion.div>
             </motion.div>
           )}
