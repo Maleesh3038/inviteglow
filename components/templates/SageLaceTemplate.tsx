@@ -919,7 +919,12 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 names, the formal wording, the couple's names in script,
                 and the formal date block, all inside one lace-bordered
                 panel instead of a separate photo hero + two plain cards. */}
-            <div style={{ padding: "24px 16px 20px" }}>
+            {/* Horizontal padding here is 16px minus the LaceFrame's own
+                11px frame width, so the card's visible white edge lands
+                at the same 16px inset as every other section's cardStyle()
+                card below it — otherwise the lace frame's border made this
+                one card sit narrower than the rest, out of line. */}
+            <div style={{ padding: "24px 5px 20px" }}>
               <LaceFrame primary={PRIMARY} primaryLight={PRIMARY_LIGHT} frame={11} radius={24}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={{ padding: "34px 24px 38px", textAlign: "center" }}>
