@@ -6,7 +6,6 @@ import { supabase, Couple } from '@/lib/supabase'
 import FooterSocial from '@/components/shared/FooterSocial'
 
 const DEFAULT_PHOTO = "/images/hero-floral.png"
-const DEFAULT_COVER_VIDEO = "https://eqacrwhbrfqcnlgegvtl.supabase.co/storage/v1/object/public/wedding-photos/videos/eternal-bloom-cover.mp4"
 const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
 const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
 const DEFAULT_SONG_ARTIST = "InviteGlow"
@@ -678,6 +677,17 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ts = useTextStyles(couple)
 
+  // Real envelope-opening video cover — set per couple from the admin's
+  // "Cover Video" uploader (same `cover_video_url` field every other
+  // video-intro template already uses). When a couple has one, the video
+  // itself IS the open animation: tapping the (unbuttoned) envelope plays
+  // it, and the invitation is revealed the instant it finishes. Couples
+  // without a video fall back to the plain kraft-envelope cover below.
+  const coverVideoUrl = (couple as any).cover_video_url || ''
+  const [videoPlaying, setVideoPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const videoEndedRef = useRef(false)
+
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
@@ -704,6 +714,24 @@ function SageLaceInner({ couple }: { couple: Couple }) {
     setFlapOpen(true)
     setTimeout(() => setLetterOut(true), 900)
     setTimeout(() => setOpened(true), 1300)
+  }
+
+  // Video-cover open flow: no button anywhere — tapping the envelope
+  // itself starts the clip (with its own sound), and the invitation opens
+  // the moment the video finishes. A generous safety timeout covers the
+  // rare case where the `ended` event never fires, so a guest is never
+  // left staring at a frozen frame.
+  const handleVideoEnded = () => {
+    if (videoEndedRef.current) return
+    videoEndedRef.current = true
+    audioRef.current?.play().catch(() => {})
+    setOpened(true)
+  }
+  const handleVideoTap = () => {
+    if (videoPlaying) return
+    setVideoPlaying(true)
+    videoRef.current?.play().catch(() => handleVideoEnded())
+    setTimeout(handleVideoEnded, 15000)
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -772,12 +800,32 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
 
-        {/* ══ COVER — a single kraft-paper envelope with a gold wax seal,
-            resting on a dark moss background, exactly like the reference
-            photo. No text at all on it — just the envelope. Tapping it
-            opens the flap and reveals the invitation directly. ══ */}
+        {/* ══ COVER — when this couple has a cover video set, the video
+            itself is the whole open animation: no button anywhere, tap
+            the envelope and the clip plays, finishing the video reveals
+            the invitation. Without one, a plain kraft-paper envelope with
+            a gold wax seal (no text at all) is the fallback — tapping it
+            opens the flap the same way. ══ */}
         <AnimatePresence>
-          {!opened && (
+          {!opened && coverVideoUrl && (
+            <motion.div key="cover-video" onClick={handleVideoTap}
+              exit={{ opacity: 0, transition: { duration: 0.6, ease: "easeInOut" } }}
+              style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: "#15200f", cursor: videoPlaying ? "default" : "pointer" }}>
+              <video
+                ref={videoRef}
+                playsInline
+                preload="auto"
+                onEnded={handleVideoEnded}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              >
+                <source src={coverVideoUrl} type="video/mp4" />
+              </video>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {!opened && !coverVideoUrl && (
             <motion.div key="cover"
               exit={{ opacity: 0, transition: { duration: 0.6, ease: "easeInOut" } }}
               style={{
