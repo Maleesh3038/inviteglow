@@ -673,15 +673,8 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
-  // Tracks whether the cover photo (couple's own upload, or the bundled
-  // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
-  // the static default asset is missing from this deployment — we stop
-  // retrying and switch to a decorative gradient instead of leaving a flat,
-  // empty dark rectangle behind the text (which is what guests were seeing).
-  const [coverPhotoOk, setCoverPhotoOk] = useState(true)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ts = useTextStyles(couple)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
@@ -689,14 +682,6 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
   const MUTED = DEFAULT_PALETTE.muted
 
-  // Priority: an explicit cover_video_url from the admin always wins. If
-  // that's empty, only fall back to the default demo video when the couple
-  // hasn't uploaded their own photo yet — once they add a real couple photo
-  // (via the dashboard), that photo becomes the intro instead of the stock
-  // video quietly overriding it.
-  const hasCustomPhoto = !!couple.couple_photo
-  const explicitCoverVideo = (couple as any).cover_video_url || ''
-  const coverVideoUrl = explicitCoverVideo || (hasCustomPhoto ? '' : DEFAULT_COVER_VIDEO)
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
   useEffect(() => {
@@ -706,37 +691,13 @@ function SageLaceInner({ couple }: { couple: Couple }) {
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
 
-  const [videoPlaying, setVideoPlaying] = useState(false)
-  const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const userStartedRef = useRef(false)
-
+  // This template is a purely text-and-lace design — no cover photo or
+  // video, matching the reference exactly. Opening is immediate: start the
+  // music (inside this click handler, a real user gesture, so mobile
+  // browsers allow it) and reveal the invitation.
   const handleOpen = () => {
-    // Start audio immediately, inside this click handler — this is a real
-    // user gesture, so browsers (including strict mobile ones) will allow
-    // it. Waiting until the video-preview timer fires would lose that
-    // gesture context and silently block playback.
     audioRef.current?.play().catch(() => {})
-    userStartedRef.current = true
-
-    if (coverVideoUrl) {
-      // Play the cover video all the way through — the invitation only
-      // opens once the clip's own `ended` event fires (see the video's
-      // onEnded below). A generous safety timeout is still kept as a
-      // fallback in case a video fails to fire `ended` (e.g. a stream
-      // that never resolves its duration), so a guest is never stuck
-      // looking at a frozen cover forever.
-      setVideoPlaying(true)
-      videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
-      videoTimerRef.current = setTimeout(handleVideoEnded, 30000)
-    } else {
-      handleVideoEnded()
-    }
-  }
-
-  const handleVideoEnded = () => {
-    if (videoTimerRef.current) { clearTimeout(videoTimerRef.current); videoTimerRef.current = null }
     setOpened(true)
-    audioRef.current?.play().catch(() => {})
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -831,53 +792,24 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 )}
               </motion.div>
 
-              {/* Lace-framed media window — couple's cover photo, or their
-                  uploaded cover video (played to completion on tap). */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }}
-                style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 320, flex: "0 1 auto" }}>
-                <LaceFrame primary={PRIMARY} primaryLight={PRIMARY_LIGHT} frame={9} radius={18} style={{ aspectRatio: "3/4" }}>
-                  <div style={{ position: "relative", width: "100%", height: "100%", borderRadius: 10, overflow: "hidden" }}>
-                    {coverPhotoOk ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}
-                        onError={e => {
-                          const img = e.currentTarget as HTMLImageElement
-                          if (img.src.endsWith(DEFAULT_PHOTO)) { setCoverPhotoOk(false); return }
-                          img.src = DEFAULT_PHOTO
-                        }} />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, zIndex: 1, background: `linear-gradient(160deg, ${PRIMARY_LIGHT}, ${PRIMARY})` }} />
-                    )}
-                    {coverVideoUrl && (
-                      // Stays paused and invisible until handleOpen() plays
-                      // it from the button's own click — a real user
-                      // gesture, so mobile browsers allow it. No `loop` —
-                      // it plays once, start to finish, and `onEnded` is
-                      // what opens the invitation.
-                      <video ref={videoRef} muted playsInline preload="auto"
-                        onPlaying={e => { e.currentTarget.style.opacity = "1" }}
-                        onEnded={handleVideoEnded}
-                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
-                        <source src={coverVideoUrl} type="video/mp4" />
-                      </video>
-                    )}
-                  </div>
-                </LaceFrame>
+              {/* Pure text + lace design, matching the reference exactly —
+                  no cover photo or video, just a small decorative divider
+                  before the Open button. */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }}
+                style={{ position: "relative", zIndex: 1, margin: "6px 0 30px" }}>
+                <LeafDivider color={PRIMARY} size={16} />
               </motion.div>
 
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.3 }}
-                style={{ position: "relative", zIndex: 1, textAlign: "center", marginTop: 26 }}>
-                <button onClick={handleOpen} disabled={videoPlaying} style={{
+                style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+                <button onClick={handleOpen} style={{
                   display: "inline-flex", alignItems: "center", gap: 10, background: PRIMARY, color: "#fff",
                   border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: `0 10px 26px ${PRIMARY}44`,
-                  opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
+                  cursor: "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: `0 10px 26px ${PRIMARY}44`,
                 }}>
-                  {videoPlaying ? "Playing..." : "Open Invitation →"}
+                  Open Invitation →
                 </button>
-                {!videoPlaying && (
-                  <div style={{ fontSize: 9, color: MUTED, marginTop: 14, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
-                )}
+                <div style={{ fontSize: 9, color: MUTED, marginTop: 14, letterSpacing: "0.05em" }}>🎵 Tap to begin — with music</div>
               </motion.div>
             </motion.div>
           )}
