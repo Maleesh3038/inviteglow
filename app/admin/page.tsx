@@ -40,6 +40,7 @@ const TEMPLATES = [
   { id: 'golden-poruwa', name: 'Golden Poruwa', tag: 'Cinematic Gold Video', photo: '', demoSlug: '', color: '#b8863d', category: 'wedding' },
   { id: 'prism-glow', name: 'Prism Glow', tag: 'Bold & Modern', photo: '', demoSlug: '', color: '#e8432f', category: 'wedding' },
   { id: 'sage-lace', name: 'Sage Lace', tag: 'Elegant Lace & Video', photo: '', demoSlug: '', color: '#5c7a52', category: 'wedding' },
+  { id: 'blush-reveal', name: 'Blush Reveal', tag: 'Photo/Video Reveal', photo: '/images/blush-blossom-cover-bg.png', demoSlug: '', color: '#c17d8a', category: 'wedding' },
   { id: 'corporate-event', name: 'Corporate Event', tag: 'Office & Corporate', photo: '', demoSlug: '', color: '#1c3d5a', category: 'event' },
   { id: 'first-communion', name: 'First Holy Communion', tag: 'Blue & Gold Blessing', photo: '', demoSlug: '', color: '#7fa8c9', category: 'event' },
 ]
