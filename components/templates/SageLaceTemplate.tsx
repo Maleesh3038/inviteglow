@@ -942,22 +942,40 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 20 }}>{W.groom}</div>
 
                   {/* A small flourish anchors the date to the names above
-                      it, instead of it floating alone in blank space.
-                      Just the month and the day here — the full date,
-                      time and venue are already laid out in the "Wedding
-                      Ceremony" card right below, so this stays a simple,
-                      elegant one-line save-the-date instead of repeating
-                      everything twice. */}
+                      it, instead of it floating alone in blank space. The
+                      weekday · big day number · time row, plus the venue
+                      under a small pin, matches the invitation.lk-style
+                      reference the couple sent. */}
                   {coverFormalDate && (
                     <div>
-                      <div style={{ margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, maxWidth: 100 }}>
+                      <div style={{ margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, maxWidth: 100 }}>
                         <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
                         <div style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY, opacity: 0.6 }} />
                         <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.3 }} />
                       </div>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.2rem", color: DARK }}>
-                        {coverFormalDate.month} <span style={{ fontStyle: "normal", color: PRIMARY, fontWeight: 700 }}>&middot; {coverFormalDate.day}{coverFormalDate.ordinal}</span> {coverFormalDate.year}
+
+                      <div style={{ fontSize: 10, letterSpacing: "0.32em", textTransform: "uppercase", color: MUTED, fontWeight: 600, marginBottom: 6 }}>
+                        {coverFormalDate.month}
                       </div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+                        <div style={{ width: 62, fontSize: 9.5, letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, textAlign: "right", lineHeight: 1.4 }}>{coverFormalDate.weekday}</div>
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, fontSize: "2.5rem", color: PRIMARY, lineHeight: 1 }}>{coverFormalDate.day}<span style={{ fontSize: "1.1rem", verticalAlign: "super" }}>{coverFormalDate.ordinal}</span></div>
+                          <div style={{ fontSize: 9.5, color: MUTED, marginTop: 4, letterSpacing: "0.1em" }}>{coverFormalDate.year}</div>
+                        </div>
+                        <div style={{ width: 62, fontSize: 9.5, letterSpacing: "0.15em", textTransform: "uppercase", color: MUTED, textAlign: "left", lineHeight: 1.4 }}>{coverFormalDate.time}</div>
+                      </div>
+
+                      {coverEvent?.venue && (
+                        <div style={{ marginTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                          <svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" stroke={PRIMARY} strokeWidth="1.4" />
+                            <circle cx="12" cy="10" r="2.6" stroke={PRIMARY} strokeWidth="1.4" />
+                          </svg>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: DARK }}>{coverEvent.venue}</div>
+                          {coverEvent.venue_address && <div style={{ fontSize: 11, color: MUTED }}>{coverEvent.venue_address}</div>}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
