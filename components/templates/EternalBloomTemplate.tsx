@@ -324,11 +324,23 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
         {step === "count" && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <div style={{ fontSize: 13, color: dark, fontWeight: 600, marginBottom: 16 }}>How many people, including you?</div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }}>
-              <button onClick={() => setGuestCount(c => Math.max(1, c - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${primary}1a`, color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>−</button>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.8rem", color: dark, minWidth: 40 }}>{guestCount}</div>
-              <button onClick={() => setGuestCount(c => Math.min(20, c + 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: `${primary}1a`, color: primary, border: "none", cursor: "pointer", fontSize: 16 }}>+</button>
+            {/* Swipe-friendly picker — a native select renders as the
+                phone's own scroll/swipe wheel on tap (iOS and Android both
+                do this automatically), which is far easier on a small
+                screen than tapping tiny +/- buttons one at a time. */}
+            <div style={{ position: "relative", marginBottom: 6 }}>
+              <select value={guestCount} onChange={e => setGuestCount(Number(e.target.value))}
+                style={{
+                  width: "100%", textAlign: "center", textAlignLast: "center", fontFamily: "'Cormorant Garamond',serif",
+                  fontSize: "1.8rem", color: dark, background: `${primary}0d`, border: `1px solid ${primary}33`,
+                  borderRadius: 12, padding: "12px 0", outline: "none", cursor: "pointer",
+                  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
+                }}>
+                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+              <div style={{ position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: primary, fontSize: 13 }}>▾</div>
             </div>
+            <div style={{ fontSize: 10, color: muted, letterSpacing: "0.08em", marginBottom: 16 }}>Swipe to choose</div>
             <button onClick={() => askDrinking ? setStep("drinking") : save("yes", null, guestCount)} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "Continue →"}</button>
           </motion.div>
         )}
