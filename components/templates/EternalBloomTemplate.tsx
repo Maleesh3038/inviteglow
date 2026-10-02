@@ -739,6 +739,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // Eternal Bloom invitation keeps its exact current cover layout
   // untouched. Not a general template change.
   const isMalshaniIsuru = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'malshani-isuru'
+  // Same idea, a different couple's link ("nipuni-anjana-") — their names
+  // sat a bit too high/tight against the photo, so this one link nudges
+  // the whole eyebrow+names block down slightly. Every other invitation
+  // (including malshani-isuru's own, separately-gated layout above) is
+  // untouched.
+  const isNipuniAnjana = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'nipuni-anjana'
 
   const TINT_SAGE = "#eef2e6"
 
@@ -762,7 +768,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : "21vh" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isNipuniAnjana ? "27vh" : "21vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
