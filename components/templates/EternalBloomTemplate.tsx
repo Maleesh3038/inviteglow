@@ -56,6 +56,18 @@ function coupleNameFontSize(name: string): string {
   return "clamp(2.4rem,8.5vw,3.4rem)"
 }
 
+// Same idea, sized down a bit for the italic serif used only on the
+// "anjana-nipuni-" one-off cover below — Cormorant Garamond reads larger
+// than Great Vibes at the same font-size, so it needs smaller clamps to
+// occupy about the same visual space.
+function coupleNameFontSizeSerif(name: string): string {
+  const len = (name || '').length
+  if (len > 12) return "clamp(1.3rem,5vw,1.7rem)"
+  if (len > 9) return "clamp(1.5rem,5.8vw,2.0rem)"
+  if (len > 6) return "clamp(1.7rem,6.5vw,2.3rem)"
+  return "clamp(2.0rem,7.2vw,2.8rem)"
+}
+
 // Same idea, for the "Bride & Groom" combined single-line treatment used
 // in the hero band further down — combined length matters here, not
 // either name individually, since both sit on one line together.
@@ -754,6 +766,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // (including malshani-isuru's own, separately-gated layout above) is
   // untouched.
   const isNipuniAnjana = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'nipuni-anjana'
+  // A third, separate couple's link ("anjana-nipuni-") — their cover names
+  // sat too high over the couple's faces and the script font was hard to
+  // read against the busy photo, so this one link nudges the names down a
+  // little and swaps to a clearer italic serif, same as every other
+  // one-off here: gated on the slug, no effect on any other invitation.
+  const isAnjanaNipuni = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'anjana-nipuni'
 
   const TINT_SAGE = "#eef2e6"
 
@@ -777,7 +795,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isNipuniAnjana ? "27vh" : "21vh" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isNipuniAnjana ? "27vh" : isAnjanaNipuni ? "27vh" : "21vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -825,13 +843,32 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: isMalshaniIsuru ? "1.6rem" : "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
-                <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
+                <div style={{
+                  ...ts('bride_name'),
+                  fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                  fontStyle: isAnjanaNipuni ? "italic" : "normal",
+                  fontWeight: isAnjanaNipuni ? 600 : undefined,
+                  fontSize: isAnjanaNipuni ? coupleNameFontSizeSerif(W.bride) : coupleNameFontSize(W.bride),
+                  color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1,
+                  textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)",
+                  maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word",
+                }}>{W.bride}</div>
                 <div style={{ margin: isMalshaniIsuru ? "22px 0" : "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: isMalshaniIsuru ? 14 : 10 }}>
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ ...ts('groom_name'), fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
+                <div style={{
+                  ...ts('groom_name'),
+                  fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                  fontStyle: isAnjanaNipuni ? "italic" : "normal",
+                  fontWeight: isAnjanaNipuni ? 600 : undefined,
+                  fontSize: isAnjanaNipuni ? coupleNameFontSizeSerif(W.groom) : coupleNameFontSize(W.groom),
+                  color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1,
+                  textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)",
+                  maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word",
+                  marginTop: isMalshaniIsuru ? 8 : 0,
+                }}>{W.groom}</div>
 
                 {guestName && (
                   <>
