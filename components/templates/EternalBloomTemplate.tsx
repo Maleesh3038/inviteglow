@@ -1046,15 +1046,17 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
                   {/* One-off, requested for the "nipuni-anjana-" link only:
-                      Great Vibes read too thin/faint here next to the rest
-                      of the card's text — not fixed by forcing a fake bold
-                      on it (that just distorted the letterforms), so this
-                      one link uses Pacifico instead, a naturally bolder,
-                      more legible script face, plus the darker ink color
-                      for contrast. */}
+                      Great Vibes read too thin/faint here, and a fake bold
+                      or a bolder script face (both tried before this)
+                      either distorted the letterforms or still didn't read
+                      cleanly — so this one link just reuses the same
+                      italic serif already used right above for "To Our
+                      Lovely Guests" (titleStyle), which is clearly legible,
+                      plus the darker ink color for contrast. */}
                   <div style={{
-                    fontFamily: isNipuniAnjana ? "'Pacifico',cursive" : "'Great Vibes',cursive",
-                    fontSize: isNipuniAnjana ? "1.5rem" : "1.8rem",
+                    fontFamily: isNipuniAnjana ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                    fontStyle: isNipuniAnjana ? "italic" : "normal",
+                    fontSize: isNipuniAnjana ? "1.6rem" : "1.8rem",
                     color: isNipuniAnjana ? DARK : PRIMARY, marginTop: 4,
                   }}>{W.bride} &amp; {W.groom}</div>
                 </div>
