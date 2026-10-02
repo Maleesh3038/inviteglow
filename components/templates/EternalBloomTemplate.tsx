@@ -72,6 +72,15 @@ function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+// Adds an ordinal suffix to a day-of-month number (3 -> "3rd", 21 -> "21st").
+// Only used by the "nipuni-anjana-" one-off date format below.
+function ordinalDay(d: number): string {
+  if (d % 10 === 1 && d % 100 !== 11) return `${d}st`
+  if (d % 10 === 2 && d % 100 !== 12) return `${d}nd`
+  if (d % 10 === 3 && d % 100 !== 13) return `${d}rd`
+  return `${d}th`
+}
+
 function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
   primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
 }) {
@@ -915,7 +924,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
-              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              // One-off, requested for the "nipuni-anjana-" link only: show
+              // the day with its ordinal suffix ("3rd December 2026")
+              // instead of the plain number every other invitation uses
+              // ("3 December 2026").
+              const evDateDisplay = isNipuniAnjana
+                ? `${ordinalDay(evDate.getDate())} ${evDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
+                : evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -1030,7 +1045,16 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  {/* One-off, requested for the "nipuni-anjana-" link only:
+                      this cursive signature read too thin/faint next to the
+                      rest of the card's bolder text, so just this link
+                      thickens the strokes (a text-stroke, since Great Vibes
+                      has no real bold weight for font-weight alone to use)
+                      and switches to the darker ink color for contrast. */}
+                  <div style={{
+                    fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: isNipuniAnjana ? DARK : PRIMARY, marginTop: 4,
+                    ...(isNipuniAnjana ? { fontWeight: 700 as any, WebkitTextStroke: `0.6px ${DARK}` } : {}),
+                  }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
             )}
