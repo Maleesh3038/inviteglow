@@ -681,12 +681,20 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // maroon palette — again gated on the slug, no effect on any other
   // invitation.
   const isAnjanaNipuni = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'anjana-nipuni'
+  // A fourth couple's link ("krishal-jayakshi") — same two requests as
+  // anjana-nipuni above: nudge the cover names down a little, and switch
+  // the interior from the template's default green to a matching red
+  // theme for their red homecoming photo. This one keeps the usual Great
+  // Vibes script font on the cover (no font-clarity complaint here).
+  const isKrishalJayakshi = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'krishal-jayakshi'
+  // Either of the two "switch to a red interior" couples above.
+  const useRedTheme = isAnjanaNipuni || isKrishalJayakshi
 
-  const PRIMARY = isAnjanaNipuni ? '#a3403f' : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = isAnjanaNipuni ? '#e8cac4' : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = isAnjanaNipuni ? '#3d2220' : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const PRIMARY = useRedTheme ? '#a3403f' : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = useRedTheme ? '#e8cac4' : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = useRedTheme ? '#3d2220' : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
-  const MUTED = isAnjanaNipuni ? '#a98580' : DEFAULT_PALETTE.muted
+  const MUTED = useRedTheme ? '#a98580' : DEFAULT_PALETTE.muted
 
   // Priority: an explicit cover_video_url from the admin always wins. If
   // that's empty, only fall back to the default demo video when the couple
@@ -785,7 +793,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // text and the countdown pills — switched to a matching light red/rose
   // tint for the anjana-nipuni- one-off above, since the sage-green
   // version clashed with that couple's red homecoming theme.
-  const TINT_SAGE = isAnjanaNipuni ? "#f3e2de" : "#eef2e6"
+  const TINT_SAGE = useRedTheme ? "#f3e2de" : "#eef2e6"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -807,7 +815,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isNipuniAnjana ? "27vh" : isAnjanaNipuni ? "27vh" : "21vh" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isNipuniAnjana ? "27vh" : (isAnjanaNipuni || isKrishalJayakshi) ? "27vh" : "21vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -993,7 +1001,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: (isAnjanaNipuni ? MUTED : "#a8b89e") }}>{d.label}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: (useRedTheme ? MUTED : "#a8b89e") }}>{d.label}</div>
                         <div style={{ ...(d.tsKey ? ts(d.tsKey) : {}), fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ ...((d as any).subTsKey ? ts((d as any).subTsKey) : {}), fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
@@ -1093,7 +1101,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: (isAnjanaNipuni ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontSize: 11, color: (useRedTheme ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
                   {/* One-off, requested for the "nipuni-anjana-" link only:
                       Great Vibes read too thin/faint here, and a fake bold
                       or a bolder script face (both tried before this)
@@ -1128,7 +1136,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
               </div>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: (isAnjanaNipuni ? MUTED : "#a8b89e") }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: (useRedTheme ? MUTED : "#a8b89e") }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
           </motion.div>
@@ -1137,7 +1145,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
       {opened && (
         <BottomNavBar
           primary={PRIMARY} dark={DARK}
-          accentLight={isAnjanaNipuni ? PRIMARY_LIGHT : undefined}
+          accentLight={useRedTheme ? PRIMARY_LIGHT : undefined}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
           hasWishes={(couple as any).enable_guest_wishes ?? false}
           hasGallery={sv.gallery && W.gallery.length > 0}
