@@ -760,7 +760,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Pacifico&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #b5c2ac; }
       `}</style>
@@ -1046,14 +1046,16 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
                   {/* One-off, requested for the "nipuni-anjana-" link only:
-                      this cursive signature read too thin/faint next to the
-                      rest of the card's bolder text, so just this link
-                      thickens the strokes (a text-stroke, since Great Vibes
-                      has no real bold weight for font-weight alone to use)
-                      and switches to the darker ink color for contrast. */}
+                      Great Vibes read too thin/faint here next to the rest
+                      of the card's text — not fixed by forcing a fake bold
+                      on it (that just distorted the letterforms), so this
+                      one link uses Pacifico instead, a naturally bolder,
+                      more legible script face, plus the darker ink color
+                      for contrast. */}
                   <div style={{
-                    fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: isNipuniAnjana ? DARK : PRIMARY, marginTop: 4,
-                    ...(isNipuniAnjana ? { fontWeight: 700 as any, WebkitTextStroke: `0.6px ${DARK}` } : {}),
+                    fontFamily: isNipuniAnjana ? "'Pacifico',cursive" : "'Great Vibes',cursive",
+                    fontSize: isNipuniAnjana ? "1.5rem" : "1.8rem",
+                    color: isNipuniAnjana ? DARK : PRIMARY, marginTop: 4,
                   }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
