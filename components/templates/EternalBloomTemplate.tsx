@@ -1147,11 +1147,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* RSVP */}
             {/* The "simple" single-page RSVP form (name, phone, an accept/
                 decline toggle, guest count, an optional message, one
-                submit button) is a one-off requested only for the
-                nipuni-anjana- link, modeled on a reference design the
-                couple liked. Every other invitation keeps the original
-                multi-step RSVP ('wizard', the default) untouched. */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} variant={isNipuniAnjana ? 'simple' : 'wizard'} /></div>
+                submit button) is a one-off requested for the
+                nipuni-anjana- link (and now anjana-nipuni- too), modeled
+                on a reference design the couple liked. Every other
+                invitation keeps the original multi-step RSVP ('wizard',
+                the default) untouched. */}
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} variant={(isNipuniAnjana || isAnjanaNipuni) ? 'simple' : 'wizard'} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
@@ -1228,19 +1229,20 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: (useRedTheme ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
-                  {/* One-off, requested for the "nipuni-anjana-" link only:
-                      Great Vibes read too thin/faint here, and a fake bold
-                      or a bolder script face (both tried before this)
-                      either distorted the letterforms or still didn't read
-                      cleanly — so this one link just reuses the same
-                      italic serif already used right above for "To Our
-                      Lovely Guests" (titleStyle), which is clearly legible,
-                      plus the darker ink color for contrast. */}
+                  {/* One-off, requested for the "nipuni-anjana-" link (and
+                      now "anjana-nipuni-" too): Great Vibes read too thin/
+                      faint here, and a fake bold or a bolder script face
+                      (both tried before this) either distorted the
+                      letterforms or still didn't read cleanly — so these
+                      links just reuse the same italic serif already used
+                      right above for "To Our Lovely Guests" (titleStyle),
+                      which is clearly legible, plus the darker ink color
+                      for contrast. */}
                   <div style={{
-                    fontFamily: isNipuniAnjana ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                    fontStyle: isNipuniAnjana ? "italic" : "normal",
-                    fontSize: isNipuniAnjana ? "1.6rem" : "1.8rem",
-                    color: isNipuniAnjana ? DARK : PRIMARY, marginTop: 4,
+                    fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                    fontStyle: useSerifName ? "italic" : "normal",
+                    fontSize: useSerifName ? "1.6rem" : "1.8rem",
+                    color: useSerifName ? DARK : PRIMARY, marginTop: 4,
                   }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
