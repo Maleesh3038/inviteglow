@@ -359,6 +359,11 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
                 <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
                   {r.response === 'yes' ? `Attending · ${r.guest_count} guest${r.guest_count > 1 ? 's' : ''}` : 'Not attending'}
                   {r.drinking ? ` · ${r.drinking}` : ''}
+                  {/* phone is a newer, optional column some invitations'
+                      RSVP forms collect (see add_rsvp_phone.sql) — older
+                      rows and templates that don't ask for it simply don't
+                      have one, so this only shows up when present. */}
+                  {(r as any).phone ? ` · ${(r as any).phone}` : ''}
                 </div>
               </div>
               <button type="button" onClick={() => handleDelete(r.id, r.guest_name)} disabled={deletingId === r.id}
