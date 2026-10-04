@@ -366,7 +366,15 @@ function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted
     if (!simpleAttendance) { setSimpleError('Please choose whether you can make it.'); return }
     setSimpleError('')
     setSaving(true)
-    const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response: simpleAttendance, drinking: null, guest_count: simpleAttendance === 'yes' ? guestCount : 1 }])
+    const basePayload = { couple_id: coupleId, guest_name: name.trim(), response: simpleAttendance, drinking: null, guest_count: simpleAttendance === 'yes' ? guestCount : 1 }
+    // `phone` is a newer column (see add_rsvp_phone.sql) — until that
+    // migration has actually been run on this project, Supabase would
+    // reject it as an unknown column, so this retries once without it
+    // rather than losing the whole RSVP over a missing phone number.
+    let { error } = await supabase.from('rsvps').insert([{ ...basePayload, phone: phone.trim() || null }])
+    if (error) {
+      ;({ error } = await supabase.from('rsvps').insert([basePayload]))
+    }
     if (error) { setSaving(false); setSimpleError('Something went wrong — please try again.'); return }
     if (message.trim()) {
       await supabase.from('wishes').insert([{ couple_id: coupleId, guest_name: name.trim(), message: message.trim(), media: [] }]).then(() => {}, () => {})
