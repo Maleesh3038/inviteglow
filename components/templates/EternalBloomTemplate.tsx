@@ -1101,11 +1101,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
-              // One-off, requested for the "nipuni-anjana-" link only: show
-              // the day with its ordinal suffix ("3rd December 2026")
-              // instead of the plain number every other invitation uses
-              // ("3 December 2026").
-              const evDateDisplay = isNipuniAnjana
+              // One-off, requested for the "nipuni-anjana-" link (and now
+              // "anjana-nipuni-" too): show the day with its ordinal
+              // suffix ("5th December 2026") instead of the plain number
+              // every other invitation uses ("5 December 2026").
+              const evDateDisplay = (isNipuniAnjana || isAnjanaNipuni)
                 ? `${ordinalDay(evDate.getDate())} ${evDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
                 : evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
