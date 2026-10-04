@@ -322,16 +322,115 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
+function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName, variant = 'wizard' }: {
+  coupleId: string; askDrinking: boolean; primary: string; primaryLight?: string; dark: string; cream: string; muted: string; guestName: string
+  // 'simple' is a one-off single-page form layout (Guest Name, Phone,
+  // an Accept/Decline toggle, Number of Guests, an optional Message, one
+  // "Send RSVP" button) requested for a specific invitation link — see
+  // its call site below. The default 'wizard' is the original multi-step
+  // flow every other invitation already uses, completely unchanged.
+  variant?: 'wizard' | 'simple'
+}) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
+  // Only used by the 'simple' variant below.
+  const [phone, setPhone] = useState("")
+  const [simpleAttendance, setSimpleAttendance] = useState<"yes" | "no" | null>(null)
+  const [message, setMessage] = useState("")
+  const [simpleError, setSimpleError] = useState("")
   const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
     setSaving(true)
     const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
     setSaving(false); if (!error) { setFinalResponse(response); setStep("done") }
   }
+  // The reference design this was modeled on also collects a "Message"
+  // right on the RSVP form — there's no message column on the rsvps table
+  // (no other invitation's RSVP writes one), so instead of risking a
+  // broken submission on an unknown column, a non-empty message is saved
+  // as a guest wish instead (the `wishes` table already exists and is
+  // exactly what the Guest Wishes Wall section reads from).
+  const saveSimple = async () => {
+    if (!name.trim()) { setSimpleError('Please enter your name.'); return }
+    if (!simpleAttendance) { setSimpleError('Please choose whether you can make it.'); return }
+    setSimpleError('')
+    setSaving(true)
+    const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response: simpleAttendance, drinking: null, guest_count: simpleAttendance === 'yes' ? guestCount : 1 }])
+    if (error) { setSaving(false); setSimpleError('Something went wrong — please try again.'); return }
+    if (message.trim()) {
+      await supabase.from('wishes').insert([{ couple_id: coupleId, guest_name: name.trim(), message: message.trim(), media: [] }]).then(() => {}, () => {})
+    }
+    setSaving(false)
+    setFinalResponse(simpleAttendance)
+    setStep("done")
+  }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
+
+  if (variant === 'simple') {
+    const simpleLabel: React.CSSProperties = { fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontWeight: 700, color: dark, marginBottom: 8, display: 'block', textAlign: 'left' }
+    const simpleInput: React.CSSProperties = { width: '100%', padding: '14px 16px', borderRadius: 14, border: `1.5px solid ${primary}33`, background: '#fff', color: dark, fontSize: 14, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }
+    return (
+      <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
+        <LeafDivider color={primary} />
+        <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
+        <div style={{ background: "#fff", borderRadius: 20, padding: "26px 22px", maxWidth: 420, margin: "0 auto", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", textAlign: "left" }}>
+          {step === "done" ? (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🌿" : "🙏"}</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>{finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}</div>
+              <div style={{ fontSize: 12, color: muted }}>{finalResponse === "yes" ? (guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We can't wait to celebrate with you.") : "Thank you for letting us know."}</div>
+            </motion.div>
+          ) : (
+            <>
+              <div style={{ marginBottom: 20 }}>
+                <label style={simpleLabel}>Guest Name<span style={{ color: "#c0504d" }}> *</span></label>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={simpleInput} />
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={simpleLabel}>Phone Number<span style={{ color: muted, fontWeight: 400 }}> (optional)</span></label>
+                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="07XX XXX XXXX" style={simpleInput} />
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={simpleLabel}>Attendance<span style={{ color: "#c0504d" }}> *</span></label>
+                <button type="button" onClick={() => setSimpleAttendance("yes")} style={{
+                  width: "100%", padding: "14px 16px", borderRadius: 14, border: simpleAttendance === "yes" ? `1.5px solid ${primary}` : "1.5px solid transparent",
+                  background: simpleAttendance === "yes" ? primary : `${primary}0f`, color: simpleAttendance === "yes" ? "#fff" : dark,
+                  fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 10, fontFamily: "'Inter',sans-serif", display: "block",
+                }}>Joyfully Accept</button>
+                <button type="button" onClick={() => setSimpleAttendance("no")} style={{
+                  width: "100%", padding: "14px 16px", borderRadius: 14, border: simpleAttendance === "no" ? `1.5px solid ${dark}` : "1.5px solid transparent",
+                  background: simpleAttendance === "no" ? dark : `${primary}0f`, color: simpleAttendance === "no" ? "#fff" : dark,
+                  fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter',sans-serif", display: "block",
+                }}>Regretfully Decline</button>
+              </div>
+              {simpleAttendance === "yes" && (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={simpleLabel}>Number of Guests</label>
+                  <input type="number" min={1} max={10} value={guestCount} onChange={e => setGuestCount(Math.max(1, Math.min(10, Number(e.target.value) || 1)))} style={{ ...simpleInput, width: 100 }} />
+                </div>
+              )}
+              <div style={{ marginBottom: 20 }}>
+                <label style={simpleLabel}>Message<span style={{ color: muted, fontWeight: 400 }}> (optional)</span></label>
+                <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Share your wishes for the couple..." rows={4} style={{ ...simpleInput, resize: "vertical" }} />
+              </div>
+              {simpleError && <div style={{ fontSize: 12, color: "#c0504d", marginBottom: 14 }}>{simpleError}</div>}
+              <button onClick={saveSimple} disabled={saving} style={{
+                width: "100%", padding: "15px 16px", borderRadius: 14, border: "none", cursor: saving ? "default" : "pointer",
+                background: `linear-gradient(135deg,${primary},${primaryLight || primary})`, color: "#fff", fontSize: 14, fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "'Inter',sans-serif",
+                opacity: saving ? 0.7 : 1,
+              }}>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+                {saving ? "Sending..." : "Send RSVP"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
       <LeafDivider color={primary} />
@@ -1025,7 +1124,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
+            {/* The "simple" single-page RSVP form (name, phone, an accept/
+                decline toggle, guest count, an optional message, one
+                submit button) is a one-off requested only for the
+                nipuni-anjana- link, modeled on a reference design the
+                couple liked. Every other invitation keeps the original
+                multi-step RSVP ('wizard', the default) untouched. */}
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} variant={isNipuniAnjana ? 'simple' : 'wizard'} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
