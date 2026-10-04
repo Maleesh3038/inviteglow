@@ -80,6 +80,17 @@ function combinedNameFontSize(bride: string, groom: string): string {
   return "clamp(2.2rem,7.5vw,3.1rem)"
 }
 
+// Same idea, sized down for the clearer italic serif used on the hero
+// band for the nipuni-anjana-/anjana-nipuni- one-offs (see useSerifName).
+function combinedNameFontSizeSerif(bride: string, groom: string): string {
+  const len = (bride || '').length + (groom || '').length
+  if (len > 22) return "clamp(1.0rem,4vw,1.3rem)"
+  if (len > 17) return "clamp(1.2rem,4.6vw,1.6rem)"
+  if (len > 13) return "clamp(1.4rem,5.2vw,1.9rem)"
+  if (len > 10) return "clamp(1.6rem,5.8vw,2.3rem)"
+  return "clamp(1.9rem,6.5vw,2.7rem)"
+}
+
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -788,6 +799,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const isKrishalJayakshi = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'krishal-jayakshi'
   // Either of the two "switch to a red interior" couples above.
   const useRedTheme = isAnjanaNipuni || isKrishalJayakshi
+  // Either of the two couples whose names switch from the thin cursive
+  // script to the clearer italic serif — used everywhere their name
+  // appears (cover, hero band, thank-you signature), not just one spot.
+  const useSerifName = isAnjanaNipuni || isNipuniAnjana
 
   const PRIMARY = useRedTheme ? '#a3403f' : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
   const PRIMARY_LIGHT = useRedTheme ? '#e8cac4' : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
@@ -964,10 +979,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: isMalshaniIsuru ? "1.6rem" : "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
                 <div style={{
                   ...ts('bride_name'),
-                  fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                  fontStyle: isAnjanaNipuni ? "italic" : "normal",
-                  fontWeight: isAnjanaNipuni ? 600 : undefined,
-                  fontSize: isAnjanaNipuni ? coupleNameFontSizeSerif(W.bride) : coupleNameFontSize(W.bride),
+                  fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                  fontStyle: useSerifName ? "italic" : "normal",
+                  fontWeight: useSerifName ? 600 : undefined,
+                  fontSize: useSerifName ? coupleNameFontSizeSerif(W.bride) : coupleNameFontSize(W.bride),
                   color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1,
                   textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)",
                   maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word",
@@ -979,10 +994,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{
                   ...ts('groom_name'),
-                  fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                  fontStyle: isAnjanaNipuni ? "italic" : "normal",
-                  fontWeight: isAnjanaNipuni ? 600 : undefined,
-                  fontSize: isAnjanaNipuni ? coupleNameFontSizeSerif(W.groom) : coupleNameFontSize(W.groom),
+                  fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                  fontStyle: useSerifName ? "italic" : "normal",
+                  fontWeight: useSerifName ? 600 : undefined,
+                  fontSize: useSerifName ? coupleNameFontSizeSerif(W.groom) : coupleNameFontSize(W.groom),
                   color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1,
                   textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)",
                   maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word",
@@ -1037,7 +1052,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
+                  <div style={{
+                    fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
+                    fontStyle: useSerifName ? "italic" : "normal",
+                    fontWeight: useSerifName ? 600 : undefined,
+                    fontSize: useSerifName ? combinedNameFontSizeSerif(W.bride, W.groom) : combinedNameFontSize(W.bride, W.groom),
+                    color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)",
+                  }}>
                     <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
