@@ -675,6 +675,197 @@ export default function BlushRevealTemplate({ couple }: { couple: Couple }) {
   )
 }
 
+// ── Calendar-link helpers for the "Save Our Date" accordion (imesha-madusanka
+// one-off below). Google Calendar gets a deep link; Apple Calendar/Outlook
+// get a downloadable .ics built on the fly — no server round-trip either way. ──
+function fmtCalDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+}
+function buildGoogleCalendarUrl(title: string, start: Date, venue: string, address: string): string {
+  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000)
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: title, dates: `${fmtCalDate(start)}/${fmtCalDate(end)}`, location: [venue, address].filter(Boolean).join(', ') })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+function buildIcsDataUrl(title: string, start: Date, venue: string, address: string): string {
+  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000)
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT', `DTSTART:${fmtCalDate(start)}`, `DTEND:${fmtCalDate(end)}`, `SUMMARY:${title}`, `LOCATION:${[venue, address].filter(Boolean).join(', ')}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`
+}
+
+// ── One-off tabbed interior for imesha-madusanka-, modeled on a reference
+// design the couple sent (sticky translucent header, DETAILS / LOCATION /
+// PHOTOS / RSVP tabs). Deliberately reuses this template's own PRIMARY /
+// PRIMARY_LIGHT / DARK / CREAM colors throughout — only the layout changes,
+// per "colors change karanna epa". Every other invitation on this template
+// keeps the original continuous-scroll layout untouched. ──
+function TabbedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, activeTab, setActiveTab }: {
+  couple: Couple
+  PRIMARY: string; PRIMARY_LIGHT: string; DARK: string; CREAM: string; MUTED: string
+  W: { bride: string; groom: string; brideFamilyName: string; groomFamilyName: string; date?: string; gallery: string[] }
+  eventsList: { key: string; label: string; icon: string; venue: string; venue_address: string; date: string; maps_url: string }[]
+  guestName: string
+  activeTab: 'details' | 'location' | 'photos' | 'rsvp'
+  setActiveTab: (t: 'details' | 'location' | 'photos' | 'rsvp') => void
+}) {
+  const [dateOpen, setDateOpen] = useState(false)
+  const primaryEvent = eventsList[0]
+  const evDate = primaryEvent && primaryEvent.date ? new Date(primaryEvent.date) : null
+  const evTimeDisplay = evDate ? evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''
+  const mapQuery = primaryEvent ? encodeURIComponent([primaryEvent.venue, primaryEvent.venue_address].filter(Boolean).join(', ')) : ''
+
+  const tabs: { key: 'details' | 'location' | 'photos' | 'rsvp'; label: string }[] = [
+    { key: 'details', label: 'DETAILS' }, { key: 'location', label: 'LOCATION' }, { key: 'photos', label: 'PHOTOS' }, { key: 'rsvp', label: 'RSVP' },
+  ]
+
+  return (
+    <div style={{ position: 'relative', paddingTop: 108 }}>
+      {/* Sticky translucent header — couple names + tab row */}
+      <div style={{ position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 24px)', maxWidth: 456, zIndex: 90, background: `${DARK}d9`, backdropFilter: 'blur(10px)', borderRadius: 20, padding: '14px 16px', boxShadow: '0 12px 30px rgba(0,0,0,0.25)' }}>
+        <div style={{ textAlign: 'center', fontFamily: "'Great Vibes',cursive", fontSize: '1.4rem', color: '#fff', marginBottom: 10 }}>
+          <span style={{ color: PRIMARY_LIGHT }}>{W.bride}</span> &amp; <span style={{ color: PRIMARY_LIGHT }}>{W.groom}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
+              padding: '8px 13px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              background: activeTab === t.key ? PRIMARY : 'transparent',
+              color: activeTab === t.key ? '#fff' : 'rgba(255,255,255,0.75)',
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', fontFamily: "'Inter',sans-serif",
+            }}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: '6px 18px 80px' }}>
+        {activeTab === 'details' && (
+          <>
+            {/* Personal Invitation card */}
+            <div style={{ background: CREAM, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 24, padding: '28px 22px', textAlign: 'center', marginBottom: 18 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: MUTED, marginBottom: 18 }}>A Personal Invitation</div>
+              {W.brideFamilyName && (
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: DARK, lineHeight: 1.7 }}>{W.brideFamilyName}</div>
+              )}
+              {W.brideFamilyName && W.groomFamilyName && (
+                <div style={{ fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: MUTED, margin: '14px 0' }}>Together With</div>
+              )}
+              {W.groomFamilyName && (
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: DARK, lineHeight: 1.7 }}>{W.groomFamilyName}</div>
+              )}
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 16, color: DARK, margin: '18px 0' }}>joyfully invite</div>
+              {guestName && (
+                <div style={{ display: 'inline-block', border: `1.5px dashed ${PRIMARY}77`, borderRadius: 100, padding: '14px 26px', margin: '4px 0 18px', background: `${PRIMARY}0a` }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: DARK, lineHeight: 1.5 }}>{guestName}</div>
+                </div>
+              )}
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: DARK, lineHeight: 1.8 }}>
+                to join in celebrating the wedding of their beloved children.
+              </div>
+            </div>
+
+            {primaryEvent && (
+              <>
+                {/* Arch-topped ceremony card */}
+                <div style={{ background: '#fff', borderRadius: '120px 120px 20px 20px', padding: '36px 24px 24px', textAlign: 'center', boxShadow: `0 8px 26px ${DARK}14`, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                    <Blossom size={22} color={PRIMARY} />
+                  </div>
+                  <div style={{ fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>{primaryEvent.label}</div>
+                  {evDate && <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: DARK, fontWeight: 700 }}>{evTimeDisplay}</div>}
+                  <div style={{ width: 36, height: 1, background: PRIMARY, opacity: 0.4, margin: '12px auto' }} />
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: DARK }}>{primaryEvent.venue}</div>
+                </div>
+
+                {/* Save Our Date accordion */}
+                <div style={{ background: CREAM, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 18, overflow: 'hidden' }}>
+                  <button onClick={() => setDateOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: '50%', background: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></svg>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: DARK, fontWeight: 700 }}>Save Our Date</div>
+                      <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>Add the wedding to your calendar</div>
+                    </div>
+                    <div style={{ color: MUTED, transform: dateOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</div>
+                  </button>
+                  {dateOpen && evDate && (
+                    <div style={{ padding: '0 18px 18px', display: 'grid', gap: 8 }}>
+                      <a href={buildGoogleCalendarUrl(`${W.bride} & ${W.groom}'s Wedding`, evDate, primaryEvent.venue, primaryEvent.venue_address)} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'block', textAlign: 'center', padding: '12px 16px', borderRadius: 12, border: `1px solid ${PRIMARY_LIGHT}`, background: '#fff', color: DARK, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                        Google Calendar
+                      </a>
+                      <a href={buildIcsDataUrl(`${W.bride} & ${W.groom}'s Wedding`, evDate, primaryEvent.venue, primaryEvent.venue_address)} download={`${W.bride}-${W.groom}-wedding.ics`}
+                        style={{ display: 'block', textAlign: 'center', padding: '12px 16px', borderRadius: 12, border: `1px solid ${PRIMARY_LIGHT}`, background: '#fff', color: DARK, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                        Apple Calendar / Outlook
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {activeTab === 'location' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: MUTED, marginBottom: 8 }}>How To Find Us</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: DARK }}>The <span style={{ color: PRIMARY, fontStyle: 'italic' }}>Location</span></div>
+            </div>
+            {primaryEvent ? (
+              <>
+                <div style={{ background: '#fff', borderRadius: 22, padding: '26px 20px', textAlign: 'center', boxShadow: `0 8px 26px ${DARK}14`, marginBottom: 16 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', border: `1px solid ${PRIMARY}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={PRIMARY} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                  </div>
+                  <div style={{ fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>Venue</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 17, fontWeight: 700, color: DARK, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{primaryEvent.venue}</div>
+                  {primaryEvent.venue_address && <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8, lineHeight: 1.6 }}>{primaryEvent.venue_address}</div>}
+                </div>
+                <div style={{ borderRadius: 18, overflow: 'hidden', boxShadow: `0 8px 26px ${DARK}14`, position: 'relative' }}>
+                  <iframe title="Venue map" src={`https://maps.google.com/maps?q=${mapQuery}&output=embed`} width="100%" height="230" style={{ border: 0, display: 'block' }} loading="lazy" />
+                  <a href={primaryEvent.maps_url || `https://maps.google.com/?q=${mapQuery}`} target="_blank" rel="noopener noreferrer"
+                    style={{ position: 'absolute', top: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: DARK, borderRadius: 100, padding: '8px 14px', fontSize: 11.5, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 14px rgba(0,0,0,0.18)' }}>
+                    Open in Maps ↗
+                  </a>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', color: MUTED, fontSize: 13 }}>Venue details coming soon.</div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'photos' && (
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: MUTED, marginBottom: 8 }}>Our Moments</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: DARK }}>The <span style={{ color: PRIMARY, fontStyle: 'italic' }}>Photos</span></div>
+            </div>
+            {W.gallery.length > 0 ? (
+              <div style={{ columnCount: 2, columnGap: 10 }}>
+                {W.gallery.map((src, i) => (
+                  <div key={i} style={{ breakInside: 'avoid', marginBottom: 10, borderRadius: 16, overflow: 'hidden', background: `${PRIMARY_LIGHT}55`, boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = 'none' }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', color: MUTED, fontSize: 13 }}>Photos coming soon.</div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'rsvp' && (
+          <div style={{ background: '#fff', borderRadius: 22, padding: '8px 4px 20px', boxShadow: `0 8px 26px ${DARK}14` }}>
+            <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function BlushRevealInner({ couple }: { couple: Couple }) {
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
@@ -687,6 +878,14 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ts = useTextStyles(couple)
+
+  // One-off: imesha-madusanka- gets a tabbed-navigation redesign (DETAILS /
+  // LOCATION / PHOTOS / RSVP) instead of the usual continuous scroll, per a
+  // reference design the couple liked. Same colors as every other invite —
+  // only the layout differs — and every other link on this template is
+  // completely unaffected.
+  const isImeshaMadusanka = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'imesha-madusanka'
+  const [activeTab, setActiveTab] = useState<'details' | 'location' | 'photos' | 'rsvp'>('details')
 
   const colors = sanitizeColors(couple.custom_colors)
   const PRIMARY = colors.primary
@@ -847,7 +1046,13 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
 
       {/* ───────── MAIN CONTENT — Eternal Bloom's interior structure ───────── */}
       <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
-        {opened && (
+        {opened && isImeshaMadusanka && (
+          <TabbedInterior
+            couple={couple} PRIMARY={PRIMARY} PRIMARY_LIGHT={PRIMARY_LIGHT} DARK={DARK} CREAM={CREAM} MUTED={MUTED}
+            W={W} eventsList={eventsList} guestName={guestName} activeTab={activeTab} setActiveTab={setActiveTab}
+          />
+        )}
+        {opened && !isImeshaMadusanka && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
             {/* Heading — Eternal Bloom's hero text, minus the repeated
@@ -1047,7 +1252,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
-      {opened && (
+      {opened && !isImeshaMadusanka && (
         <BottomNavBar
           primary={PRIMARY} dark={DARK}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
