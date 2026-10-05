@@ -103,8 +103,13 @@ function scrollToId(id: string) {
 
 // ── Floating bottom nav bar — a narrow pill with quick jumps to key
 // sections, plus a raised music toggle on the right. ──
-function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
+function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef, onSelectTab, showWishesContact = true }: {
   primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+  // When set (tabbed layouts), nav buttons switch tabs instead of scrolling
+  // to an in-page anchor, and the Wishes/Contact icons — which have no tab
+  // of their own — are hidden rather than left as dead links.
+  onSelectTab?: (tab: 'details' | 'location' | 'photos' | 'rsvp') => void
+  showWishesContact?: boolean
 }) {
   const [playing, setPlaying] = useState(false)
   useEffect(() => {
@@ -123,6 +128,13 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
     if (!a) return
     a.paused ? a.play().catch(() => {}) : a.pause()
   }
+
+  const goSaveDate = () => {
+    if (onSelectTab) { onSelectTab('details'); setTimeout(() => scrollToId('savethedate'), 60) }
+    else scrollToId('savethedate')
+  }
+  const goGallery = () => { if (onSelectTab) onSelectTab('photos'); else scrollToId('gallery') }
+  const goLocation = () => { if (onSelectTab) onSelectTab('location') }
 
   const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
     <button key={key} onClick={onClick} aria-label={label} style={{
@@ -144,11 +156,21 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
         background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(0,0,0,0.06)',
         boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
       }}>
-        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
-        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
-        {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
-        {iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
-        {mapsUrl && (
+        {showWishesContact && hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {iconBtn(goSaveDate, 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
+        {hasGallery && iconBtn(goGallery, 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
+        {showWishesContact && iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {mapsUrl && (onSelectTab ? (
+          <button onClick={goLocation} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8,
+            background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px',
+          }}>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            <span style={{ fontSize: 8 }}>Location</span>
+          </button>
+        ) : (
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8,
             textDecoration: 'none', padding: '2px 4px',
@@ -158,7 +180,7 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
             </svg>
             <span style={{ fontSize: 8 }}>Location</span>
           </a>
-        )}
+        ))}
 
         {/* Raised music toggle, floating on the right edge of the pill */}
         <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
@@ -698,7 +720,7 @@ function buildIcsDataUrl(title: string, start: Date, venue: string, address: str
 // PRIMARY_LIGHT / DARK / CREAM colors throughout — only the layout changes,
 // per "colors change karanna epa". Every other invitation on this template
 // keeps the original continuous-scroll layout untouched. ──
-function TabbedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, activeTab, setActiveTab }: {
+function TabbedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, activeTab, setActiveTab, showCountdown }: {
   couple: Couple
   PRIMARY: string; PRIMARY_LIGHT: string; DARK: string; CREAM: string; MUTED: string
   W: { bride: string; groom: string; brideFamilyName: string; groomFamilyName: string; date?: string; gallery: string[] }
@@ -706,6 +728,7 @@ function TabbedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W,
   guestName: string
   activeTab: 'details' | 'location' | 'photos' | 'rsvp'
   setActiveTab: (t: 'details' | 'location' | 'photos' | 'rsvp') => void
+  showCountdown: boolean
 }) {
   const [dateOpen, setDateOpen] = useState(false)
   const primaryEvent = eventsList[0]
@@ -736,7 +759,7 @@ function TabbedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W,
         </div>
       </div>
 
-      <div style={{ padding: '6px 18px 80px' }}>
+      <div style={{ padding: '6px 18px 110px' }}>
         {activeTab === 'details' && (
           <>
             {/* Personal Invitation card */}
@@ -775,15 +798,25 @@ function TabbedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W,
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: DARK }}>{primaryEvent.venue}</div>
                 </div>
 
-                {/* Save Our Date accordion */}
+                {/* Countdown band — kept from the original layout (same id
+                    the bottom nav's "Save Date" button scrolls to), just
+                    restyled as a card to match the rest of this tab. */}
+                {showCountdown && (
+                  <div id="savethedate" style={{ background: '#fff', borderRadius: 20, padding: '1.4rem 1rem', textAlign: 'center', boxShadow: `0 8px 26px ${DARK}14`, marginBottom: 16 }}>
+                    <div style={{ fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: PRIMARY, marginBottom: 10, fontWeight: 700 }}>Counting Down to Our Big Day</div>
+                    <Countdown targetDate={W.date} dark={DARK} tint={PRIMARY_LIGHT} />
+                  </div>
+                )}
+
+                {/* Add-to-calendar accordion */}
                 <div style={{ background: CREAM, border: `1px solid ${PRIMARY_LIGHT}`, borderRadius: 18, overflow: 'hidden' }}>
                   <button onClick={() => setDateOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                     <div style={{ width: 42, height: 42, borderRadius: '50%', background: DARK, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></svg>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: DARK, fontWeight: 700 }}>Save Our Date</div>
-                      <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>Add the wedding to your calendar</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: DARK, fontWeight: 700 }}>Add to Calendar</div>
+                      <div style={{ fontSize: 11.5, color: MUTED, marginTop: 2 }}>Save the wedding to your calendar</div>
                     </div>
                     <div style={{ color: MUTED, transform: dateOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</div>
                   </button>
@@ -1050,6 +1083,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           <TabbedInterior
             couple={couple} PRIMARY={PRIMARY} PRIMARY_LIGHT={PRIMARY_LIGHT} DARK={DARK} CREAM={CREAM} MUTED={MUTED}
             W={W} eventsList={eventsList} guestName={guestName} activeTab={activeTab} setActiveTab={setActiveTab}
+            showCountdown={sv.countdown}
           />
         )}
         {opened && !isImeshaMadusanka && (
@@ -1252,13 +1286,15 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           </motion.div>
         )}
       </div>
-      {opened && !isImeshaMadusanka && (
+      {opened && (
         <BottomNavBar
           primary={PRIMARY} dark={DARK}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
-          hasWishes={(couple as any).enable_guest_wishes ?? false}
+          hasWishes={isImeshaMadusanka ? false : ((couple as any).enable_guest_wishes ?? false)}
           hasGallery={sv.gallery && W.gallery.length > 0}
           audioRef={audioRef}
+          onSelectTab={isImeshaMadusanka ? setActiveTab : undefined}
+          showWishesContact={!isImeshaMadusanka}
         />
       )}
     </div>
