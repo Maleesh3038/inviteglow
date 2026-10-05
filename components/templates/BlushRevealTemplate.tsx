@@ -820,7 +820,7 @@ function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED
                 <Blossom size={22} color={PRIMARY} />
               </div>
               <div style={{ fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: MUTED, marginBottom: 6 }}>{primaryEvent.label}</div>
-              {evDate && <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 16, color: PRIMARY, marginBottom: 6 }}>{evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>}
+              {evDate && <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700, fontSize: 19, color: PRIMARY, marginBottom: 8 }}>{evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>}
               {evDate && <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: DARK, fontWeight: 700 }}>{evTimeDisplay}</div>}
               <div style={{ width: 36, height: 1, background: PRIMARY, opacity: 0.4, margin: '12px auto' }} />
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: 15, color: DARK }}>{primaryEvent.venue}</div>
