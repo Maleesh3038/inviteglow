@@ -1109,7 +1109,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 zone so the text stays readable no matter how bright the
                 couple's own photo is. */}
             {isImeshaMadusanka && (
-              <div style={{ position: 'absolute', top: '9%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+              <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
                 <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
                   <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
                 </div>
