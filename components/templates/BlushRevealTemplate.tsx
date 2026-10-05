@@ -1063,7 +1063,9 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           template already uses): a video plays muted and on loop purely
           as a moving backdrop, a photo just sits still. Either way,
           tapping the button opens the invitation immediately. Left
-          completely untouched by the Eternal Bloom interior swap below. */}
+          completely untouched by the Eternal Bloom interior swap below —
+          except for imesha-madusanka-, which also gets cover text (see
+          the isImeshaMadusanka block further down). */}
       <AnimatePresence>
         {!opened && introGone && (
           <motion.div key="cover"
@@ -1091,11 +1093,39 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 backgroundSize: 'cover', backgroundPosition: 'center',
               }} />
             )}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)' }} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: isImeshaMadusanka
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.05) 22%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.55) 100%)'
+                : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
+            }} />
 
-            {/* No text at all on this cover by design — just the couple's
-                own uploaded photo/video and the Open Invitation button. */}
+            {/* One-off: imesha-madusanka- gets "Wedding Invitation" +
+                couple names over the top of the photo, and the guest's
+                name worked into the cover itself (not just the separate
+                "Dear [Name]" intro screen before it). Every other
+                invitation on this template keeps the original text-free
+                cover untouched. */}
+            {isImeshaMadusanka && (
+              <div style={{ position: 'absolute', top: '7%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
+                <div style={{ fontSize: 10, letterSpacing: '0.45em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.88)', marginBottom: 16, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
+                  Wedding Invitation
+                </div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '2.5rem', lineHeight: 1.2, color: '#fff', textShadow: '0 3px 16px rgba(0,0,0,0.45)' }}>
+                  <span style={{ color: PRIMARY_LIGHT }}>{W.bride}</span> &amp; <span style={{ color: PRIMARY_LIGHT }}>{W.groom}</span>
+                </div>
+              </div>
+            )}
+
             <div style={{ position: 'relative', zIndex: 1, minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 64px', textAlign: 'center' }}>
+              {isImeshaMadusanka && guestName && (
+                <p style={{
+                  margin: '0 0 18px', fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600,
+                  fontSize: 17, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)',
+                }}>
+                  Dear <span style={{ color: PRIMARY_LIGHT }}>{guestName}</span>,
+                </p>
+              )}
               <motion.button
                 onClick={handleOpenClick}
                 aria-label="Open invitation"
