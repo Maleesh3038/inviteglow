@@ -751,14 +751,15 @@ function PhotoSlideshow({ images, primary }: { images: string[]; primary: string
   )
 }
 
-function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, showCountdown, showThankYou, contactList }: {
+function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, showCountdown, showThankYou, showTimeline, contactList }: {
   couple: Couple
   PRIMARY: string; PRIMARY_LIGHT: string; DARK: string; CREAM: string; MUTED: string
-  W: { bride: string; groom: string; brideFamilyName: string; groomFamilyName: string; date?: string; gallery: string[] }
+  W: { bride: string; groom: string; brideFamilyName: string; groomFamilyName: string; date?: string; gallery: string[]; timeline: { time: string; event: string }[] }
   eventsList: { key: string; label: string; icon: string; venue: string; venue_address: string; date: string; maps_url: string }[]
   guestName: string
   showCountdown: boolean
   showThankYou: boolean
+  showTimeline: boolean
   contactList: { name: string; phone: string }[]
 }) {
   const [dateOpen, setDateOpen] = useState(false)
@@ -880,6 +881,24 @@ function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED
                 Open in Maps ↗
               </a>
             </div>
+
+            {/* Timeline — the wedding day's run of events */}
+            {showTimeline && W.timeline.length > 0 && (
+              <div style={{ background: '#fff', borderRadius: 22, padding: '1.6rem 1.4rem', boxShadow: `0 8px 26px ${DARK}14`, marginBottom: 16 }}>
+                <div style={{ fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: PRIMARY, textAlign: 'center', marginBottom: 6, fontWeight: 700 }}>Our Celebration</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '1.4rem', color: DARK, textAlign: 'center', marginBottom: 18 }}>The Wedding Lineup</div>
+                <div style={{ position: 'relative', paddingLeft: 20 }}>
+                  <div style={{ position: 'absolute', left: 6, top: 0, bottom: 0, width: 1, background: PRIMARY_LIGHT }} />
+                  {W.timeline.map((tl, i) => (
+                    <div key={i} style={{ position: 'relative', padding: '10px 0 10px 20px' }}>
+                      <div style={{ position: 'absolute', left: -14, top: 14, width: 10, height: 10, borderRadius: '50%', background: PRIMARY, border: '2px solid #fff', boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
+                      <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: '0.1em' }}>{tl.time}</div>
+                      <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{tl.event}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -1163,7 +1182,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           <RedesignedInterior
             couple={couple} PRIMARY={PRIMARY} PRIMARY_LIGHT={PRIMARY_LIGHT} DARK={DARK} CREAM={CREAM} MUTED={MUTED}
             W={W} eventsList={eventsList} guestName={guestName}
-            showCountdown={sv.countdown} showThankYou={sv.thank_you} contactList={contactList}
+            showCountdown={sv.countdown} showThankYou={sv.thank_you} showTimeline={sv.timeline} contactList={contactList}
           />
         )}
         {opened && !isImeshaMadusanka && (
