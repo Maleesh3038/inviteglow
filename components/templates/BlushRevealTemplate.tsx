@@ -103,12 +103,8 @@ function scrollToId(id: string) {
 
 // ── Floating bottom nav bar — a narrow pill with quick jumps to key
 // sections, plus a raised music toggle on the right. ──
-function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef, showWishesContact = true }: {
+function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
   primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
-  // Wishes/Contact have no section on every layout (the imesha-madusanka
-  // redesign doesn't include them), so this hides those two icons rather
-  // than leaving dead links.
-  showWishesContact?: boolean
 }) {
   const [playing, setPlaying] = useState(false)
   useEffect(() => {
@@ -148,10 +144,10 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef,
         background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(0,0,0,0.06)',
         boxShadow: '0 10px 30px rgba(0,0,0,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
       }}>
-        {showWishesContact && hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
+        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
         {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
         {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
-        {showWishesContact && iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
+        {iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
         {mapsUrl && (
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8,
@@ -702,13 +698,68 @@ function buildIcsDataUrl(title: string, start: Date, venue: string, address: str
 // PRIMARY_LIGHT / DARK / CREAM colors throughout — only the layout changes,
 // per "colors change karanna epa". Every other invitation on this template
 // keeps the original continuous-scroll layout untouched. ──
-function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, showCountdown }: {
+// ── Auto-advancing, swipeable photo slideshow for the imesha-madusanka
+// redesign's Photos section — one picture at a time with dot indicators,
+// arrow buttons, and a touch-swipe handler for mobile. ──
+function PhotoSlideshow({ images, primary }: { images: string[]; primary: string }) {
+  const [index, setIndex] = useState(0)
+  const touchStartX = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (images.length <= 1) return
+    const t = setInterval(() => setIndex(i => (i + 1) % images.length), 4000)
+    return () => clearInterval(t)
+  }, [images.length])
+
+  if (images.length === 0) return null
+  const go = (dir: 1 | -1) => setIndex(i => (i + dir + images.length) % images.length)
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (dx > 40) go(-1)
+    else if (dx < -40) go(1)
+    touchStartX.current = null
+  }
+
+  return (
+    <div>
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', boxShadow: '0 8px 26px rgba(0,0,0,0.14)', aspectRatio: '4 / 5', background: `${primary}11` }}>
+        {images.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} src={src} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: i === index ? 1 : 0, transition: 'opacity 0.6s ease' }} />
+        ))}
+        {images.length > 1 && (
+          <>
+            <button onClick={() => go(-1)} aria-label="Previous photo" style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+            </button>
+            <button onClick={() => go(1)} aria-label="Next photo" style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+          {images.map((_, i) => (
+            <button key={i} onClick={() => setIndex(i)} aria-label={`Go to photo ${i + 1}`} style={{ width: i === index ? 18 : 6, height: 6, borderRadius: 100, border: 'none', cursor: 'pointer', background: i === index ? primary : `${primary}44`, transition: 'width 0.3s' }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED, W, eventsList, guestName, showCountdown, showThankYou, contactList }: {
   couple: Couple
   PRIMARY: string; PRIMARY_LIGHT: string; DARK: string; CREAM: string; MUTED: string
   W: { bride: string; groom: string; brideFamilyName: string; groomFamilyName: string; date?: string; gallery: string[] }
   eventsList: { key: string; label: string; icon: string; venue: string; venue_address: string; date: string; maps_url: string }[]
   guestName: string
   showCountdown: boolean
+  showThankYou: boolean
+  contactList: { name: string; phone: string }[]
 }) {
   const [dateOpen, setDateOpen] = useState(false)
   const primaryEvent = eventsList[0]
@@ -839,14 +890,7 @@ function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED
               <div style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: MUTED, marginBottom: 8 }}>Our Moments</div>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: DARK }}>The <span style={{ color: PRIMARY, fontStyle: 'italic' }}>Photos</span></div>
             </div>
-            <div style={{ columnCount: 2, columnGap: 10, marginBottom: 6 }}>
-              {W.gallery.map((src, i) => (
-                <div key={i} style={{ breakInside: 'avoid', marginBottom: 10, borderRadius: 16, overflow: 'hidden', background: `${PRIMARY_LIGHT}55`, boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = 'none' }} />
-                </div>
-              ))}
-            </div>
+            <PhotoSlideshow images={W.gallery} primary={PRIMARY} />
           </>
         )}
 
@@ -854,6 +898,42 @@ function RedesignedInterior({ couple, PRIMARY, PRIMARY_LIGHT, DARK, CREAM, MUTED
         <div id="rsvp" style={{ background: '#fff', borderRadius: 22, padding: '8px 4px 20px', boxShadow: `0 8px 26px ${DARK}14`, marginTop: 30 }}>
           <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} />
         </div>
+
+        {/* Thank you */}
+        {showThankYou && (
+          <div style={{ background: '#fff', borderRadius: 24, padding: '1.8rem', boxShadow: `0 8px 26px ${DARK}14`, marginTop: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: PRIMARY, textAlign: 'center', marginBottom: 6, fontWeight: 700 }}>A Special Note</div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '1.5rem', color: DARK, textAlign: 'center', marginBottom: 20 }}>To Our Lovely Guests</div>
+            <div style={{ fontSize: 13, color: DARK, lineHeight: 2 }}>
+              {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontSize: 11, color: MUTED, letterSpacing: '0.1em' }}>With all our love,</div>
+              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.8rem', color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Contact Numbers */}
+        {contactList.length > 0 && (
+          <div id="contact" style={{ background: '#fff', borderRadius: 22, padding: '1.8rem', boxShadow: `0 8px 26px ${DARK}14`, marginTop: 16 }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.4em', textTransform: 'uppercase', color: PRIMARY, textAlign: 'center', marginBottom: 6, fontWeight: 700 }}>Get In Touch</div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontSize: '1.5rem', color: DARK, textAlign: 'center', marginBottom: 20 }}>Contact Numbers</div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '2rem 1.5rem 6rem', textAlign: 'center', background: '#fff', borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: '24px 24px 0 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <Blossom size={34} color={PRIMARY} />
+        </div>
+        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '1.5rem', color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
+        <div style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: MUTED }}>inviteglow.com · Digital Wedding Invitations</div>
+        {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
       </div>
     </div>
   )
@@ -1043,7 +1123,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           <RedesignedInterior
             couple={couple} PRIMARY={PRIMARY} PRIMARY_LIGHT={PRIMARY_LIGHT} DARK={DARK} CREAM={CREAM} MUTED={MUTED}
             W={W} eventsList={eventsList} guestName={guestName}
-            showCountdown={sv.countdown}
+            showCountdown={sv.countdown} showThankYou={sv.thank_you} contactList={contactList}
           />
         )}
         {opened && !isImeshaMadusanka && (
@@ -1253,7 +1333,6 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
           hasWishes={isImeshaMadusanka ? false : ((couple as any).enable_guest_wishes ?? false)}
           hasGallery={sv.gallery && W.gallery.length > 0}
           audioRef={audioRef}
-          showWishesContact={!isImeshaMadusanka}
         />
       )}
     </div>
