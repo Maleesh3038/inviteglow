@@ -1096,7 +1096,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
             <div style={{
               position: 'absolute', inset: 0,
               background: isImeshaMadusanka
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.05) 22%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.55) 100%)'
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.32) 30%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.12) 65%, rgba(0,0,0,0.55) 100%)'
                 : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
             }} />
 
@@ -1105,14 +1105,20 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 name worked into the cover itself (not just the separate
                 "Dear [Name]" intro screen before it). Every other
                 invitation on this template keeps the original text-free
-                cover untouched. */}
+                cover untouched. A dark translucent "glass" plate sits
+                behind the text so it stays readable no matter how bright
+                the couple's own photo is (their reference photo has a
+                pale, overcast sky right where this text sits — plain
+                white text with just a shadow washed out against it). */}
             {isImeshaMadusanka && (
-              <div style={{ position: 'absolute', top: '18%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
-                <div style={{ fontSize: 10, letterSpacing: '0.45em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.88)', marginBottom: 16, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
-                  Wedding Invitation
-                </div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: '2.1rem', lineHeight: 1.3, color: '#fff', textShadow: '0 3px 16px rgba(0,0,0,0.5)' }}>
-                  <span style={{ color: PRIMARY_LIGHT }}>{W.bride}</span> &amp; <span style={{ color: PRIMARY_LIGHT }}>{W.groom}</span>
+              <div style={{ position: 'absolute', top: '16%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
+                <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(6px)', borderRadius: 20, padding: '18px 28px' }}>
+                  <div style={{ fontSize: 10, letterSpacing: '0.45em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.92)', marginBottom: 14 }}>
+                    Wedding Invitation
+                  </div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: '2.1rem', lineHeight: 1.3, color: '#fff' }}>
+                    <span style={{ color: PRIMARY_LIGHT }}>{W.bride}</span> &amp; <span style={{ color: PRIMARY_LIGHT }}>{W.groom}</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -1368,3 +1374,4 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
     </div>
   )
 }
+
