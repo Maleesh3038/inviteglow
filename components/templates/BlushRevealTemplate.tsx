@@ -980,6 +980,14 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
   // other link on this template is completely unaffected.
   const isImeshaMadusanka = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'imesha-madusanka'
 
+  // One-off: dilushika-isuru- drops the Engagement event entirely (even if
+  // it's turned on in the dashboard) and gets a decorative script-title
+  // banner — "Wedding" in large cursive over a small dotted subtitle — on
+  // its remaining event card, instead of the plain pretitle/title text
+  // every other invitation on this template uses. Every other link is
+  // unaffected.
+  const isDilushikaIsuru = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'dilushika-isuru'
+
   const colors = sanitizeColors(couple.custom_colors)
   const PRIMARY = colors.primary
   const PRIMARY_LIGHT = colors.primaryLight
@@ -1022,7 +1030,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
         const e = couple.events![key]
         const customLabel = (e as any)?.label
         return { key, ...EVENT_META[key], label: (customLabel && customLabel.trim()) || EVENT_META[key].label, enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
-      }).filter(e => e.enabled && e.date.length > 0)
+      }).filter(e => e.enabled && e.date.length > 0 && !(isDilushikaIsuru && e.key === 'engagement'))
     : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
 
   const sv = {
@@ -1248,8 +1256,23 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
-                  <div style={titleStyle(DARK)}>{ev.label}</div>
+                  {isDilushikaIsuru ? (
+                    <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                      <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '3rem', color: PRIMARY, lineHeight: 1 }}>
+                        {ev.key === 'wedding' ? 'Wedding' : ev.key === 'homecoming' ? 'Homecoming' : ev.label}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 }}>
+                        <span style={{ color: PRIMARY, fontSize: 10, letterSpacing: 2 }}>&bull;&bull;&bull;</span>
+                        <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: DARK, fontWeight: 600 }}>{ev.label}</span>
+                        <span style={{ color: PRIMARY, fontSize: 10, letterSpacing: 2 }}>&bull;&bull;&bull;</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
+                      <div style={titleStyle(DARK)}>{ev.label}</div>
+                    </>
+                  )}
                   {[
                     { icon: "📅", label: "Date", val: evDateDisplay, tsKey: '' },
                     { icon: "⏰", label: "Time", val: evTimeDisplay, tsKey: '' },
