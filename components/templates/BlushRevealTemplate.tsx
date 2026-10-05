@@ -1096,29 +1096,28 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
             <div style={{
               position: 'absolute', inset: 0,
               background: isImeshaMadusanka
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.32) 30%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.12) 65%, rgba(0,0,0,0.55) 100%)'
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)'
                 : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
             }} />
 
-            {/* One-off: imesha-madusanka- gets "Wedding Invitation" +
-                couple names over the top of the photo, and the guest's
-                name worked into the cover itself (not just the separate
-                "Dear [Name]" intro screen before it). Every other
-                invitation on this template keeps the original text-free
-                cover untouched. A dark translucent "glass" plate sits
-                behind the text so it stays readable no matter how bright
-                the couple's own photo is (their reference photo has a
-                pale, overcast sky right where this text sits — plain
-                white text with just a shadow washed out against it). */}
+            {/* One-off: imesha-madusanka- gets a reference-matched cover
+                treatment — a pill "Wedding Invitation" badge, "You Are
+                Invited", and the couple's names stacked on their own
+                lines around a smaller "&" — instead of the default
+                text-free cover every other invitation on this template
+                keeps. The gradient above is darkened through this whole
+                zone so the text stays readable no matter how bright the
+                couple's own photo is. */}
             {isImeshaMadusanka && (
-              <div style={{ position: 'absolute', top: '16%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
-                <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(6px)', borderRadius: 20, padding: '18px 28px' }}>
-                  <div style={{ fontSize: 10, letterSpacing: '0.45em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.92)', marginBottom: 14 }}>
-                    Wedding Invitation
-                  </div>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: '2.1rem', lineHeight: 1.3, color: '#fff' }}>
-                    <span style={{ color: PRIMARY_LIGHT }}>{W.bride}</span> &amp; <span style={{ color: PRIMARY_LIGHT }}>{W.groom}</span>
-                  </div>
+              <div style={{ position: 'absolute', top: '9%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
+                </div>
+                <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>You Are Invited</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
+                  <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.bride}</div>
+                  <div style={{ fontSize: '1.3rem', color: PRIMARY_LIGHT, margin: '3px 0' }}>&amp;</div>
+                  <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.groom}</div>
                 </div>
               </div>
             )}
@@ -1148,6 +1147,11 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 Open Invitation
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </motion.button>
+              {isImeshaMadusanka && (
+                <div style={{ marginTop: 14, fontSize: 11, color: 'rgba(255,255,255,0.75)', textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                  🎵 Tap to begin — with music
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -1374,4 +1378,3 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
     </div>
   )
 }
-
