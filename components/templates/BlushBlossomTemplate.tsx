@@ -1006,6 +1006,23 @@ function WishesWall({ coupleId, primary, primaryLight, dark, boxBg, t }: {
 
 const BB_WRAP: React.CSSProperties = { maxWidth: 420, margin: '0 auto', padding: '0 24px' }
 
+// ── Calendar-link helpers for the "Save Our Date" accordion (imesha-madusanka
+// one-off). Google Calendar gets a deep link; Apple Calendar/Outlook get a
+// downloadable .ics built on the fly — no server round-trip either way. ──
+function fmtCalDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+}
+function buildGoogleCalendarUrl(title: string, start: Date, venue: string, address: string): string {
+  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000)
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: title, dates: `${fmtCalDate(start)}/${fmtCalDate(end)}`, location: [venue, address].filter(Boolean).join(', ') })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+function buildIcsDataUrl(title: string, start: Date, venue: string, address: string): string {
+  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000)
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT', `DTSTART:${fmtCalDate(start)}`, `DTEND:${fmtCalDate(end)}`, `SUMMARY:${title}`, `LOCATION:${[venue, address].filter(Boolean).join(', ')}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`
+}
+
 function Reveal({ id, mt = 56, wide = false, children }: { id?: string; mt?: number; wide?: boolean; children: React.ReactNode }) {
   return (
     <div id={id} className={wide ? 'bb-wrap-wide' : undefined}
@@ -1156,11 +1173,30 @@ function RsvpBlock({ couple, colors, boxBg, guestName, t }: {
 }
 
 export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
+  // One-offs — each gated to a single invitation's slug, every other link
+  // on this template is unaffected:
+  // · dilushika-isuru- drops the Engagement event entirely (even if it's
+  //   turned on in the dashboard) and gets a decorative script-title
+  //   banner on its remaining event card instead of the plain heart+label.
+  // · imesha-madusanka- gets a full-bleed photo cover (badge, "You're
+  //   Invited", stacked names, guest line) instead of the envelope/flap,
+  //   a dashed-border guest badge on the Invitation section, a "Save Our
+  //   Date" add-to-calendar accordion, and a photo slideshow instead of
+  //   the stacked gallery — ported over from the BlushReveal prototype
+  //   this same design was first built and approved on.
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  const isDilushikaIsuru = slug === 'dilushika-isuru'
+  const isImeshaMadusanka = slug === 'imesha-madusanka'
+
   const [opened, setOpened] = useState(false)
   const [flapOpen, setFlapOpen] = useState(false)
   const [letterOut, setLetterOut] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  // imesha-madusanka- skips the envelope/flap sequence entirely (its cover
+  // is a full-bleed photo, not a card to unfold) — tapping the button opens
+  // the invitation immediately, same as BlushReveal's "simple reveal" cover.
   const handleOpenClick = () => {
+    if (isImeshaMadusanka) { setOpened(true); return }
     setFlapOpen(true)
     setTimeout(() => setLetterOut(true), 400)
     setTimeout(() => setOpened(true), 950)
@@ -1183,6 +1219,10 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
 
   const [lang, setLang] = useState<Lang>('en')
   const t = (key: string) => TXT[lang][key] || TXT.en[key] || key
+  // imesha-madusanka- only: open/closed state for the "Add to Calendar"
+  // accordion next to the countdown.
+  const [dateOpen, setDateOpen] = useState(false)
+
   const colors = sanitizeColors(couple.custom_colors)
   // The card/box backgrounds (event details, map card, name band, timeline
   // dots, etc.) used to be a hardcoded light-purple regardless of the
@@ -1227,7 +1267,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
         : ['engagement', 'wedding', 'homecoming']
     const labels = eventLabels(t)
     return order
-      .filter(k => ev[k]?.enabled)
+      .filter(k => ev[k]?.enabled && !(isDilushikaIsuru && k === 'engagement'))
       .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || labels[k].title }))
   }, [couple, lang])
 
@@ -1292,9 +1332,69 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
         )}
       </AnimatePresence>
 
+      {/* ───────── imesha-madusanka- SIMPLE PHOTO COVER ─────────
+          Full-bleed couple photo behind a "WEDDING INVITATION" badge,
+          "You're Invited", the couple's names stacked around a small "&",
+          and (when a guest link is used) a "Dear [Name]" line — instead of
+          the envelope/flap every other invitation on this template opens.
+          Ported from the BlushReveal prototype this was designed on. */}
+      <AnimatePresence>
+        {!opened && introGone && isImeshaMadusanka && (
+          <motion.div key="cover-simple"
+            exit={{ opacity: 0, transition: { duration: 0.5, delay: 0.1 } }}
+            style={{ position: 'fixed', inset: 0, zIndex: 50, overflow: 'hidden', background: colors.dark }}>
+            <div style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG})`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+            }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)' }} />
+
+            <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+              <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>{badgeText}</span>
+              </div>
+              <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>{t('youAreInvited')}</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
+                <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{couple.bride}</div>
+                <div style={{ fontSize: '1.3rem', color: colors.primaryLight, margin: '3px 0' }}>&amp;</div>
+                <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{couple.groom}</div>
+              </div>
+            </div>
+
+            <div style={{ position: 'relative', zIndex: 1, minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 64px', textAlign: 'center' }}>
+              {guestName && (
+                <p style={{ margin: '0 0 18px', fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 17, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>
+                  {t('dear')} <span style={{ color: colors.primaryLight }}>{guestName}</span>,
+                </p>
+              )}
+              <motion.button
+                onClick={handleOpenClick}
+                aria-label="Open invitation"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 9,
+                  padding: '13px 28px', borderRadius: 100, border: 'none',
+                  background: `linear-gradient(135deg,${colors.primary},${colors.primaryLight})`,
+                  color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase',
+                  cursor: 'pointer', boxShadow: '0 10px 26px rgba(0,0,0,0.4)',
+                  fontFamily: "'Inter',sans-serif",
+                }}>
+                {t('openInvitation')}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </motion.button>
+              <div style={{ marginTop: 14, fontSize: 11, color: 'rgba(255,255,255,0.75)', textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                🎵 Tap to begin — with music
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ───────── ENVELOPE COVER ───────── */}
       <AnimatePresence>
-        {!opened && introGone && (
+        {!opened && introGone && !isImeshaMadusanka && (
           <motion.div key="cover" className="bb-cover-bg"
             exit={{ opacity: 0, transition: { duration: 0.5, delay: 0.15 } }}
             style={{
@@ -1430,6 +1530,20 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             <p style={{ ...ts('message'), fontSize: 13.5, color: colors.dark, opacity: 0.7, lineHeight: 1.9 }}>
               {familyInvitationText || t('defaultFamilyInvite')}
             </p>
+            {isImeshaMadusanka && guestName && (
+              <div style={{
+                display: 'inline-block', marginTop: 18, padding: '10px 26px',
+                border: `1.5px dashed ${colors.primary}`, borderRadius: 12,
+                background: boxBg,
+              }}>
+                <div style={{ fontSize: 9.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: colors.dark, opacity: 0.55, marginBottom: 3 }}>
+                  Specially Invited
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 17, color: colors.primary }}>
+                  {guestName}
+                </div>
+              </div>
+            )}
           </Reveal>
 
           {/* Events — the ONLY sections with cards, besides the couple photo */}
@@ -1452,8 +1566,23 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
             const mapsLinkHref = ev.maps_url || (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : undefined)
             return (
               <Reveal key={ev.key} wide>
-                <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{ev.title}</div>
-                <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, margin: '6px 0 18px' }}>{t('venueLocationTime')}</p>
+                {isDilushikaIsuru ? (
+                  <div style={{ textAlign: 'center', marginBottom: 18 }}>
+                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '3rem', color: colors.primary, lineHeight: 1 }}>
+                      {ev.key === 'wedding' ? 'Wedding' : ev.key === 'homecoming' ? 'Homecoming' : ev.title}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 }}>
+                      <span style={{ color: colors.primary, fontSize: 10, letterSpacing: 2 }}>&bull;&bull;&bull;</span>
+                      <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: colors.dark, fontWeight: 600 }}>{ev.title}</span>
+                      <span style={{ color: colors.primary, fontSize: 10, letterSpacing: 2 }}>&bull;&bull;&bull;</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={capsHeading}><Icon name="heart" size={12} color={colors.primary} />{ev.title}</div>
+                    <p style={{ fontSize: 11.5, color: colors.dark, opacity: 0.55, margin: '6px 0 18px' }}>{t('venueLocationTime')}</p>
+                  </>
+                )}
 
                 <div className="bb-event-row">
                 <div style={{ ...cardStyle, overflow: 'hidden', textAlign: 'left', marginBottom: 10 }}>
@@ -1598,6 +1727,38 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                   {t('countingDays')}
                 </p>
                 <CountdownDisplay targetDate={couple.wedding_date} dark={colors.dark} primary={colors.primary} primaryLight={colors.primaryLight} t={t} />
+              </Reveal>
+            )}
+
+            {/* Add-to-calendar accordion — imesha-madusanka- only */}
+            {isImeshaMadusanka && couple.wedding_date && (
+              <Reveal>
+                <div style={{ background: colors.cream, border: `1px solid ${colors.primaryLight}`, borderRadius: 18, overflow: 'hidden', textAlign: 'left' }}>
+                  <button onClick={() => setDateOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: '50%', background: colors.dark, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon name="calendar" size={18} color="#fff" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: colors.dark, fontWeight: 700 }}>Add to Calendar</div>
+                      <div style={{ fontSize: 11.5, color: colors.dark, opacity: 0.6, marginTop: 2 }}>Save the wedding to your calendar</div>
+                    </div>
+                    <div style={{ color: colors.dark, opacity: 0.6, transform: dateOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                      <Icon name="chevronDown" size={14} color={colors.dark} />
+                    </div>
+                  </button>
+                  {dateOpen && (
+                    <div style={{ padding: '0 18px 18px', display: 'grid', gap: 8 }}>
+                      <a href={buildGoogleCalendarUrl(`${couple.bride} & ${couple.groom}'s Wedding`, new Date(couple.wedding_date), enabledEvents[0]?.venue || '', enabledEvents[0]?.venue_address || '')} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'block', textAlign: 'center', padding: '12px 16px', borderRadius: 12, border: `1px solid ${colors.primaryLight}`, background: '#fff', color: colors.dark, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                        Google Calendar
+                      </a>
+                      <a href={buildIcsDataUrl(`${couple.bride} & ${couple.groom}'s Wedding`, new Date(couple.wedding_date), enabledEvents[0]?.venue || '', enabledEvents[0]?.venue_address || '')} download={`${couple.bride}-${couple.groom}-wedding.ics`}
+                        style={{ display: 'block', textAlign: 'center', padding: '12px 16px', borderRadius: 12, border: `1px solid ${colors.primaryLight}`, background: '#fff', color: colors.dark, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                        Apple Calendar / Outlook
+                      </a>
+                    </div>
+                  )}
+                </div>
               </Reveal>
             )}
 
