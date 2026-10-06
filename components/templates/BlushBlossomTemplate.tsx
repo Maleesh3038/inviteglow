@@ -492,7 +492,7 @@ function BottomNavBar({ primary, primaryLight, dark, mapsUrl, hasWishes, hasGall
   )
 }
 
-type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo' | 'ring' | 'play' | 'pause'
+type IconName = 'calendar' | 'clock' | 'pin' | 'phone' | 'gift' | 'heart' | 'music' | 'chevronDown' | 'check' | 'cross' | 'photo' | 'ring' | 'play' | 'pause' | 'food'
 function Icon({ name, size = 16, color }: { name: IconName; size?: number; color: string }) {
   const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (name) {
@@ -510,6 +510,7 @@ function Icon({ name, size = 16, color }: { name: IconName; size?: number; color
     case 'ring': return <svg {...c}><circle cx="12" cy="14.5" r="6.5" /><path d="M9 8l3-5 3 5" /><path d="M9 8h6l-1.3 3H10.3z" fill={color} stroke="none" /></svg>
     case 'play': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M8 5v14l11-7z" /></svg>
     case 'pause': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+    case 'food': return <svg {...c}><path d="M7 2.5v8a2 2 0 002 2v9" /><path d="M7 2.5v6M10 2.5v6" /><path d="M17 2.5c-1.8 0-3 2-3 5s1.2 5 3 5v9" strokeLinejoin="round" /></svg>
     default: return null
   }
 }
@@ -587,7 +588,7 @@ function FallingPetals({ color }: { color: string }) {
 function pickTimelineIcon(eventName: string): IconName {
   const n = eventName.toLowerCase()
   if (n.includes('ceremony') || n.includes('poruwa') || n.includes('vow') || n.includes('bless')) return 'ring'
-  if (n.includes('lunch') || n.includes('dinner') || n.includes('meal') || n.includes('reception')) return 'gift'
+  if (n.includes('lunch') || n.includes('dinner') || n.includes('meal') || n.includes('reception')) return 'food'
   if (n.includes('danc') || n.includes('music') || n.includes('party') || n.includes('floor')) return 'music'
   if (n.includes('away') || n.includes('depart') || n.includes('leav')) return 'pin'
   if (n.includes('photo')) return 'photo'
