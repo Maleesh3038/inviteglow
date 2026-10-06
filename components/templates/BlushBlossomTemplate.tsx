@@ -1267,7 +1267,7 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
         : ['engagement', 'wedding', 'homecoming']
     const labels = eventLabels(t)
     return order
-      .filter(k => ev[k]?.enabled && !(isDilushikaIsuru && k === 'engagement'))
+      .filter(k => ev[k]?.enabled)
       .map(k => ({ key: k, ...ev[k], title: (ev[k]?.label && ev[k]!.label!.trim()) || labels[k].title }))
   }, [couple, lang])
 
