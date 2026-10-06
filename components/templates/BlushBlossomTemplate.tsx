@@ -1569,11 +1569,13 @@ export default function BlushBlossomTemplate({ couple }: { couple: Couple }) {
                 {isDilushikaIsuru ? (
                   <div style={{ textAlign: 'center', marginBottom: 18 }}>
                     <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: '3rem', color: colors.primary, lineHeight: 1 }}>
-                      {ev.key === 'wedding' ? 'Wedding' : ev.key === 'homecoming' ? 'Homecoming' : ev.title}
+                      {ev.key === 'wedding' || ev.key === 'engagement' ? 'Wedding' : ev.key === 'homecoming' ? 'Homecoming' : ev.title}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 }}>
                       <span style={{ color: colors.primary, fontSize: 10, letterSpacing: 2 }}>&bull;&bull;&bull;</span>
-                      <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: colors.dark, fontWeight: 600 }}>{ev.title}</span>
+                      <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: colors.dark, fontWeight: 600 }}>
+                        {ev.key === 'engagement' ? 'RING EXCHANGE & REGISTRATION CEREMONY' : ev.title}
+                      </span>
                       <span style={{ color: colors.primary, fontSize: 10, letterSpacing: 2 }}>&bull;&bull;&bull;</span>
                     </div>
                   </div>
