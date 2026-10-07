@@ -56,18 +56,6 @@ function coupleNameFontSize(name: string): string {
   return "clamp(2.4rem,8.5vw,3.4rem)"
 }
 
-// Same idea, sized down a bit for the italic serif used only on the
-// "anjana-nipuni-" one-off cover below — Cormorant Garamond reads larger
-// than Great Vibes at the same font-size, so it needs smaller clamps to
-// occupy about the same visual space.
-function coupleNameFontSizeSerif(name: string): string {
-  const len = (name || '').length
-  if (len > 12) return "clamp(1.3rem,5vw,1.7rem)"
-  if (len > 9) return "clamp(1.5rem,5.8vw,2.0rem)"
-  if (len > 6) return "clamp(1.7rem,6.5vw,2.3rem)"
-  return "clamp(2.0rem,7.2vw,2.8rem)"
-}
-
 // Same idea, for the "Bride & Groom" combined single-line treatment used
 // in the hero band further down — combined length matters here, not
 // either name individually, since both sit on one line together.
@@ -80,37 +68,12 @@ function combinedNameFontSize(bride: string, groom: string): string {
   return "clamp(2.2rem,7.5vw,3.1rem)"
 }
 
-// Same idea, sized down for the clearer italic serif used on the hero
-// band for the nipuni-anjana-/anjana-nipuni- one-offs (see useSerifName).
-function combinedNameFontSizeSerif(bride: string, groom: string): string {
-  const len = (bride || '').length + (groom || '').length
-  if (len > 22) return "clamp(1.0rem,4vw,1.3rem)"
-  if (len > 17) return "clamp(1.2rem,4.6vw,1.6rem)"
-  if (len > 13) return "clamp(1.4rem,5.2vw,1.9rem)"
-  if (len > 10) return "clamp(1.6rem,5.8vw,2.3rem)"
-  return "clamp(1.9rem,6.5vw,2.7rem)"
-}
-
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-// Adds an ordinal suffix to a day-of-month number (3 -> "3rd", 21 -> "21st").
-// Only used by the "nipuni-anjana-" one-off date format below.
-function ordinalDay(d: number): string {
-  if (d % 10 === 1 && d % 100 !== 11) return `${d}st`
-  if (d % 10 === 2 && d % 100 !== 12) return `${d}nd`
-  if (d % 10 === 3 && d % 100 !== 13) return `${d}rd`
-  return `${d}th`
-}
-
-function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef, accentLight }: {
+function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
   primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
-  // Optional override for the raised music button's gradient end color,
-  // which otherwise defaults to the template's usual green accent below —
-  // used to match the anjana-nipuni- one-off's red theme without touching
-  // this button's look for any other invitation.
-  accentLight?: string
 }) {
   const [playing, setPlaying] = useState(false)
   useEffect(() => {
@@ -170,7 +133,7 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef,
         <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
           position: 'absolute', right: 4, top: -16,
           width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
-          background: `linear-gradient(135deg,${primary},${accentLight || '#8aa87e'})`, color: '#fff',
+          background: `linear-gradient(135deg,${primary},#8aa87e)`, color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           boxShadow: '0 6px 16px rgba(45,61,40,0.35)',
         }}>
@@ -333,123 +296,16 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, primaryLight, dark, cream, muted, guestName, variant = 'wizard' }: {
-  coupleId: string; askDrinking: boolean; primary: string; primaryLight?: string; dark: string; cream: string; muted: string; guestName: string
-  // 'simple' is a one-off single-page form layout (Guest Name, Phone,
-  // an Accept/Decline toggle, Number of Guests, an optional Message, one
-  // "Send RSVP" button) requested for a specific invitation link — see
-  // its call site below. The default 'wizard' is the original multi-step
-  // flow every other invitation already uses, completely unchanged.
-  variant?: 'wizard' | 'simple'
-}) {
+function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
-  // Only used by the 'simple' variant below.
-  const [phone, setPhone] = useState("")
-  const [simpleAttendance, setSimpleAttendance] = useState<"yes" | "no" | null>(null)
-  const [message, setMessage] = useState("")
-  const [simpleError, setSimpleError] = useState("")
   const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
     setSaving(true)
     const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
     setSaving(false); if (!error) { setFinalResponse(response); setStep("done") }
   }
-  // The reference design this was modeled on also collects a "Message"
-  // right on the RSVP form — there's no message column on the rsvps table
-  // (no other invitation's RSVP writes one), so instead of risking a
-  // broken submission on an unknown column, a non-empty message is saved
-  // as a guest wish instead (the `wishes` table already exists and is
-  // exactly what the Guest Wishes Wall section reads from).
-  const saveSimple = async () => {
-    if (!name.trim()) { setSimpleError('Please enter your name.'); return }
-    if (!simpleAttendance) { setSimpleError('Please choose whether you can make it.'); return }
-    setSimpleError('')
-    setSaving(true)
-    const basePayload = { couple_id: coupleId, guest_name: name.trim(), response: simpleAttendance, drinking: null, guest_count: simpleAttendance === 'yes' ? guestCount : 1 }
-    // `phone` is a newer column (see add_rsvp_phone.sql) — until that
-    // migration has actually been run on this project, Supabase would
-    // reject it as an unknown column, so this retries once without it
-    // rather than losing the whole RSVP over a missing phone number.
-    let { error } = await supabase.from('rsvps').insert([{ ...basePayload, phone: phone.trim() || null }])
-    if (error) {
-      ;({ error } = await supabase.from('rsvps').insert([basePayload]))
-    }
-    if (error) { setSaving(false); setSimpleError('Something went wrong — please try again.'); return }
-    if (message.trim()) {
-      await supabase.from('wishes').insert([{ couple_id: coupleId, guest_name: name.trim(), message: message.trim(), media: [] }]).then(() => {}, () => {})
-    }
-    setSaving(false)
-    setFinalResponse(simpleAttendance)
-    setStep("done")
-  }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
-
-  if (variant === 'simple') {
-    const simpleLabel: React.CSSProperties = { fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontWeight: 700, color: dark, marginBottom: 8, display: 'block', textAlign: 'left' }
-    const simpleInput: React.CSSProperties = { width: '100%', padding: '14px 16px', borderRadius: 14, border: `1.5px solid ${primary}33`, background: '#fff', color: dark, fontSize: 14, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box' }
-    return (
-      <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
-        <LeafDivider color={primary} />
-        <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
-        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
-        <div style={{ background: "#fff", borderRadius: 20, padding: "26px 22px", maxWidth: 420, margin: "0 auto", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", textAlign: "left" }}>
-          {step === "done" ? (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🌿" : "🙏"}</div>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>{finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}</div>
-              <div style={{ fontSize: 12, color: muted }}>{finalResponse === "yes" ? (guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We can't wait to celebrate with you.") : "Thank you for letting us know."}</div>
-            </motion.div>
-          ) : (
-            <>
-              <div style={{ marginBottom: 20 }}>
-                <label style={simpleLabel}>Guest Name<span style={{ color: "#c0504d" }}> *</span></label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={simpleInput} />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={simpleLabel}>Phone Number<span style={{ color: muted, fontWeight: 400 }}> (optional)</span></label>
-                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="07XX XXX XXXX" style={simpleInput} />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={simpleLabel}>Attendance<span style={{ color: "#c0504d" }}> *</span></label>
-                <button type="button" onClick={() => setSimpleAttendance("yes")} style={{
-                  width: "100%", padding: "14px 16px", borderRadius: 14, border: simpleAttendance === "yes" ? `1.5px solid ${primary}` : "1.5px solid transparent",
-                  background: simpleAttendance === "yes" ? primary : `${primary}0f`, color: simpleAttendance === "yes" ? "#fff" : dark,
-                  fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 10, fontFamily: "'Inter',sans-serif", display: "block",
-                }}>Joyfully Accept</button>
-                <button type="button" onClick={() => setSimpleAttendance("no")} style={{
-                  width: "100%", padding: "14px 16px", borderRadius: 14, border: simpleAttendance === "no" ? `1.5px solid ${dark}` : "1.5px solid transparent",
-                  background: simpleAttendance === "no" ? dark : `${primary}0f`, color: simpleAttendance === "no" ? "#fff" : dark,
-                  fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter',sans-serif", display: "block",
-                }}>Regretfully Decline</button>
-              </div>
-              {simpleAttendance === "yes" && (
-                <div style={{ marginBottom: 20 }}>
-                  <label style={simpleLabel}>Number of Guests</label>
-                  <input type="number" min={1} max={10} value={guestCount} onChange={e => setGuestCount(Math.max(1, Math.min(10, Number(e.target.value) || 1)))} style={{ ...simpleInput, width: 100 }} />
-                </div>
-              )}
-              <div style={{ marginBottom: 20 }}>
-                <label style={simpleLabel}>Message<span style={{ color: muted, fontWeight: 400 }}> (optional)</span></label>
-                <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Share your wishes for the couple..." rows={4} style={{ ...simpleInput, resize: "vertical" }} />
-              </div>
-              {simpleError && <div style={{ fontSize: 12, color: "#c0504d", marginBottom: 14 }}>{simpleError}</div>}
-              <button onClick={saveSimple} disabled={saving} style={{
-                width: "100%", padding: "15px 16px", borderRadius: 14, border: "none", cursor: saving ? "default" : "pointer",
-                background: `linear-gradient(135deg,${primary},${primaryLight || primary})`, color: "#fff", fontSize: 14, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "'Inter',sans-serif",
-                opacity: saving ? 0.7 : 1,
-              }}>
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
-                {saving ? "Sending..." : "Send RSVP"}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
       <LeafDivider color={primary} />
@@ -755,6 +611,43 @@ const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 1
 const pretitleStyle = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
+// ── One-shot petal/flower shower (krishal-jayakshi- only, see the slug
+// gate in EternalBloomInner). A fixed-position overlay of small botanical
+// shapes that fall from the top of the screen once, right as the
+// invitation opens, then the parent un-mounts it after a few seconds. ──
+function PetalShower({ primary, primaryLight }: { primary: string; primaryLight: string }) {
+  const petals = [
+    { left: "2%", size: 15, delay: 0, dur: 5.6, lite: false },
+    { left: "10%", size: 10, delay: 0.5, dur: 6.3, lite: true },
+    { left: "18%", size: 17, delay: 0.1, dur: 5.9, lite: false },
+    { left: "27%", size: 11, delay: 0.9, dur: 6.6, lite: true },
+    { left: "36%", size: 14, delay: 0.3, dur: 5.4, lite: false },
+    { left: "45%", size: 9, delay: 1.2, dur: 6.9, lite: true },
+    { left: "53%", size: 16, delay: 0.65, dur: 5.7, lite: false },
+    { left: "61%", size: 10, delay: 0.2, dur: 6.2, lite: true },
+    { left: "69%", size: 15, delay: 1.0, dur: 6.0, lite: false },
+    { left: "77%", size: 11, delay: 0.55, dur: 6.5, lite: true },
+    { left: "85%", size: 17, delay: 0.15, dur: 5.5, lite: false },
+    { left: "93%", size: 10, delay: 1.1, dur: 6.8, lite: true },
+  ]
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 90, overflow: "hidden" }}>
+      {petals.map((p, i) => (
+        <span key={i} className="eb-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
+          <svg width={p.size} height={p.size} viewBox="0 0 24 24" fill="none">
+            <g fill={p.lite ? primaryLight : primary}>
+              <ellipse cx="12" cy="6" rx="3.2" ry="4.6" />
+              <ellipse cx="12" cy="18" rx="3.2" ry="4.6" />
+              <ellipse cx="6" cy="12" rx="4.6" ry="3.2" />
+              <ellipse cx="18" cy="12" rx="4.6" ry="3.2" />
+            </g>
+          </svg>
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export default function EternalBloomTemplate({ couple }: { couple: Couple }) {
   return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f8f6ee" }} />}>
@@ -769,6 +662,16 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
+  // One-offs, each gated to a single invitation's slug — every other link
+  // on this template keeps its current behavior untouched:
+  // · malshani-isuru- gets extra top spacing on the cover (see below).
+  // · krishal-jayakshi- gets a shower of falling petals/flowers across the
+  //   screen for a few seconds right as the invitation opens.
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  const isMalshaniIsuru = slug === 'malshani-isuru'
+  const isKrishalJayakshi = slug === 'krishal-jayakshi'
+  const [showPetalShower, setShowPetalShower] = useState(false)
+  const petalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
   // the static default asset is missing from this deployment — we stop
@@ -779,44 +682,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const ts = useTextStyles(couple)
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
-  // One-off cover-spacing refinement requested for this specific couple's
-  // link only ("malshani-isuru-") — gated on the slug so every other
-  // Eternal Bloom invitation keeps its exact current cover layout
-  // untouched. Not a general template change.
-  const isMalshaniIsuru = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'malshani-isuru'
-  // Same idea, a different couple's link ("nipuni-anjana-") — their names
-  // sat a bit too high/tight against the photo, so this one link nudges
-  // the whole eyebrow+names block down slightly. Every other invitation
-  // (including malshani-isuru's own, separately-gated layout above) is
-  // untouched.
-  const isNipuniAnjana = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'nipuni-anjana'
-  // A third, separate couple's link ("anjana-nipuni-") — their cover names
-  // sat too high over the couple's faces and the script font was hard to
-  // read against the busy photo, so this one link nudges the names down a
-  // little and swaps to a clearer italic serif. This same couple's
-  // homecoming is a red-theme event, so their interior cards below are
-  // also switched from the template's default green to a matching red/
-  // maroon palette — again gated on the slug, no effect on any other
-  // invitation.
-  const isAnjanaNipuni = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'anjana-nipuni'
-  // A fourth couple's link ("krishal-jayakshi") — same two requests as
-  // anjana-nipuni above: nudge the cover names down a little, and switch
-  // the interior from the template's default green to a matching red
-  // theme for their red homecoming photo. This one keeps the usual Great
-  // Vibes script font on the cover (no font-clarity complaint here).
-  const isKrishalJayakshi = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'krishal-jayakshi'
-  // Either of the two "switch to a red interior" couples above.
-  const useRedTheme = isAnjanaNipuni || isKrishalJayakshi
-  // Either of the two couples whose names switch from the thin cursive
-  // script to the clearer italic serif — used everywhere their name
-  // appears (cover, hero band, thank-you signature), not just one spot.
-  const useSerifName = isAnjanaNipuni || isNipuniAnjana
-
-  const PRIMARY = useRedTheme ? '#a3403f' : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = useRedTheme ? '#e8cac4' : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = useRedTheme ? '#3d2220' : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
+  const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
+  const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
   const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
-  const MUTED = useRedTheme ? '#a98580' : DEFAULT_PALETTE.muted
+  const MUTED = DEFAULT_PALETTE.muted
 
   // Priority: an explicit cover_video_url from the admin always wins. If
   // that's empty, only fall back to the default demo video when the couple
@@ -834,6 +704,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     audio.loop = true; audio.volume = 0.6; audioRef.current = audio
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
+
+  useEffect(() => {
+    return () => { if (petalTimerRef.current) clearTimeout(petalTimerRef.current) }
+  }, [])
 
   const [videoPlaying, setVideoPlaying] = useState(false)
   const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -866,6 +740,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     if (videoTimerRef.current) { clearTimeout(videoTimerRef.current); videoTimerRef.current = null }
     setOpened(true)
     audioRef.current?.play().catch(() => {})
+    if (isKrishalJayakshi) {
+      setShowPetalShower(true)
+      if (petalTimerRef.current) clearTimeout(petalTimerRef.current)
+      petalTimerRef.current = setTimeout(() => setShowPetalShower(false), 7000)
+    }
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -911,19 +790,26 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
       ]
 
-  // TINT_SAGE is the light background tint used behind the "Our Families"
-  // text and the countdown pills — switched to a matching light red/rose
-  // tint for the anjana-nipuni- one-off above, since the sage-green
-  // version clashed with that couple's red homecoming theme.
-  const TINT_SAGE = useRedTheme ? "#f3e2de" : "#eef2e6"
+  const TINT_SAGE = "#eef2e6"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Pacifico&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #b5c2ac; }
+        .eb-petal {
+          position: absolute; top: -24px; opacity: 0; display: block;
+          animation-name: eb-fall; animation-timing-function: ease-in; animation-fill-mode: forwards;
+        }
+        @keyframes eb-fall {
+          0% { transform: translateY(-24px) translateX(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.9; }
+          100% { transform: translateY(110vh) translateX(30px) rotate(280deg); opacity: 0; }
+        }
       `}</style>
+
+      {isKrishalJayakshi && showPetalShower && <PetalShower primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
 
       <AnimatePresence>
         {showIntro && guestName && (
@@ -937,7 +823,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isNipuniAnjana ? "27vh" : isAnjanaNipuni ? "27vh" : isKrishalJayakshi ? "33vh" : "21vh" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : "21vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -985,32 +871,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: isMalshaniIsuru ? "1.6rem" : "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
-                <div style={{
-                  ...ts('bride_name'),
-                  fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                  fontStyle: useSerifName ? "italic" : "normal",
-                  fontWeight: useSerifName ? 600 : undefined,
-                  fontSize: useSerifName ? coupleNameFontSizeSerif(W.bride) : coupleNameFontSize(W.bride),
-                  color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1,
-                  textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)",
-                  maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word",
-                }}>{W.bride}</div>
+                <div style={{ ...ts('bride_name'), fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
                 <div style={{ margin: isMalshaniIsuru ? "22px 0" : "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: isMalshaniIsuru ? 14 : 10 }}>
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{
-                  ...ts('groom_name'),
-                  fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                  fontStyle: useSerifName ? "italic" : "normal",
-                  fontWeight: useSerifName ? 600 : undefined,
-                  fontSize: useSerifName ? coupleNameFontSizeSerif(W.groom) : coupleNameFontSize(W.groom),
-                  color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1,
-                  textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)",
-                  maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word",
-                  marginTop: isMalshaniIsuru ? 8 : 0,
-                }}>{W.groom}</div>
+                <div style={{ ...ts('groom_name'), fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
 
                 {guestName && (
                   <>
@@ -1060,13 +927,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
-                  <div style={{
-                    fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                    fontStyle: useSerifName ? "italic" : "normal",
-                    fontWeight: useSerifName ? 600 : undefined,
-                    fontSize: useSerifName ? combinedNameFontSizeSerif(W.bride, W.groom) : combinedNameFontSize(W.bride, W.groom),
-                    color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)",
-                  }}>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
                     <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
@@ -1109,13 +970,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
-              // One-off, requested for the "nipuni-anjana-" link (and now
-              // "anjana-nipuni-" too): show the day with its ordinal
-              // suffix ("5th December 2026") instead of the plain number
-              // every other invitation uses ("5 December 2026").
-              const evDateDisplay = (isNipuniAnjana || isAnjanaNipuni)
-                ? `${ordinalDay(evDate.getDate())} ${evDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
-                : evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+              const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -1129,7 +984,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: (useRedTheme ? MUTED : "#a8b89e") }}>{d.label}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#a8b89e" }}>{d.label}</div>
                         <div style={{ ...(d.tsKey ? ts(d.tsKey) : {}), fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ ...((d as any).subTsKey ? ts((d as any).subTsKey) : {}), fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
@@ -1153,14 +1008,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            {/* The "simple" single-page RSVP form (name, phone, an accept/
-                decline toggle, guest count, an optional message, one
-                submit button) is a one-off requested for the
-                nipuni-anjana- link (and now anjana-nipuni- too), modeled
-                on a reference design the couple liked. Every other
-                invitation keeps the original multi-step RSVP ('wizard',
-                the default) untouched. */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} variant={(isNipuniAnjana || isAnjanaNipuni) ? 'simple' : 'wizard'} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
@@ -1236,22 +1084,8 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: (useRedTheme ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
-                  {/* One-off, requested for the "nipuni-anjana-" link (and
-                      now "anjana-nipuni-" too): Great Vibes read too thin/
-                      faint here, and a fake bold or a bolder script face
-                      (both tried before this) either distorted the
-                      letterforms or still didn't read cleanly — so these
-                      links just reuse the same italic serif already used
-                      right above for "To Our Lovely Guests" (titleStyle),
-                      which is clearly legible, plus the darker ink color
-                      for contrast. */}
-                  <div style={{
-                    fontFamily: useSerifName ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive",
-                    fontStyle: useSerifName ? "italic" : "normal",
-                    fontSize: useSerifName ? "1.6rem" : "1.8rem",
-                    color: useSerifName ? DARK : PRIMARY, marginTop: 4,
-                  }}>{W.bride} &amp; {W.groom}</div>
+                  <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
             )}
@@ -1272,7 +1106,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
               </div>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: (useRedTheme ? MUTED : "#a8b89e") }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b89e" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
           </motion.div>
@@ -1281,7 +1115,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
       {opened && (
         <BottomNavBar
           primary={PRIMARY} dark={DARK}
-          accentLight={useRedTheme ? PRIMARY_LIGHT : undefined}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
           hasWishes={(couple as any).enable_guest_wishes ?? false}
           hasGallery={sv.gallery && W.gallery.length > 0}
