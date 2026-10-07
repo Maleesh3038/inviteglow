@@ -611,37 +611,50 @@ const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 1
 const pretitleStyle = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
 const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
-// ── One-shot petal/flower shower (krishal-jayakshi- only, see the slug
+// ── Continuous petal + leaf shower (krishal-jayakshi- only, see the slug
 // gate in EternalBloomInner). A fixed-position overlay of small botanical
-// shapes that fall from the top of the screen once, right as the
-// invitation opens, then the parent un-mounts it after a few seconds. ──
+// shapes that keep drifting down from the top of the screen, slowly, for
+// as long as the invitation stays open (each span loops forever on its
+// own delay/duration, so the shower never visibly stops or restarts). ──
+function Leaf({ size, color }: { size: number; color: string }) {
+  return (
+    <svg width={size} height={size * 1.5} viewBox="0 0 16 24" fill="none">
+      <path d="M8 1C2 5 1 13 8 23C15 13 14 5 8 1Z" fill={color} />
+      <path d="M8 5V20" stroke="#fff" strokeOpacity="0.35" strokeWidth="1" />
+    </svg>
+  )
+}
 function PetalShower({ primary, primaryLight }: { primary: string; primaryLight: string }) {
-  const petals = [
-    { left: "2%", size: 15, delay: 0, dur: 5.6, lite: false },
-    { left: "10%", size: 10, delay: 0.5, dur: 6.3, lite: true },
-    { left: "18%", size: 17, delay: 0.1, dur: 5.9, lite: false },
-    { left: "27%", size: 11, delay: 0.9, dur: 6.6, lite: true },
-    { left: "36%", size: 14, delay: 0.3, dur: 5.4, lite: false },
-    { left: "45%", size: 9, delay: 1.2, dur: 6.9, lite: true },
-    { left: "53%", size: 16, delay: 0.65, dur: 5.7, lite: false },
-    { left: "61%", size: 10, delay: 0.2, dur: 6.2, lite: true },
-    { left: "69%", size: 15, delay: 1.0, dur: 6.0, lite: false },
-    { left: "77%", size: 11, delay: 0.55, dur: 6.5, lite: true },
-    { left: "85%", size: 17, delay: 0.15, dur: 5.5, lite: false },
-    { left: "93%", size: 10, delay: 1.1, dur: 6.8, lite: true },
+  const items: { left: string; size: number; delay: number; dur: number; lite: boolean; kind: "flower" | "leaf" }[] = [
+    { left: "2%", size: 15, delay: 0, dur: 16, lite: false, kind: "flower" },
+    { left: "10%", size: 11, delay: 2.5, dur: 19, lite: true, kind: "leaf" },
+    { left: "18%", size: 17, delay: 0.8, dur: 17, lite: false, kind: "flower" },
+    { left: "27%", size: 10, delay: 4.5, dur: 21, lite: true, kind: "leaf" },
+    { left: "36%", size: 14, delay: 1.6, dur: 15, lite: false, kind: "flower" },
+    { left: "45%", size: 11, delay: 6.0, dur: 20, lite: true, kind: "leaf" },
+    { left: "53%", size: 16, delay: 3.2, dur: 18, lite: false, kind: "flower" },
+    { left: "61%", size: 10, delay: 1.1, dur: 19, lite: true, kind: "leaf" },
+    { left: "69%", size: 15, delay: 5.0, dur: 16, lite: false, kind: "flower" },
+    { left: "77%", size: 11, delay: 2.8, dur: 22, lite: true, kind: "leaf" },
+    { left: "85%", size: 17, delay: 0.4, dur: 17, lite: false, kind: "flower" },
+    { left: "93%", size: 10, delay: 4.0, dur: 20, lite: true, kind: "leaf" },
   ]
   return (
     <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 90, overflow: "hidden" }}>
-      {petals.map((p, i) => (
+      {items.map((p, i) => (
         <span key={i} className="eb-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
-          <svg width={p.size} height={p.size} viewBox="0 0 24 24" fill="none">
-            <g fill={p.lite ? primaryLight : primary}>
-              <ellipse cx="12" cy="6" rx="3.2" ry="4.6" />
-              <ellipse cx="12" cy="18" rx="3.2" ry="4.6" />
-              <ellipse cx="6" cy="12" rx="4.6" ry="3.2" />
-              <ellipse cx="18" cy="12" rx="4.6" ry="3.2" />
-            </g>
-          </svg>
+          {p.kind === "leaf" ? (
+            <Leaf size={p.size} color={p.lite ? primaryLight : primary} />
+          ) : (
+            <svg width={p.size} height={p.size} viewBox="0 0 24 24" fill="none">
+              <g fill={p.lite ? primaryLight : primary}>
+                <ellipse cx="12" cy="6" rx="3.2" ry="4.6" />
+                <ellipse cx="12" cy="18" rx="3.2" ry="4.6" />
+                <ellipse cx="6" cy="12" rx="4.6" ry="3.2" />
+                <ellipse cx="18" cy="12" rx="4.6" ry="3.2" />
+              </g>
+            </svg>
+          )}
         </span>
       ))}
     </div>
@@ -665,13 +678,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // One-offs, each gated to a single invitation's slug — every other link
   // on this template keeps its current behavior untouched:
   // · malshani-isuru- gets extra top spacing on the cover (see below).
-  // · krishal-jayakshi- gets a shower of falling petals/flowers across the
-  //   screen for a few seconds right as the invitation opens.
+  // · krishal-jayakshi- gets a continuous, slow shower of falling petals
+  //   and leaves across the screen for as long as the invitation stays open.
   const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
   const isMalshaniIsuru = slug === 'malshani-isuru'
   const isKrishalJayakshi = slug === 'krishal-jayakshi'
-  const [showPetalShower, setShowPetalShower] = useState(false)
-  const petalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
   // the static default asset is missing from this deployment — we stop
@@ -705,10 +716,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     return () => { audio.pause(); audio.src = "" }
   }, [songUrl])
 
-  useEffect(() => {
-    return () => { if (petalTimerRef.current) clearTimeout(petalTimerRef.current) }
-  }, [])
-
   const [videoPlaying, setVideoPlaying] = useState(false)
   const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const userStartedRef = useRef(false)
@@ -740,11 +747,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     if (videoTimerRef.current) { clearTimeout(videoTimerRef.current); videoTimerRef.current = null }
     setOpened(true)
     audioRef.current?.play().catch(() => {})
-    if (isKrishalJayakshi) {
-      setShowPetalShower(true)
-      if (petalTimerRef.current) clearTimeout(petalTimerRef.current)
-      petalTimerRef.current = setTimeout(() => setShowPetalShower(false), 7000)
-    }
   }
 
   const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
@@ -799,17 +801,18 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #b5c2ac; }
         .eb-petal {
-          position: absolute; top: -24px; opacity: 0; display: block;
-          animation-name: eb-fall; animation-timing-function: ease-in; animation-fill-mode: forwards;
+          position: absolute; top: -28px; opacity: 0; display: block;
+          animation-name: eb-fall; animation-timing-function: linear; animation-iteration-count: infinite;
         }
         @keyframes eb-fall {
-          0% { transform: translateY(-24px) translateX(0) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.9; }
-          100% { transform: translateY(110vh) translateX(30px) rotate(280deg); opacity: 0; }
+          0% { transform: translateY(-28px) translateX(0) rotate(0deg); opacity: 0; }
+          6% { opacity: 0.85; }
+          94% { opacity: 0.7; }
+          100% { transform: translateY(112vh) translateX(32px) rotate(280deg); opacity: 0; }
         }
       `}</style>
 
-      {isKrishalJayakshi && showPetalShower && <PetalShower primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
+      {isKrishalJayakshi && opened && <PetalShower primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
 
       <AnimatePresence>
         {showIntro && guestName && (
