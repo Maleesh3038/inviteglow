@@ -1462,13 +1462,15 @@ export default function CoupleDashboard() {
     if (!addGuestForm.name.trim()) return
     setAddingGuest(true)
     setRsvpError('')
-    const { error } = await supabase.from('rsvps').insert([{
+    const { data, error } = await supabase.from('rsvps').insert([{
       couple_id: couple.id, guest_name: addGuestForm.name.trim(), response: addGuestForm.response,
       guest_count: addGuestForm.response === 'yes' ? (parseInt(addGuestForm.guest_count) || 1) : 1,
       drinking: addGuestForm.response === 'yes' ? (addGuestForm.drinking || null) : null,
-    }])
+    }]).select()
     setAddingGuest(false)
-    if (!error) {
+    if (!error && (!data || data.length === 0)) {
+      setRsvpError('Save blocked by a database permission rule (Row Level Security) — the request succeeded but no guest was actually added.')
+    } else if (!error) {
       setAddGuestForm({ name: '', response: 'yes', guest_count: '1', drinking: '' })
       setShowAddGuest(false)
       loadData()
@@ -1487,12 +1489,22 @@ export default function CoupleDashboard() {
     if (!editForm.guest_name.trim()) return
     setSavingEdit(true)
     setRsvpError('')
-    const { error } = await supabase.from('rsvps').update({
+    // .select() is the important part here — a plain .update().eq(...) with
+    // no .select() reports success (no `error`) even when a Row Level
+    // Security policy silently matches zero rows, which is exactly what was
+    // happening: the Save button looked like it worked but nothing in the
+    // database actually changed. Asking for the row back lets us tell the
+    // two cases apart and say so.
+    const { data, error } = await supabase.from('rsvps').update({
       guest_name: editForm.guest_name.trim(), response: editForm.response,
       guest_count: editForm.response === 'yes' ? (parseInt(editForm.guest_count) || 1) : 1,
       drinking: editForm.response === 'yes' ? (editForm.drinking || null) : null,
-    }).eq('id', id)
+    }).eq('id', id).select()
     setSavingEdit(false)
+    if (!error && (!data || data.length === 0)) {
+      setRsvpError('Save blocked by a database permission rule (Row Level Security) — the request succeeded but no row was actually updated. This needs a Supabase RLS policy fix, not a code fix.')
+      return
+    }
     if (!error) { setEditingRsvpId(null); loadData() } else { setRsvpError('Could not save: ' + error.message) }
   }
 
