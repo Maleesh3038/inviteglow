@@ -919,22 +919,22 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 
       <div style={fieldWrap}>
         <label style={labelStyle}>Wedding Date &amp; Time</label>
-        <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 6 }}>Drives the countdown on your invitation — keep this set to your actual wedding date even if you use separate events below.</div>
+        <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginBottom: 6 }}>Drives the countdown on your invitation — keep this set to your actual wedding date even if you use separate events below.</div>
         <input type="datetime-local" style={inputStyle} value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
       </div>
 
       {hasEventsSystem ? (
         <div style={fieldWrap}>
           <label style={labelStyle}>Event Venues &amp; Dates</label>
-          <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginBottom: 10 }}>
             Your invitation uses separate Engagement/Wedding/Homecoming events — edit each one's venue, address, maps link and date here (turning events on/off, labels and dress code are set from the admin side).
           </div>
           <div style={{ display: 'grid', gap: 10 }}>
             {eventsOrder.filter(key => eventsEdit?.[key]?.enabled).map(key => {
               const e = eventsEdit![key]
               return (
-                <div key={key} style={{ border: `1px solid ${BORDER}`, borderRadius: 12, padding: 14 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 8 }}>{e.label?.trim() || EVENT_DISPLAY_LABEL[key]}</div>
+                <div key={key} style={{ border: `1px solid ${PANEL_BORDER}`, borderRadius: 12, padding: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 8 }}>{e.label?.trim() || EVENT_DISPLAY_LABEL[key]}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
                     <input style={inputStyle} value={e.venue || ''} onChange={ev => updateEventField(key, 'venue', ev.target.value)} placeholder="Venue name" />
                     <input type="datetime-local" style={inputStyle} value={e.date ? e.date.slice(0, 16) : ''} onChange={ev => updateEventField(key, 'date', ev.target.value)} />
