@@ -678,6 +678,22 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const [venue, setVenue] = useState(couple.venue || '')
   const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
   const [mapsUrl, setMapsUrl] = useState(couple.maps_url || '')
+  // Once an invitation has moved to the Engagement/Wedding/Homecoming event
+  // system (set up from the admin side), every template reads venue/date
+  // from couple.events[key] instead of the legacy single venue/venue_address/
+  // maps_url fields above — so editing those legacy fields here was a silent
+  // no-op for any couple on the new system (saved fine, nothing changed on
+  // the live invitation). This mirrors that same per-event shape so it can
+  // actually be edited from here too.
+  type EventEdit = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; label?: string; dress_code?: string }
+  const initialEvents = ((couple as any).events || null) as Record<'engagement' | 'wedding' | 'homecoming', EventEdit> | null
+  const hasEventsSystem = !!(initialEvents && Object.keys(initialEvents).length > 0)
+  const [eventsEdit, setEventsEdit] = useState<Record<'engagement' | 'wedding' | 'homecoming', EventEdit> | null>(initialEvents)
+  const eventsOrder = (((couple as any).events_order as ('engagement' | 'wedding' | 'homecoming')[]) || ['engagement', 'wedding', 'homecoming'])
+  const updateEventField = (key: 'engagement' | 'wedding' | 'homecoming', field: 'venue' | 'venue_address' | 'maps_url' | 'date', val: string) => {
+    setEventsEdit(prev => prev ? { ...prev, [key]: { ...prev[key], [field]: val } } : prev)
+  }
+  const EVENT_DISPLAY_LABEL: Record<'engagement' | 'wedding' | 'homecoming', string> = { engagement: 'Engagement', wedding: 'Wedding', homecoming: 'Homecoming' }
   const [introText, setIntroText] = useState(couple.intro_text || '')
   const [thankYouText, setThankYouText] = useState((couple as any).thank_you_text || '')
   const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
@@ -806,6 +822,11 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       venue: venue || null,
       venue_address: venueAddress || null,
       maps_url: mapsUrl || null,
+      // Only sent when this invitation actually uses the per-event system
+      // (hasEventsSystem) — never overwrites `events` with null/empty for
+      // the many couples who don't use it, since the legacy venue fields
+      // above remain this record's source of truth for them.
+      ...(hasEventsSystem && eventsEdit ? { events: eventsEdit } : {}),
       custom_colors: colors,
       seats: seatsObj,
       intro_text: introText || null,
@@ -896,24 +917,51 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Wedding Date &amp; Time</label>
-          <input type="datetime-local" style={inputStyle} value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
-        </div>
-        <div style={fieldWrap}>
-          <label style={labelStyle}>Venue Name</label>
-          <input style={inputStyle} value={venue} onChange={e => setVenue(e.target.value)} placeholder="The Kingsbury" />
-        </div>
-      </div>
       <div style={fieldWrap}>
-        <label style={labelStyle}>Venue Address</label>
-        <input style={inputStyle} value={venueAddress} onChange={e => setVenueAddress(e.target.value)} placeholder="Janadhipathi Mawatha, Colombo" />
+        <label style={labelStyle}>Wedding Date &amp; Time</label>
+        <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 6 }}>Drives the countdown on your invitation — keep this set to your actual wedding date even if you use separate events below.</div>
+        <input type="datetime-local" style={inputStyle} value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
       </div>
-      <div style={fieldWrap}>
-        <label style={labelStyle}>Google Maps URL</label>
-        <input style={inputStyle} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/?q=..." />
-      </div>
+
+      {hasEventsSystem ? (
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Event Venues &amp; Dates</label>
+          <div style={{ fontSize: 11, color: TEXT_MUTED, marginBottom: 10 }}>
+            Your invitation uses separate Engagement/Wedding/Homecoming events — edit each one's venue, address, maps link and date here (turning events on/off, labels and dress code are set from the admin side).
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {eventsOrder.filter(key => eventsEdit?.[key]?.enabled).map(key => {
+              const e = eventsEdit![key]
+              return (
+                <div key={key} style={{ border: `1px solid ${BORDER}`, borderRadius: 12, padding: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 8 }}>{e.label?.trim() || EVENT_DISPLAY_LABEL[key]}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                    <input style={inputStyle} value={e.venue || ''} onChange={ev => updateEventField(key, 'venue', ev.target.value)} placeholder="Venue name" />
+                    <input type="datetime-local" style={inputStyle} value={e.date ? e.date.slice(0, 16) : ''} onChange={ev => updateEventField(key, 'date', ev.target.value)} />
+                  </div>
+                  <input style={{ ...inputStyle, marginBottom: 8 }} value={e.venue_address || ''} onChange={ev => updateEventField(key, 'venue_address', ev.target.value)} placeholder="Venue address" />
+                  <input style={{ ...inputStyle, marginBottom: 0 }} value={e.maps_url || ''} onChange={ev => updateEventField(key, 'maps_url', ev.target.value)} placeholder="Google Maps URL" />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Venue Name</label>
+            <input style={inputStyle} value={venue} onChange={e => setVenue(e.target.value)} placeholder="The Kingsbury" />
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Venue Address</label>
+            <input style={inputStyle} value={venueAddress} onChange={e => setVenueAddress(e.target.value)} placeholder="Janadhipathi Mawatha, Colombo" />
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Google Maps URL</label>
+            <input style={inputStyle} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/?q=..." />
+          </div>
+        </>
+      )}
 
       {couple.show_seating && (
         <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
@@ -1225,6 +1273,10 @@ export default function CoupleDashboard() {
   const [editingRsvpId, setEditingRsvpId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ guest_name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
   const [savingEdit, setSavingEdit] = useState(false)
+  // Surfaces the actual Supabase error when a save/add fails — previously
+  // these failed silently (the edit box just sat there with no feedback),
+  // which looked exactly like "the Save button doesn't do anything".
+  const [rsvpError, setRsvpError] = useState('')
 
   // Deep-linking: /dashboard/[slug]?tab=guests etc. jumps straight to that
   // tab. Falls back to 'overview' for anything unrecognised. This only
@@ -1409,6 +1461,7 @@ export default function CoupleDashboard() {
   const addGuestManually = async () => {
     if (!addGuestForm.name.trim()) return
     setAddingGuest(true)
+    setRsvpError('')
     const { error } = await supabase.from('rsvps').insert([{
       couple_id: couple.id, guest_name: addGuestForm.name.trim(), response: addGuestForm.response,
       guest_count: addGuestForm.response === 'yes' ? (parseInt(addGuestForm.guest_count) || 1) : 1,
@@ -1419,24 +1472,28 @@ export default function CoupleDashboard() {
       setAddGuestForm({ name: '', response: 'yes', guest_count: '1', drinking: '' })
       setShowAddGuest(false)
       loadData()
+    } else {
+      setRsvpError('Could not save: ' + error.message)
     }
   }
 
   const startEditRsvp = (r: RSVP) => {
     setEditingRsvpId(r.id)
     setEditForm({ guest_name: r.guest_name, response: r.response, guest_count: String(r.guest_count || 1), drinking: (r.drinking as any) || '' })
+    setRsvpError('')
   }
 
   const saveEditRsvp = async (id: string) => {
     if (!editForm.guest_name.trim()) return
     setSavingEdit(true)
+    setRsvpError('')
     const { error } = await supabase.from('rsvps').update({
       guest_name: editForm.guest_name.trim(), response: editForm.response,
       guest_count: editForm.response === 'yes' ? (parseInt(editForm.guest_count) || 1) : 1,
       drinking: editForm.response === 'yes' ? (editForm.drinking || null) : null,
     }).eq('id', id)
     setSavingEdit(false)
-    if (!error) { setEditingRsvpId(null); loadData() }
+    if (!error) { setEditingRsvpId(null); loadData() } else { setRsvpError('Could not save: ' + error.message) }
   }
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
@@ -1679,10 +1736,13 @@ export default function CoupleDashboard() {
                       padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
                       background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 13, opacity: (addingGuest || !addGuestForm.name.trim()) ? 0.6 : 1,
                     }}>{addingGuest ? 'Saving...' : 'Save Guest'}</button>
-                    <button type="button" onClick={() => setShowAddGuest(false)} style={{
+                    <button type="button" onClick={() => { setShowAddGuest(false); setRsvpError('') }} style={{
                       padding: '10px 20px', borderRadius: 10, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 13,
                     }}>Cancel</button>
                   </div>
+                  {rsvpError && (
+                    <div style={{ marginTop: 10, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
+                  )}
                 </div>
               )}
 
@@ -1745,10 +1805,13 @@ export default function CoupleDashboard() {
                               <button type="button" onClick={() => saveEditRsvp(r.id)} disabled={savingEdit} style={{
                                 padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer', background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 12.5, opacity: savingEdit ? 0.6 : 1,
                               }}>{savingEdit ? 'Saving...' : 'Save'}</button>
-                              <button type="button" onClick={() => setEditingRsvpId(null)} style={{
+                              <button type="button" onClick={() => { setEditingRsvpId(null); setRsvpError('') }} style={{
                                 padding: '8px 18px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12.5,
                               }}>Cancel</button>
                             </div>
+                            {isEditing && rsvpError && (
+                              <div style={{ marginTop: 8, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
