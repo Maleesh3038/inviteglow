@@ -1356,9 +1356,20 @@ export default function CoupleDashboard() {
   const handleDeleteRsvp = async (id: string, guestName: string) => {
     if (!confirm(`Remove ${guestName}'s RSVP? This cannot be undone.`)) return
     setDeletingRsvpId(id)
-    const { error } = await supabase.from('rsvps').delete().eq('id', id)
+    setRsvpError('')
+    // Same RLS pitfall as saveEditRsvp/addGuestManually: without .select(),
+    // a delete silently blocked by Row Level Security still reports
+    // success, so this used to optimistically remove the guest from the
+    // list even though it was still in the database — the guest would
+    // reappear on the next page reload with no explanation why.
+    const { data, error } = await supabase.from('rsvps').delete().eq('id', id).select()
     setDeletingRsvpId(null)
+    if (!error && (!data || data.length === 0)) {
+      setRsvpError('Remove blocked by a database permission rule (Row Level Security) — the request succeeded but nothing was actually deleted.')
+      return
+    }
     if (!error) setRsvps(prev => prev.filter(r => r.id !== id))
+    else setRsvpError('Could not remove: ' + error.message)
   }
 
   if (loading) {
@@ -1756,6 +1767,10 @@ export default function CoupleDashboard() {
                     <div style={{ marginTop: 10, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
                   )}
                 </div>
+              )}
+
+              {rsvpError && !showAddGuest && !editingRsvpId && (
+                <div style={{ marginBottom: 12, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
               )}
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
