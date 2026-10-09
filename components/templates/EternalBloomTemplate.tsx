@@ -1126,7 +1126,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  <div style={{ fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
             )}
