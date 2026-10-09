@@ -86,10 +86,10 @@ const emptyForm = {
     thank_you: true,
   },
   events: {
-    engagement: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
-    wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
-    homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '' },
-  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string }>,
+    engagement: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '', show_ordinal_date: false },
+    wedding: { enabled: true, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '', show_ordinal_date: false },
+    homecoming: { enabled: false, venue: '', venue_address: '', date: '', maps_url: '', dress_code: '', show_ordinal_date: false },
+  } as Record<'engagement' | 'wedding' | 'homecoming', { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string; show_ordinal_date?: boolean }>,
   events_order: ['engagement', 'wedding', 'homecoming'] as ('engagement' | 'wedding' | 'homecoming')[],
   intro_text: '',
   cover_badge_text: '',
@@ -359,11 +359,6 @@ function RsvpManager({ coupleId }: { coupleId: string }) {
                 <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
                   {r.response === 'yes' ? `Attending · ${r.guest_count} guest${r.guest_count > 1 ? 's' : ''}` : 'Not attending'}
                   {r.drinking ? ` · ${r.drinking}` : ''}
-                  {/* phone is a newer, optional column some invitations'
-                      RSVP forms collect (see add_rsvp_phone.sql) — older
-                      rows and templates that don't ask for it simply don't
-                      have one, so this only shows up when present. */}
-                  {(r as any).phone ? ` · ${(r as any).phone}` : ''}
                 </div>
               </div>
               <button type="button" onClick={() => handleDelete(r.id, r.guest_name)} disabled={deletingId === r.id}
@@ -758,7 +753,7 @@ function SectionTogglesPicker({ value, onChange }: { value: SectionVisibilityVal
     </div>
   )
 }
-type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string }
+type EventValue = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; dress_code: string; label?: string; show_ordinal_date?: boolean }
 type EventsValue = Record<'engagement' | 'wedding' | 'homecoming', EventValue>
 const EVENT_LABELS: { key: keyof EventsValue; label: string }[] = [
   { key: 'engagement', label: 'Engagement' }, { key: 'wedding', label: 'Wedding' }, { key: 'homecoming', label: 'Homecoming' },
@@ -814,6 +809,10 @@ function EventsPicker({ value, onChange, order, onOrderChange }: {
                     <input placeholder="Venue name" value={e.venue} onChange={ev2 => updateEvent(ev.key, 'venue', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                     <input type="datetime-local" value={e.date} onChange={ev2 => updateEvent(ev.key, 'date', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                   </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#64748b', cursor: 'pointer', marginTop: -2 }}>
+                    <input type="checkbox" checked={!!e.show_ordinal_date} onChange={ev2 => updateEvent(ev.key, 'show_ordinal_date', ev2.target.checked)} />
+                    Show date as "5th", "22nd" etc. (ordinal — Eternal Bloom template only)
+                  </label>
                   <input placeholder="Venue address" value={e.venue_address} onChange={ev2 => updateEvent(ev.key, 'venue_address', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                   <input placeholder="Google Maps URL" value={e.maps_url} onChange={ev2 => updateEvent(ev.key, 'maps_url', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
                   <input placeholder="Dress code (optional) — e.g. No. 1 Ceremonial Dress" value={e.dress_code || ''} onChange={ev2 => updateEvent(ev.key, 'dress_code', ev2.target.value)} style={{ ...inputStyle, marginBottom: 0 }} />
@@ -1559,6 +1558,7 @@ export default function AdminPage() {
           maps_url: c.events?.engagement?.maps_url ?? '',
           dress_code: c.events?.engagement?.dress_code ?? '',
           label: (c.events?.engagement as any)?.label ?? '',
+          show_ordinal_date: (c.events?.engagement as any)?.show_ordinal_date ?? false,
         },
         wedding: {
           enabled: c.events?.wedding?.enabled ?? true,
@@ -1568,6 +1568,7 @@ export default function AdminPage() {
           maps_url: c.events?.wedding?.maps_url ?? c.maps_url ?? '',
           dress_code: c.events?.wedding?.dress_code ?? '',
           label: (c.events?.wedding as any)?.label ?? '',
+          show_ordinal_date: (c.events?.wedding as any)?.show_ordinal_date ?? false,
         },
         homecoming: {
           enabled: c.events?.homecoming?.enabled ?? false,
@@ -1577,6 +1578,7 @@ export default function AdminPage() {
           maps_url: c.events?.homecoming?.maps_url ?? '',
           dress_code: c.events?.homecoming?.dress_code ?? '',
           label: (c.events?.homecoming as any)?.label ?? '',
+          show_ordinal_date: (c.events?.homecoming as any)?.show_ordinal_date ?? false,
         },
       } as any,
       events_order: (Array.isArray((c as any).events_order) && (c as any).events_order.length === 3)
