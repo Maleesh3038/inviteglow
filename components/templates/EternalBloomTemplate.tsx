@@ -702,6 +702,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // bolder cover name font — the thin cursive script wasn't reading well
   // for this couple's names over their cover photo.
   const isAnjanaNipuni = slug === 'anjana-nipuni'
+  // A second, separate couple (their names just happen to be the same two
+  // names in reversed order) — gets the same clearer bold cover name font
+  // as anjana-nipuni, but keeps this template's default sage/moss colors
+  // (no red-theme match was requested for this couple).
+  const isNipuniAnjana = slug === 'nipuni-anjana'
+  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana
   const isRedTheme = isKrishalJayakshi || isAnjanaNipuni
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
@@ -897,13 +903,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: isMalshaniIsuru ? "1.6rem" : "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
-                <div style={{ ...ts('bride_name'), fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: isAnjanaNipuni ? 700 : 400, fontStyle: isAnjanaNipuni ? "italic" : "normal", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
+                <div style={{ ...ts('bride_name'), fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
                 <div style={{ margin: isMalshaniIsuru ? "22px 0" : "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: isMalshaniIsuru ? 14 : 10 }}>
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ ...ts('groom_name'), fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: isAnjanaNipuni ? 700 : 400, fontStyle: isAnjanaNipuni ? "italic" : "normal", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
+                <div style={{ ...ts('groom_name'), fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
 
                 {guestName && (
                   <>
@@ -953,7 +959,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
-                  <div style={{ fontFamily: isAnjanaNipuni ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: isAnjanaNipuni ? 700 : 400, fontStyle: isAnjanaNipuni ? "italic" : "normal", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
+                  <div style={{ fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
                     <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
@@ -999,10 +1005,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               // Ordinal date ("5th December 2026") is admin-controlled per
               // event via the "Show date as 5th, 22nd..." toggle in the
               // dashboard's event editor (ev.show_ordinal_date). The
-              // isAnjanaNipuni fallback keeps this couple's date formatted
+              // isNipuniAnjana fallback keeps this couple's date formatted
               // correctly even before that toggle has been switched on for
               // their existing event data.
-              const useOrdinalDate = ev.show_ordinal_date || isAnjanaNipuni
+              const useOrdinalDate = ev.show_ordinal_date || isNipuniAnjana
               const evDateDisplay = useOrdinalDate
                 ? `${evDate.getDate()}${ordinalSuffix(evDate.getDate())} ${evDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
                 : evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
