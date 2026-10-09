@@ -402,7 +402,7 @@ function SimpleRSVP({ coupleId, primary, dark, cream, muted, guestName }: { coup
 
   const fieldLabelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: dark, marginBottom: 8, display: "block", fontFamily: "'Inter',sans-serif" }
   const requiredMark: React.CSSProperties = { color: primary }
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 12, border: `1px solid ${primary}33`, background: "#fff", color: dark, fontSize: 14, outline: "none", marginBottom: 20, fontFamily: "'Inter',sans-serif", boxSizing: "border-box" }
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 12, border: `1.5px solid ${primary}`, background: "#fff", color: dark, fontSize: 14, outline: "none", marginBottom: 20, fontFamily: "'Inter',sans-serif", boxSizing: "border-box" }
 
   const submit = async () => {
     if (!name.trim()) { setError("Please enter your name."); return }
