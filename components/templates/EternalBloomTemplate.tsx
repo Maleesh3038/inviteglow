@@ -437,15 +437,19 @@ function SimpleRSVP({ coupleId, primary, dark, cream, muted, guestName }: { coup
 
   return (
     <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
+      {/* Guest Name / Phone Number placeholder text in red (primary) instead
+          of the browser's default grey — ::placeholder needs real CSS, an
+          inline style prop can't target it, so this scoped rule does it. */}
+      <style>{`.simple-rsvp-input::placeholder { color: ${primary}; opacity: 0.75; }`}</style>
       <LeafDivider color={primary} />
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
       <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)", textAlign: "left" }}>
         <label style={fieldLabelStyle}>Guest Name <span style={requiredMark}>*</span></label>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" className="simple-rsvp-input" style={inputStyle} />
 
         <label style={fieldLabelStyle}>Phone Number <span style={{ color: muted, fontWeight: 400 }}>(optional)</span></label>
-        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="07XX XXX XXXX" style={inputStyle} />
+        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="07XX XXX XXXX" className="simple-rsvp-input" style={inputStyle} />
 
         <label style={fieldLabelStyle}>Attendance <span style={requiredMark}>*</span></label>
         <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
