@@ -310,7 +310,7 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
+function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, simpleForm }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string; simpleForm?: boolean }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
@@ -320,6 +320,11 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
     setSaving(false); if (!error) { setFinalResponse(response); setStep("done") }
   }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
+  // anjana-nipuni- and nipuni-anjana- only: a single-page RSVP form (name,
+  // phone, attendance as two stacked buttons, guest count, message) instead
+  // of this template's default multi-step wizard — requested to match a
+  // reference screenshot from another invitation.
+  if (simpleForm) return <SimpleRSVP coupleId={coupleId} primary={primary} dark={dark} cream={cream} muted={muted} guestName={guestName} />
   return (
     <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
       <LeafDivider color={primary} />
@@ -374,6 +379,108 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
             <div style={{ fontSize: 12, color: muted }}>{finalResponse === "yes" ? (guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We can't wait to celebrate with you.") : "Thank you for letting us know."}</div>
           </motion.div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ── Single-page RSVP form (anjana-nipuni- and nipuni-anjana- only) — name,
+// phone, attendance (two stacked buttons), guest count and a message, all
+// on one screen instead of the template's default multi-step wizard.
+// `guest_phone` / `guest_message` are separate nullable columns on `rsvps`
+// (see add_rsvp_phone_message_columns.sql) — older invitations that still
+// use the multi-step RSVP above never set them, so they simply stay null.
+function SimpleRSVP({ coupleId, primary, dark, cream, muted, guestName }: { coupleId: string; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
+  const [name, setName] = useState(guestName || "")
+  const [phone, setPhone] = useState("")
+  const [response, setResponse] = useState<"yes" | "no" | null>(null)
+  const [guestCount, setGuestCount] = useState("1")
+  const [message, setMessage] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [done, setDone] = useState(false)
+
+  const fieldLabelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: dark, marginBottom: 8, display: "block", fontFamily: "'Inter',sans-serif" }
+  const requiredMark: React.CSSProperties = { color: primary }
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 12, border: `1px solid ${primary}33`, background: "#fff", color: dark, fontSize: 14, outline: "none", marginBottom: 20, fontFamily: "'Inter',sans-serif", boxSizing: "border-box" }
+
+  const submit = async () => {
+    if (!name.trim()) { setError("Please enter your name."); return }
+    if (!response) { setError("Please let us know if you can make it."); return }
+    setSaving(true); setError("")
+    const { error: err } = await supabase.from('rsvps').insert([{
+      couple_id: coupleId, guest_name: name.trim(), response,
+      guest_count: response === "yes" ? (parseInt(guestCount, 10) || 1) : 1,
+      guest_phone: phone.trim() || null, guest_message: message.trim() || null,
+    }])
+    setSaving(false)
+    if (err) { setError("Something went wrong — please try again."); return }
+    setDone(true)
+  }
+
+  if (done) {
+    return (
+      <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
+        <LeafDivider color={primary} />
+        <div style={{ background: "#fff", borderRadius: 20, padding: 28, maxWidth: 380, margin: "16px auto 0", boxShadow: "0 4px 20px rgba(45,61,40,0.08)" }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>{response === "yes" ? "🌿" : "🙏"}</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>
+            {response === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}
+          </div>
+          <div style={{ fontSize: 12, color: muted }}>
+            {response === "yes" ? "We can't wait to celebrate with you." : "Thank you for letting us know."}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
+      <LeafDivider color={primary} />
+      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
+      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
+      <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)", textAlign: "left" }}>
+        <label style={fieldLabelStyle}>Guest Name <span style={requiredMark}>*</span></label>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
+
+        <label style={fieldLabelStyle}>Phone Number <span style={{ color: muted, fontWeight: 400 }}>(optional)</span></label>
+        <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="07XX XXX XXXX" style={inputStyle} />
+
+        <label style={fieldLabelStyle}>Attendance <span style={requiredMark}>*</span></label>
+        <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
+          <button type="button" onClick={() => setResponse("yes")} style={{
+            padding: 14, borderRadius: 12, border: `1.5px solid ${response === "yes" ? primary : `${primary}33`}`,
+            background: response === "yes" ? primary : "#fff", color: response === "yes" ? "#fff" : dark,
+            cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "'Inter',sans-serif",
+          }}>Joyfully Accept</button>
+          <button type="button" onClick={() => setResponse("no")} style={{
+            padding: 14, borderRadius: 12, border: `1.5px solid ${response === "no" ? primary : `${primary}33`}`,
+            background: response === "no" ? primary : "#fff", color: response === "no" ? "#fff" : dark,
+            cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "'Inter',sans-serif",
+          }}>Regretfully Decline</button>
+        </div>
+
+        {response === "yes" && (
+          <>
+            <label style={fieldLabelStyle}>Number of Guests</label>
+            <input type="number" min={1} value={guestCount} onChange={e => setGuestCount(e.target.value)} style={inputStyle} />
+          </>
+        )}
+
+        <label style={fieldLabelStyle}>Message <span style={{ color: muted, fontWeight: 400 }}>(optional)</span></label>
+        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Share your wishes for the couple..." rows={3}
+          style={{ ...inputStyle, resize: "vertical", fontFamily: "'Inter',sans-serif" }} />
+
+        {error && <div style={{ color: "#b3261e", fontSize: 12, marginBottom: 14, marginTop: -8 }}>{error}</div>}
+
+        <button type="button" onClick={submit} disabled={saving} style={{
+          width: "100%", padding: 15, borderRadius: 12, background: primary, color: "#fff", border: "none",
+          cursor: saving ? "default" : "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'Inter',sans-serif",
+          opacity: saving ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        }}>
+          {saving ? "Sending..." : <>➤ Send RSVP</>}
+        </button>
       </div>
     </div>
   )
@@ -1049,7 +1156,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} simpleForm={isAnjanaNipuni || isNipuniAnjana} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
