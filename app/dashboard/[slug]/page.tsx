@@ -815,7 +815,13 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       if (name && table) seatsObj[name.toLowerCase()] = table
     })
 
-    const { error } = await supabase.from('couples').update({
+    // .select() is what lets us tell "saved" apart from "the request
+    // succeeded but a Row Level Security policy silently matched zero
+    // rows" — without it, supabase-js reports no `error` either way, so a
+    // blocked save still showed "Saved! Your invitation has been updated."
+    // even though nothing in the database actually changed (this is the
+    // same RLS pitfall already fixed on the RSVP save/add/remove below).
+    const { data, error } = await supabase.from('couples').update({
       couple_photo: photo || null,
       share_preview_url: sharePreview || null,
       wedding_date: weddingDate,
@@ -836,10 +842,12 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
       together_with_text: togetherWithText || null,
       family_invitation_text: familyInvitationText || null,
       text_styles: textStyles,
-    }).eq('id', couple.id)
+    }).eq('id', couple.id).select()
 
     setSaving(false)
-    if (error) {
+    if (!error && (!data || data.length === 0)) {
+      setMessage('Save blocked by a database permission rule (Row Level Security) — the request succeeded but nothing was actually updated. This needs a Supabase RLS policy fix on the couples table, not a code fix.')
+    } else if (error) {
       setMessage('Could not save: ' + error.message)
     } else {
       setMessage('Saved! Your invitation has been updated.')
