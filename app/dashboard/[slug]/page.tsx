@@ -1,474 +1,658 @@
 "use client"
-import { useState, useEffect, useRef, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase, Couple } from '@/lib/supabase'
-import FooterSocial from '@/components/shared/FooterSocial'
+import { supabase, Couple, RSVP, CoupleColors } from '@/lib/supabase'
 
-const DEFAULT_PHOTO = "/images/hero-floral.png"
-const DEFAULT_COVER_VIDEO = "https://eqacrwhbrfqcnlgegvtl.supabase.co/storage/v1/object/public/wedding-photos/videos/eternal-bloom-cover.mp4"
-const DEFAULT_SONG_URL = "/audio/calm-wedding.mp3"
-const DEFAULT_SONG_TITLE = "Calm Wedding Theme"
-const DEFAULT_SONG_ARTIST = "InviteGlow"
+const BUCKET = 'wedding-photos'
 
-// Botanical, lush-green palette — moss/sage tones on warm ivory.
-const DEFAULT_PALETTE = {
-  primary: "#5c7a52",
-  primaryLight: "#b9cdae",
-  dark: "#2d3d28",
-  cream: "#f8f6ee",
-  muted: "#8a9a80",
+// Default color presets per template — used as the starting point when a couple
+// customises colors for the first time (no custom_colors saved yet)
+const TEMPLATE_DEFAULTS: Record<string, Required<CoupleColors>> = {
+  'floral-romance': { primary: '#c4607a', primaryLight: '#e8a0b8', dark: '#3d1a2a', cream: '#fdf0f0' },
+  'elegant-photo': { primary: '#c9a06e', primaryLight: '#e8d5a0', dark: '#2d2424', cream: '#faf6f4' },
+  'cinematic-gold': { primary: '#e8c468', primaryLight: '#f0d488', dark: '#1a1208', cream: '#241a0c' },
+  'kandyan-heritage': { primary: '#d4923f', primaryLight: '#f0c878', dark: '#4a1f0f', cream: '#fbf0dc' },
+  'twilight-picnic': { primary: '#f0a868', primaryLight: '#e0849a', dark: '#171c33', cream: '#232a4d' },
+  'golden-garden': { primary: '#d4a857', primaryLight: '#e8a87a', dark: '#3d2b1f', cream: '#fdf6ec' },
+  'ocean-pearl': { primary: '#2f7d9e', primaryLight: '#7fc4d8', dark: '#0d2e3a', cream: '#f0f9fb' },
+  'sunset-shores': { primary: '#e0795a', primaryLight: '#f4b896', dark: '#5a3a2e', cream: '#fdf3ea' },
+  'traditional-ceylon': { primary: '#2f4a35', primaryLight: '#c9a227', dark: '#1f2e22', cream: '#fbf6e9' },
+  'sacred-poruwa': { primary: '#c4956a', primaryLight: '#e8c99a', dark: '#3d2510', cream: '#fdf6e9' },
+  'garden-minimal': { primary: '#4a8a5a', primaryLight: '#a0d8b0', dark: '#1a2e20', cream: '#f0f7f0' },
+  'blush-blossom': { primary: '#c17d8a', primaryLight: '#f3d6d6', dark: '#5c4632', cream: '#fff6f1' },
+  'ceylon-elegance': { primary: '#c68a8f', primaryLight: '#e7c9c0', dark: '#3f4a45', cream: '#faf6f3' },
+  'eternal-bloom': { primary: '#5c7a52', primaryLight: '#b9cdae', dark: '#2d3d28', cream: '#f8f6ee' },
+  'noble-salute': { primary: '#3f5233', primaryLight: '#9aa87f', dark: '#1a2116', cream: '#faf8f2' },
+  'crimson-royale': { primary: '#8b1a2b', primaryLight: '#c96b78', dark: '#1a1214', cream: '#faf5f0' },
+  'kanchi-vivaha': { primary: '#9b2c2c', primaryLight: '#d98a5f', dark: '#221512', cream: '#f7ecd9' },
+  'ceremonial-guard': { primary: '#8B7BB8', primaryLight: '#D4C9E8', dark: '#3A2E4D', cream: '#FDFCFF' },
 }
 
-// ── Leaf divider — the signature organic motif for this template, used
-// instead of geometric dots/diamonds anywhere Ceylon Elegance-style
-// dividers would normally go. ──
-// ── Floating bottom nav bar — modern narrow pill (not edge-to-edge),
-// quick jump to key sections, plus a raised music toggle on the right. ──
-// ── Auto-shrinks the couple-name script font for longer names so they
-// never overflow the screen width on mobile — short names (e.g. "Amal")
-// get the full large size, longer ones (e.g. "Nathasha") step down. ──
-// ── Per-element text style overrides. Reads couple.text_styles (set from
-// the "Customise Fonts" panel in the couple's dashboard) and merges a
-// color/font/bold override on top of the template's own default styling.
-// A missing key simply falls back to the template default — nothing
-// breaks for invitations that never touch that panel. ──
-type TextStyleEntry = { color?: string; font?: string; bold?: boolean }
-function useTextStyles(couple: any) {
-  const map: Record<string, TextStyleEntry> = couple?.text_styles || {}
-  return (key: string, fallback: React.CSSProperties = {}): React.CSSProperties => {
-    const s = map[key]
-    if (!s) return fallback
-    return {
-      ...fallback,
-      ...(s.color ? { color: s.color } : {}),
-      ...(s.font && s.font !== 'inherit' ? { fontFamily: s.font } : {}),
-      ...(s.bold ? { fontWeight: 700 } : {}),
-    }
+// Human-readable labels for the "Change Template" picker in the couple's
+// own dashboard — purely cosmetic, doesn't affect any stored data.
+const TEMPLATE_NAMES: Record<string, string> = {
+  'floral-romance': 'Floral Romance',
+  'elegant-photo': 'Elegant Photo Hero',
+  'cinematic-gold': 'Cinematic Gold',
+  'kandyan-heritage': 'Kandyan Heritage',
+  'twilight-picnic': 'Twilight Picnic',
+  'golden-garden': 'Golden Garden',
+  'ocean-pearl': 'Ocean Pearl',
+  'sunset-shores': 'Sunset Shores',
+  'traditional-ceylon': 'Traditional Ceylon',
+  'sacred-poruwa': 'Sacred Poruwa',
+  'blush-blossom': 'Blush Blossom',
+  'ceylon-elegance': 'Ceylon Elegance',
+  'eternal-bloom': 'Eternal Bloom',
+  'noble-salute': 'Noble Salute',
+  'crimson-royale': 'Crimson Royale',
+  'kanchi-vivaha': 'Kanchi Vivaha',
+  'ceremonial-guard': 'Ceremonial Guard',
+}
+
+// ── Fonts available for per-element text styling. ──
+const FONT_OPTIONS = [
+  { key: 'inherit', label: 'Template Default' },
+  { key: "'Inter',sans-serif", label: 'Inter (Clean Sans)' },
+  { key: "'Cormorant Garamond',serif", label: 'Cormorant Garamond (Elegant Serif)' },
+  { key: "'Great Vibes',cursive", label: 'Great Vibes (Script)' },
+  { key: "'Playfair Display',serif", label: 'Playfair Display (Classic Serif)' },
+  { key: "'Dancing Script',cursive", label: 'Dancing Script (Casual Script)' },
+  { key: "'Montserrat',sans-serif", label: 'Montserrat (Modern Sans)' },
+  { key: "'Lora',serif", label: 'Lora (Soft Serif)' },
+  { key: "'EB Garamond',serif", label: 'EB Garamond (Traditional Serif)' },
+]
+
+// ── Which text elements can be individually styled. Stored as
+// couple.text_styles = { [key]: { color, font, bold } }. Templates read
+// this object and fall back to their own default styling when a key is
+// absent — nothing breaks for invitations that never touch this panel.
+// Labels + example text are written in plain terms (not template jargon)
+// so it's clear what each one actually controls. ──
+const TEXT_STYLE_TARGETS: { key: string; label: string; example: (c: { bride: string; groom: string; venue: string; venue_address: string }) => string }[] = [
+  { key: 'groom_name', label: "Groom's Name", example: c => c.groom || 'Roshan' },
+  { key: 'bride_name', label: "Bride's Name", example: c => c.bride || 'Amara' },
+  { key: 'subtitle', label: 'Welcome Line (shown above the names, e.g. "You Are Invited")', example: () => 'You Are Invited' },
+  { key: 'tagline', label: 'Short Quote Under the Names', example: () => 'Where the tide meets eternity, we begin our forever' },
+  { key: 'message', label: 'Family Invitation Message', example: () => 'With the blessings of our families, we joyfully invite you to celebrate...' },
+  { key: 'love_story', label: 'Love Story Text', example: () => 'Our journey began on a rainy afternoon in Colombo...' },
+  { key: 'venue_name', label: 'Venue Name', example: c => c.venue || 'Hotel Green Court' },
+  { key: 'venue_address', label: 'Venue Address', example: c => c.venue_address || 'Janadhipathi Mawatha, Colombo' },
+  { key: 'together_label', label: '"Together With Their Families" Line (shown above the names once the invitation is opened)', example: () => 'Together with their families' },
+  { key: 'dress_code', label: 'Dress Code Text', example: () => 'Formal / No. 1 Ceremonial Dress' },
+  { key: 'countdown_label', label: 'Countdown Heading', example: () => 'Counting Down to Our Big Day' },
+]
+
+async function uploadToStorage(file: File, folder: string): Promise<string | null> {
+  const ext = file.name.split('.').pop()
+  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
+  if (error) { console.error('Upload error:', error); return null }
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
+  return data.publicUrl
+}
+
+function findSeatForGuest(guestName: string, seats: Record<string, string>): string | null {
+  const query = guestName.trim().toLowerCase()
+  if (!query) return null
+  const found = Object.keys(seats || {}).find(k => query.includes(k) || k.includes(query))
+  return found ? seats[found] : null
+}
+
+// ── Clean line-style SVG icons — no emoji in the dashboard chrome ──
+type IconName = 'lock' | 'check' | 'cross' | 'users' | 'chair' | 'wine' | 'glass' | 'edit' | 'link' | 'overview' | 'search' | 'refresh' | 'trash' | 'copy' | 'whatsapp' | 'home' | 'car' | 'sparkles' | 'camera' | 'heart' | 'wallet' | 'plus'
+function Icon({ name, size = 16, color = 'currentColor', strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
+  const c = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  switch (name) {
+    case 'lock': return <svg {...c}><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M7.5 10.5V7a4.5 4.5 0 019 0v3.5" /></svg>
+    case 'check': return <svg {...c}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+    case 'cross': return <svg {...c}><path d="M6 6l12 12M18 6L6 18" /></svg>
+    case 'users': return <svg {...c}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20a5.5 5.5 0 0111 0" /><path d="M15.5 8.2a3 3 0 010 5.8" /><path d="M15 20a5 5 0 016.5-4.8" /></svg>
+    case 'chair': return <svg {...c}><path d="M6 4v9a2 2 0 002 2h8a2 2 0 002-2V4" /><path d="M6 15v5M18 15v5M8 4h8" /></svg>
+    case 'wine': return <svg {...c}><path d="M8 3h8l-1 7a3 3 0 01-6 0z" /><path d="M12 13v7M8.5 20h7" /></svg>
+    case 'glass': return <svg {...c}><path d="M6 3h12l-1.5 12a3.5 3.5 0 01-3 3h-3a3.5 3.5 0 01-3-3z" /><path d="M9 8h6" /></svg>
+    case 'edit': return <svg {...c}><path d="M4 20h4L18.5 9.5a2.1 2.1 0 00-3-3L5 17v3z" /><path d="M13.5 8l3 3" /></svg>
+    case 'link': return <svg {...c}><path d="M9.5 14.5l5-5" /><path d="M13 6l1-1a3.5 3.5 0 015 5l-1 1" /><path d="M11 18l-1 1a3.5 3.5 0 01-5-5l1-1" /></svg>
+    case 'overview': return <svg {...c}><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></svg>
+    case 'search': return <svg {...c}><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>
+    case 'refresh': return <svg {...c}><path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3" /><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5" /></svg>
+    case 'trash': return <svg {...c}><path d="M5 7h14" /><path d="M9 7V4.8A1.8 1.8 0 0110.8 3h2.4A1.8 1.8 0 0115 4.8V7" /><path d="M7 7l1 13.2A1.8 1.8 0 009.8 22h4.4a1.8 1.8 0 001.8-1.8L17 7" /></svg>
+    case 'copy': return <svg {...c}><rect x="8.5" y="8.5" width="12" height="12" rx="2" /><path d="M15.5 8.5V5.8A1.8 1.8 0 0013.7 4H5.8A1.8 1.8 0 004 5.8v7.9A1.8 1.8 0 005.8 15.5H8.5" /></svg>
+    case 'whatsapp': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" /></svg>
+    case 'home': return <svg {...c}><path d="M4 11l8-7 8 7" /><path d="M6 10v9a1 1 0 001 1h10a1 1 0 001-1v-9" /></svg>
+    case 'car': return <svg {...c}><path d="M4 16V11l2-4h12l2 4v5" /><path d="M4 16a1.5 1.5 0 003 0M17 16a1.5 1.5 0 003 0M4 16h16" /></svg>
+    case 'sparkles': return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
+    case 'camera': return <svg {...c}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7l1.5-3h5L16 7" /><circle cx="12" cy="13.5" r="3.5" /></svg>
+    case 'heart': return <svg {...c}><path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" /></svg>
+    case 'wallet': return <svg {...c}><rect x="3" y="6.5" width="18" height="13" rx="2.5" /><path d="M3 10h18" /><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor" stroke="none" /><path d="M7 6.5V5a1.5 1.5 0 011.5-1.5h7A1.5 1.5 0 0117 5v1.5" /></svg>
+    case 'plus': return <svg {...c}><path d="M12 5v14M5 12h14" /></svg>
+    default: return null
   }
 }
 
-function coupleNameFontSize(name: string): string {
-  const len = (name || '').length
-  if (len > 12) return "clamp(1.4rem,5.5vw,1.9rem)"
-  if (len > 9) return "clamp(1.7rem,6.5vw,2.3rem)"
-  if (len > 6) return "clamp(2.0rem,7.5vw,2.8rem)"
-  return "clamp(2.4rem,8.5vw,3.4rem)"
-}
-
-// nipuni-anjana- only: "5" -> "5th", "22" -> "22nd", etc., for the Date row
-// on the event card — every other invitation keeps the plain "5 December
-// 2026" style from toLocaleDateString.
-function ordinalSuffix(day: number): string {
-  const v = day % 100
-  if (v >= 11 && v <= 13) return 'th'
-  switch (day % 10) {
-    case 1: return 'st'
-    case 2: return 'nd'
-    case 3: return 'rd'
-    default: return 'th'
-  }
-}
-
-// Same idea, for the "Bride & Groom" combined single-line treatment used
-// in the hero band further down — combined length matters here, not
-// either name individually, since both sit on one line together.
-function combinedNameFontSize(bride: string, groom: string): string {
-  const len = (bride || '').length + (groom || '').length
-  if (len > 22) return "clamp(1.1rem,4.5vw,1.5rem)"
-  if (len > 17) return "clamp(1.4rem,5.2vw,1.8rem)"
-  if (len > 13) return "clamp(1.6rem,6vw,2.2rem)"
-  if (len > 10) return "clamp(1.9rem,6.8vw,2.7rem)"
-  return "clamp(2.2rem,7.5vw,3.1rem)"
-}
-
-function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-function BottomNavBar({ primary, accent = "#8aa87e", dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
-  primary: string; accent?: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
-}) {
-  const [playing, setPlaying] = useState(false)
-  useEffect(() => {
-    const a = audioRef.current
-    if (!a) return
-    const onPlay = () => setPlaying(true)
-    const onPause = () => setPlaying(false)
-    a.addEventListener('play', onPlay)
-    a.addEventListener('pause', onPause)
-    setPlaying(!a.paused)
-    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause) }
-  }, [audioRef])
-
-  const toggleMusic = () => {
-    const a = audioRef.current
-    if (!a) return
-    a.paused ? a.play().catch(() => {}) : a.pause()
-  }
-
-  const iconBtn = (onClick: () => void, label: string, path: React.ReactElement, key: string) => (
-    <button key={key} onClick={onClick} aria-label={label} style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'transparent',
-      border: 'none', cursor: 'pointer', color: dark, opacity: 0.8, padding: '2px 4px',
-    }}>
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
-      <span style={{ fontSize: 8, letterSpacing: '0.02em' }}>{label}</span>
-    </button>
-  )
-
+// ── Small donut chart (attending vs declined), pure SVG — no charting library ──
+function RsvpDonut({ accepted, declined, accent, accentLight, size = 128 }: { accepted: number; declined: number; accent: string; accentLight: string; size?: number }) {
+  const total = accepted + declined
+  const r = size / 2 - 12
+  const circumference = 2 * Math.PI * r
+  const acceptedFrac = total > 0 ? accepted / total : 0
+  const acceptedLen = circumference * acceptedFrac
   return (
-    <div style={{
-      position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)',
-      width: 'calc(100% - 40px)', maxWidth: 400, zIndex: 100,
-    }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-evenly',
-        background: 'rgba(255,255,255,0.98)', borderRadius: 100, border: '1px solid rgba(45,61,40,0.08)',
-        boxShadow: '0 10px 30px rgba(45,61,40,0.18)', padding: '10px 18px', paddingRight: 56, position: 'relative',
-      }}>
-        {hasWishes && iconBtn(() => scrollToId('wishes'), 'Wishes', <path d="M12 20.5s-7.5-4.9-9.8-9.3C.6 8 2 4.7 5.2 4a4.6 4.6 0 016.8 2.3A4.6 4.6 0 0118.8 4C22 4.7 23.4 8 21.8 11.2 19.5 15.6 12 20.5 12 20.5z" />, 'wishes')}
-        {iconBtn(() => scrollToId('savethedate'), 'Save Date', <><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>, 'savedate')}
-        {hasGallery && iconBtn(() => scrollToId('gallery'), 'Gallery', <><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5.2-5.2a2 2 0 00-2.8 0L4 19" /></>, 'gallery')}
-        {iconBtn(() => scrollToId('contact'), 'Contact', <><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3.5 6.5L12 13l8.5-6.5" /></>, 'contact')}
-        {mapsUrl && (
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: dark, opacity: 0.8,
-            textDecoration: 'none', padding: '2px 4px',
-          }}>
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s7-7.5 7-12.5A7 7 0 105 9.5C5 14.5 12 22 12 22z" /><circle cx="12" cy="9.5" r="2.5" />
-            </svg>
-            <span style={{ fontSize: 8 }}>Location</span>
-          </a>
-        )}
-
-        {/* Raised music toggle, floating on the right edge of the pill */}
-        <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
-          position: 'absolute', right: 4, top: -16,
-          width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
-          background: `linear-gradient(135deg,${primary},${accent})`, color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          boxShadow: '0 6px 16px rgba(45,61,40,0.35)',
-        }}>
-          {playing ? (
-            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
-              <path d="M16.5 9a3.5 3.5 0 010 6M19 6.5a7 7 0 010 11" />
-            </svg>
-          ) : (
-            <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
-              <path d="M16.5 9l5 6M21.5 9l-5 6" />
-            </svg>
-          )}
-        </button>
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={12} />
+      {total > 0 && (
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={accent} strokeWidth={12}
+          strokeDasharray={`${acceptedLen} ${circumference - acceptedLen}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      )}
+      <text x="50%" y="47%" textAnchor="middle" fontSize={size * 0.22} fontWeight={800} fill="#1e293b" fontFamily="'Inter',sans-serif">{total}</text>
+      <text x="50%" y="63%" textAnchor="middle" fontSize={size * 0.09} fill="#94a3b8" fontFamily="'Inter',sans-serif">RSVPs</text>
+    </svg>
   )
 }
 
-// ── Contact Numbers — click-to-call and WhatsApp buttons. Reads the
-// flexible `contacts` list first; if that's empty, falls back to the
-// classic bride_phone/groom_phone fields so older invitations keep
-// showing their existing numbers with no data lost. ──
-function ContactRow({ name, phone, primary, nameColor = '#2d3d28', phoneColor = '#8a9a80' }: { name: string; phone: string; primary: string; nameColor?: string; phoneColor?: string }) {
-  const digitsOnly = phone.replace(/\D/g, '')
-  const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: `1px solid ${primary}22`, borderRadius: 14, padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
-      <div style={{ minWidth: 0 }}>
-        {name ? (
-          <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: nameColor, fontFamily: "'Inter',sans-serif" }}>{name}</div>
-            <div style={{ fontSize: 12, color: phoneColor, marginTop: 2 }}>{phone}</div>
-          </>
-        ) : (
-          <div style={{ fontSize: 13, fontWeight: 700, color: nameColor, fontFamily: "'Inter',sans-serif" }}>{phone}</div>
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-        <a href={`tel:${digitsOnly}`} aria-label={name ? `Call ${name}` : `Call ${phone}`} style={{
-          width: 36, height: 36, borderRadius: '50%', background: `${primary}1a`, color: primary,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
-        }}>
-          <svg width={16} height={16} viewBox="0 0 24 24" fill={primary}>
-            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01z" />
-          </svg>
-        </a>
-        <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={name ? `WhatsApp ${name}` : `WhatsApp ${phone}`} style={{
-          width: 36, height: 36, borderRadius: '50%', background: '#25d366', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
-        }}>
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="#fff">
-            <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.3A10 10 0 1012 2z" />
-          </svg>
-        </a>
-      </div>
-    </div>
-  )
-}
-
-function LeafDivider({ color, size = 20 }: { color: string; size?: number }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-      <div style={{ width: 34, height: 1, background: color, opacity: 0.4 }} />
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={color} opacity="0.8" />
-        <path d="M12 4v16" stroke="#fff" strokeWidth="0.8" opacity="0.5" />
-      </svg>
-      <div style={{ width: 34, height: 1, background: color, opacity: 0.4 }} />
-    </div>
-  )
-}
-
-// ── Guest intro screen ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, midTint = "#eef2e6" }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; midTint?: string
-}) {
-  return (
-    <motion.div key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
-      style={{
-        position: "fixed", inset: 0, zIndex: 200,
-        background: `linear-gradient(160deg, ${cream} 0%, ${midTint} 45%, ${cream} 100%)`,
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        textAlign: "center", padding: "2rem", overflow: "hidden",
-      }}>
-      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}44, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
-      <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
-        style={{ position: "relative", zIndex: 1, marginBottom: "1.6rem" }}>
-        <LeafDivider color={primary} size={22} />
-      </motion.div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }} style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
-        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
-          Dear <span style={{ color: primary, fontWeight: 600 }}>{guestName}</span>,
-        </div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, letterSpacing: "0.1em" }} animate={{ opacity: 1, letterSpacing: "0.4em" }} transition={{ duration: 0.9, delay: 1.6 }}
-        style={{ fontSize: 10, textTransform: "uppercase", color: `${primary}cc`, fontFamily: "'Inter',sans-serif" }}>
-        Where Love Blooms
-      </motion.div>
-      <motion.div style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100 }}
-        initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 5, ease: "linear", delay: 0.4 }} onAnimationComplete={onDone} />
-      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ delay: 2 }} onClick={onDone}
-        style={{ position: "absolute", bottom: 20, right: 20, background: "transparent", border: "none", cursor: "pointer", fontSize: 12, color: primary, fontFamily: "'Inter',sans-serif", letterSpacing: "0.1em" }}>
-        Skip →
-      </motion.button>
-    </motion.div>
-  )
-}
-
-// ── Countdown ──
-function Countdown({ targetDate, dark, tint = "#eef2e6", labelColor = "#7a8a70" }: { targetDate: string; dark: string; tint?: string; labelColor?: string }) {
-  const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
-  useEffect(() => {
-    const tick = () => {
-      const diff = new Date(targetDate).getTime() - Date.now(); if (diff <= 0) return
-      setT({
-        d: String(Math.floor(diff / 86400000)).padStart(2, "0"), h: String(Math.floor(diff % 86400000 / 3600000)).padStart(2, "0"),
-        m: String(Math.floor(diff % 3600000 / 60000)).padStart(2, "0"), s: String(Math.floor(diff % 60000 / 1000)).padStart(2, "0"),
-      })
-    }
-    tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
-  }, [targetDate])
-  return (
-    <div style={{ display: "flex", justifyContent: "center", gap: 8, maxWidth: 340, margin: "0 auto" }}>
-      {[["Days", t.d], ["Hours", t.h], ["Minutes", t.m], ["Seconds", t.s]].map(([l, v]) => (
-        <div key={l} style={{ flex: 1, textAlign: "center", background: tint, borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%", padding: "12px 3px" }}>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 700, lineHeight: 1 }}>{v}</div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: labelColor, marginTop: 5 }}>{l}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── Music Player ──
-function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string }) {
-  const [playing, setPlaying] = useState(false); const [prog, setProg] = useState(0)
-  useEffect(() => {
-    const a = audioRef.current; if (!a) return
-    const onPlay = () => setPlaying(true), onPause = () => setPlaying(false), onTime = () => { if (a.duration) setProg((a.currentTime / a.duration) * 100) }
-    a.addEventListener('play', onPlay); a.addEventListener('pause', onPause); a.addEventListener('timeupdate', onTime)
-    setPlaying(!a.paused)
-    return () => { a.removeEventListener('play', onPlay); a.removeEventListener('pause', onPause); a.removeEventListener('timeupdate', onTime) }
-  }, [audioRef])
-  const toggle = () => { const a = audioRef.current; if (!a) return; a.paused ? a.play().catch(() => {}) : a.pause() }
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#fff", borderRadius: 16, padding: 16, border: `1px solid ${primaryLight}` }}>
-      <div style={{ width: 46, height: 46, borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%", background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: dark }}>{title}</div>
-        <div style={{ fontSize: 11, color: muted, marginTop: 2 }}>{artist}</div>
-        <div style={{ height: 3, background: `${primary}26`, borderRadius: 100, marginTop: 8 }}>
-          <div style={{ height: "100%", width: `${prog}%`, background: `linear-gradient(to right,${primary},${primaryLight})`, borderRadius: 100, transition: "width 0.3s" }} />
-        </div>
-      </div>
-      <button onClick={toggle} style={{ width: 40, height: 40, borderRadius: "50%", background: dark, border: "none", color: "#fff", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>{playing ? "⏸" : "▶"}</button>
-    </div>
-  )
-}
-
-// ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
-  const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
-  const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
-  const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
-  const save = async (response: "yes" | "no", drinking: "yes" | "no" | null, count: number) => {
-    setSaving(true)
-    const { error } = await supabase.from('rsvps').insert([{ couple_id: coupleId, guest_name: name.trim(), response, drinking, guest_count: count }])
-    setSaving(false); if (!error) { setFinalResponse(response); setStep("done") }
-  }
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
-  return (
-    <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
-      <LeafDivider color={primary} />
-      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
-      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
-      <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)" }}>
-        {step === "form" && (
-          <>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => name.trim() && setStep("count")} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>✓ Accept</button>
-              <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: `1px solid ${primary}33`, cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Decline"}</button>
-            </div>
-          </>
-        )}
-        {step === "count" && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div style={{ fontSize: 13, color: dark, fontWeight: 600, marginBottom: 16 }}>How many people, including you?</div>
-            {/* Swipe-friendly picker — a native select renders as the
-                phone's own scroll/swipe wheel on tap (iOS and Android both
-                do this automatically), which is far easier on a small
-                screen than tapping tiny +/- buttons one at a time. */}
-            <div style={{ position: "relative", marginBottom: 6 }}>
-              <select value={guestCount} onChange={e => setGuestCount(Number(e.target.value))}
-                style={{
-                  width: "100%", textAlign: "center", textAlignLast: "center", fontFamily: "'Inter',sans-serif",
-                  fontSize: "1.1rem", fontWeight: 700, color: dark, background: `${primary}0d`, border: `1px solid ${primary}33`,
-                  borderRadius: 10, padding: "8px 0", outline: "none", cursor: "pointer",
-                  WebkitAppearance: "none", MozAppearance: "none", appearance: "none",
-                }}>
-                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <div style={{ position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: primary, fontSize: 13 }}>▾</div>
-            </div>
-            <div style={{ fontSize: 10, color: muted, letterSpacing: "0.08em", marginBottom: 16 }}>Swipe to choose</div>
-            <button onClick={() => askDrinking ? setStep("drinking") : save("yes", null, guestCount)} disabled={saving} style={{ width: "100%", padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "Continue →"}</button>
-          </motion.div>
-        )}
-        {step === "drinking" && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div style={{ fontSize: 12, color: muted, marginBottom: 14 }}>Will you be having alcohol?</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => save("yes", "yes", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}1a`, color: primary, border: `1px solid ${primary}44`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🍷 Yes</button>
-              <button onClick={() => save("yes", "no", guestCount)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: `${primary}1a`, color: primary, border: `1px solid ${primary}44`, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>🥤 No</button>
-            </div>
-          </motion.div>
-        )}
-        {step === "done" && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            <div style={{ fontSize: 28, marginBottom: 8 }}>{finalResponse === "yes" ? "🌿" : "🙏"}</div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.3rem", color: primary, marginBottom: 4 }}>{finalResponse === "yes" ? `See you there, ${name}!` : `We'll miss you, ${name}.`}</div>
-            <div style={{ fontSize: 12, color: muted }}>{finalResponse === "yes" ? (guestCount > 1 ? `Party of ${guestCount} confirmed!` : "We can't wait to celebrate with you.") : "Thank you for letting us know."}</div>
-          </motion.div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Seat Finder ──
-function SeatFinder({ seats, primary, dark, cream, muted }: { seats: Record<string, string>; primary: string; dark: string; cream: string; muted: string }) {
-  const [q, setQ] = useState(""); const [res, setRes] = useState("")
-  const search = () => {
-    const query = q.trim().toLowerCase()
-    if (!query) { setRes("Please enter your name."); return }
-    const found = Object.keys(seats || {}).find(k => query.includes(k) || k.includes(query))
-    setRes(found ? `You are seated at ${seats[found]}` : "Name not found. Please contact the couple.")
-  }
-  return (
-    <div>
-      <div style={{ display: "flex", gap: 10 }}>
-        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && search()} placeholder="Enter your name..." style={{ flex: 1, padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif" }} />
-        <button onClick={search} style={{ padding: "13px 20px", borderRadius: 10, background: dark, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Search</button>
-      </div>
-      {res && <div style={{ marginTop: 12, fontSize: 14, color: res.startsWith("You") ? primary : muted, fontWeight: res.startsWith("You") ? 600 : 400 }}>{res}</div>}
-    </div>
-  )
-}
-
-// ── Guest Wishes Wall ──────────────────────────────────────────────
-type WishMedia = { url: string; type: 'photo' | 'video' }
-type Wish = {
+// ── Guest wish moderation ──────────────────────────────────────────
+type DashWishMedia = { url: string; type: 'photo' | 'video' }
+type DashWish = {
   id: string; couple_id: string; guest_name: string; message: string
-  photo_url: string | null; video_url: string | null; media: WishMedia[] | null; created_at: string
+  photo_url: string | null; video_url: string | null; media: DashWishMedia[] | null
+  approved: boolean | null; created_at: string
 }
 
-async function uploadWishMedia(file: File, coupleId: string): Promise<{ url: string; isVideo: boolean }> {
-  const isVideo = file.type.startsWith('video/')
-  const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')
-  const path = `${coupleId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-  const { error } = await supabase.storage.from('wishes').upload(path, file, { cacheControl: '3600', upsert: false })
-  if (error) throw error
-  const { data } = supabase.storage.from('wishes').getPublicUrl(path)
-  return { url: data.publicUrl, isVideo }
-}
-
-function getWishMedia(w: Wish): WishMedia[] {
+function getDashWishMedia(w: DashWish): DashWishMedia[] {
   if (w.media && w.media.length > 0) return w.media
   if (w.photo_url) return [{ url: w.photo_url, type: 'photo' }]
   if (w.video_url) return [{ url: w.video_url, type: 'video' }]
   return []
 }
 
-function WishLightbox({ media, index, onIndex, onClose }: { media: WishMedia[]; index: number; onIndex: (i: number) => void; onClose: () => void }) {
-  const current = media[index]
+function WishesManager({ coupleId, accent }: { coupleId: string; accent: string }) {
+  const [wishes, setWishes] = useState<DashWish[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'pending' | 'approved'>('pending')
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const BORDER = '#e2e8f0'
+  const TEXT_DARK = '#1e293b'
+  const TEXT_MUTED = '#64748b'
+
+  const load = async () => {
+    const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+    if (data) setWishes(data as DashWish[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [coupleId])
+
+  const setApproved = async (id: string, approved: boolean) => {
+    setBusyId(id)
+    const { error } = await supabase.from('wishes').update({ approved }).eq('id', id)
+    if (!error) setWishes(prev => prev.map(w => w.id === id ? { ...w, approved } : w))
+    setBusyId(null)
+  }
+
+  const deleteWish = async (id: string, guestName: string) => {
+    if (!confirm(`Delete ${guestName}'s wish? This cannot be undone.`)) return
+    setBusyId(id)
+    const { error } = await supabase.from('wishes').delete().eq('id', id)
+    if (!error) setWishes(prev => prev.filter(w => w.id !== id))
+    setBusyId(null)
+  }
+
+  const pending = wishes.filter(w => !w.approved)
+  const approved = wishes.filter(w => w.approved)
+  const shown = filter === 'pending' ? pending : approved
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+    border: active ? 'none' : `1px solid ${BORDER}`,
+    background: active ? accent : '#fff',
+    color: active ? '#fff' : TEXT_MUTED,
+  })
+
+  if (loading) {
+    return <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>Loading wishes...</div>
+  }
+
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(24,32,20,0.92)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: "92vw", maxHeight: "86vh" }}>
-        {current.type === 'video' ? (
-          <video src={current.url} controls autoPlay style={{ maxWidth: "92vw", maxHeight: "86vh", display: "block", borderRadius: 10 }} />
-        ) : (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={current.url} alt="" style={{ maxWidth: "92vw", maxHeight: "86vh", display: "block", borderRadius: 10, objectFit: "contain" }} />
-        )}
-        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: -40, right: 0, background: "transparent", border: "none", color: "#fff", fontSize: 26, cursor: "pointer", lineHeight: 1 }}>×</button>
-        {media.length > 1 && (
-          <>
-            <button onClick={() => onIndex((index - 1 + media.length) % media.length)} aria-label="Previous" style={{ position: "absolute", left: -18, top: "50%", transform: "translate(-100%,-50%)", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", fontSize: 20, cursor: "pointer" }}>‹</button>
-            <button onClick={() => onIndex((index + 1) % media.length)} aria-label="Next" style={{ position: "absolute", right: -18, top: "50%", transform: "translate(100%,-50%)", width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", fontSize: 20, cursor: "pointer" }}>›</button>
-            <div style={{ position: "absolute", bottom: -30, left: "50%", transform: "translateX(-50%)", color: "#fff", fontSize: 12, opacity: 0.8 }}>{index + 1} / {media.length}</div>
-          </>
-        )}
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div onClick={() => setFilter('pending')} style={pillStyle(filter === 'pending')}>Pending ({pending.length})</div>
+        <div onClick={() => setFilter('approved')} style={pillStyle(filter === 'approved')}>Approved ({approved.length})</div>
       </div>
+
+      {shown.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>
+          {filter === 'pending' ? 'No wishes waiting for approval.' : 'No approved wishes yet.'}
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 10 }}>
+          {shown.map(w => {
+            const media = getDashWishMedia(w)
+            return (
+              <div key={w.id} style={{ background: "#fff", borderRadius: 14, padding: "14px 18px", boxShadow: "0 2px 10px rgba(15,23,42,0.05)" }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  {media.length > 0 && (
+                    <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f1f5f9' }}>
+                      {media[0].type === 'video' ? (
+                        <video src={media[0].url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={media[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{w.guest_name}</div>
+                    <div style={{ fontSize: 13, color: TEXT_MUTED, marginTop: 2, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{w.message}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                      {new Date(w.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {media.length > 1 && ` · ${media.length} attachments`}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+                  {w.approved ? (
+                    <button type="button" onClick={() => setApproved(w.id, false)} disabled={busyId === w.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
+                      border: '1px solid #fde68a', cursor: 'pointer', background: '#fffbeb', color: '#b45309',
+                      fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
+                    }}>Unapprove</button>
+                  ) : (
+                    <button type="button" onClick={() => setApproved(w.id, true)} disabled={busyId === w.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
+                      border: '1px solid #bbf7d0', cursor: 'pointer', background: '#f0fdf4', color: '#16a34a',
+                      fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
+                    }}>
+                      <Icon name="check" size={11} color="#16a34a" /> Approve
+                    </button>
+                  )}
+                  <button type="button" onClick={() => deleteWish(w.id, w.guest_name)} disabled={busyId === w.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', borderRadius: 100,
+                    border: '1px solid #fecaca', cursor: 'pointer', background: '#fef2f2', color: '#dc2626',
+                    fontSize: 11, fontWeight: 600, opacity: busyId === w.id ? 0.6 : 1,
+                  }}>
+                    <Icon name="trash" size={11} color="#dc2626" /> Delete
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
-function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: number) => void }) {
-  if (media.length === 0) return null
-  const shown = media.slice(0, 4)
-  const isSingle = media.length === 1
+// ── Couple-facing self-service edit panel ──
+// ── Wedding Budget Tracker ────────────────────────────────────────
+type BudgetItem = {
+  id: string
+  couple_id: string
+  category: string
+  item_name: string
+  vendor: string | null
+  estimated_cost: number
+  paid_amount: number
+  due_date: string | null
+  status: 'pending' | 'partial' | 'paid'
+  notes: string | null
+  created_at: string
+}
+
+const BUDGET_CATEGORIES = [
+  { key: 'venue', label: 'Venue', icon: '🏛️' },
+  { key: 'catering', label: 'Catering', icon: '🍽️' },
+  { key: 'photography', label: 'Photo & Video', icon: '📷' },
+  { key: 'attire', label: 'Attire', icon: '👗' },
+  { key: 'decor', label: 'Decor & Flowers', icon: '💐' },
+  { key: 'music', label: 'Music & DJ', icon: '🎵' },
+  { key: 'invitations', label: 'Invitations', icon: '💌' },
+  { key: 'transport', label: 'Transport', icon: '🚗' },
+  { key: 'beauty', label: 'Hair & Makeup', icon: '💄' },
+  { key: 'other', label: 'Other', icon: '📦' },
+]
+const categoryMeta = (key: string) => BUDGET_CATEGORIES.find(c => c.key === key) || BUDGET_CATEGORIES[BUDGET_CATEGORIES.length - 1]
+
+const emptyBudgetForm = {
+  category: 'venue', item_name: '', vendor: '', estimated_cost: '', paid_amount: '', due_date: '', status: 'pending' as BudgetItem['status'], notes: '',
+}
+
+function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string }) {
+  const [items, setItems] = useState<BudgetItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState(emptyBudgetForm)
+  const [saving, setSaving] = useState(false)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [totalBudgetInput, setTotalBudgetInput] = useState('')
+  const [totalBudget, setTotalBudget] = useState<number | null>(null)
+
+  const TEXT_DARK = '#1e293b'
+  const TEXT_MUTED = '#64748b'
+  const BORDER = '#e2e8f0'
+
+  const load = async () => {
+    const { data } = await supabase.from('budget_items').select('*').eq('couple_id', coupleId).order('created_at', { ascending: true })
+    if (data) setItems(data as BudgetItem[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [coupleId])
+
+  useEffect(() => {
+    const saved = window.localStorage?.getItem?.(`budget-target-${coupleId}`)
+    if (saved) { setTotalBudget(parseFloat(saved)); setTotalBudgetInput(saved) }
+  }, [coupleId])
+  const saveTotalBudget = () => {
+    const val = parseFloat(totalBudgetInput)
+    if (!isNaN(val) && val > 0) {
+      setTotalBudget(val)
+      try { window.localStorage?.setItem?.(`budget-target-${coupleId}`, String(val)) } catch { }
+    }
+  }
+
+  const totalEstimated = items.reduce((s, i) => s + (i.estimated_cost || 0), 0)
+  const totalPaid = items.reduce((s, i) => s + (i.paid_amount || 0), 0)
+  const totalRemaining = totalEstimated - totalPaid
+  const budgetTarget = totalBudget ?? totalEstimated
+  const usedPct = budgetTarget > 0 ? Math.min(100, Math.round((totalEstimated / budgetTarget) * 100)) : 0
+
+  const fmt = (n: number) => `LKR ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+
+  const resetForm = () => { setForm(emptyBudgetForm); setEditingId(null); setShowForm(false) }
+
+  const startEdit = (item: BudgetItem) => {
+    setForm({
+      category: item.category, item_name: item.item_name, vendor: item.vendor || '',
+      estimated_cost: String(item.estimated_cost ?? ''), paid_amount: String(item.paid_amount ?? ''),
+      due_date: item.due_date || '', status: item.status, notes: item.notes || '',
+    })
+    setEditingId(item.id)
+    setShowForm(true)
+  }
+
+  const handleSaveItem = async () => {
+    if (!form.item_name.trim()) return
+    setSaving(true)
+    const payload = {
+      couple_id: coupleId,
+      category: form.category,
+      item_name: form.item_name.trim(),
+      vendor: form.vendor.trim() || null,
+      estimated_cost: parseFloat(form.estimated_cost) || 0,
+      paid_amount: parseFloat(form.paid_amount) || 0,
+      due_date: form.due_date || null,
+      status: form.status,
+      notes: form.notes.trim() || null,
+    }
+    const { error } = editingId
+      ? await supabase.from('budget_items').update(payload).eq('id', editingId)
+      : await supabase.from('budget_items').insert([payload])
+    setSaving(false)
+    if (!error) { resetForm(); load() }
+  }
+
+  const handleDeleteItem = async (id: string, name: string) => {
+    if (!confirm(`Remove "${name}" from your budget?`)) return
+    setBusyId(id)
+    const { error } = await supabase.from('budget_items').delete().eq('id', id)
+    setBusyId(null)
+    if (!error) setItems(prev => prev.filter(i => i.id !== id))
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '10px 12px', borderRadius: 9, border: `1px solid ${BORDER}`,
+    fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", background: '#fff', color: TEXT_DARK, boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = { fontSize: 10.5, fontWeight: 600, color: TEXT_MUTED, marginBottom: 5, display: 'block' }
+
+  const statusMeta: Record<BudgetItem['status'], { label: string; bg: string; color: string }> = {
+    pending: { label: 'Pending', bg: '#fef3c7', color: '#b45309' },
+    partial: { label: 'Partially Paid', bg: '#dbeafe', color: '#1d4ed8' },
+    paid: { label: 'Paid in Full', bg: '#dcfce7', color: '#16a34a' },
+  }
+
+  if (loading) {
+    return <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>Loading budget...</div>
+  }
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: isSingle ? "1fr" : "repeat(2, 1fr)", gap: 4, marginBottom: 6, borderRadius: 10, overflow: "hidden" }}>
-      {shown.map((m, idx) => {
-        const isMoreTile = idx === 3 && media.length > 4
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 10.5, color: TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>TOTAL ESTIMATED</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: TEXT_DARK }}>{fmt(totalEstimated)}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 10.5, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>PAID SO FAR</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: '#16a34a' }}>{fmt(totalPaid)}</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+          <div style={{ fontSize: 10.5, color: totalRemaining > 0 ? '#dc2626' : TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>BALANCE DUE</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: totalRemaining > 0 ? '#dc2626' : TEXT_DARK }}>{fmt(Math.max(0, totalRemaining))}</div>
+        </div>
+      </div>
+
+      <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT_DARK }}>Overall Budget Goal (optional)</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input value={totalBudgetInput} onChange={e => setTotalBudgetInput(e.target.value.replace(/[^\d.]/g, ''))}
+              placeholder="e.g. 1500000" style={{ ...inputStyle, width: 140, padding: '7px 10px', fontSize: 12.5 }} />
+            <button onClick={saveTotalBudget} style={{ padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: accent, color: '#fff', fontSize: 12, fontWeight: 600 }}>Set</button>
+          </div>
+        </div>
+        {budgetTarget > 0 && (
+          <>
+            <div style={{ height: 8, background: '#f1f5f9', borderRadius: 100, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${usedPct}%`, background: usedPct >= 100 ? '#dc2626' : `linear-gradient(90deg,${accent},#a5b4fc)`, borderRadius: 100, transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 6 }}>
+              {fmt(totalEstimated)} planned of {fmt(budgetTarget)} goal ({usedPct}%)
+            </div>
+          </>
+        )}
+      </div>
+
+      {showForm ? (
+        <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', marginBottom: 16 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK, marginBottom: 14 }}>{editingId ? 'Edit Expense' : 'Add Expense'}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Category</label>
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+                {BUDGET_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Item / Service Name</label>
+              <input value={form.item_name} onChange={e => setForm({ ...form, item_name: e.target.value })} placeholder="e.g. Wedding Cake" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={labelStyle}>Vendor (optional)</label>
+            <input value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} placeholder="e.g. Sweet Dreams Bakery" style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Estimated Cost (LKR)</label>
+              <input value={form.estimated_cost} onChange={e => setForm({ ...form, estimated_cost: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Paid / Advance (LKR)</label>
+              <input value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value.replace(/[^\d.]/g, '') })} placeholder="0" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={labelStyle}>Due Date</label>
+              <input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Payment Status</label>
+              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as BudgetItem['status'] })} style={inputStyle}>
+                <option value="pending">Pending</option>
+                <option value="partial">Partially Paid</option>
+                <option value="paid">Paid in Full</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Notes (optional)</label>
+            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contract details, contact info, etc." style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleSaveItem} disabled={saving || !form.item_name.trim()} style={{
+              flex: 1, padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer', background: accent, color: '#fff',
+              fontWeight: 700, fontSize: 13, opacity: (saving || !form.item_name.trim()) ? 0.6 : 1,
+            }}>{saving ? 'Saving...' : editingId ? 'Update Expense' : 'Add Expense'}</button>
+            <button onClick={resetForm} style={{ padding: '12px 18px', borderRadius: 10, border: `1px solid ${BORDER}`, cursor: 'pointer', background: '#fff', color: TEXT_MUTED, fontWeight: 600, fontSize: 13 }}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowForm(true)} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: 13, borderRadius: 12,
+          border: `1.5px dashed ${accent}`, cursor: 'pointer', background: `${accent}0d`, color: accent, fontWeight: 700, fontSize: 13, marginBottom: 16,
+        }}>
+          <Icon name="plus" size={14} color={accent} /> Add Expense
+        </button>
+      )}
+
+      {items.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 40, background: "#fff", borderRadius: 16, color: TEXT_MUTED, fontSize: 13 }}>
+          No expenses added yet. Start planning your budget above!
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {items.map(item => {
+            const meta = categoryMeta(item.category)
+            const sMeta = statusMeta[item.status]
+            const balance = (item.estimated_cost || 0) - (item.paid_amount || 0)
+            return (
+              <div key={item.id} style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', boxShadow: '0 2px 10px rgba(15,23,42,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{meta.icon}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: TEXT_DARK }}>{item.item_name}</div>
+                      <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 1 }}>
+                        {meta.label}{item.vendor ? ` · ${item.vendor}` : ''}{item.due_date ? ` · Due ${new Date(item.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10.5, fontWeight: 700, background: sMeta.bg, color: sMeta.color, whiteSpace: 'nowrap' }}>{sMeta.label}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 44 }}>
+                  <span>Est: <strong style={{ color: TEXT_DARK }}>{fmt(item.estimated_cost || 0)}</strong></span>
+                  <span>Paid: <strong style={{ color: '#16a34a' }}>{fmt(item.paid_amount || 0)}</strong></span>
+                  {balance > 0 && <span>Balance: <strong style={{ color: '#dc2626' }}>{fmt(balance)}</strong></span>}
+                </div>
+                {item.notes && <div style={{ fontSize: 11.5, color: TEXT_MUTED, marginBottom: 10, paddingLeft: 44, fontStyle: 'italic' }}>{item.notes}</div>}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button onClick={() => startEdit(item)} style={{
+                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 100, border: `1px solid ${BORDER}`,
+                    cursor: 'pointer', background: '#f8fafc', color: TEXT_MUTED, fontSize: 11, fontWeight: 500,
+                  }}><Icon name="edit" size={11} /> Edit</button>
+                  <button onClick={() => handleDeleteItem(item.id, item.item_name)} disabled={busyId === item.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 100, border: '1px solid #fecaca',
+                    cursor: 'pointer', background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500, opacity: busyId === item.id ? 0.6 : 1,
+                  }}><Icon name="trash" size={11} color="#dc2626" /> {busyId === item.id ? 'Removing...' : 'Delete'}</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Text & Fonts — per-element color + font + bold override. Stored
+// under couple.text_styles = { [targetKey]: { color, font, bold } }. A
+// target with no entry simply uses the template's own default styling —
+// nothing breaks for invitations that never open this panel. ──
+function TextStyleFields({ styles, onChange, border, textMuted, inputStyle, previewData }: {
+  styles: Record<string, { color?: string; font?: string; bold?: boolean }>
+  onChange: (next: Record<string, { color?: string; font?: string; bold?: boolean }>) => void
+  border: string
+  textMuted: string
+  inputStyle: React.CSSProperties
+  previewData: { bride: string; groom: string; venue: string; venue_address: string }
+}) {
+  const setStyle = (key: string, patch: { color?: string; font?: string; bold?: boolean }) => {
+    onChange({ ...styles, [key]: { ...(styles[key] || {}), ...patch } })
+  }
+  const resetStyle = (key: string) => {
+    const next = { ...styles }
+    delete next[key]
+    onChange(next)
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      {TEXT_STYLE_TARGETS.map(t => {
+        const s = styles[t.key] || {}
+        const hasOverride = !!s.color || (!!s.font && s.font !== 'inherit') || !!s.bold
+        const previewStyle: React.CSSProperties = {
+          fontSize: 13.5,
+          color: s.color || '#334155',
+          fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif",
+          fontWeight: s.bold ? 700 : 400,
+        }
         return (
-          <div key={idx} onClick={() => onOpen(idx)} style={{ position: "relative", cursor: "pointer", overflow: "hidden", height: isSingle ? 140 : undefined, aspectRatio: isSingle ? undefined : "1 / 1", background: "#000" }}>
-            {isSingle && m.type === 'photo' && (
-              <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${m.url})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(16px) brightness(0.7)", transform: "scale(1.15)" }} />
-            )}
-            {m.type === 'video' ? (
-              <video src={m.url} muted style={{ position: isSingle ? "relative" : "static", zIndex: 1, width: "100%", height: "100%", objectFit: isSingle ? "contain" : "cover", display: "block" }} />
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={m.url} alt="" style={{ position: isSingle ? "relative" : "static", zIndex: 1, width: "100%", height: "100%", objectFit: isSingle ? "contain" : "cover", display: "block" }} />
-            )}
-            {isMoreTile && (
-              <div style={{ position: "absolute", inset: 0, background: "rgba(24,32,20,0.55)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, fontWeight: 700, zIndex: 2 }}>+{media.length - 4}</div>
-            )}
+          <div key={t.key} style={{ background: '#fff', borderRadius: 12, padding: 12, border: `1px solid ${border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#334155', lineHeight: 1.4 }}>{t.label}</span>
+              {hasOverride && (
+                <button type="button" onClick={() => resetStyle(t.key)} style={{ fontSize: 10.5, color: textMuted, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline', whiteSpace: 'nowrap', flexShrink: 0 }}>Reset</button>
+              )}
+            </div>
+
+            {/* Live preview so it's obvious what you're changing */}
+            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+              <div style={previewStyle}>{t.example(previewData)}</div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: textMuted, marginBottom: 4 }}>COLOR</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    type="color"
+                    value={s.color || '#1e293b'}
+                    onChange={e => setStyle(t.key, { color: e.target.value })}
+                    style={{ width: 38, height: 38, borderRadius: 8, border: `1px solid ${border}`, padding: 0, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <input
+                    value={s.color || ''}
+                    onChange={e => setStyle(t.key, { color: e.target.value })}
+                    placeholder="Default"
+                    style={{ ...inputStyle, padding: '8px 10px', fontSize: 12 }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: textMuted, marginBottom: 4 }}>FONT</div>
+                <select
+                  value={s.font || 'inherit'}
+                  onChange={e => setStyle(t.key, { font: e.target.value })}
+                  style={{ ...inputStyle, padding: '8px 10px', height: 38, fontFamily: s.font && s.font !== 'inherit' ? s.font : "'Inter',sans-serif" }}
+                >
+                  {FONT_OPTIONS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', width: 'fit-content' }}>
+              <input type="checkbox" checked={!!s.bold} onChange={e => setStyle(t.key, { bold: e.target.checked })}
+                style={{ width: 16, height: 16, cursor: 'pointer' }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Bold</span>
+            </label>
           </div>
         )
       })}
@@ -476,679 +660,1313 @@ function WishMediaGrid({ media, onOpen }: { media: WishMedia[]; onOpen: (index: 
   )
 }
 
-function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { coupleId: string; primary: string; primaryLight: string; dark: string; cream: string; muted: string }) {
-  const [wishes, setWishes] = useState<Wish[]>([])
-  const [loading, setLoading] = useState(true)
-  const [rsvpCounts, setRsvpCounts] = useState<{ yes: number; no: number }>({ yes: 0, no: 0 })
-  const [name, setName] = useState('')
+function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void }) {
+  const panelTemplateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
+  const PANEL_ACCENT = couple.custom_colors?.primary || panelTemplateDefault.primary
+  const PANEL_BORDER = '#e2e8f0'
+  const PANEL_TEXT_MUTED = '#64748b'
+  const PANEL_TEXT_DARK = '#1e293b'
+
+  const [photo, setPhoto] = useState(couple.couple_photo || '')
+  // Shown as the preview thumbnail when the invitation link is shared on
+  // WhatsApp/Facebook/etc (the "og:image" the messaging app fetches). If
+  // this is an actual animated .gif file, WhatsApp animates it right in
+  // the chat bubble — that's how a "looping video preview" is achieved,
+  // since WhatsApp does not autoplay real video files in link previews.
+  const [sharePreview, setSharePreview] = useState((couple as any).share_preview_url || '')
+  const [weddingDate, setWeddingDate] = useState(couple.wedding_date ? couple.wedding_date.slice(0, 16) : '')
+  const [venue, setVenue] = useState(couple.venue || '')
+  const [venueAddress, setVenueAddress] = useState(couple.venue_address || '')
+  const [mapsUrl, setMapsUrl] = useState(couple.maps_url || '')
+  // Once an invitation has moved to the Engagement/Wedding/Homecoming event
+  // system (set up from the admin side), every template reads venue/date
+  // from couple.events[key] instead of the legacy single venue/venue_address/
+  // maps_url fields above — so editing those legacy fields here was a silent
+  // no-op for any couple on the new system (saved fine, nothing changed on
+  // the live invitation). This mirrors that same per-event shape so it can
+  // actually be edited from here too.
+  type EventEdit = { enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string; label?: string; dress_code?: string }
+  const initialEvents = ((couple as any).events || null) as Record<'engagement' | 'wedding' | 'homecoming', EventEdit> | null
+  const hasEventsSystem = !!(initialEvents && Object.keys(initialEvents).length > 0)
+  const [eventsEdit, setEventsEdit] = useState<Record<'engagement' | 'wedding' | 'homecoming', EventEdit> | null>(initialEvents)
+  const eventsOrder = (((couple as any).events_order as ('engagement' | 'wedding' | 'homecoming')[]) || ['engagement', 'wedding', 'homecoming'])
+  const updateEventField = (key: 'engagement' | 'wedding' | 'homecoming', field: 'venue' | 'venue_address' | 'maps_url' | 'date', val: string) => {
+    setEventsEdit(prev => prev ? { ...prev, [key]: { ...prev[key], [field]: val } } : prev)
+  }
+  const EVENT_DISPLAY_LABEL: Record<'engagement' | 'wedding' | 'homecoming', string> = { engagement: 'Engagement', wedding: 'Wedding', homecoming: 'Homecoming' }
+  const [introText, setIntroText] = useState(couple.intro_text || '')
+  const [thankYouText, setThankYouText] = useState((couple as any).thank_you_text || '')
+  const [brideFamilyName, setBrideFamilyName] = useState(couple.bride_family || '')
+  const [groomFamilyName, setGroomFamilyName] = useState(couple.groom_family || '')
+  const [togetherWithText, setTogetherWithText] = useState((couple as any).together_with_text || '')
+  const [familyInvitationText, setFamilyInvitationText] = useState((couple as any).family_invitation_text || '')
+  const [textStyles, setTextStyles] = useState<Record<string, { color?: string; font?: string; bold?: boolean }>>((couple as any).text_styles || {})
+
+  const [seatRows, setSeatRows] = useState<{ id: number; name: string; table: string }[]>(
+    Object.entries(couple.seats || {}).map(([name, table], i) => ({ id: i, name, table }))
+  )
+
+  const templateDefault = TEMPLATE_DEFAULTS[couple.template] || TEMPLATE_DEFAULTS['floral-romance']
+  const [colors, setColors] = useState<Required<CoupleColors>>({
+    primary: couple.custom_colors?.primary || templateDefault.primary,
+    primaryLight: couple.custom_colors?.primaryLight || templateDefault.primaryLight,
+    dark: couple.custom_colors?.dark || templateDefault.dark,
+    cream: couple.custom_colors?.cream || templateDefault.cream,
+  })
+
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [files, setFiles] = useState<File[]>([])
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [done, setDone] = useState(false)
-  const [page, setPage] = useState(0)
-  const PER_PAGE = 3
-  const [lightbox, setLightbox] = useState<{ media: WishMedia[]; index: number } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    let active = true
-    const load = async () => {
-      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
-      if (active && data) setWishes(data as Wish[])
-      setLoading(false)
-    }
-    load()
-    const channel = supabase.channel(`wishes-${coupleId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'wishes', filter: `couple_id=eq.${coupleId}` }, () => load())
-      .subscribe()
-    return () => { active = false; supabase.removeChannel(channel) }
-  }, [coupleId])
+  const [newPin, setNewPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
+  const [pinSaving, setPinSaving] = useState(false)
+  const [pinMessage, setPinMessage] = useState('')
 
-  useEffect(() => {
-    let active = true
-    const loadCounts = async () => {
-      const { data } = await supabase.from('rsvps').select('response').eq('couple_id', coupleId)
-      if (!active || !data) return
-      const yes = data.filter((r: any) => r.response === 'yes').length
-      const no = data.filter((r: any) => r.response === 'no').length
-      setRsvpCounts({ yes, no })
-    }
-    loadCounts()
-    return () => { active = false }
-  }, [coupleId])
-
-  const submit = async () => {
-    if (!name.trim() || !message.trim()) { setError('Please add your name and a message.'); return }
-    setSubmitting(true); setError('')
-    try {
-      const media: WishMedia[] = []
-      for (const f of files) {
-        const { url, isVideo } = await uploadWishMedia(f, coupleId)
-        media.push({ url, type: isVideo ? 'video' : 'photo' })
-      }
-      const { error: insertError } = await supabase.from('wishes').insert([{ couple_id: coupleId, guest_name: name.trim(), message: message.trim(), media }])
-      if (insertError) throw insertError
-      setName(''); setMessage(''); setFiles([]); setDone(true)
-    } catch { setError('Something went wrong — please try again.') } finally { setSubmitting(false) }
-  }
-
-  const underlineInput: React.CSSProperties = {
-    width: '100%', padding: '10px 2px', border: 'none', borderBottom: `1.5px solid ${primaryLight}`,
-    background: 'transparent', color: dark, fontSize: 13.5, outline: 'none', marginBottom: 16,
-    boxSizing: 'border-box', fontFamily: "'Inter',sans-serif",
-  }
-
-  return (
-    <div style={{ background: cream, borderRadius: 20, padding: '22px 18px', border: `1px solid ${primaryLight}` }}>
-      <div style={{ textAlign: 'center', fontSize: 12, color: muted, marginBottom: 14 }}>
-        {wishes.length} {wishes.length === 1 ? 'Comment' : 'Comments'}
-      </div>
-      {(rsvpCounts.yes > 0 || rsvpCounts.no > 0) && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 20 }}>
-          <div style={{ background: dark, color: '#fff', borderRadius: 12, padding: '10px 18px', textAlign: 'center', minWidth: 90 }}>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{rsvpCounts.yes}</div>
-            <div style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.8, marginTop: 2 }}>I'll Be There</div>
-          </div>
-          <div style={{ background: `${dark}bb`, color: '#fff', borderRadius: 12, padding: '10px 18px', textAlign: 'center', minWidth: 90 }}>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{rsvpCounts.no}</div>
-            <div style={{ fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.8, marginTop: 2 }}>Can't Come</div>
-          </div>
-        </div>
-      )}
-
-      {done ? (
-        <div style={{ textAlign: 'center', padding: '10px 0 20px' }}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: dark }}>Thank you for your wish!</div>
-          <div style={{ fontSize: 12, color: muted, marginTop: 4 }}>It's now on the wall below.</div>
-          <button onClick={() => setDone(false)} style={{ marginTop: 12, padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer', background: `${primary}1a`, color: dark, fontSize: 12, fontWeight: 700 }}>Leave another wish</button>
-        </div>
-      ) : (
-        <div style={{ marginBottom: 20 }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Name" style={underlineInput} />
-          <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Type your wishes" rows={3} style={{ ...underlineInput, resize: 'vertical' }} />
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: muted, padding: '9px 2px', cursor: 'pointer', marginBottom: files.length ? 8 : 16, borderBottom: `1.5px dashed ${primaryLight}` }}>
-            📷 {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected — add more` : 'Add photos or a video (optional)'}
-            <input type="file" accept="image/*,video/*" multiple onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])].slice(0, 6))} style={{ display: 'none' }} />
-          </label>
-          {files.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-              {files.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: dark, background: `${primary}1a`, borderRadius: 100, padding: '4px 9px' }}>
-                  {f.name.length > 16 ? f.name.slice(0, 14) + '…' : f.name}
-                  <span onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {error && <div style={{ fontSize: 11.5, color: primary, marginBottom: 10 }}>{error}</div>}
-          <button onClick={submit} disabled={submitting} style={{ padding: '10px 26px', borderRadius: 10, border: 'none', cursor: 'pointer', background: dark, color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: "'Inter',sans-serif", opacity: submitting ? 0.6 : 1 }}>{submitting ? 'Sending...' : 'Submit'}</button>
-        </div>
-      )}
-
-      {loading ? (
-        <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Loading wishes...</div>
-      ) : wishes.length === 0 ? (
-        <div style={{ fontSize: 12, color: muted, textAlign: 'center' }}>Be the first to leave a wish!</div>
-      ) : (
-        <div style={{ borderTop: `1px solid ${primaryLight}`, paddingTop: 6 }}>
-          {wishes.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).map((w, i, arr) => {
-            const mediaList = getWishMedia(w)
-            return (
-              <div key={w.id} style={{ padding: '16px 0', borderBottom: i < arr.length - 1 ? `1px solid ${primaryLight}` : 'none', textAlign: 'left' }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: dark, marginBottom: 5 }}>{w.guest_name}</div>
-                <div style={{ fontSize: 13, color: dark, opacity: 0.8, lineHeight: 1.7, marginBottom: mediaList.length ? 10 : 6, whiteSpace: 'pre-wrap' }}>{w.message}</div>
-                <WishMediaGrid media={mediaList} onOpen={idx => setLightbox({ media: mediaList, index: idx })} />
-                <div style={{ fontSize: 10.5, color: muted, marginTop: 4 }}>{new Date(w.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-              </div>
-            )
-          })}
-          {wishes.length > PER_PAGE && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${primaryLight}`, flexWrap: 'wrap' }}>
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ background: 'transparent', border: 'none', cursor: page === 0 ? 'default' : 'pointer', fontSize: 12, fontWeight: 700, color: primary, opacity: page === 0 ? 0.35 : 1 }}>← Previous</button>
-              {Array.from({ length: Math.ceil(wishes.length / PER_PAGE) }).map((_, i) => (
-                <button key={i} onClick={() => setPage(i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: i === page ? 800 : 600, color: i === page ? dark : primary, textDecoration: i === page ? 'underline' : 'none', padding: '2px 4px' }}>{i + 1}</button>
-              ))}
-              <button onClick={() => setPage(p => (p + 1) * PER_PAGE < wishes.length ? p + 1 : p)} disabled={(page + 1) * PER_PAGE >= wishes.length} style={{ background: 'transparent', border: 'none', cursor: (page + 1) * PER_PAGE >= wishes.length ? 'default' : 'pointer', fontSize: 12, fontWeight: 700, color: primary, opacity: (page + 1) * PER_PAGE >= wishes.length ? 0.35 : 1 }}>Next →</button>
-            </div>
-          )}
-        </div>
-      )}
-      {lightbox && <WishLightbox media={lightbox.media} index={lightbox.index} onIndex={i => setLightbox(l => l && { ...l, index: i })} onClose={() => setLightbox(null)} />}
-    </div>
-  )
-}
-
-// ── Card + section styles, matching the Floral Romance layout pattern:
-// each section is its own white rounded card in a vertical stack, with a
-// small corner leaf accent (instead of Floral Romance's lotus). ──
-const cardStyle = (): React.CSSProperties => ({ background: "#fff", margin: "0 16px 16px", borderRadius: 22, padding: "1.8rem", boxShadow: "0 2px 20px rgba(45,61,40,0.06)", position: "relative", overflow: "hidden" })
-const pretitleStyle = (color: string): React.CSSProperties => ({ fontSize: 9, letterSpacing: "0.4em", textTransform: "uppercase", color, textAlign: "center", marginBottom: 6, fontWeight: 700 })
-const titleStyle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
-
-// ── Continuous petal + leaf shower (krishal-jayakshi- only, see the slug
-// gate in EternalBloomInner). A fixed-position overlay of small botanical
-// shapes that keep drifting down from the top of the screen, slowly, for
-// as long as the invitation stays open (each span loops forever on its
-// own delay/duration, so the shower never visibly stops or restarts). ──
-function Leaf({ size, color }: { size: number; color: string }) {
-  return (
-    <svg width={size} height={size * 1.5} viewBox="0 0 16 24" fill="none">
-      <path d="M8 1C2 5 1 13 8 23C15 13 14 5 8 1Z" fill={color} />
-      <path d="M8 5V20" stroke="#fff" strokeOpacity="0.35" strokeWidth="1" />
-    </svg>
-  )
-}
-function PetalShower({ primary, primaryLight }: { primary: string; primaryLight: string }) {
-  const items: { left: string; size: number; delay: number; dur: number; lite: boolean; kind: "flower" | "leaf" }[] = [
-    { left: "2%", size: 15, delay: 0, dur: 16, lite: false, kind: "flower" },
-    { left: "10%", size: 11, delay: 2.5, dur: 19, lite: true, kind: "leaf" },
-    { left: "18%", size: 17, delay: 0.8, dur: 17, lite: false, kind: "flower" },
-    { left: "27%", size: 10, delay: 4.5, dur: 21, lite: true, kind: "leaf" },
-    { left: "36%", size: 14, delay: 1.6, dur: 15, lite: false, kind: "flower" },
-    { left: "45%", size: 11, delay: 6.0, dur: 20, lite: true, kind: "leaf" },
-    { left: "53%", size: 16, delay: 3.2, dur: 18, lite: false, kind: "flower" },
-    { left: "61%", size: 10, delay: 1.1, dur: 19, lite: true, kind: "leaf" },
-    { left: "69%", size: 15, delay: 5.0, dur: 16, lite: false, kind: "flower" },
-    { left: "77%", size: 11, delay: 2.8, dur: 22, lite: true, kind: "leaf" },
-    { left: "85%", size: 17, delay: 0.4, dur: 17, lite: false, kind: "flower" },
-    { left: "93%", size: 10, delay: 4.0, dur: 20, lite: true, kind: "leaf" },
-  ]
-  return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 90, overflow: "hidden" }}>
-      {items.map((p, i) => (
-        <span key={i} className="eb-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
-          {p.kind === "leaf" ? (
-            <Leaf size={p.size} color={p.lite ? primaryLight : primary} />
-          ) : (
-            <svg width={p.size} height={p.size} viewBox="0 0 24 24" fill="none">
-              <g fill={p.lite ? primaryLight : primary}>
-                <ellipse cx="12" cy="6" rx="3.2" ry="4.6" />
-                <ellipse cx="12" cy="18" rx="3.2" ry="4.6" />
-                <ellipse cx="6" cy="12" rx="4.6" ry="3.2" />
-                <ellipse cx="18" cy="12" rx="4.6" ry="3.2" />
-              </g>
-            </svg>
-          )}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-export default function EternalBloomTemplate({ couple }: { couple: Couple }) {
-  return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f8f6ee" }} />}>
-      <EternalBloomInner couple={couple} />
-    </Suspense>
-  )
-}
-
-function EternalBloomInner({ couple }: { couple: Couple }) {
-  const searchParams = useSearchParams()
-  const guestName = searchParams?.get('name') || ''
-  const introEnabled = (couple as any).show_guest_intro !== false
-  const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
-  const [opened, setOpened] = useState(false)
-  // One-offs, each gated to a single invitation's slug — every other link
-  // on this template keeps its current behavior untouched:
-  // · malshani-isuru- gets extra top spacing on the cover (see below).
-  // · krishal-jayakshi- gets a continuous, slow shower of falling petals
-  //   and leaves across the screen for as long as the invitation stays open.
-  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
-  const isMalshaniIsuru = slug === 'malshani-isuru'
-  const isKrishalJayakshi = slug === 'krishal-jayakshi'
-  // nipuni-anjana- gets the same Homecoming-matching deep-red palette as
-  // krishal-jayakshi (reusing that exact reference color), plus a clearer,
-  // bolder cover name font — the thin cursive script wasn't reading well
-  // for this couple's names over their cover photo.
-  const isNipuniAnjana = slug === 'nipuni-anjana'
-  const isRedTheme = isKrishalJayakshi || isNipuniAnjana
-  // Tracks whether the cover photo (couple's own upload, or the bundled
-  // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
-  // the static default asset is missing from this deployment — we stop
-  // retrying and switch to a decorative gradient instead of leaving a flat,
-  // empty dark rectangle behind the text (which is what guests were seeing).
-  const [coverPhotoOk, setCoverPhotoOk] = useState(true)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const ts = useTextStyles(couple)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-
-  // krishal-jayakshi- only: a deep-red palette requested to match their
-  // Homecoming colors, overriding this template's default sage/moss theme
-  // (and any custom colors set on the dashboard) for this invitation alone.
-  const PRIMARY = isRedTheme ? "#9c2b2b" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = isRedTheme ? "#dba89f" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = isRedTheme ? "#3a1414" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
-  const CREAM = isRedTheme ? "#faf3ec" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
-  const MUTED = isRedTheme ? "#9a7a74" : DEFAULT_PALETTE.muted
-
-  // Priority: an explicit cover_video_url from the admin always wins. If
-  // that's empty, only fall back to the default demo video when the couple
-  // hasn't uploaded their own photo yet — once they add a real couple photo
-  // (via the dashboard), that photo becomes the intro instead of the stock
-  // video quietly overriding it.
-  const hasCustomPhoto = !!couple.couple_photo
-  const explicitCoverVideo = (couple as any).cover_video_url || ''
-  const coverVideoUrl = explicitCoverVideo || (hasCustomPhoto ? '' : DEFAULT_COVER_VIDEO)
-  const songUrl = couple.song_url || DEFAULT_SONG_URL
-
-  useEffect(() => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; audioRef.current = null }
-    const audio = new Audio(songUrl)
-    audio.loop = true; audio.volume = 0.6; audioRef.current = audio
-    return () => { audio.pause(); audio.src = "" }
-  }, [songUrl])
-
-  const [videoPlaying, setVideoPlaying] = useState(false)
-  const videoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const userStartedRef = useRef(false)
-
-  const handleOpen = () => {
-    // Start audio immediately, inside this click handler — this is a real
-    // user gesture, so browsers (including strict mobile ones) will allow
-    // it. Waiting until the video-preview timer fires would lose that
-    // gesture context and silently block playback.
-    audioRef.current?.play().catch(() => {})
-    userStartedRef.current = true
-
-    if (coverVideoUrl) {
-      // Play the cover video all the way through — the invitation only
-      // opens once the clip's own `ended` event fires (see the video's
-      // onEnded below). A generous safety timeout is still kept as a
-      // fallback in case a video fails to fire `ended` (e.g. a stream
-      // that never resolves its duration), so a guest is never stuck
-      // looking at a frozen cover forever.
-      setVideoPlaying(true)
-      videoRef.current?.play().catch(() => { setVideoPlaying(false); handleVideoEnded() })
-      videoTimerRef.current = setTimeout(handleVideoEnded, 30000)
+  const handleChangePin = async () => {
+    setPinMessage('')
+    if (newPin.length !== 4) { setPinMessage('PIN must be exactly 4 digits.'); return }
+    if (newPin !== confirmPin) { setPinMessage("PINs don't match — please re-enter."); return }
+    setPinSaving(true)
+    const { error } = await supabase.from('couples').update({ pin: newPin }).eq('id', couple.id)
+    setPinSaving(false)
+    if (error) {
+      setPinMessage('Could not update PIN: ' + error.message)
     } else {
-      handleVideoEnded()
+      setPinMessage('PIN updated! Use it next time you unlock this dashboard.')
+      setNewPin('')
+      setConfirmPin('')
     }
   }
 
-  const handleVideoEnded = () => {
-    if (videoTimerRef.current) { clearTimeout(videoTimerRef.current); videoTimerRef.current = null }
-    setOpened(true)
-    audioRef.current?.play().catch(() => {})
+  const allowedTemplates: string[] = Array.isArray((couple as any).allowed_templates) ? (couple as any).allowed_templates : []
+  const defaultTemplateId: string = (couple as any).default_template || 'floral-romance'
+  const templateOptions: string[] = Array.from(new Set([...allowedTemplates, defaultTemplateId, couple.template]))
+  const [selectedTemplate, setSelectedTemplate] = useState(couple.template)
+  const [templateSaving, setTemplateSaving] = useState(false)
+  const [templateMessage, setTemplateMessage] = useState('')
+
+  const handleChangeTemplate = async () => {
+    if (selectedTemplate === couple.template) { setTemplateMessage("That's already your current template."); return }
+    setTemplateMessage('')
+    setTemplateSaving(true)
+    const { error } = await supabase.from('couples').update({ template: selectedTemplate }).eq('id', couple.id)
+    setTemplateSaving(false)
+    if (error) {
+      setTemplateMessage('Could not switch template: ' + error.message)
+    } else {
+      setTemplateMessage('Template updated! Refresh your invitation link to see the new look.')
+      onSaved()
+    }
   }
 
-  const EVENT_META: Record<'engagement' | 'wedding' | 'homecoming', { label: string; icon: string }> = {
-    engagement: { label: 'Engagement', icon: '💍' }, wedding: { label: 'Wedding Ceremony', icon: '👰' }, homecoming: { label: 'Homecoming', icon: '🏡' },
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', borderRadius: 10,
+    border: '1px solid #e2e8f0', fontSize: 14, outline: 'none',
+    fontFamily: "'Inter',sans-serif", background: '#fff', color: '#1e293b',
   }
-  type RenderableEvent = { key: 'engagement' | 'wedding' | 'homecoming'; label: string; icon: string; enabled: boolean; venue: string; venue_address: string; date: string; maps_url: string }
-  const hasNewEvents = couple.events && Object.keys(couple.events).length > 0
-  // Respects the admin's chosen display order (couple.events_order) when
-  // set — e.g. showing Wedding before Engagement — falling back to the
-  // default engagement → wedding → homecoming order otherwise.
-  const eventKeyOrder: ('engagement' | 'wedding' | 'homecoming')[] =
-    Array.isArray((couple as any).events_order) && (couple as any).events_order.length === 3
-      ? (couple as any).events_order
-      : ['engagement', 'wedding', 'homecoming']
-  const eventsList: RenderableEvent[] = hasNewEvents
-    ? eventKeyOrder.map((key): RenderableEvent => {
-        const e = couple.events![key]
-        const customLabel = (e as any)?.label
-        return { key, ...EVENT_META[key], label: (customLabel && customLabel.trim()) || EVENT_META[key].label, enabled: e?.enabled ?? false, venue: e?.venue ?? '', venue_address: e?.venue_address ?? '', date: e?.date ?? '', maps_url: e?.maps_url ?? '' }
-      }).filter(e => e.enabled && e.date.length > 0)
-    : (couple.wedding_date ? [{ key: 'wedding', ...EVENT_META.wedding, enabled: true, venue: couple.venue || '', venue_address: couple.venue_address || '', date: couple.wedding_date, maps_url: couple.maps_url || '' }] : [])
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 6, display: 'block',
+  }
+  const fieldWrap: React.CSSProperties = { marginBottom: 16 }
 
-  const sv = {
-    gallery: couple.section_visibility?.gallery ?? true, countdown: couple.section_visibility?.countdown ?? true,
-    timeline: couple.section_visibility?.timeline ?? true, seat_finder: couple.section_visibility?.seat_finder ?? true,
-    music: couple.section_visibility?.music ?? true, thank_you: couple.section_visibility?.thank_you ?? true,
+  const handlePhotoUpload = async (file: File) => {
+    setUploading(true)
+    const url = await uploadToStorage(file, 'couple')
+    setUploading(false)
+    if (url) setPhoto(url)
   }
 
-  const W = {
-    bride: couple.bride, groom: couple.groom, brideFamilyName: couple.bride_family || '', groomFamilyName: couple.groom_family || '',
-    date: couple.wedding_date, couplePhoto: couple.couple_photo || DEFAULT_PHOTO,
-    bridePhoto: (couple as any).bride_photo || couple.couple_photo || DEFAULT_PHOTO,
-    groomPhoto: (couple as any).groom_photo || couple.couple_photo || DEFAULT_PHOTO,
-    song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
-    timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
+  const [sharePreviewUploading, setSharePreviewUploading] = useState(false)
+  const sharePreviewInputRef = useRef<HTMLInputElement>(null)
+  const handleSharePreviewUpload = async (file: File) => {
+    setSharePreviewUploading(true)
+    const url = await uploadToStorage(file, 'share-preview')
+    setSharePreviewUploading(false)
+    if (url) setSharePreview(url)
   }
 
-  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
-  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
-    ? flexContacts
-    : [
-        ...(couple.groom && (couple as any).groom_phone ? [{ name: couple.groom, phone: (couple as any).groom_phone }] : []),
-        ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
-      ]
+  const updateSeatRow = (id: number, field: 'name' | 'table', value: string) => {
+    setSeatRows(rows => rows.map(r => r.id === id ? { ...r, [field]: value } : r))
+  }
+  const addSeatRow = () => {
+    const newId = seatRows.length ? Math.max(...seatRows.map(r => r.id)) + 1 : 0
+    setSeatRows(rows => [...rows, { id: newId, name: '', table: '' }])
+  }
+  const removeSeatRow = (id: number) => {
+    setSeatRows(rows => rows.filter(r => r.id !== id))
+  }
 
-  const TINT_SAGE = isRedTheme ? "#f6e4e0" : "#eef2e6"
+  const handleSave = async () => {
+    // Belt-and-braces: even if the greyed-out overlay is somehow bypassed,
+    // a locked invitation's data can't be written from here.
+    if ((couple as any).is_locked) {
+      setMessage('This invitation is locked. Please contact us to make changes.')
+      return
+    }
+    setSaving(true)
+    setMessage('')
+
+    const seatsObj: Record<string, string> = {}
+    seatRows.forEach(r => {
+      const name = r.name.trim()
+      const table = r.table.trim()
+      if (name && table) seatsObj[name.toLowerCase()] = table
+    })
+
+    // .select() is what lets us tell "saved" apart from "the request
+    // succeeded but a Row Level Security policy silently matched zero
+    // rows" — without it, supabase-js reports no `error` either way, so a
+    // blocked save still showed "Saved! Your invitation has been updated."
+    // even though nothing in the database actually changed (this is the
+    // same RLS pitfall already fixed on the RSVP save/add/remove below).
+    const { data, error } = await supabase.from('couples').update({
+      couple_photo: photo || null,
+      share_preview_url: sharePreview || null,
+      wedding_date: weddingDate,
+      venue: venue || null,
+      venue_address: venueAddress || null,
+      maps_url: mapsUrl || null,
+      // Only sent when this invitation actually uses the per-event system
+      // (hasEventsSystem) — never overwrites `events` with null/empty for
+      // the many couples who don't use it, since the legacy venue fields
+      // above remain this record's source of truth for them.
+      ...(hasEventsSystem && eventsEdit ? { events: eventsEdit } : {}),
+      custom_colors: colors,
+      seats: seatsObj,
+      intro_text: introText || null,
+      thank_you_text: thankYouText || null,
+      bride_family: brideFamilyName || null,
+      groom_family: groomFamilyName || null,
+      together_with_text: togetherWithText || null,
+      family_invitation_text: familyInvitationText || null,
+      text_styles: textStyles,
+    }).eq('id', couple.id).select()
+
+    setSaving(false)
+    if (!error && (!data || data.length === 0)) {
+      setMessage('Save blocked by a database permission rule (Row Level Security) — the request succeeded but nothing was actually updated. This needs a Supabase RLS policy fix on the couples table, not a code fix.')
+    } else if (error) {
+      setMessage('Could not save: ' + error.message)
+    } else {
+      setMessage('Saved! Your invitation has been updated.')
+      onSaved()
+    }
+  }
+
+  const resetColors = () => setColors(templateDefault)
+
+  const isLocked = !!(couple as any).is_locked
+  return (
+    <div style={{ position: 'relative', background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 2px 20px rgba(15,23,42,0.06)' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Montserrat:wght@400;500;600;700&family=Lora:wght@500;600&family=EB+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap');`}</style>
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 4 }}>Edit Your Invitation</div>
+        <div style={{ fontSize: 12, color: PANEL_TEXT_MUTED, marginBottom: isLocked ? 12 : 20 }}>Changes apply instantly to your live invitation link.</div>
+        {isLocked && (
+          <div style={{ marginBottom: 20, padding: '12px 16px', borderRadius: 10, background: '#fef3c7', border: '1px solid #fde68a', fontSize: 12.5, color: '#92400e', lineHeight: 1.6 }}>
+            🔒 Your invitation has been finalized and locked. Please contact us if you'd like to make further changes.
+          </div>
+        )}
+      </div>
+      {isLocked && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 5, borderRadius: 18, background: 'rgba(255,255,255,0.55)' }} />
+      )}
+
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Couple Photo</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: `1px solid ${PANEL_BORDER}` }} />
+          ) : (
+            <div style={{ width: 56, height: 56, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="camera" size={20} color="#94a3b8" />
+            </div>
+          )}
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, background: uploading ? '#f1f5f9' : '#fff', cursor: uploading ? 'default' : 'pointer', fontSize: 13, color: PANEL_TEXT_MUTED, fontWeight: 500 }}>
+            <Icon name="camera" size={14} />
+            {uploading ? 'Uploading...' : photo ? 'Change Photo' : 'Upload Photo'}
+          </button>
+          {photo && (
+            <button type="button" onClick={() => setPhoto('')} style={{ fontSize: 12, color: PANEL_ACCENT, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+          )}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
+        </div>
+      </div>
+
+      <div style={fieldWrap}>
+        <label style={labelStyle}>WhatsApp Share Preview (Photo or GIF)</label>
+        <div style={{ fontSize: 11.5, color: PANEL_TEXT_MUTED, marginBottom: 10, lineHeight: 1.6 }}>
+          This is the thumbnail people see when you send your invitation link on WhatsApp. Upload a regular photo for a static preview — or upload an actual <strong>.gif</strong> file (convert a short video clip to a GIF first, e.g. on ezgif.com) and WhatsApp will play it as a small looping animation right in the chat. Leave empty to use your Couple Photo above.
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {sharePreview ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={sharePreview} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: `1px solid ${PANEL_BORDER}` }} />
+          ) : (
+            <div style={{ width: 56, height: 56, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="sparkles" size={18} color="#94a3b8" />
+            </div>
+          )}
+          <button type="button" onClick={() => sharePreviewInputRef.current?.click()} disabled={sharePreviewUploading}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, background: sharePreviewUploading ? '#f1f5f9' : '#fff', cursor: sharePreviewUploading ? 'default' : 'pointer', fontSize: 13, color: PANEL_TEXT_MUTED, fontWeight: 500 }}>
+            <Icon name="camera" size={14} />
+            {sharePreviewUploading ? 'Uploading...' : sharePreview ? 'Change File' : 'Upload Photo or GIF'}
+          </button>
+          {sharePreview && (
+            <button type="button" onClick={() => setSharePreview('')} style={{ fontSize: 12, color: PANEL_ACCENT, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+          )}
+          <input ref={sharePreviewInputRef} type="file" accept="image/*,.gif" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleSharePreviewUpload(f) }} />
+        </div>
+      </div>
+
+      <div style={fieldWrap}>
+        <label style={labelStyle}>Wedding Date &amp; Time</label>
+        <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginBottom: 6 }}>Drives the countdown on your invitation — keep this set to your actual wedding date even if you use separate events below.</div>
+        <input type="datetime-local" style={inputStyle} value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
+      </div>
+
+      {hasEventsSystem ? (
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Event Venues &amp; Dates</label>
+          <div style={{ fontSize: 11, color: PANEL_TEXT_MUTED, marginBottom: 10 }}>
+            Your invitation uses separate Engagement/Wedding/Homecoming events — edit each one's venue, address, maps link and date here (turning events on/off, labels and dress code are set from the admin side).
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {eventsOrder.filter(key => eventsEdit?.[key]?.enabled).map(key => {
+              const e = eventsEdit![key]
+              return (
+                <div key={key} style={{ border: `1px solid ${PANEL_BORDER}`, borderRadius: 12, padding: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: PANEL_TEXT_DARK, marginBottom: 8 }}>{e.label?.trim() || EVENT_DISPLAY_LABEL[key]}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                    <input style={inputStyle} value={e.venue || ''} onChange={ev => updateEventField(key, 'venue', ev.target.value)} placeholder="Venue name" />
+                    <input type="datetime-local" style={inputStyle} value={e.date ? e.date.slice(0, 16) : ''} onChange={ev => updateEventField(key, 'date', ev.target.value)} />
+                  </div>
+                  <input style={{ ...inputStyle, marginBottom: 8 }} value={e.venue_address || ''} onChange={ev => updateEventField(key, 'venue_address', ev.target.value)} placeholder="Venue address" />
+                  <input style={{ ...inputStyle, marginBottom: 0 }} value={e.maps_url || ''} onChange={ev => updateEventField(key, 'maps_url', ev.target.value)} placeholder="Google Maps URL" />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Venue Name</label>
+            <input style={inputStyle} value={venue} onChange={e => setVenue(e.target.value)} placeholder="The Kingsbury" />
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Venue Address</label>
+            <input style={inputStyle} value={venueAddress} onChange={e => setVenueAddress(e.target.value)} placeholder="Janadhipathi Mawatha, Colombo" />
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Google Maps URL</label>
+            <input style={inputStyle} value={mapsUrl} onChange={e => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/?q=..." />
+          </div>
+        </>
+      )}
+
+      {couple.show_seating && (
+        <div style={{ background: '#eef2ff', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#3730a3', marginBottom: 4 }}>
+            <Icon name="chair" size={15} color="#3730a3" /> Manage Seating
+          </div>
+          <div style={{ fontSize: 11, color: '#4338ca', marginBottom: 14 }}>
+            Guests can search their name on your invitation to find their table. Add, edit, or remove names below.
+          </div>
+          <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+            {seatRows.map(row => (
+              <div key={row.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input value={row.name} onChange={e => updateSeatRow(row.id, 'name', e.target.value)} placeholder="Guest name"
+                  style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }} />
+                <input value={row.table} onChange={e => updateSeatRow(row.id, 'table', e.target.value)} placeholder="Table 3"
+                  style={{ ...inputStyle, flex: 1, marginBottom: 0, background: '#fff' }} />
+                <button type="button" onClick={() => removeSeatRow(row.id)} aria-label="Remove guest" style={{
+                  width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', flexShrink: 0,
+                  background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}><Icon name="cross" size={13} color="#dc2626" /></button>
+              </div>
+            ))}
+            {seatRows.length === 0 && <div style={{ fontSize: 12, color: '#6b6098', fontStyle: 'italic' }}>No guests added yet.</div>}
+          </div>
+          <button type="button" onClick={addSeatRow} style={{
+            padding: '8px 16px', borderRadius: 8, border: '1px solid #c7d2fe',
+            background: '#fff', cursor: 'pointer', fontSize: 13, color: '#4338ca', fontWeight: 500,
+          }}>+ Add Guest</button>
+        </div>
+      )}
+
+      <div style={{ background: '#fdf8ec', borderRadius: 12, padding: 16, marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#8a6a2a' }}>Customise Colors</div>
+          <button type="button" onClick={resetColors} style={{ fontSize: 11, color: PANEL_TEXT_MUTED, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+            Reset to default
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          {[
+            { key: 'primary' as const, label: 'Primary Accent' },
+            { key: 'primaryLight' as const, label: 'Light Accent' },
+            { key: 'dark' as const, label: 'Dark / Text' },
+            { key: 'cream' as const, label: 'Background' },
+          ].map(c => (
+            <div key={c.key}>
+              <label style={labelStyle}>{c.label}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="color" value={colors[c.key]} onChange={e => setColors({ ...colors, [c.key]: e.target.value })}
+                  style={{ width: 38, height: 38, borderRadius: 8, border: `1px solid ${PANEL_BORDER}`, cursor: 'pointer', padding: 0 }} />
+                <input value={colors[c.key]} onChange={e => setColors({ ...colors, [c.key]: e.target.value })}
+                  style={{ ...inputStyle, padding: '8px 10px', fontSize: 12 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, padding: 12, borderRadius: 10, background: colors.cream }}>
+          <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: colors.primary, color: '#fff', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>Primary</div>
+          <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: colors.primaryLight, color: colors.dark, fontSize: 11, textAlign: 'center', fontWeight: 600 }}>Light</div>
+          <div style={{ flex: 1, padding: '10px', borderRadius: 8, background: colors.dark, color: '#fff', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>Dark</div>
+        </div>
+      </div>
+
+      <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 16, marginTop: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#166534', marginBottom: 14 }}>Customise Text</div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Groom's Family Name</label>
+          <input style={inputStyle} value={groomFamilyName} onChange={e => setGroomFamilyName(e.target.value)} placeholder="e.g. MR & MRS De Silva" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>"Together With" Label</label>
+          <input style={inputStyle} value={togetherWithText} onChange={e => setTogetherWithText(e.target.value)} placeholder="together with (default)" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Bride's Family Name</label>
+          <input style={inputStyle} value={brideFamilyName} onChange={e => setBrideFamilyName(e.target.value)} placeholder="e.g. MR & MRS Perera" />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Family Invitation Text</label>
+          <textarea value={familyInvitationText} onChange={e => setFamilyInvitationText(e.target.value)} style={{ ...inputStyle, minHeight: 70, resize: 'vertical' as const }} />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Cover Intro Text</label>
+          <textarea value={introText} onChange={e => setIntroText(e.target.value)} placeholder="Leave empty to use the template's default line..." style={{ ...inputStyle, minHeight: 70, resize: 'vertical' as const }} />
+        </div>
+        <div>
+          <label style={labelStyle}>Thank You Message</label>
+          <textarea value={thankYouText} onChange={e => setThankYouText(e.target.value)} placeholder="Leave empty to use the default thank you message..." style={{ ...inputStyle, minHeight: 90, resize: 'vertical' as const }} />
+        </div>
+      </div>
+
+      <div style={{ background: '#f5f3ff', borderRadius: 12, padding: 16, marginTop: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#5b21b6', marginBottom: 4 }}>Customise Fonts</div>
+        <div style={{ fontSize: 11, color: '#6d28d9', marginBottom: 14, lineHeight: 1.5 }}>
+          For each part of your invitation below: pick a color, pick a font, or make it bold. Each box shows a live preview so you can see exactly what changes. Leave anything untouched to keep the template's original look.
+        </div>
+        <TextStyleFields
+          styles={textStyles}
+          onChange={setTextStyles}
+          border={PANEL_BORDER}
+          textMuted={PANEL_TEXT_MUTED}
+          inputStyle={inputStyle}
+          previewData={{ bride: couple.bride, groom: couple.groom, venue: venue, venue_address: venueAddress }}
+        />
+      </div>
+
+      {message && <div style={{ marginTop: 16, fontSize: 13, color: message.startsWith('Saved') ? '#16a34a' : '#dc2626' }}>{message}</div>}
+
+      <button onClick={handleSave} disabled={saving} style={{
+        marginTop: 18, width: '100%', padding: 14, borderRadius: 12, border: 'none', cursor: 'pointer',
+        background: `linear-gradient(135deg,${PANEL_ACCENT},${panelTemplateDefault.primaryLight})`, color: '#fff', fontWeight: 700, fontSize: 14,
+        opacity: saving ? 0.6 : 1,
+      }}>
+        {saving ? 'Saving...' : 'Save Changes'}
+      </button>
+
+      {(couple as any).enable_template_switch === true && allowedTemplates.length > 0 && (
+        <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, marginTop: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>
+            <Icon name="sparkles" size={14} color="#c2410c" /> Change Template
+          </div>
+          <div style={{ fontSize: 11, color: '#ea580c', marginBottom: 14 }}>
+            Not feeling the current look? Pick a different template below — your photos, text, and RSVPs all stay exactly as they are.
+          </div>
+          <label style={labelStyle}>Template</label>
+          <select value={selectedTemplate} onChange={e => { setSelectedTemplate(e.target.value); setTemplateMessage('') }}
+            style={{ ...inputStyle, marginBottom: 14 }}>
+            {templateOptions.map(id => {
+              const label = TEMPLATE_NAMES[id] || id
+              const isCurrent = couple.template === id
+              const isDefault = id === defaultTemplateId
+              return (
+                <option key={id} value={id}>
+                  {label}{isCurrent ? ' (Current)' : isDefault ? ' (Default)' : ''}
+                </option>
+              )
+            })}
+          </select>
+          {templateMessage && (
+            <div style={{ fontSize: 12.5, marginBottom: 12, color: templateMessage.startsWith('Template updated') ? '#16a34a' : '#dc2626' }}>{templateMessage}</div>
+          )}
+          <button type="button" onClick={handleChangeTemplate} disabled={templateSaving || selectedTemplate === couple.template} style={{
+            width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
+            background: '#c2410c', color: '#fff', fontWeight: 700, fontSize: 13,
+            opacity: (templateSaving || selectedTemplate === couple.template) ? 0.5 : 1,
+          }}>
+            {templateSaving ? 'Switching...' : 'Switch to This Template'}
+          </button>
+        </div>
+      )}
+
+      <div style={{ background: '#eff6ff', borderRadius: 12, padding: 16, marginTop: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1e40af', marginBottom: 4 }}>
+          <Icon name="lock" size={14} color="#1e40af" /> Change Dashboard PIN
+        </div>
+        <div style={{ fontSize: 11, color: '#3b5bab', marginBottom: 14 }}>
+          This is the 4-digit code you enter to unlock this dashboard. Changing it here does not affect anything else about your invitation.
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+          <div>
+            <label style={labelStyle}>New PIN</label>
+            <input type="tel" inputMode="numeric" maxLength={4} value={newPin}
+              onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••" style={{ ...inputStyle, letterSpacing: '0.3em', textAlign: 'center' }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Confirm New PIN</label>
+            <input type="tel" inputMode="numeric" maxLength={4} value={confirmPin}
+              onChange={e => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••" style={{ ...inputStyle, letterSpacing: '0.3em', textAlign: 'center' }} />
+          </div>
+        </div>
+        {pinMessage && (
+          <div style={{ fontSize: 12.5, marginBottom: 12, color: pinMessage.startsWith('PIN updated') ? '#16a34a' : '#dc2626' }}>{pinMessage}</div>
+        )}
+        <button type="button" onClick={handleChangePin} disabled={pinSaving || newPin.length !== 4 || confirmPin.length !== 4} style={{
+          width: '100%', padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer',
+          background: '#1e40af', color: '#fff', fontWeight: 700, fontSize: 13,
+          opacity: (pinSaving || newPin.length !== 4 || confirmPin.length !== 4) ? 0.5 : 1,
+        }}>
+          {pinSaving ? 'Updating...' : 'Update PIN'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string }) {
+  const [guestName, setGuestName] = useState("")
+  const [copied, setCopied] = useState(false)
+  const [waMessage, setWaMessage] = useState((couple as any).whatsapp_invite_message || `Hi {name}! 💌\n\nWe're getting married and would be so happy to have you celebrate with us! Please tap below to view your invitation and let us know if you can make it.\n\nWith love,\n${couple.bride} & ${couple.groom}`)
+  const [editingMsg, setEditingMsg] = useState(false)
+
+  const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/invite/${couple.slug}` : `/invite/${couple.slug}`
+  const generatedLink = guestName.trim() ? `${baseUrl}?name=${encodeURIComponent(guestName.trim())}` : baseUrl
+  // Swaps {name} in the template for the guest currently typed above —
+  // if they haven't typed a name yet, leaves the placeholder visible so
+  // it's clear a name is expected here.
+  const personalizedMessage = waMessage.replace(/\{name\}/g, guestName.trim() || '{name}')
+
+  const copyLink = async () => {
+    if (!guestName.trim()) return
+    await navigator.clipboard.writeText(generatedLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const shareWhatsApp = () => {
+    if (!guestName.trim()) return
+    const msg = encodeURIComponent(`${personalizedMessage}\n${generatedLink}`)
+    window.open(`https://wa.me/?text=${msg}`, '_blank')
+  }
+
+  const saveMessage = async () => {
+    await supabase.from('couples').update({ whatsapp_invite_message: waMessage }).eq('id', couple.id)
+    setEditingMsg(false)
+  }
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
+    <div style={{ background: "#fff", borderRadius: 18, padding: 24, boxShadow: "0 2px 20px rgba(15,23,42,0.06)" }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>Generate Guest Link</div>
+      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 16 }}>
+        Type a guest's name to generate a personalised invitation link — their name will appear on the cover and auto-fill in the RSVP form.
+      </div>
+
+      <input
+        value={guestName}
+        onChange={e => { setGuestName(e.target.value); setCopied(false) }}
+        placeholder="e.g. Amara & Family"
+        style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif", color: "#1e293b", marginBottom: 12, boxSizing: 'border-box' }}
+      />
+
+      {guestName.trim() && (
+        <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#475569", wordBreak: "break-all", border: "1px solid #e2e8f0" }}>
+          {generatedLink}
+        </div>
+      )}
+
+      <div style={{ background: "#f0fdf4", borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: "1px solid #bbf7d0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#166534" }}>WhatsApp Message</div>
+          <button onClick={() => setEditingMsg(!editingMsg)} style={{ fontSize: 11, color: accent, background: "transparent", border: "none", cursor: "pointer", fontWeight: 600 }}>
+            {editingMsg ? "Cancel" : "Edit"}
+          </button>
+        </div>
+        {editingMsg ? (
+          <div>
+            <div style={{ fontSize: 10.5, color: "#16a34a", marginBottom: 6 }}>Tip: type <strong>{'{name}'}</strong> anywhere and it'll be swapped for the guest's name above.</div>
+            <textarea value={waMessage} onChange={e => setWaMessage(e.target.value)}
+              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, outline: "none", fontFamily: "'Inter',sans-serif", resize: "vertical" as const, minHeight: 90, boxSizing: 'border-box' }} />
+            <button onClick={saveMessage} style={{ marginTop: 6, padding: "7px 16px", borderRadius: 8, background: accent, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+              Save Message
+            </button>
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: "#1e293b", whiteSpace: "pre-wrap" }}>{personalizedMessage}<br /><span style={{ color: "#64748b" }}>[link auto-added]</span></div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={copyLink} disabled={!guestName.trim()} style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          padding: "11px", borderRadius: 10, border: "none", cursor: guestName.trim() ? "pointer" : "default",
+          background: copied ? "#16a34a" : accent, color: "#fff", fontWeight: 600, fontSize: 13,
+          opacity: guestName.trim() ? 1 : 0.4, transition: "background 0.2s",
+        }}>
+          {copied ? <Icon name="check" size={14} color="#fff" /> : <Icon name="copy" size={14} color="#fff" />}
+          {copied ? "Copied!" : "Copy Link"}
+        </button>
+        <button onClick={shareWhatsApp} disabled={!guestName.trim()} style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          padding: "11px", borderRadius: 10, border: "none", cursor: guestName.trim() ? "pointer" : "default",
+          background: "#25d366", color: "#fff", fontWeight: 600, fontSize: 13, opacity: guestName.trim() ? 1 : 0.4,
+        }}>
+          <Icon name="whatsapp" size={14} color="#fff" />
+          WhatsApp
+        </button>
+      </div>
+    </div>
+  )
+}
+
+type DashTabKey = 'overview' | 'guests' | 'budget' | 'wishes' | 'edit' | 'share'
+const TABS: { key: DashTabKey; label: string; icon: IconName }[] = [
+  { key: 'overview', label: 'Overview', icon: 'overview' },
+  { key: 'guests', label: 'Guests', icon: 'users' },
+  { key: 'budget', label: 'Budget', icon: 'wallet' },
+  { key: 'wishes', label: 'Wishes', icon: 'heart' },
+  { key: 'edit', label: 'Edit', icon: 'edit' },
+  { key: 'share', label: 'Share', icon: 'link' },
+]
+
+export default function CoupleDashboard() {
+  const params = useParams()
+  const searchParams = useSearchParams()
+  const slug = params.slug as string
+
+  const [couple, setCouple] = useState<Couple | null>(null)
+  const [rsvps, setRsvps] = useState<RSVP[]>([])
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const [search, setSearch] = useState("")
+  const [filterResponse, setFilterResponse] = useState<'all' | 'yes' | 'no'>('all')
+  const [filterDrinking, setFilterDrinking] = useState<'all' | 'yes' | 'no'>('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name-az' | 'name-za' | 'guests'>('newest')
+  const [showAddGuest, setShowAddGuest] = useState(false)
+  const [addGuestForm, setAddGuestForm] = useState({ name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
+  const [addingGuest, setAddingGuest] = useState(false)
+  const [editingRsvpId, setEditingRsvpId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ guest_name: '', response: 'yes' as 'yes' | 'no', guest_count: '1', drinking: '' as '' | 'yes' | 'no' })
+  const [savingEdit, setSavingEdit] = useState(false)
+  // Surfaces the actual Supabase error when a save/add fails — previously
+  // these failed silently (the edit box just sat there with no feedback),
+  // which looked exactly like "the Save button doesn't do anything".
+  const [rsvpError, setRsvpError] = useState('')
+
+  // Deep-linking: /dashboard/[slug]?tab=guests etc. jumps straight to that
+  // tab. Falls back to 'overview' for anything unrecognised. This only
+  // sets the *initial* tab — after that the tab strip behaves as before.
+  const initialTab: DashTabKey = (() => {
+    const t = searchParams?.get('tab')
+    const match = TABS.find(tab => tab.key === t)
+    return match ? match.key : 'overview'
+  })()
+  const [activeTab, setActiveTab] = useState<DashTabKey>(initialTab)
+
+  const [unlocked, setUnlocked] = useState(false)
+  const [pinInput, setPinInput] = useState("")
+  const [pinError, setPinError] = useState(false)
+  const [deletingRsvpId, setDeletingRsvpId] = useState<string | null>(null)
+
+  const loadData = async () => {
+    const { data: coupleData, error: coupleError } = await supabase
+      .from('couples').select('*').eq('slug', slug).single()
+
+    if (coupleError || !coupleData) {
+      setNotFound(true)
+      setLoading(false)
+      return
+    }
+    setCouple(coupleData as Couple)
+
+    if ((coupleData as any).user_id) {
+      const { data: authData } = await supabase.auth.getUser()
+      if (authData.user && authData.user.id === (coupleData as any).user_id) {
+        setUnlocked(true)
+      }
+    }
+
+    const { data: rsvpData } = await supabase
+      .from('rsvps').select('*').eq('couple_id', coupleData.id).order('created_at', { ascending: false })
+
+    setRsvps((rsvpData as RSVP[]) || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadData() }, [slug])
+
+  useEffect(() => {
+    if (!couple || activeTab !== 'share') return
+    const shareAllowed = (couple as any).enable_guest_links !== false && (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
+    if (!shareAllowed) setActiveTab('overview')
+  }, [couple, activeTab])
+
+  useEffect(() => {
+    if (couple && (couple as any).enable_guest_wishes !== true && activeTab === 'wishes') {
+      setActiveTab('overview')
+    }
+  }, [couple, activeTab])
+
+  useEffect(() => {
+    if (couple && (couple as any).enable_budget_tracker !== true && activeTab === 'budget') {
+      setActiveTab('overview')
+    }
+  }, [couple, activeTab])
+
+  useEffect(() => {
+    if (!unlocked) return
+    const interval = setInterval(loadData, 30000)
+    return () => clearInterval(interval)
+  }, [unlocked, slug])
+
+  const checkPin = () => {
+    if (couple && pinInput === couple.pin) {
+      setUnlocked(true)
+      setPinError(false)
+    } else {
+      setPinError(true)
+    }
+  }
+
+  const handleDeleteRsvp = async (id: string, guestName: string) => {
+    if (!confirm(`Remove ${guestName}'s RSVP? This cannot be undone.`)) return
+    setDeletingRsvpId(id)
+    setRsvpError('')
+    // Same RLS pitfall as saveEditRsvp/addGuestManually: without .select(),
+    // a delete silently blocked by Row Level Security still reports
+    // success, so this used to optimistically remove the guest from the
+    // list even though it was still in the database — the guest would
+    // reappear on the next page reload with no explanation why.
+    const { data, error } = await supabase.from('rsvps').delete().eq('id', id).select()
+    setDeletingRsvpId(null)
+    if (!error && (!data || data.length === 0)) {
+      setRsvpError('Remove blocked by a database permission rule (Row Level Security) — the request succeeded but nothing was actually deleted.')
+      return
+    }
+    if (!error) setRsvps(prev => prev.filter(r => r.id !== id))
+    else setRsvpError('Could not remove: ' + error.message)
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: "'Inter',sans-serif", color: "#475569" }}>
+        Loading...
+      </div>
+    )
+  }
+
+  if (notFound || !couple) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: "'Inter',sans-serif", color: "#1e293b", textAlign: "center", padding: 24 }}>
+        <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.6rem", color: "#1e293b", marginBottom: 8 }}>Dashboard Not Found</div>
+        <div style={{ fontSize: 14, color: "#64748b" }}>This invitation doesn't exist.</div>
+      </div>
+    )
+  }
+
+  const ACCENT = couple.custom_colors?.primary || '#6366f1'
+  const ACCENT_LIGHT = couple.custom_colors?.primaryLight || '#a5b4fc'
+  const TEXT_DARK = '#1e293b'
+  const TEXT_MUTED = '#64748b'
+  const BORDER = '#e2e8f0'
+  const PAGE_BG = '#f6f7fb'
+
+  if (!unlocked) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: PAGE_BG, fontFamily: "'Inter',sans-serif", padding: 24 }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');`}</style>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          style={{ background: "#fff", borderRadius: 20, padding: "2.5rem 2rem", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 8px 32px rgba(15,23,42,0.1)" }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%', background: `${ACCENT}1a`, display: 'flex',
+            alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+          }}>
+            <Icon name="lock" size={24} color={ACCENT} />
+          </div>
+          <div style={{ fontFamily: "'Inter',sans-serif", fontWeight: 800, fontSize: "1.4rem", color: TEXT_DARK, marginBottom: 4 }}>
+            {couple.bride} &amp; {couple.groom}
+          </div>
+          <div style={{ fontSize: 12, color: TEXT_MUTED, marginBottom: 24 }}>Enter your PIN to view your dashboard</div>
+          <input
+            type="tel" inputMode="numeric" maxLength={4} value={pinInput}
+            onChange={e => { setPinInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setPinError(false) }}
+            onKeyDown={e => e.key === 'Enter' && checkPin()}
+            placeholder="••••"
+            style={{
+              width: "100%", padding: "16px", borderRadius: 12, textAlign: "center",
+              fontSize: 28, letterSpacing: "0.5em", border: `2px solid ${pinError ? '#dc2626' : BORDER}`,
+              outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif", color: TEXT_DARK, boxSizing: 'border-box',
+            }}
+          />
+          {pinError && <div style={{ color: "#dc2626", fontSize: 12, marginBottom: 12 }}>Incorrect PIN. Please try again.</div>}
+          <button onClick={checkPin} style={{
+            width: "100%", padding: "14px", borderRadius: 12, border: "none", cursor: "pointer",
+            background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: "#fff", fontWeight: 600, fontSize: 14,
+          }}>
+            Unlock Dashboard
+          </button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  const accepted = rsvps.filter(r => r.response === 'yes')
+  const declined = rsvps.filter(r => r.response === 'no')
+  const drinkingYes = accepted.filter(r => r.drinking === 'yes').length
+  const drinkingNo = accepted.filter(r => r.drinking === 'no').length
+  const totalGuests = accepted.reduce((sum, r) => sum + (r.guest_count || 1), 0)
+
+  const isTwilightPicnic = couple.template === 'twilight-picnic'
+  const drinkCounts = { 'Hard Liquor': 0, 'Wine': 0, 'Beer': 0, 'Non-Alcoholic': 0 }
+  if (isTwilightPicnic) {
+    accepted.forEach(r => {
+      (r.drinking || '').split(',').map(d => d.trim()).forEach(d => {
+        if (d in drinkCounts) drinkCounts[d as keyof typeof drinkCounts]++
+      })
+    })
+  }
+  const accommodationNeeded = accepted.filter(r => r.accommodation === 'needed').length
+  const accommodationNotNeeded = accepted.filter(r => r.accommodation === 'not_needed').length
+
+  const filteredRsvps = rsvps.filter(r => {
+    if (search && !r.guest_name.toLowerCase().includes(search.toLowerCase())) return false
+    if (filterResponse !== 'all' && r.response !== filterResponse) return false
+    if (filterDrinking !== 'all' && r.drinking !== filterDrinking) return false
+    return true
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      case 'name-az': return a.guest_name.localeCompare(b.guest_name)
+      case 'name-za': return b.guest_name.localeCompare(a.guest_name)
+      case 'guests': return (b.guest_count || 1) - (a.guest_count || 1)
+      case 'newest':
+      default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }
+  })
+
+  const addGuestManually = async () => {
+    if (!addGuestForm.name.trim()) return
+    setAddingGuest(true)
+    setRsvpError('')
+    const { data, error } = await supabase.from('rsvps').insert([{
+      couple_id: couple.id, guest_name: addGuestForm.name.trim(), response: addGuestForm.response,
+      guest_count: addGuestForm.response === 'yes' ? (parseInt(addGuestForm.guest_count) || 1) : 1,
+      drinking: addGuestForm.response === 'yes' ? (addGuestForm.drinking || null) : null,
+    }]).select()
+    setAddingGuest(false)
+    if (!error && (!data || data.length === 0)) {
+      setRsvpError('Save blocked by a database permission rule (Row Level Security) — the request succeeded but no guest was actually added.')
+    } else if (!error) {
+      setAddGuestForm({ name: '', response: 'yes', guest_count: '1', drinking: '' })
+      setShowAddGuest(false)
+      loadData()
+    } else {
+      setRsvpError('Could not save: ' + error.message)
+    }
+  }
+
+  const startEditRsvp = (r: RSVP) => {
+    setEditingRsvpId(r.id)
+    setEditForm({ guest_name: r.guest_name, response: r.response, guest_count: String(r.guest_count || 1), drinking: (r.drinking as any) || '' })
+    setRsvpError('')
+  }
+
+  const saveEditRsvp = async (id: string) => {
+    if (!editForm.guest_name.trim()) return
+    setSavingEdit(true)
+    setRsvpError('')
+    // .select() is the important part here — a plain .update().eq(...) with
+    // no .select() reports success (no `error`) even when a Row Level
+    // Security policy silently matches zero rows, which is exactly what was
+    // happening: the Save button looked like it worked but nothing in the
+    // database actually changed. Asking for the row back lets us tell the
+    // two cases apart and say so.
+    const { data, error } = await supabase.from('rsvps').update({
+      guest_name: editForm.guest_name.trim(), response: editForm.response,
+      guest_count: editForm.response === 'yes' ? (parseInt(editForm.guest_count) || 1) : 1,
+      drinking: editForm.response === 'yes' ? (editForm.drinking || null) : null,
+    }).eq('id', id).select()
+    setSavingEdit(false)
+    if (!error && (!data || data.length === 0)) {
+      setRsvpError('Save blocked by a database permission rule (Row Level Security) — the request succeeded but no row was actually updated. This needs a Supabase RLS policy fix, not a code fix.')
+      return
+    }
+    if (!error) { setEditingRsvpId(null); loadData() } else { setRsvpError('Could not save: ' + error.message) }
+  }
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    padding: '7px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+    border: active ? 'none' : `1px solid ${BORDER}`,
+    background: active ? `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})` : '#fff',
+    color: active ? '#fff' : TEXT_MUTED,
+  })
+
+  return (
+    <div style={{ minHeight: "100vh", background: PAGE_BG, fontFamily: "'Inter',sans-serif", overflowX: 'hidden' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`}</style>
+
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13, flexShrink: 0,
+            }}>
+              {couple.bride?.[0]}{couple.groom?.[0]}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_DARK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {couple.bride} &amp; {couple.groom}
+              </div>
+              <div style={{ fontSize: 10, color: TEXT_MUTED }}>Wedding Dashboard</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', borderRadius: 100, padding: 4 }}>
+            {TABS.filter(tab =>
+              (tab.key !== 'share' || (
+                (couple as any).enable_guest_links !== false &&
+                (!(couple as any).user_id || (couple as any).payment_slip_status === 'verified')
+              )) &&
+              (tab.key !== 'wishes' || (couple as any).enable_guest_wishes === true) &&
+              (tab.key !== 'budget' || (couple as any).enable_budget_tracker === true)
+            ).map(tab => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key as typeof activeTab)} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 100,
+                border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
+                background: activeTab === tab.key ? '#fff' : 'transparent',
+                color: activeTab === tab.key ? ACCENT : TEXT_MUTED,
+                boxShadow: activeTab === tab.key ? '0 2px 8px rgba(15,23,42,0.08)' : 'none',
+                transition: 'all 0.15s',
+              }}>
+                <Icon name={tab.icon} size={14} />
+                <span className="dash-tab-label">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
-        @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-        input::placeholder { color: #b5c2ac; }
-        .eb-petal {
-          position: absolute; top: -28px; opacity: 0; display: block;
-          animation-name: eb-fall; animation-timing-function: linear; animation-iteration-count: infinite;
+        @media (max-width: 520px) {
+          .dash-tab-label { display: none; }
         }
-        @keyframes eb-fall {
-          0% { transform: translateY(-28px) translateX(0) rotate(0deg); opacity: 0; }
-          6% { opacity: 0.85; }
-          94% { opacity: 0.7; }
-          100% { transform: translateY(112vh) translateX(32px) rotate(280deg); opacity: 0; }
+        .dash-overview-grid { grid-template-columns: 1fr; }
+        @media (min-width: 600px) {
+          .dash-overview-grid { grid-template-columns: minmax(160px, auto) 1fr; }
         }
       `}</style>
 
-      {isKrishalJayakshi && opened && <PetalShower primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 20px 60px" }}>
 
-      <AnimatePresence>
-        {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} midTint={TINT_SAGE} />
-        )}
-      </AnimatePresence>
-
-      <div style={{ maxWidth: 480, margin: "0 auto", background: CREAM, boxShadow: "0 0 80px rgba(0,0,0,0.06)", position: "relative" }}>
-
-        {/* ══ COVER ══ */}
-        <AnimatePresence>
-          {!opened && (
-            <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : "21vh" }}>
-
-              {coverPhotoOk ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%", zIndex: 1 }}
-                  onError={e => {
-                    const img = e.currentTarget as HTMLImageElement
-                    if (img.src.endsWith(DEFAULT_PHOTO)) { setCoverPhotoOk(false); return }
-                    img.src = DEFAULT_PHOTO
-                  }} />
-              ) : (
-                // Neither the couple's photo nor the bundled default photo
-                // could load — a decorative gradient so the cover never
-                // shows as a flat, empty block behind the text.
-                <>
-                  <div style={{ position: "absolute", inset: 0, zIndex: 1, background: `radial-gradient(ellipse 90% 70% at 50% 20%, ${PRIMARY} 0%, ${DARK} 70%)` }} />
-                  <div style={{ position: "absolute", inset: 0, zIndex: 1, backgroundImage: `radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)`, backgroundSize: "28px 28px" }} />
-                </>
-              )}
-              {coverVideoUrl && (
-                // No `autoPlay` here on purpose — it used to start decoding
-                // and playing the instant the cover mounted, so the video
-                // would silently fade in over the photo before the guest
-                // ever tapped anything. Now it stays paused (and invisible,
-                // via opacity 0) until handleOpen() calls videoRef.play()
-                // inside the button's own click handler — a real user
-                // gesture — so playback only ever starts once "Open
-                // Invitation" is tapped. No `loop` either — it plays once,
-                // start to finish, and `onEnded` is what opens the
-                // invitation (see handleVideoEnded).
-                <video ref={videoRef} muted playsInline preload="auto"
-                  onPlaying={e => { e.currentTarget.style.opacity = "1" }}
-                  onEnded={handleVideoEnded}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
-                  <source src={coverVideoUrl} type="video/mp4" />
-                </video>
-              )}
-              {/* Reshaped so the top band (behind the eyebrow + names, now
-                  moved up to clear the couple's photo below) stays dark
-                  enough to read, the middle band stays light so the actual
-                  photo of the couple is still clearly visible, and it
-                  darkens again near the bottom for the button. */}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(20,16,8,0.58) 0%, rgba(20,16,8,0.4) 20%, rgba(20,16,8,0.14) 40%, rgba(20,16,8,0.12) 65%, rgba(20,16,8,0.5) 85%, rgba(20,16,8,0.75) 100%)`, zIndex: 3 }} />
-
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
-
-                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: isMalshaniIsuru ? "1.6rem" : "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
-                <div style={{ ...ts('bride_name'), fontFamily: isNipuniAnjana ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: isNipuniAnjana ? 700 : 400, fontStyle: isNipuniAnjana ? "italic" : "normal", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
-                <div style={{ margin: isMalshaniIsuru ? "22px 0" : "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: isMalshaniIsuru ? 14 : 10 }}>
-                  <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
-                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
-                  <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
-                </div>
-                <div style={{ ...ts('groom_name'), fontFamily: isNipuniAnjana ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: isNipuniAnjana ? 700 : 400, fontStyle: isNipuniAnjana ? "italic" : "normal", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
-
-                {guestName && (
-                  <>
-                    <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", margin: "1.3rem 0 0.35rem", fontWeight: 700, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>Dear</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: "#fff", marginBottom: "1.3rem", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.6)", fontWeight: 600 }}>{guestName}</div>
-                  </>
-                )}
-              </motion.div>
-
-              {/* Button now anchored near the bottom of the cover, over the
-                  path/ground area of the photo, well clear of the names
-                  block pinned up top — instead of sitting right under the
-                  names. */}
-              <div style={{ position: "absolute", left: 0, right: 0, bottom: "25%", textAlign: "center", zIndex: 10, padding: "0 1rem" }}>
-                <button onClick={handleOpen} disabled={videoPlaying} style={{
-                  display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.95)", color: "#1a1408",
-                  border: "none", borderRadius: 100, padding: "14px 30px", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
-                  cursor: videoPlaying ? "default" : "pointer", fontFamily: "'Inter',sans-serif", fontWeight: 700, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                  opacity: videoPlaying ? 0.7 : 1, transition: "opacity 0.2s",
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              {(couple as any).user_id && (couple as any).payment_slip_status !== 'verified' && (
+                <div style={{
+                  background: (couple as any).payment_slip_status === 'rejected' ? '#fef2f2' : '#fffbeb',
+                  border: `1px solid ${(couple as any).payment_slip_status === 'rejected' ? '#fecaca' : '#fde68a'}`,
+                  borderRadius: 14, padding: '14px 16px', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10,
                 }}>
-                  {videoPlaying ? "Playing..." : "Open Invitation →"}
-                </button>
-                {!videoPlaying && (
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.85)", marginTop: 14, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>🎵 Tap to begin — with music</div>
-                )}
+                  <Icon name="lock" size={16} color={(couple as any).payment_slip_status === 'rejected' ? '#dc2626' : '#b45309'} />
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: (couple as any).payment_slip_status === 'rejected' ? '#dc2626' : '#b45309' }}>
+                      {(couple as any).payment_slip_status === 'rejected' ? 'Payment slip rejected' : 'Payment pending verification'}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: (couple as any).payment_slip_status === 'rejected' ? '#991b1b' : '#92400e', marginTop: 2 }}>
+                      {(couple as any).payment_slip_status === 'rejected'
+                        ? 'Please contact us to resolve this — your invitation link will unlock once payment is confirmed.'
+                        : "You can preview and customise your invitation now. Sharing the guest link unlocks once we've verified your payment slip."}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="dash-overview-grid" style={{ display: 'grid', gap: 16, alignItems: 'stretch', marginBottom: 20 }}>
+                <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 2px 16px rgba(15,23,42,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <RsvpDonut accepted={accepted.length} declined={declined.length} accent={ACCENT} accentLight={ACCENT_LIGHT} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="check" size={14} color="#16a34a" />
+                      </div>
+                      <span style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Accepted</span>
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: TEXT_DARK }}>{accepted.length}</div>
+                  </div>
+                  <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="cross" size={14} color="#dc2626" />
+                      </div>
+                      <span style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 600 }}>Declined</span>
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: TEXT_DARK }}>{declined.length}</div>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, borderRadius: 16, padding: 18, display: 'flex', alignItems: 'center', gap: 12, boxShadow: `0 4px 20px ${ACCENT}40` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="users" size={18} color="#fff" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>{totalGuests}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>Total guests attending (incl. families)</div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {isTwilightPicnic ? (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 12 }}>
+                    {([
+                      ['wine', 'Hard Liquor'], ['glass', 'Wine'], ['glass', 'Beer'], ['glass', 'Non-Alcoholic'],
+                    ] as const).map(([icon, label]) => (
+                      <div key={label} style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: `${ACCENT}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name={icon} size={15} color={ACCENT} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{drinkCounts[label]}</div>
+                          <div style={{ fontSize: 10, color: TEXT_MUTED }}>{label}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="home" size={15} color="#6d28d9" /></div>
+                      <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{accommodationNeeded}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Accommodation Needed</div></div>
+                    </div>
+                    <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="car" size={15} color="#0369a1" /></div>
+                      <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{accommodationNotNeeded}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Not Needed</div></div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="wine" size={15} color="#b45309" /></div>
+                    <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{drinkingYes}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Drinking Alcohol</div></div>
+                  </div>
+                  <div style={{ background: "#fff", borderRadius: 16, padding: "16px", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="glass" size={15} color="#0369a1" /></div>
+                    <div><div style={{ fontSize: 18, fontWeight: 700, color: TEXT_DARK }}>{drinkingNo}</div><div style={{ fontSize: 10, color: TEXT_MUTED }}>Non-Alcoholic</div></div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ textAlign: 'center', marginTop: 24 }}>
+                <button onClick={loadData} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: ACCENT,
+                  background: "transparent", border: `1px solid ${BORDER}`, borderRadius: 100, padding: '8px 16px', cursor: "pointer", fontWeight: 600,
+                }}>
+                  <Icon name="refresh" size={13} color={ACCENT} /> Refresh Data
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'guests' && (
+            <motion.div key="guests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+                  <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <Icon name="search" size={16} color="#94a3b8" />
+                  </div>
+                  <input
+                    value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Search guest by name..."
+                    style={{
+                      width: "100%", padding: "12px 18px 12px 42px", borderRadius: 12, boxSizing: 'border-box',
+                      border: `1px solid ${BORDER}`, background: "#fff", color: TEXT_DARK,
+                      fontSize: 14, outline: "none", fontFamily: "'Inter',sans-serif",
+                    }}
+                  />
+                </div>
+                <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} style={{
+                  padding: '0 14px', borderRadius: 12, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_DARK,
+                  fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", cursor: 'pointer',
+                }}>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="name-az">Name A–Z</option>
+                  <option value="name-za">Name Z–A</option>
+                  <option value="guests">Most guests</option>
+                </select>
+                <button type="button" onClick={() => setShowAddGuest(!showAddGuest)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 18px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                  background: `linear-gradient(135deg,${ACCENT},${ACCENT_LIGHT})`, color: '#fff', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
+                }}>
+                  <Icon name="plus" size={13} color="#fff" /> Add Guest
+                </button>
+              </div>
+
+              {showAddGuest && (
+                <div style={{ background: '#fff', borderRadius: 14, padding: 18, marginBottom: 16, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_DARK, marginBottom: 12 }}>Add Guest Manually</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
+                    <input value={addGuestForm.name} onChange={e => setAddGuestForm({ ...addGuestForm, name: e.target.value })} placeholder="Guest name"
+                      style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                    <select value={addGuestForm.response} onChange={e => setAddGuestForm({ ...addGuestForm, response: e.target.value as 'yes' | 'no' })}
+                      style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                      <option value="yes">Attending</option>
+                      <option value="no">Not Attending</option>
+                    </select>
+                  </div>
+                  {addGuestForm.response === 'yes' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: !isTwilightPicnic ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 14 }}>
+                      <input type="number" min={1} value={addGuestForm.guest_count} onChange={e => setAddGuestForm({ ...addGuestForm, guest_count: e.target.value })} placeholder="Guest count"
+                        style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                      {!isTwilightPicnic && (
+                        <select value={addGuestForm.drinking} onChange={e => setAddGuestForm({ ...addGuestForm, drinking: e.target.value as any })}
+                          style={{ padding: '10px 14px', borderRadius: 10, border: `1px solid ${BORDER}`, fontSize: 13.5, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                          <option value="">Drinks — no preference</option>
+                          <option value="yes">Drinks alcohol</option>
+                          <option value="no">Non-alcoholic</option>
+                        </select>
+                      )}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={addGuestManually} disabled={addingGuest || !addGuestForm.name.trim()} style={{
+                      padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                      background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 13, opacity: (addingGuest || !addGuestForm.name.trim()) ? 0.6 : 1,
+                    }}>{addingGuest ? 'Saving...' : 'Save Guest'}</button>
+                    <button type="button" onClick={() => { setShowAddGuest(false); setRsvpError('') }} style={{
+                      padding: '10px 20px', borderRadius: 10, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 13,
+                    }}>Cancel</button>
+                  </div>
+                  {rsvpError && (
+                    <div style={{ marginTop: 10, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
+                  )}
+                </div>
+              )}
+
+              {rsvpError && !showAddGuest && !editingRsvpId && (
+                <div style={{ marginBottom: 12, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
+              )}
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Status:</span>
+                <div onClick={() => setFilterResponse('all')} style={pillStyle(filterResponse === 'all')}>All</div>
+                <div onClick={() => setFilterResponse('yes')} style={pillStyle(filterResponse === 'yes')}>Attending</div>
+                <div onClick={() => setFilterResponse('no')} style={pillStyle(filterResponse === 'no')}>Not Attending</div>
+              </div>
+              {!isTwilightPicnic && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                  <span style={{ fontSize: 11, color: TEXT_MUTED, alignSelf: 'center', marginRight: 4 }}>Drinks:</span>
+                  <div onClick={() => setFilterDrinking('all')} style={pillStyle(filterDrinking === 'all')}>All</div>
+                  <div onClick={() => setFilterDrinking('yes')} style={pillStyle(filterDrinking === 'yes')}>Yes</div>
+                  <div onClick={() => setFilterDrinking('no')} style={pillStyle(filterDrinking === 'no')}>No</div>
+                </div>
+              )}
+
+              {filteredRsvps.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 48, background: "#fff", borderRadius: 16, color: TEXT_MUTED }}>
+                  {rsvps.length === 0 ? "No RSVP responses yet. Share your invitation link with guests!" : "No guests match your filters."}
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {filteredRsvps.map((r, i) => {
+                    const seatTable = r.response === 'yes' ? findSeatForGuest(r.guest_name, couple.seats) : null
+                    const isEditing = editingRsvpId === r.id
+                    return (
+                      <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}
+                        style={{
+                          background: "#fff", borderRadius: 14, padding: "14px 18px",
+                          boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
+                        }}>
+                        {isEditing ? (
+                          <div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
+                              <input value={editForm.guest_name} onChange={e => setEditForm({ ...editForm, guest_name: e.target.value })}
+                                style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                              <select value={editForm.response} onChange={e => setEditForm({ ...editForm, response: e.target.value as 'yes' | 'no' })}
+                                style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                                <option value="yes">Attending</option>
+                                <option value="no">Not Attending</option>
+                              </select>
+                            </div>
+                            {editForm.response === 'yes' && (
+                              <div style={{ display: 'grid', gridTemplateColumns: !isTwilightPicnic ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 12 }}>
+                                <input type="number" min={1} value={editForm.guest_count} onChange={e => setEditForm({ ...editForm, guest_count: e.target.value })} placeholder="Guest count"
+                                  style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }} />
+                                {!isTwilightPicnic && (
+                                  <select value={editForm.drinking} onChange={e => setEditForm({ ...editForm, drinking: e.target.value as any })}
+                                    style={{ padding: '9px 12px', borderRadius: 9, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', fontFamily: "'Inter',sans-serif", color: TEXT_DARK }}>
+                                    <option value="">No preference</option>
+                                    <option value="yes">Drinks alcohol</option>
+                                    <option value="no">Non-alcoholic</option>
+                                  </select>
+                                )}
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button type="button" onClick={() => saveEditRsvp(r.id)} disabled={savingEdit} style={{
+                                padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer', background: ACCENT, color: '#fff', fontWeight: 600, fontSize: 12.5, opacity: savingEdit ? 0.6 : 1,
+                              }}>{savingEdit ? 'Saving...' : 'Save'}</button>
+                              <button type="button" onClick={() => { setEditingRsvpId(null); setRsvpError('') }} style={{
+                                padding: '8px 18px', borderRadius: 9, border: `1px solid ${BORDER}`, background: '#fff', color: TEXT_MUTED, cursor: 'pointer', fontSize: 12.5,
+                              }}>Cancel</button>
+                            </div>
+                            {isEditing && rsvpError && (
+                              <div style={{ marginTop: 8, fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 10px' }}>{rsvpError}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_DARK }}>{r.guest_name}</div>
+                                {r.response === 'yes' && r.guest_count > 1 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#f3e8ff", color: "#7c3aed" }}>
+                                    <Icon name="users" size={11} color="#7c3aed" /> {r.guest_count}
+                                  </div>
+                                )}
+                                {seatTable && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: "2px 9px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#eef2ff", color: "#4f46e5" }}>
+                                    <Icon name="chair" size={11} color="#4f46e5" /> {seatTable}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>
+                                {new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at{' '}
+                                {new Date(r.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                {isTwilightPicnic ? (
+                                  <>
+                                    {r.response === 'yes' && r.drinking && (
+                                      <div style={{ padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600, background: "#fef3c7", color: "#b45309" }}>
+                                        {r.drinking.split(',').filter(Boolean).join(', ') || 'No preference'}
+                                      </div>
+                                    )}
+                                    {r.response === 'yes' && r.accommodation && (
+                                      <div style={{
+                                        padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                                        background: r.accommodation === 'needed' ? '#ede9fe' : '#e0f2fe',
+                                        color: r.accommodation === 'needed' ? '#6d28d9' : '#0369a1',
+                                      }}>
+                                        {r.accommodation === 'needed' ? 'Needs Stay' : 'Sorted'}
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  r.response === 'yes' && r.drinking && (
+                                    <div style={{
+                                      padding: "6px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600,
+                                      background: r.drinking === 'yes' ? '#fef3c7' : '#e0f2fe',
+                                      color: r.drinking === 'yes' ? '#b45309' : '#0369a1',
+                                    }}>
+                                      {r.drinking === 'yes' ? 'Drinks' : 'No Drinks'}
+                                    </div>
+                                  )
+                                )}
+                                <div style={{
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600,
+                                  background: r.response === 'yes' ? '#dcfce7' : '#fee2e2',
+                                  color: r.response === 'yes' ? '#16a34a' : '#dc2626',
+                                }}>
+                                  <Icon name={r.response === 'yes' ? 'check' : 'cross'} size={11} color={r.response === 'yes' ? '#16a34a' : '#dc2626'} />
+                                  {r.response === 'yes' ? 'Attending' : 'Not Attending'}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button type="button" onClick={() => startEditRsvp(r)} style={{
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: '4px 12px', borderRadius: 100, border: '1px solid #c7d2fe', cursor: 'pointer',
+                                  background: '#eef2ff', color: '#4f46e5', fontSize: 11, fontWeight: 500,
+                                }}>
+                                  <Icon name="edit" size={11} color="#4f46e5" /> Edit
+                                </button>
+                                <button type="button" onClick={() => handleDeleteRsvp(r.id, r.guest_name)} disabled={deletingRsvpId === r.id} style={{
+                                  display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: '4px 12px', borderRadius: 100, border: '1px solid #fecaca', cursor: 'pointer',
+                                  background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 500,
+                                  opacity: deletingRsvpId === r.id ? 0.6 : 1,
+                                }}>
+                                  <Icon name="trash" size={11} color="#dc2626" />
+                                  {deletingRsvpId === r.id ? 'Removing...' : 'Remove'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'budget' && (couple as any).enable_budget_tracker === true && (
+            <motion.div key="budget" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <BudgetManager coupleId={couple.id} accent={ACCENT} />
+            </motion.div>
+          )}
+
+          {activeTab === 'wishes' && (couple as any).enable_guest_wishes === true && (
+            <motion.div key="wishes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <WishesManager coupleId={couple.id} accent={ACCENT} />
+            </motion.div>
+          )}
+
+          {activeTab === 'edit' && (
+            <motion.div key="edit" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <EditPanel couple={couple} onSaved={loadData} />
+            </motion.div>
+          )}
+
+          {activeTab === 'share' && (couple as any).enable_guest_links !== false && (
+            <motion.div key="share" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <GuestLinkGenerator couple={couple} accent={ACCENT} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ══ INVITATION ══ */}
-        {opened && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
-
-            {/* Hero */}
-            <div style={{ position: "relative", height: 560, overflow: "hidden" }}>
-              {coverVideoUrl ? (
-                <video ref={videoRef} autoPlay loop muted playsInline preload="auto" poster={W.couplePhoto} style={{ width: "100%", height: "100%", objectFit: "cover" }}>
-                  <source src={coverVideoUrl} type="video/mp4" />
-                </video>
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              )}
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(to top,${CREAM} 0%,rgba(45,61,40,0.15) 60%,rgba(45,61,40,0.4) 100%)` }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
-                  <div style={{ fontFamily: isNipuniAnjana ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: isNipuniAnjana ? 700 : 400, fontStyle: isNipuniAnjana ? "italic" : "normal", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(45,61,40,0.3)" }}>
-                    <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
-                    <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none" }}>RSVP</a>
-                    <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.8)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-
-            <div style={{ background: "#fff", padding: 10, display: "flex", justifyContent: "center", gap: 8, borderBottom: `1px solid ${PRIMARY_LIGHT}` }}>
-              {[1, 2, 3].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />)}
-            </div>
-
-            {/* Blessing card */}
-            <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <div style={pretitleStyle(PRIMARY)}>With Love</div>
-              <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
-                {(couple as any).family_invitation_text ||
-                  "Like a garden that blooms in its season, our love has grown into something beautiful. Join us as we begin this new chapter together."}
-              </div>
-            </motion.div>
-
-            {/* Family names */}
-            {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Families</div>
-                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
-                  {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED }}>
-                    {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
-                      .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
-                  </span>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Events */}
-            {eventsList.map(ev => {
-              const evDate = new Date(ev.date)
-              const evDateDisplay = isNipuniAnjana
-                ? `${evDate.getDate()}${ordinalSuffix(evDate.getDate())} ${evDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`
-                : evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-              const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
-              return (
-                <motion.div key={ev.key} style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <div style={pretitleStyle(PRIMARY)}>{ev.icon} Save the Date</div>
-                  <div style={titleStyle(DARK)}>{ev.label}</div>
-                  {[
-                    { icon: "📅", label: "Date", val: evDateDisplay, tsKey: '' },
-                    { icon: "⏰", label: "Time", val: evTimeDisplay, tsKey: '' },
-                    { icon: "📍", label: "Venue", val: ev.venue, sub: ev.venue_address, tsKey: 'venue_name', subTsKey: 'venue_address' },
-                  ].map(d => (
-                    <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
-                      <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED }}>{d.label}</div>
-                        <div style={{ ...(d.tsKey ? ts(d.tsKey) : {}), fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
-                        {d.sub && <div style={{ ...((d as any).subTsKey ? ts((d as any).subTsKey) : {}), fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
-                      </div>
-                    </div>
-                  ))}
-                  {ev.maps_url && (
-                    <a href={ev.maps_url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}44`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 700 }}>
-                      📍 View Location on Maps
-                    </a>
-                  )}
-                </motion.div>
-              )
-            })}
-
-            {/* Countdown — full-width bordered band, matching Floral Romance */}
-            {sv.countdown && (
-              <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
-                <div style={{ ...pretitleStyle(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={isRedTheme ? MUTED : undefined} />
-              </div>
-            )}
-
-            {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
-
-            {/* Timeline */}
-            {sv.timeline && W.timeline.length > 0 && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Celebration</div>
-                <div style={titleStyle(DARK)}>The Wedding Lineup</div>
-                <div style={{ position: "relative", paddingLeft: 20 }}>
-                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}` }} />
-                  {W.timeline.map((t, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                      style={{ position: "relative", padding: "10px 0 10px 20px" }}>
-                      <div style={{ position: "absolute", left: -14, top: 14, width: 10, height: 10, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
-                      <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
-                      <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Guest Wishes Wall */}
-            {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div id="wishes" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>With Love</div>
-                <div style={titleStyle(DARK)}>Wishes for Us</div>
-                <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center', marginBottom: 16 }}>
-                  Share your wishes and blessings with {W.bride} &amp; {W.groom}.
-                </div>
-                <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
-              </motion.div>
-            )}
-
-            {/* Seat finder */}
-            {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Be Our Guest</div>
-                <div style={titleStyle(DARK)}>Find Your Table</div>
-                <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
-                <SeatFinder seats={W.seats} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} />
-              </motion.div>
-            )}
-
-            {/* Music */}
-            {sv.music && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Song</div>
-                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
-              </motion.div>
-            )}
-
-            {/* Gallery */}
-            {sv.gallery && W.gallery.length > 0 && (
-              <motion.div id="gallery" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Story</div>
-                <div style={titleStyle(DARK)}>Our Moments</div>
-                <div style={{ columnCount: 2, columnGap: 10 }}>
-                  {W.gallery.map((src, i) => (
-                    <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Thank you */}
-            {sv.thank_you && (
-              <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
-                <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
-                </div>
-                <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Contact Numbers */}
-            {contactList.length > 0 && (
-              <motion.div id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
-                <div style={titleStyle(DARK)}>Contact Numbers</div>
-                <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} nameColor={isRedTheme ? DARK : undefined} phoneColor={isRedTheme ? MUTED : undefined} />)}
-                </div>
-              </motion.div>
-            )}
-
-            <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.6 }}>
-                <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
-              </div>
-              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: MUTED }}>inviteglow.com · Digital Wedding Invitations</div>
-              {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
-            </div>
-          </motion.div>
-        )}
+        <div style={{ textAlign: "center", marginTop: 40, fontSize: 11, color: TEXT_MUTED }}>
+          Auto-refreshes every 30 seconds · InviteGlow Dashboard
+        </div>
       </div>
-      {opened && (
-        <BottomNavBar
-          primary={PRIMARY} accent={isRedTheme ? PRIMARY_LIGHT : undefined} dark={DARK}
-          mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
-          hasWishes={(couple as any).enable_guest_wishes ?? false}
-          hasGallery={sv.gallery && W.gallery.length > 0}
-          audioRef={audioRef}
-        />
-      )}
     </div>
   )
 }
