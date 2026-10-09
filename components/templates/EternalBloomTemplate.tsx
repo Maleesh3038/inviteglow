@@ -443,7 +443,7 @@ function SimpleRSVP({ coupleId, primary, dark, cream, muted, guestName }: { coup
       <style>{`.simple-rsvp-input::placeholder { color: ${primary}; opacity: 0.75; }`}</style>
       <LeafDivider color={primary} />
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
-      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
+      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>We would love to have you celebrate with us</div>
       <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)", textAlign: "left" }}>
         <label style={fieldLabelStyle}>Guest Name <span style={requiredMark}>*</span></label>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" className="simple-rsvp-input" style={inputStyle} />
