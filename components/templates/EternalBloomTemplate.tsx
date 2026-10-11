@@ -445,7 +445,7 @@ function SimpleRSVP({ coupleId, primary, dark, cream, muted, guestName }: { coup
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>We would love to have you celebrate with us</div>
       <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)", textAlign: "left" }}>
-        <label style={fieldLabelStyle}>Guest Name <span style={requiredMark}>*</span></label>
+        <label style={{ ...fieldLabelStyle, color: primary }}>Guest Name <span style={requiredMark}>*</span></label>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" className="simple-rsvp-input" style={inputStyle} />
 
         <label style={fieldLabelStyle}>Phone Number <span style={{ color: muted, fontWeight: 400 }}>(optional)</span></label>
@@ -937,7 +937,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #b5c2ac; }
         .eb-petal {
@@ -1098,11 +1098,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>Our Families</div>
-                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
-                  {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED }}>
+                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, fontFamily: useClearNameFont ? "'Playfair Display',serif" : undefined }}>
+                  {W.brideFamilyName && <><strong style={useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.brideFamilyName}</strong><br /></>}
+                  {W.brideFamilyName && W.groomFamilyName && <><span style={useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
+                  {W.groomFamilyName && <><strong style={useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.groomFamilyName}</strong><br /></>}
+                  <span style={{ color: MUTED, fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
                     {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
                       .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
                   </span>
