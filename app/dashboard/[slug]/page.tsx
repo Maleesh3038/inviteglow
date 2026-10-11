@@ -84,13 +84,30 @@ const TEXT_STYLE_TARGETS: { key: string; label: string; example: (c: { bride: st
   { key: 'countdown_label', label: 'Countdown Heading', example: () => 'Counting Down to Our Big Day' },
 ]
 
-async function uploadToStorage(file: File, folder: string): Promise<string | null> {
+// Guesses a content-type from the file extension when the browser doesn't
+// report one (file.type can come back empty, especially for .gif on some
+// mobile file pickers) — without this, Supabase Storage falls back to a
+// generic type and WhatsApp's link-preview scraper either refuses to show
+// the image at all or won't animate a GIF.
+function guessContentType(file: File): string {
+  if (file.type) return file.type
+  const ext = (file.name.split('.').pop() || '').toLowerCase()
+  if (ext === 'gif') return 'image/gif'
+  if (ext === 'png') return 'image/png'
+  if (ext === 'webp') return 'image/webp'
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg'
+  return 'application/octet-stream'
+}
+
+async function uploadToStorage(file: File, folder: string): Promise<{ url: string | null; error: string | null }> {
   const ext = file.name.split('.').pop()
   const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-  const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
-  if (error) { console.error('Upload error:', error); return null }
+  const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, {
+    cacheControl: '3600', upsert: false, contentType: guessContentType(file),
+  })
+  if (error) { console.error('Upload error:', error); return { url: null, error: error.message } }
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
-  return data.publicUrl
+  return { url: data.publicUrl, error: null }
 }
 
 function findSeatForGuest(guestName: string, seats: Record<string, string>): string | null {
@@ -771,20 +788,24 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   }
   const fieldWrap: React.CSSProperties = { marginBottom: 16 }
 
+  const [photoError, setPhotoError] = useState('')
   const handlePhotoUpload = async (file: File) => {
-    setUploading(true)
-    const url = await uploadToStorage(file, 'couple')
+    setUploading(true); setPhotoError('')
+    const { url, error } = await uploadToStorage(file, 'couple')
     setUploading(false)
     if (url) setPhoto(url)
+    else setPhotoError('Upload failed: ' + (error || 'unknown error') + '. Please try a different photo.')
   }
 
   const [sharePreviewUploading, setSharePreviewUploading] = useState(false)
+  const [sharePreviewError, setSharePreviewError] = useState('')
   const sharePreviewInputRef = useRef<HTMLInputElement>(null)
   const handleSharePreviewUpload = async (file: File) => {
-    setSharePreviewUploading(true)
-    const url = await uploadToStorage(file, 'share-preview')
+    setSharePreviewUploading(true); setSharePreviewError('')
+    const { url, error } = await uploadToStorage(file, 'share-preview')
     setSharePreviewUploading(false)
     if (url) setSharePreview(url)
+    else setSharePreviewError('Upload failed: ' + (error || 'unknown error') + (file.name.toLowerCase().endsWith('.gif') ? ' — this storage bucket may not allow .gif files yet (see add_gif_mimetype.sql).' : '.'))
   }
 
   const updateSeatRow = (id: number, field: 'name' | 'table', value: string) => {
@@ -896,6 +917,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f) }} />
         </div>
+        {photoError && <div style={{ fontSize: 12, color: '#b3261e', marginTop: 8 }}>{photoError}</div>}
       </div>
 
       <div style={fieldWrap}>
@@ -923,6 +945,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           <input ref={sharePreviewInputRef} type="file" accept="image/*,.gif" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) handleSharePreviewUpload(f) }} />
         </div>
+        {sharePreviewError && <div style={{ fontSize: 12, color: '#b3261e', marginTop: 8 }}>{sharePreviewError}</div>}
       </div>
 
       <div style={fieldWrap}>
