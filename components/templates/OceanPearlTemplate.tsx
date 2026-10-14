@@ -797,7 +797,7 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
                 style={{
                   ...sectionCard,
                   ...(isUpekshaAnjula ? {
-                    backgroundImage: `linear-gradient(rgba(13,46,58,0.6),rgba(13,46,58,0.68)),url('/images/upeksha-anjula-lineup.jpg')`,
+                    backgroundImage: `linear-gradient(rgba(13,46,58,0.78),rgba(13,46,58,0.85)),url('/images/upeksha-anjula-lineup.jpg')`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   } : {}),
