@@ -793,27 +793,31 @@ function OceanPearlInner({ couple }: { couple: Couple }) {
             )}
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
             {sv.timeline && W.timeline.length > 0 && (
-              <motion.div
-                style={{
-                  ...sectionCard,
-                  ...(isUpekshaAnjula ? {
-                    backgroundImage: `linear-gradient(rgba(13,46,58,0.78),rgba(13,46,58,0.85)),url('/images/upeksha-anjula-lineup.jpg')`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  } : {}),
-                }}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={{ ...sectionEyebrow(PRIMARY), ...(isUpekshaAnjula ? { color: "#fff" } : {}) }}>Our Celebration</div>
-                <div style={{ ...sectionTitle(DARK), ...(isUpekshaAnjula ? { color: "#fff" } : {}) }}>{(couple as any).timeline_title || 'The Wedding Lineup'}</div>
+              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
+                <div style={sectionTitle(DARK)}>{(couple as any).timeline_title || 'The Wedding Lineup'}</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
-                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: isUpekshaAnjula ? "rgba(255,255,255,0.45)" : `${PRIMARY_LIGHT}77` }} />
+                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: `${PRIMARY_LIGHT}77` }} />
                   {W.timeline.map((t, i) => (
                     <div key={i} style={{ position: "relative", padding: "10px 0 10px 20px" }}>
                       <div style={{ position: "absolute", left: -14, top: 14, width: 10, height: 10, borderRadius: "50%", background: PRIMARY, border: "2px solid #fff", boxShadow: `0 0 0 2px ${PRIMARY_LIGHT}` }} />
-                      <div style={{ fontSize: 11, fontWeight: 600, color: isUpekshaAnjula ? "#fff" : PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
-                      <div style={{ fontSize: 13, color: isUpekshaAnjula ? "#fff" : DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: PRIMARY, letterSpacing: "0.1em" }}>{t.time}</div>
+                      <div style={{ fontSize: 13, color: DARK, fontWeight: 500, marginTop: 2 }}>{t.event}</div>
                     </div>
                   ))}
+                </div>
+              </motion.div>
+            )}
+            {/* Slug-scoped extra photo section — "upeksha-anjula-" only. Shown
+                as its own card right under the Wedding Lineup, image sized to
+                its natural aspect ratio so nothing gets awkwardly cropped. */}
+            {isUpekshaAnjula && (
+              <motion.div style={{ ...sectionCard, padding: "1.8rem 1.8rem 1.5rem" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={sectionEyebrow(PRIMARY)}>A Moment We Cherish</div>
+                <div style={sectionTitle(DARK)}>Forever Begins Here</div>
+                <div style={{ borderRadius: 18, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/upeksha-anjula-lineup.jpg" alt="" style={{ width: "100%", height: "auto", display: "block" }} />
                 </div>
               </motion.div>
             )}
