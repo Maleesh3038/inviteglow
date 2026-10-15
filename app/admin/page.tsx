@@ -920,14 +920,19 @@ function VideoUploader({ value, onChange, hasPoster, onGeneratedPoster }: { valu
 }
 function MusicUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
   const [tab, setTab] = useState<'upload' | 'youtube'>(value.includes('youtube.com') || value.includes('youtu.be') ? 'youtube' : 'upload')
   const inputRef = useRef<HTMLInputElement>(null)
   const handleFile = async (file: File) => {
     setUploading(true)
+    setError('')
     const ext = file.name.split('.').pop()
     const fileName = `music/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false })
-    if (!error) {
+    const { error: uploadError } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type || 'audio/mpeg' })
+    if (uploadError) {
+      console.error('Music upload error:', uploadError)
+      setError(uploadError.message || 'Upload failed — please try again.')
+    } else {
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
       onChange(data.publicUrl)
     }
@@ -963,8 +968,9 @@ function MusicUploader({ value, onChange }: { value: string; onChange: (url: str
             )}
           </div>
           <input ref={inputRef} type="file" accept="audio/*,.mp3,.wav,.aac,.m4a,.ogg" style={{ display: 'none' }}
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
           <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>Upload MP3, AAC, WAV, or M4A. Plays automatically when guests open the invitation.</div>
+          {error && <div style={{ fontSize: 11.5, color: '#dc2626', marginTop: 8, lineHeight: 1.5 }}>{error}</div>}
         </div>
       )}
       {tab === 'youtube' && (
