@@ -535,8 +535,9 @@ function WishesWall({ coupleId, primary, gold, dark, cream, muted }: { coupleId:
 // ── Card + section styles — white cards with gold corner brackets, the
 // signature honor-guard motif in place of a botanical/geometric accent. ──
 // ── Contact Numbers — click-to-call and WhatsApp buttons per person.
-// Only rendered for whichever of bride/groom phone the admin has filled
-// in; either can be present without the other. ──
+// Reads the flexible `contacts` list first; if that's empty, falls back to
+// the classic bride_phone/groom_phone fields so older invitations keep
+// showing their existing numbers with no data lost. ──
 function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
   const digitsOnly = phone.replace(/\D/g, '')
   const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
@@ -664,6 +665,17 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
     bridePhone: (couple as any).bride_phone || '', groomPhone: (couple as any).groom_phone || '',
     groomRank: (couple as any).groom_rank || '',
   }
+
+  // Additional Contact Numbers (admin's flexible contacts list) — falls
+  // back to the classic bride/groom phone fields when none are set, same
+  // pattern used by the other templates (Ocean Pearl, Eternal Bloom).
+  const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.name && c?.phone) : []
+  const contactList: { name: string; phone: string }[] = flexContacts.length > 0
+    ? flexContacts
+    : [
+        ...(W.groom && W.groomPhone ? [{ name: W.groom, phone: W.groomPhone }] : []),
+        ...(W.bride && W.bridePhone ? [{ name: W.bride, phone: W.bridePhone }] : []),
+      ]
 
   const TINT = "#f0ede2"
 
@@ -944,14 +956,13 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
             )}
 
             {/* Contact Numbers */}
-            {(W.bridePhone || W.groomPhone) && (
+            {contactList.length > 0 && (
               <motion.div id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <CornerBrackets color={GOLD} />
                 <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
                 <div style={titleStyle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {W.groomPhone && <ContactRow name={W.groom} phone={W.groomPhone} primary={PRIMARY} />}
-                  {W.bridePhone && <ContactRow name={W.bride} phone={W.bridePhone} primary={PRIMARY} />}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
                 </div>
               </motion.div>
             )}
@@ -972,7 +983,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            <div id={(W.bridePhone || W.groomPhone) ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
+            <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
                 <svg width={30} height={30} viewBox="0 0 24 24" fill={GOLD}><path d="M12 2l2.4 6.9H22l-6 4.4 2.3 7-6.3-4.4L5.7 20.3l2.3-7-6-4.4h7.6z" /></svg>
               </div>
