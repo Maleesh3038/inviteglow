@@ -120,23 +120,27 @@ async function uploadToStorage(file: File, folder: string): Promise<{ url: strin
 // link-preview box (1200x630, the 1.91:1 ratio WhatsApp/Facebook/etc.
 // all expect) and compressed well under 1MB. GIFs are left completely
 // untouched so their animation still plays in WhatsApp.
-async function prepareSharePreviewImage(file: File): Promise<File> {
+//
+// Uses an object URL (not a FileReader data: URL) to hand the image to
+// the browser's decoder — some mobile file pickers report an empty
+// file.type, which breaks a data: URL (it has no mime type to put in
+// the "data:...;base64," prefix) and silently fails to decode, which
+// would otherwise make this whole step quietly no-op.
+//
+// Returns a status string alongside the file so the UI can show
+// (and a screenshot can confirm) whether the resize actually ran,
+// instead of that being invisible.
+async function prepareSharePreviewImage(file: File): Promise<{ file: File; status: string }> {
   const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')
-  if (isGif) return file
+  if (isGif) return { file, status: 'GIF — kept as-is (not resized) so the animation still plays.' }
 
+  const objectUrl = URL.createObjectURL(file)
   try {
-    const dataUrl: string = await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-
     const img: HTMLImageElement = await new Promise((resolve, reject) => {
       const el = new Image()
       el.onload = () => resolve(el)
-      el.onerror = reject
-      el.src = dataUrl
+      el.onerror = () => reject(new Error('browser could not decode this image file'))
+      el.src = objectUrl
     })
 
     const TARGET_W = 1200
@@ -145,7 +149,7 @@ async function prepareSharePreviewImage(file: File): Promise<File> {
     canvas.width = TARGET_W
     canvas.height = TARGET_H
     const ctx = canvas.getContext('2d')
-    if (!ctx) return file
+    if (!ctx) return { file, status: 'Could not auto-resize (no canvas support) — uploaded your original photo as-is.' }
 
     // "Cover" fit: scale so the photo fills the 1200x630 box, cropping
     // whatever hangs off the edges — the same crop WhatsApp would do to a
@@ -163,15 +167,18 @@ async function prepareSharePreviewImage(file: File): Promise<File> {
       quality -= 0.15
       blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
     }
-    if (!blob) return file
+    if (!blob) return { file, status: 'Could not auto-resize (compression failed) — uploaded your original photo as-is.' }
 
     const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg'
-    return new File([blob], newName, { type: 'image/jpeg' })
+    const resized = new File([blob], newName, { type: 'image/jpeg' })
+    return { file: resized, status: `Resized to 1200×630, ${Math.round(blob.size / 1024)}KB (from ${file.name}, ${Math.round(file.size / 1024)}KB).` }
   } catch (e) {
     // If anything about resizing fails (unsupported format, etc.), fall
     // back to uploading the original file rather than blocking the user.
     console.error('Share preview resize failed, uploading original file instead:', e)
-    return file
+    return { file, status: `Could not auto-resize (${e instanceof Error ? e.message : 'unknown error'}) — uploaded your original photo as-is. Please pick a smaller, landscape-shaped photo instead (under 1MB).` }
+  } finally {
+    URL.revokeObjectURL(objectUrl)
   }
 }
 
@@ -864,10 +871,12 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
 
   const [sharePreviewUploading, setSharePreviewUploading] = useState(false)
   const [sharePreviewError, setSharePreviewError] = useState('')
+  const [sharePreviewStatus, setSharePreviewStatus] = useState('')
   const sharePreviewInputRef = useRef<HTMLInputElement>(null)
   const handleSharePreviewUpload = async (file: File) => {
-    setSharePreviewUploading(true); setSharePreviewError('')
-    const preparedFile = await prepareSharePreviewImage(file)
+    setSharePreviewUploading(true); setSharePreviewError(''); setSharePreviewStatus('')
+    const { file: preparedFile, status } = await prepareSharePreviewImage(file)
+    setSharePreviewStatus(status)
     const { url, error } = await uploadToStorage(preparedFile, 'share-preview')
     setSharePreviewUploading(false)
     if (url) setSharePreview(url)
@@ -1012,6 +1021,7 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
             onChange={e => { const f = e.target.files?.[0]; if (f) handleSharePreviewUpload(f) }} />
         </div>
         {sharePreviewError && <div style={{ fontSize: 12, color: '#b3261e', marginTop: 8 }}>{sharePreviewError}</div>}
+        {sharePreviewStatus && <div style={{ fontSize: 11, color: '#64748b', marginTop: 8 }}>{sharePreviewStatus}</div>}
       </div>
 
       <div style={fieldWrap}>
