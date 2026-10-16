@@ -151,21 +151,24 @@ async function prepareSharePreviewImage(file: File): Promise<{ file: File; statu
     const ctx = canvas.getContext('2d')
     if (!ctx) return { file, status: 'Could not auto-resize (no canvas support) — uploaded your original photo as-is.' }
 
-    // "Cover" fit: scale so the photo fills the 1200x630 box, cropping
-    // whatever hangs off the edges — the same crop WhatsApp would do to a
-    // wrong-shaped image anyway, except under our control. For a portrait
-    // (tall) source photo, fitting it into this wide box crops away most
-    // of the height — a plain center crop would cut faces in half, so the
-    // vertical crop is biased toward the top instead, where a couple
-    // portrait almost always has its faces, trimming mostly from the
-    // bottom (feet/legs) rather than evenly from both ends.
-    const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height)
-    const drawW = img.width * scale
-    const drawH = img.height * scale
-    const isPortraitSource = img.height > img.width
-    const dx = (TARGET_W - drawW) / 2
-    const dy = (TARGET_H - drawH) * (isPortraitSource ? 0.15 : 0.5)
-    ctx.drawImage(img, dx, dy, drawW, drawH)
+    // Show the FULL photo, nothing cropped off — a portrait (tall) source
+    // doesn't fit a wide 1200x630 box without empty space on the sides, so
+    // that empty space is filled with a blurred, darkened copy of the same
+    // photo (the common "Instagram story" background trick) instead of a
+    // plain color bar, and the complete, uncropped photo is drawn on top,
+    // centered and scaled to fit entirely inside the box.
+    const coverScale = Math.max(TARGET_W / img.width, TARGET_H / img.height)
+    const coverW = img.width * coverScale
+    const coverH = img.height * coverScale
+    ctx.save()
+    ctx.filter = 'blur(28px) brightness(0.65)'
+    ctx.drawImage(img, (TARGET_W - coverW) / 2 - 30, (TARGET_H - coverH) / 2 - 30, coverW + 60, coverH + 60)
+    ctx.restore()
+
+    const containScale = Math.min(TARGET_W / img.width, TARGET_H / img.height)
+    const containW = img.width * containScale
+    const containH = img.height * containScale
+    ctx.drawImage(img, (TARGET_W - containW) / 2, (TARGET_H - containH) / 2, containW, containH)
 
     // Step the JPEG quality down until it's comfortably under WhatsApp's
     // practical size ceiling, with margin to spare.
