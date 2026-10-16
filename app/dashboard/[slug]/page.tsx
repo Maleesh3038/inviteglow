@@ -153,11 +153,19 @@ async function prepareSharePreviewImage(file: File): Promise<{ file: File; statu
 
     // "Cover" fit: scale so the photo fills the 1200x630 box, cropping
     // whatever hangs off the edges — the same crop WhatsApp would do to a
-    // wrong-shaped image anyway, except centered and under our control.
+    // wrong-shaped image anyway, except under our control. For a portrait
+    // (tall) source photo, fitting it into this wide box crops away most
+    // of the height — a plain center crop would cut faces in half, so the
+    // vertical crop is biased toward the top instead, where a couple
+    // portrait almost always has its faces, trimming mostly from the
+    // bottom (feet/legs) rather than evenly from both ends.
     const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height)
     const drawW = img.width * scale
     const drawH = img.height * scale
-    ctx.drawImage(img, (TARGET_W - drawW) / 2, (TARGET_H - drawH) / 2, drawW, drawH)
+    const isPortraitSource = img.height > img.width
+    const dx = (TARGET_W - drawW) / 2
+    const dy = (TARGET_H - drawH) * (isPortraitSource ? 0.15 : 0.5)
+    ctx.drawImage(img, dx, dy, drawW, drawH)
 
     // Step the JPEG quality down until it's comfortably under WhatsApp's
     // practical size ceiling, with margin to spare.
