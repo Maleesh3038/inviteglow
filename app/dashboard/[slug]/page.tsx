@@ -110,6 +110,71 @@ async function uploadToStorage(file: File, folder: string): Promise<{ url: strin
   return { url: data.publicUrl, error: null }
 }
 
+// WhatsApp's own link-preview crawler is much stricter than generic
+// Open Graph checker tools — it can successfully fetch an image (so a
+// tool like opengraph.xyz shows it fine) and still silently drop it
+// from the actual chat preview, falling back to text-only, if the file
+// is too large or an unexpected shape. A photo straight off a phone is
+// often 2-4MB and tall/portrait, which trips this. So before a Share
+// Preview photo is uploaded, it's resized client-side to the standard
+// link-preview box (1200x630, the 1.91:1 ratio WhatsApp/Facebook/etc.
+// all expect) and compressed well under 1MB. GIFs are left completely
+// untouched so their animation still plays in WhatsApp.
+async function prepareSharePreviewImage(file: File): Promise<File> {
+  const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')
+  if (isGif) return file
+
+  try {
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+    const img: HTMLImageElement = await new Promise((resolve, reject) => {
+      const el = new Image()
+      el.onload = () => resolve(el)
+      el.onerror = reject
+      el.src = dataUrl
+    })
+
+    const TARGET_W = 1200
+    const TARGET_H = 630
+    const canvas = document.createElement('canvas')
+    canvas.width = TARGET_W
+    canvas.height = TARGET_H
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return file
+
+    // "Cover" fit: scale so the photo fills the 1200x630 box, cropping
+    // whatever hangs off the edges — the same crop WhatsApp would do to a
+    // wrong-shaped image anyway, except centered and under our control.
+    const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height)
+    const drawW = img.width * scale
+    const drawH = img.height * scale
+    ctx.drawImage(img, (TARGET_W - drawW) / 2, (TARGET_H - drawH) / 2, drawW, drawH)
+
+    // Step the JPEG quality down until it's comfortably under WhatsApp's
+    // practical size ceiling, with margin to spare.
+    let quality = 0.85
+    let blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
+    while (blob && blob.size > 700 * 1024 && quality > 0.4) {
+      quality -= 0.15
+      blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
+    }
+    if (!blob) return file
+
+    const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+    return new File([blob], newName, { type: 'image/jpeg' })
+  } catch (e) {
+    // If anything about resizing fails (unsupported format, etc.), fall
+    // back to uploading the original file rather than blocking the user.
+    console.error('Share preview resize failed, uploading original file instead:', e)
+    return file
+  }
+}
+
 function findSeatForGuest(guestName: string, seats: Record<string, string>): string | null {
   const query = guestName.trim().toLowerCase()
   if (!query) return null
@@ -802,7 +867,8 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
   const sharePreviewInputRef = useRef<HTMLInputElement>(null)
   const handleSharePreviewUpload = async (file: File) => {
     setSharePreviewUploading(true); setSharePreviewError('')
-    const { url, error } = await uploadToStorage(file, 'share-preview')
+    const preparedFile = await prepareSharePreviewImage(file)
+    const { url, error } = await uploadToStorage(preparedFile, 'share-preview')
     setSharePreviewUploading(false)
     if (url) setSharePreview(url)
     else setSharePreviewError('Upload failed: ' + (error || 'unknown error') + (file.name.toLowerCase().endsWith('.gif') ? ' — this storage bucket may not allow .gif files yet (see add_gif_mimetype.sql).' : '.'))
