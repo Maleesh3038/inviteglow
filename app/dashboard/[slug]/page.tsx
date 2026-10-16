@@ -153,17 +153,11 @@ async function prepareSharePreviewImage(file: File): Promise<{ file: File; statu
 
     // Show the FULL photo, nothing cropped off — a portrait (tall) source
     // doesn't fit a wide 1200x630 box without empty space on the sides, so
-    // that empty space is filled with a blurred, darkened copy of the same
-    // photo (the common "Instagram story" background trick) instead of a
-    // plain color bar, and the complete, uncropped photo is drawn on top,
-    // centered and scaled to fit entirely inside the box.
-    const coverScale = Math.max(TARGET_W / img.width, TARGET_H / img.height)
-    const coverW = img.width * coverScale
-    const coverH = img.height * coverScale
-    ctx.save()
-    ctx.filter = 'blur(28px) brightness(0.65)'
-    ctx.drawImage(img, (TARGET_W - coverW) / 2 - 30, (TARGET_H - coverH) / 2 - 30, coverW + 60, coverH + 60)
-    ctx.restore()
+    // that empty space is filled with a plain neutral background, and the
+    // complete, uncropped photo is drawn on top, centered and scaled to
+    // fit entirely inside the box.
+    ctx.fillStyle = '#faf7f2'
+    ctx.fillRect(0, 0, TARGET_W, TARGET_H)
 
     const containScale = Math.min(TARGET_W / img.width, TARGET_H / img.height)
     const containW = img.width * containScale
