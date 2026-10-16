@@ -743,16 +743,18 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
 
                 <div style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: GOLD, marginBottom: "1rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)", fontFamily: "'Oswald',sans-serif", fontWeight: 500 }}>You Are Invited</div>
 
-                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
+                {/* Groom's name shown first (on top), with his rank directly
+                    underneath — then the bride's name below the divider. */}
+                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
+                {W.groomRank && (
+                  <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>{W.groomRank}</div>
+                )}
                 <div style={{ margin: "10px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                   <svg width={13} height={13} viewBox="0 0 24 24" fill={GOLD}><path d="M12 2l2.4 6.9H22l-6 4.4 2.3 7-6.3-4.4L5.7 20.3l2.3-7-6-4.4h7.6z" /></svg>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
-                {W.groomRank && (
-                  <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>{W.groomRank}</div>
-                )}
+                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
 
                 {guestName && (
                   <>
