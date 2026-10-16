@@ -114,12 +114,14 @@ async function uploadToStorage(file: File, folder: string): Promise<{ url: strin
 // Open Graph checker tools — it can successfully fetch an image (so a
 // tool like opengraph.xyz shows it fine) and still silently drop it
 // from the actual chat preview, falling back to text-only, if the file
-// is too large or an unexpected shape. A photo straight off a phone is
-// often 2-4MB and tall/portrait, which trips this. So before a Share
-// Preview photo is uploaded, it's resized client-side to the standard
-// link-preview box (1200x630, the 1.91:1 ratio WhatsApp/Facebook/etc.
-// all expect) and compressed well under 1MB. GIFs are left completely
-// untouched so their animation still plays in WhatsApp.
+// is too large, full stop — the shape/aspect ratio turns out not to
+// matter (WhatsApp happily displays a tall portrait photo at its own
+// natural shape right in the chat bubble). A photo straight off a phone
+// is often 2-4MB, which trips this. So before a Share Preview photo is
+// uploaded, it's shrunk down and compressed client-side, keeping its
+// own original shape untouched — nothing cropped, no added bars, just
+// smaller. GIFs are left completely untouched so their animation still
+// plays in WhatsApp.
 //
 // Uses an object URL (not a FileReader data: URL) to hand the image to
 // the browser's decoder — some mobile file pickers report an empty
@@ -143,26 +145,20 @@ async function prepareSharePreviewImage(file: File): Promise<{ file: File; statu
       el.src = objectUrl
     })
 
-    const TARGET_W = 1200
-    const TARGET_H = 630
+    // Shrink to fit within a reasonable max dimension — keeps the photo's
+    // own natural shape (portrait stays portrait, landscape stays
+    // landscape), just smaller, so WhatsApp's crawler can fetch and
+    // process it quickly. Never upscale a photo that's already small.
+    const MAX_DIMENSION = 1600
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height))
+    const outW = Math.round(img.width * scale)
+    const outH = Math.round(img.height * scale)
     const canvas = document.createElement('canvas')
-    canvas.width = TARGET_W
-    canvas.height = TARGET_H
+    canvas.width = outW
+    canvas.height = outH
     const ctx = canvas.getContext('2d')
     if (!ctx) return { file, status: 'Could not auto-resize (no canvas support) — uploaded your original photo as-is.' }
-
-    // Show the FULL photo, nothing cropped off — a portrait (tall) source
-    // doesn't fit a wide 1200x630 box without empty space on the sides, so
-    // that empty space is filled with a plain neutral background, and the
-    // complete, uncropped photo is drawn on top, centered and scaled to
-    // fit entirely inside the box.
-    ctx.fillStyle = '#faf7f2'
-    ctx.fillRect(0, 0, TARGET_W, TARGET_H)
-
-    const containScale = Math.min(TARGET_W / img.width, TARGET_H / img.height)
-    const containW = img.width * containScale
-    const containH = img.height * containScale
-    ctx.drawImage(img, (TARGET_W - containW) / 2, (TARGET_H - containH) / 2, containW, containH)
+    ctx.drawImage(img, 0, 0, outW, outH)
 
     // Step the JPEG quality down until it's comfortably under WhatsApp's
     // practical size ceiling, with margin to spare.
@@ -176,7 +172,7 @@ async function prepareSharePreviewImage(file: File): Promise<{ file: File; statu
 
     const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg'
     const resized = new File([blob], newName, { type: 'image/jpeg' })
-    return { file: resized, status: `Resized to 1200×630, ${Math.round(blob.size / 1024)}KB (from ${file.name}, ${Math.round(file.size / 1024)}KB).` }
+    return { file: resized, status: `Resized to ${outW}×${outH}, ${Math.round(blob.size / 1024)}KB (from ${file.name}, ${Math.round(file.size / 1024)}KB).` }
   } catch (e) {
     // If anything about resizing fails (unsupported format, etc.), fall
     // back to uploading the original file rather than blocking the user.
