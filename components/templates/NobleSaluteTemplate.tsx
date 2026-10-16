@@ -709,8 +709,16 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               {coverVideoUrl && (
                 <video ref={videoRef} muted autoPlay playsInline preload="auto" onEnded={handleVideoEnded}
                   onPlaying={e => {
-                    e.currentTarget.style.opacity = "1"
-                    if (!userStartedRef.current) e.currentTarget.pause()
+                    // The browser autoplays this (muted) the moment it's ready,
+                    // purely so it's preloaded and primed to play instantly on
+                    // tap — it isn't meant to be seen yet. Only reveal it once
+                    // the guest has actually tapped "Open Invitation"; before
+                    // that, stay hidden (opacity 0) and paused so the uploaded
+                    // cover photo underneath stays the only thing visible,
+                    // instead of this video's frozen first frame popping over
+                    // it the instant autoplay kicks in.
+                    if (userStartedRef.current) e.currentTarget.style.opacity = "1"
+                    else e.currentTarget.pause()
                   }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 2, opacity: 0, transition: "opacity 0.4s ease" }}>
                   <source src={coverVideoUrl} type="video/mp4" />
