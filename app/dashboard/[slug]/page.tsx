@@ -1018,7 +1018,13 @@ function EditPanel({ couple, onSaved }: { couple: Couple; onSaved: () => void })
           {sharePreview && (
             <button type="button" onClick={() => setSharePreview('')} style={{ fontSize: 12, color: PANEL_ACCENT, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
           )}
-          <input ref={sharePreviewInputRef} type="file" accept="image/*,.gif" style={{ display: 'none' }}
+          {/* No `accept` filter here on purpose — a GIF downloaded from a
+              site like ezgif.com often lands in Files/Downloads without a
+              proper image UTI tag, so an `accept="image/*"` filter can hide
+              it entirely from the OS's restricted file browser. Leaving
+              this wide open lets the user always see and pick it; a wrong
+              file type still gets caught below once it's actually uploaded. */}
+          <input ref={sharePreviewInputRef} type="file" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (f) handleSharePreviewUpload(f) }} />
         </div>
         {sharePreviewError && <div style={{ fontSize: 12, color: '#b3261e', marginTop: 8 }}>{sharePreviewError}</div>}
