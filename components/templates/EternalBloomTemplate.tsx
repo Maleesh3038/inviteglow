@@ -48,12 +48,14 @@ function useTextStyles(couple: any) {
   }
 }
 
-function coupleNameFontSize(name: string): string {
+// `scale` lets one couple's cover names run a bit smaller than the
+// default sizing below (e.g. when switching to a clearer, bolder font
+// that already reads larger at the same size) without changing the
+// scale for every other invitation using this template.
+function coupleNameFontSize(name: string, scale: number = 1): string {
   const len = (name || '').length
-  if (len > 12) return "clamp(1.4rem,5.5vw,1.9rem)"
-  if (len > 9) return "clamp(1.7rem,6.5vw,2.3rem)"
-  if (len > 6) return "clamp(2.0rem,7.5vw,2.8rem)"
-  return "clamp(2.4rem,8.5vw,3.4rem)"
+  const [min, vw, max] = len > 12 ? [1.4, 5.5, 1.9] : len > 9 ? [1.7, 6.5, 2.3] : len > 6 ? [2.0, 7.5, 2.8] : [2.4, 8.5, 3.4]
+  return `clamp(${(min * scale).toFixed(2)}rem,${(vw * scale).toFixed(2)}vw,${(max * scale).toFixed(2)}rem)`
 }
 
 // anjana-nipuni- only: "5" -> "5th", "22" -> "22nd", etc., for the Date row
@@ -818,7 +820,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // as anjana-nipuni, but keeps this template's default sage/moss colors
   // (no red-theme match was requested for this couple).
   const isNipuniAnjana = slug === 'nipuni-anjana'
-  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana
+  // dilki-kasun- also gets the clearer bold serif cover name font instead
+  // of the thin cursive script, at a slightly smaller size than the other
+  // clear-font couples (their names read a bit large at full size since
+  // the bold serif sits visually bigger than the cursive script did).
+  const isDilkiKasun = slug === 'dilki-kasun'
+  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun
+  const coverNameScale = isDilkiKasun ? 0.82 : 1
   const isRedTheme = isKrishalJayakshi || isAnjanaNipuni
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
@@ -1014,13 +1022,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 style={{ textAlign: "center", width: "86%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
                 <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", marginBottom: isMalshaniIsuru ? "1.6rem" : "0.9rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}>{(couple as any).cover_badge_text || "Wedding Invitation"}</div>
-                <div style={{ ...ts('bride_name'), fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: coupleNameFontSize(W.bride), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
+                <div style={{ ...ts('bride_name'), fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: coupleNameFontSize(W.bride, coverNameScale), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word" }}>{W.bride}</div>
                 <div style={{ margin: isMalshaniIsuru ? "22px 0" : "8px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: isMalshaniIsuru ? 14 : 10 }}>
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                   <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#f0d488" }} />
                   <div style={{ height: 1, width: isMalshaniIsuru ? 52 : 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ ...ts('groom_name'), fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: coupleNameFontSize(W.groom), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
+                <div style={{ ...ts('groom_name'), fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : "'Great Vibes',cursive", fontWeight: useClearNameFont ? 700 : 400, fontStyle: useClearNameFont ? "italic" : "normal", fontSize: coupleNameFontSize(W.groom, coverNameScale), color: "#fff", lineHeight: isMalshaniIsuru ? 1.15 : 1, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)", maxWidth: "100%", overflowWrap: "break-word", wordBreak: "break-word", marginTop: isMalshaniIsuru ? 8 : 0 }}>{W.groom}</div>
 
                 {guestName && (
                   <>
