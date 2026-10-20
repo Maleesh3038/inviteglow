@@ -825,8 +825,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // clear-font couples (their names read a bit large at full size since
   // the bold serif sits visually bigger than the cursive script did).
   const isDilkiKasun = slug === 'dilki-kasun'
-  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun
-  const coverNameScale = isDilkiKasun ? 0.82 : 1
+  // vinuri-akalanka- also gets the clearer bold serif cover name font, at
+  // the same slightly-smaller size as dilki-kasun, plus the whole cover
+  // name block nudged down a bit for better placement over their photo.
+  const isVinuriAkalanka = slug === 'vinuri-akalanka'
+  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun || isVinuriAkalanka
+  const coverNameScale = isDilkiKasun || isVinuriAkalanka ? 0.82 : 1
   const isRedTheme = isKrishalJayakshi || isAnjanaNipuni
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
@@ -974,7 +978,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         <AnimatePresence>
           {!opened && (
             <motion.div key="cover" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.5 }}
-              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : "21vh" }}>
+              style={{ minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", position: "relative", overflow: "hidden", background: DARK, paddingTop: isMalshaniIsuru ? "35vh" : isVinuriAkalanka ? "27vh" : "21vh" }}>
 
               {coverPhotoOk ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
