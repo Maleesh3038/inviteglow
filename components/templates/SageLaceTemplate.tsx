@@ -71,8 +71,8 @@ function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
-  primary: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+function BottomNavBar({ primary, accent = "#8aa87e", dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
+  primary: string; accent?: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
 }) {
   const [playing, setPlaying] = useState(false)
   useEffect(() => {
@@ -132,7 +132,7 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
         <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
           position: 'absolute', right: 4, top: -16,
           width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
-          background: `linear-gradient(135deg,${primary},#8aa87e)`, color: '#fff',
+          background: `linear-gradient(135deg,${primary},${accent})`, color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           boxShadow: '0 6px 16px rgba(45,61,40,0.35)',
         }}>
@@ -157,7 +157,7 @@ function BottomNavBar({ primary, dark, mapsUrl, hasWishes, hasGallery, audioRef 
 // flexible `contacts` list first; if that's empty, falls back to the
 // classic bride_phone/groom_phone fields so older invitations keep
 // showing their existing numbers with no data lost. ──
-function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
+function ContactRow({ name, phone, primary, nameColor = '#2d3d28', phoneColor = '#8a9a80' }: { name: string; phone: string; primary: string; nameColor?: string; phoneColor?: string }) {
   const digitsOnly = phone.replace(/\D/g, '')
   const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
   return (
@@ -165,11 +165,11 @@ function ContactRow({ name, phone, primary }: { name: string; phone: string; pri
       <div style={{ minWidth: 0 }}>
         {name ? (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#2d3d28', fontFamily: "'Inter',sans-serif" }}>{name}</div>
-            <div style={{ fontSize: 12, color: '#8a9a80', marginTop: 2 }}>{phone}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: nameColor, fontFamily: "'Inter',sans-serif" }}>{name}</div>
+            <div style={{ fontSize: 12, color: phoneColor, marginTop: 2 }}>{phone}</div>
           </>
         ) : (
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#2d3d28', fontFamily: "'Inter',sans-serif" }}>{phone}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: nameColor, fontFamily: "'Inter',sans-serif" }}>{phone}</div>
         )}
       </div>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -208,14 +208,14 @@ function LeafDivider({ color, size = 20 }: { color: string; size?: number }) {
 }
 
 // ── Guest intro screen ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, midTint = "#eef2e6" }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; midTint?: string
 }) {
   return (
     <motion.div key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `linear-gradient(160deg, ${cream} 0%, #eef2e6 45%, ${cream} 100%)`,
+        background: `linear-gradient(160deg, ${cream} 0%, ${midTint} 45%, ${cream} 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
@@ -244,7 +244,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
 }
 
 // ── Countdown ──
-function Countdown({ targetDate, dark, tint = "#eef2e6" }: { targetDate: string; dark: string; tint?: string }) {
+function Countdown({ targetDate, dark, tint = "#eef2e6", labelColor = "#7a8a70" }: { targetDate: string; dark: string; tint?: string; labelColor?: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
     const tick = () => {
@@ -261,7 +261,7 @@ function Countdown({ targetDate, dark, tint = "#eef2e6" }: { targetDate: string;
       {[["Days", t.d], ["Hours", t.h], ["Minutes", t.m], ["Seconds", t.s]].map(([l, v]) => (
         <div key={l} style={{ flex: 1, textAlign: "center", background: tint, borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%", padding: "12px 3px" }}>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.5rem", color: dark, fontWeight: 700, lineHeight: 1 }}>{v}</div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7a8a70", marginTop: 5 }}>{l}</div>
+          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: labelColor, marginTop: 5 }}>{l}</div>
         </div>
       ))}
     </div>
@@ -697,11 +697,18 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const videoEndedRef = useRef(false)
 
-  const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
-  const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
-  const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
-  const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
-  const MUTED = DEFAULT_PALETTE.muted
+  // One-offs, each gated to a single invitation's slug — every other link
+  // on this template keeps its current sage/moss default untouched:
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  // roshani-sajeewa- wants the dusty-rose/mauve/blush bouquet palette
+  // they shared, instead of this template's default sage green.
+  const isRoshaniSajeewa = slug === 'roshani-sajeewa'
+
+  const PRIMARY = isRoshaniSajeewa ? "#df9179" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isRoshaniSajeewa ? "#f0ddc6" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isRoshaniSajeewa ? "#6b4a44" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isRoshaniSajeewa ? "#fffaf6" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isRoshaniSajeewa ? "#a9847c" : DEFAULT_PALETTE.muted
 
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
@@ -809,7 +816,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const coverEvent = eventsList.find(e => e.key === 'wedding') || eventsList[0]
   const coverFormalDate = formatFormalDate(coverEvent?.date || couple.wedding_date)
 
-  const TINT_SAGE = "#eef2e6"
+  const TINT_SAGE = isRoshaniSajeewa ? "#f6e9e0" : "#eef2e6"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -821,7 +828,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
       <AnimatePresence>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} midTint={isRoshaniSajeewa ? TINT_SAGE : undefined} />
         )}
       </AnimatePresence>
 
@@ -1042,7 +1049,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#a8b89e" }}>{d.label}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: (isRoshaniSajeewa ? MUTED : "#a8b89e") }}>{d.label}</div>
                         <div style={{ ...(d.tsKey ? ts(d.tsKey) : {}), fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ ...((d as any).subTsKey ? ts((d as any).subTsKey) : {}), fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
@@ -1061,7 +1068,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             {sv.countdown && (
               <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
                 <div style={{ ...pretitleStyle(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} />
+                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={isRoshaniSajeewa ? MUTED : undefined} />
               </div>
             )}
 
@@ -1142,7 +1149,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontSize: 11, color: (isRoshaniSajeewa ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
                   <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
@@ -1154,7 +1161,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
                 <div style={titleStyle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} nameColor={isRoshaniSajeewa ? DARK : undefined} phoneColor={isRoshaniSajeewa ? MUTED : undefined} />)}
                 </div>
               </motion.div>
             )}
@@ -1164,7 +1171,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
               </div>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b89e" }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: (isRoshaniSajeewa ? MUTED : "#a8b89e") }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
             </div>
@@ -1173,7 +1180,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
       </div>
       {opened && (
         <BottomNavBar
-          primary={PRIMARY} dark={DARK}
+          primary={PRIMARY} accent={isRoshaniSajeewa ? PRIMARY_LIGHT : undefined} dark={DARK}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
           hasWishes={(couple as any).enable_guest_wishes ?? false}
           hasGallery={sv.gallery && W.gallery.length > 0}
