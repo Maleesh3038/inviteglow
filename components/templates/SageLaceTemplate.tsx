@@ -943,6 +943,27 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   </svg>
                 </motion.div>
               </motion.div>
+
+              {/* A quiet "Tap to Open" hint below the envelope — the
+                  whole envelope has always been clickable, but with no
+                  text or button anywhere guests had no visual cue that it
+                  was tappable at all. Fades away once the flap opens. */}
+              <motion.button
+                onClick={handleOpen}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: flapOpen ? 0 : 1 }}
+                transition={{ duration: 0.4 }}
+                style={{
+                  position: "absolute", bottom: "6%", left: "50%", transform: "translateX(-50%)", zIndex: 4,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "rgba(255,255,255,0.1)", backdropFilter: "blur(6px)",
+                  border: `1px solid ${PRIMARY_LIGHT}66`, borderRadius: 100, padding: "10px 22px",
+                  fontFamily: "'Cormorant Garamond',serif", fontSize: 12, letterSpacing: "0.25em", textTransform: "uppercase",
+                  color: CREAM, cursor: flapOpen ? "default" : "pointer",
+                  pointerEvents: flapOpen ? "none" : "auto",
+                }}>
+                Tap to Open
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
