@@ -131,7 +131,7 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
   )
 }
 
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string }) {
+function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, skipGuestCount }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string; skipGuestCount?: boolean }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
@@ -150,7 +150,7 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName }:
           <>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button onClick={() => name.trim() && setStep("count")} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>✓ Accept</button>
+              <button onClick={() => { if (!name.trim()) return; skipGuestCount ? (askDrinking ? setStep("drinking") : save("yes", null, 1)) : setStep("count") }} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>✓ Accept</button>
               <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: "1px solid #f0ddc8", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Decline"}</button>
             </div>
           </>
@@ -830,7 +830,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               </div>
             )}
 
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} skipGuestCount={isImeshaMadusankaLunch} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
               <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
