@@ -711,7 +711,18 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(90,58,46,0.4) 0%, rgba(90,58,46,0.1) 35%, rgba(224,121,90,0.25) 65%, rgba(90,58,46,0.7) 100%)` }} />
+              {/* Darkened, more neutral overlay — the previous version
+                  dipped to near-transparent through the middle band
+                  (right behind the couple names), which is exactly where
+                  bright photos like this one (warm light, greenery,
+                  lanterns) made white text hard to read. This keeps a
+                  consistent dark base across the whole cover so the text
+                  reads clearly no matter how bright the photo is there. */}
+              <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(30,18,12,0.62) 0%, rgba(30,18,12,0.46) 28%, rgba(30,18,12,0.52) 60%, rgba(30,18,12,0.78) 100%)` }} />
+              {/* Extra soft vignette centered behind the text block itself,
+                  so the names stay legible even over the busiest part of
+                  the photo. */}
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "140%", height: "62%", background: "radial-gradient(ellipse at center, rgba(20,12,8,0.42) 0%, rgba(20,12,8,0.15) 55%, transparent 80%)", pointerEvents: "none" }} />
 
               {/* Sun glow */}
               <div style={{ position: "absolute", top: "18%", left: "50%", transform: "translateX(-50%)", width: 140, height: 140, borderRadius: "50%", background: `radial-gradient(circle, ${PRIMARY_LIGHT}, transparent 70%)`, animation: "sun-glow 3.5s ease-in-out infinite" }} />
@@ -719,18 +730,18 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
                 style={{ textAlign: "center", width: "84%", maxWidth: 340, position: "relative", zIndex: 10, padding: "0 1rem" }}>
 
-                <div style={{ ...ts('subtitle'), display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.25)" }}>
+                <div style={{ ...ts('subtitle'), display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(6px)", borderRadius: 100, padding: "6px 14px", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#fff", marginBottom: "1.2rem", border: "1px solid rgba(255,255,255,0.3)" }}>
                   {(couple as any).cover_badge_text || 'Wedding Invitation'}
                 </div>
 
-                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                <div style={{ ...ts('subtitle'), fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "#fff", marginBottom: "0.8rem", textShadow: "0 2px 10px rgba(0,0,0,0.65)" }}>
                   {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
-                <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.1rem 0" }}>&amp;</div>
-                <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
+                <div style={{ ...ts('bride_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 2px 6px rgba(0,0,0,0.75), 0 6px 28px rgba(0,0,0,0.6)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "2rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}>&amp;</div>
+                <div style={{ ...ts('groom_name'), fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.6rem,9vw,3.8rem)", color: "#fff", lineHeight: 1.05, textShadow: "0 2px 6px rgba(0,0,0,0.75), 0 6px 28px rgba(0,0,0,0.6)" }}>{W.groom}</div>
 
-                <div style={{ ...ts('tagline'), fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                <div style={{ ...ts('tagline'), fontSize: 12, color: "#fff", lineHeight: 1.7, margin: "1.2rem 0 1.6rem", textShadow: "0 2px 10px rgba(0,0,0,0.65)" }}>
                   As the sun sets on the horizon,<br />our forever begins
                 </div>
 
@@ -741,7 +752,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
                 }}>
                   Open Invitation →
                 </button>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>🎵 Tap to begin — with music</div>
+                <div style={{ fontSize: 9, color: "#fff", marginTop: 12, letterSpacing: "0.05em", textShadow: "0 2px 8px rgba(0,0,0,0.55)" }}>🎵 Tap to begin — with music</div>
               </motion.div>
             </motion.div>
           )}
@@ -754,10 +765,10 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(253,243,234,1) 0%,rgba(90,58,46,0.15) 55%,rgba(90,58,46,0.4) 100%)" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(253,243,234,1) 0%,rgba(30,18,12,0.35) 45%,rgba(30,18,12,0.55) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(90,58,46,0.3)" }}>
+                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "#fff", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.55)" }}>{(couple as any).together_with_text || "Together with their families"}</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.6), 0 6px 24px rgba(0,0,0,0.45)" }}>
                   <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                 </div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
