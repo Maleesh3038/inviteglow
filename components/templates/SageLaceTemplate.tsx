@@ -745,8 +745,11 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   // mounts and is then immediately paused again by onCoverVideoPlaying —
   // just so the phone actually decodes and paints a real first frame as
   // its thumbnail, instead of a blank black box. It never visibly moves
-  // before this tap. Tapping is what makes it play for real, with sound,
-  // from the beginning.
+  // before this tap. Tapping is what makes it play for real, from the
+  // beginning — but it stays muted even then: the video is silent so only
+  // the couple's own uploaded song (audioRef) is heard, instead of the
+  // two overlapping (the video's own embedded audio track used to also
+  // play once unmuted on tap).
   const handleCoverVideoPlaying = () => {
     const v = videoRef.current
     if (v && !videoPlaying) v.pause()
@@ -757,7 +760,6 @@ function SageLaceInner({ couple }: { couple: Couple }) {
     audioRef.current?.play().catch(() => {})
     const v = videoRef.current
     if (v) {
-      v.muted = false
       v.currentTime = 0
       v.play().catch(() => handleVideoEnded())
     } else {
