@@ -609,6 +609,12 @@ export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
 function SunsetShoresInner({ couple }: { couple: Couple }) {
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
+  // One-offs, each gated to a single invitation's slug — every other link
+  // on this template keeps its current behavior untouched:
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  // imesha-madusanka-lunch- doesn't want the "Together with their
+  // families" line shown above the couple's names in the Hero section.
+  const isImeshaMadusankaLunch = slug === 'imesha-madusanka-lunch'
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   // Cover only renders once the intro screen has fully finished exiting
@@ -758,7 +764,9 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(253,243,234,1) 0%,rgba(30,18,12,0.35) 45%,rgba(30,18,12,0.55) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center" }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "#fff", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.55)" }}>{(couple as any).together_with_text || "Together with their families"}</div>
+                {!isImeshaMadusankaLunch && (
+                  <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "#fff", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.55)" }}>{(couple as any).together_with_text || "Together with their families"}</div>
+                )}
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(2.4rem,8vw,3.6rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 6px rgba(0,0,0,0.6), 0 6px 24px rgba(0,0,0,0.45)" }}>
                   <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                 </div>
