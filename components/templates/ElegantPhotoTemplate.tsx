@@ -882,7 +882,7 @@ function ElegantPhotoInner({ couple }: { couple: Couple }) {
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,8,6,0.3) 0%, rgba(10,8,6,0.15) 45%, rgba(250,246,244,1) 100%)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 1.5rem 24px", textAlign: "center", zIndex: 4 }}>
-                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.6rem" }}>{couple.together_with_text || "Together with their families"}</div>
+                <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.6rem" }}>{(couple as any).together_with_text || "Together with their families"}</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: "clamp(2rem,7vw,3rem)", color: "#fff", fontStyle: "italic", lineHeight: 1, textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}>
                   {W.bride}<span style={{ color: "#f0d4a8" }}> &amp; </span>{W.groom}
                 </div>
@@ -906,7 +906,7 @@ function ElegantPhotoInner({ couple }: { couple: Couple }) {
                   {W.brideFamilyName && <><strong style={{ color: DARK }}>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>&amp;<br /></>}
                   {W.groomFamilyName && <><strong style={{ color: DARK }}>{W.groomFamilyName}</strong><br /></>}
-                  {couple.family_invitation_text || "request the honour of your presence to celebrate the marriage of their loving children"}
+                  {(couple as any).family_invitation_text || "request the honour of your presence to celebrate the marriage of their loving children"}
                 </div>
               </motion.div>
             )}
@@ -1049,7 +1049,7 @@ function ElegantPhotoInner({ couple }: { couple: Couple }) {
                 <div style={sectionEyebrowStyle(PRIMARY)}>A Special Note</div>
                 <div style={sectionTitleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: "#6a5a4a", lineHeight: 2, whiteSpace: "pre-wrap" }}>
-                  {couple.thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.\n\nThank you for your love, your blessings, and for being part of our journey."}
+                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express.\n\nThank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 16 }}>
                   <div style={{ fontSize: 11, color: MUTED }}>With all our love,</div>
