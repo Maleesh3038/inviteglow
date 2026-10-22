@@ -47,12 +47,10 @@ function useTextStyles(couple: any) {
   }
 }
 
-function coupleNameFontSize(name: string): string {
+function coupleNameFontSize(name: string, scale: number = 1): string {
   const len = (name || '').length
-  if (len > 12) return "clamp(1.4rem,5.5vw,1.9rem)"
-  if (len > 9) return "clamp(1.7rem,6.5vw,2.3rem)"
-  if (len > 6) return "clamp(2.0rem,7.5vw,2.8rem)"
-  return "clamp(2.4rem,8.5vw,3.4rem)"
+  const [min, vw, max] = len > 12 ? [1.4, 5.5, 1.9] : len > 9 ? [1.7, 6.5, 2.3] : len > 6 ? [2.0, 7.5, 2.8] : [2.4, 8.5, 3.4]
+  return `clamp(${(min * scale).toFixed(2)}rem,${(vw * scale).toFixed(2)}vw,${(max * scale).toFixed(2)}rem)`
 }
 
 // Same idea, for the "Bride & Groom" combined single-line treatment used
@@ -990,13 +988,17 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                     invite you to celebrate the marriage of
                   </div>
 
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: PRIMARY, lineHeight: 1.2 }}>{W.bride}</div>
+                  <div style={isRoshaniSajeewa
+                    ? { fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: coupleNameFontSize(W.bride, 0.72), color: PRIMARY, lineHeight: 1.25 }
+                    : { fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: PRIMARY, lineHeight: 1.2 }}>{W.bride}</div>
                   <div style={{ margin: "6px auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, maxWidth: 160 }}>
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.4 }} />
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIMARY }} />
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.4 }} />
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 20 }}>{W.groom}</div>
+                  <div style={isRoshaniSajeewa
+                    ? { fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: coupleNameFontSize(W.groom, 0.72), color: PRIMARY, lineHeight: 1.25, marginBottom: 20 }
+                    : { fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 20 }}>{W.groom}</div>
 
                   {/* A short closing flourish only — no date/time/venue
                       facts here any more, since those are shown fully in
@@ -1150,7 +1152,13 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: (isRoshaniSajeewa ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  <div style={isRoshaniSajeewa
+                    ? { fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "1.35rem", color: PRIMARY, marginTop: 4 }
+                    : { fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>
+                    {isRoshaniSajeewa
+                      ? <>{W.bride}<span style={{ fontFamily: "'Great Vibes',cursive", textTransform: "none", letterSpacing: 0, fontSize: "1.1rem", margin: "0 6px" }}>and</span>{W.groom}</>
+                      : <>{W.bride} &amp; {W.groom}</>}
+                  </div>
                 </div>
               </motion.div>
             )}
