@@ -41,10 +41,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = couple as any
   const brideName = c.bride_name || c.bride || ''
   const groomName = c.groom_name || c.groom || ''
+  // imesha-madusanka-lunch- is a lunch celebration, not a wedding ceremony
+  // itself, so its share-preview text drops the word "wedding" — every
+  // other invitation keeps its title/description exactly as before.
+  const normalizedSlug = String(slug || '').trim().toLowerCase().replace(/-+$/, '')
+  const isImeshaMadusankaLunch = normalizedSlug === 'imesha-madusanka-lunch'
   const title = brideName && groomName
-    ? `${brideName} & ${groomName}'s Wedding Invitation`
+    ? (isImeshaMadusankaLunch ? `${brideName} & ${groomName}'s Invitation` : `${brideName} & ${groomName}'s Wedding Invitation`)
     : "You're Invited! | InviteGlow"
-  const description = "Tap to view our wedding invitation and let us know if you can celebrate with us."
+  const description = isImeshaMadusankaLunch
+    ? "Tap to view our invitation and let us know if you can celebrate with us."
+    : "Tap to view our wedding invitation and let us know if you can celebrate with us."
 
   // This is the thumbnail shown when the invitation link is shared on
   // WhatsApp / Facebook / etc — the "og:image" the messaging app fetches.
