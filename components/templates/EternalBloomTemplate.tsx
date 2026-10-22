@@ -832,6 +832,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun || isVinuriAkalanka
   const coverNameScale = isDilkiKasun || isVinuriAkalanka ? 0.82 : 1
   const isRedTheme = isKrishalJayakshi || isAnjanaNipuni
+  // vinuri-akalanka- wants the whole invitation in the same warm
+  // champagne/dusty-rose family as the cover screen, instead of this
+  // template's default botanical green — the cover's gold/cream tones
+  // never actually come from PRIMARY/DARK, so once the invitation opens
+  // and those take over, it had been switching to green underneath.
+  const isChampagneTheme = isVinuriAkalanka
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
   // the static default asset is missing from this deployment — we stop
@@ -845,11 +851,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // krishal-jayakshi- only: a deep-red palette requested to match their
   // Homecoming colors, overriding this template's default sage/moss theme
   // (and any custom colors set on the dashboard) for this invitation alone.
-  const PRIMARY = isRedTheme ? "#9c2b2b" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = isRedTheme ? "#dba89f" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = isRedTheme ? "#3a1414" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
-  const CREAM = isRedTheme ? "#faf3ec" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
-  const MUTED = isRedTheme ? "#9a7a74" : DEFAULT_PALETTE.muted
+  const PRIMARY = isRedTheme ? "#9c2b2b" : isChampagneTheme ? "#b0895f" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isRedTheme ? "#dba89f" : isChampagneTheme ? "#e6cda4" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isRedTheme ? "#3a1414" : isChampagneTheme ? "#3e2f22" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isRedTheme ? "#faf3ec" : isChampagneTheme ? "#faf5ec" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isRedTheme ? "#9a7a74" : isChampagneTheme ? "#a4876c" : DEFAULT_PALETTE.muted
 
   // Priority: an explicit cover_video_url from the admin always wins. If
   // that's empty, only fall back to the default demo video when the couple
@@ -944,7 +950,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
       ]
 
-  const TINT_SAGE = isRedTheme ? "#f6e4e0" : "#eef2e6"
+  const TINT_SAGE = isRedTheme ? "#f6e4e0" : isChampagneTheme ? "#f4e8d8" : "#eef2e6"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -1167,7 +1173,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {sv.countdown && (
               <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
                 <div style={{ ...pretitleStyle(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={isRedTheme ? MUTED : undefined} />
+                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={(isRedTheme || isChampagneTheme) ? MUTED : undefined} />
               </div>
             )}
 
@@ -1260,7 +1266,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
                 <div style={titleStyle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} nameColor={isRedTheme ? DARK : undefined} phoneColor={isRedTheme ? MUTED : undefined} />)}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} nameColor={(isRedTheme || isChampagneTheme) ? DARK : undefined} phoneColor={(isRedTheme || isChampagneTheme) ? MUTED : undefined} />)}
                 </div>
               </motion.div>
             )}
@@ -1278,7 +1284,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
       </div>
       {opened && (
         <BottomNavBar
-          primary={PRIMARY} accent={isRedTheme ? PRIMARY_LIGHT : undefined} dark={DARK}
+          primary={PRIMARY} accent={(isRedTheme || isChampagneTheme) ? PRIMARY_LIGHT : undefined} dark={DARK}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
           hasWishes={(couple as any).enable_guest_wishes ?? false}
           hasGallery={sv.gallery && W.gallery.length > 0}
