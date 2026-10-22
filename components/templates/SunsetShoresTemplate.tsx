@@ -825,7 +825,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
 
             {sv.countdown && (
               <div id="savethedate" style={{ ...sectionCard, textAlign: "center" }}>
-                <div style={{ ...sectionEyebrow(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
+                <div style={{ ...sectionEyebrow(PRIMARY), ...ts('countdown_label') }}>{isImeshaMadusankaLunch ? 'Countdown' : 'Counting Down to Our Big Day'}</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </div>
             )}
