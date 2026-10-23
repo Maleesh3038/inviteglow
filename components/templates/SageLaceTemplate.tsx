@@ -989,11 +989,18 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               <LaceFrame primary={PRIMARY} primaryLight={PRIMARY_LIGHT} frame={11} radius={24}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={{ padding: "34px 24px 38px", textAlign: "center" }}>
+                  {isRoshaniSajeewa ? (
+                    // Custom uploaded monogram logo replaces the generic
+                    // initials-in-a-circle placeholder for this invitation only.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/roshani-sajeewa-logo.png" alt="" style={{ width: 96, height: 96, borderRadius: "50%", margin: "0 auto 16px", display: "block", objectFit: "cover" }} />
+                  ) : (
                   <div style={{
                     width: 54, height: 54, borderRadius: "50%", margin: "0 auto 16px", border: `1.4px solid ${PRIMARY}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontFamily: "'Great Vibes',cursive", fontSize: 22, color: PRIMARY,
                   }}>{`${W.bride?.[0] || ''}${W.groom?.[0] || ''}`}</div>
+                  )}
 
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.1rem", color: DARK, lineHeight: 1.8, marginBottom: 18 }}>
                     {(couple as any).family_invitation_text || "With hearts full of love and warmth"}
