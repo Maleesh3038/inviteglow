@@ -798,7 +798,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
                 <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                  <div style={sectionEyebrow(PRIMARY)}>{ev.icon} Save the Date</div>
+                  <div style={sectionEyebrow(PRIMARY)}>{!isImeshaMadusankaLunch && `${ev.icon} `}Save the Date</div>
                   {ev.label && <div style={sectionTitle(DARK)}>{ev.label}</div>}
                   {[
                     { icon: "📅", label: "Date", val: evDateDisplay, tsKey: '' },
