@@ -1188,9 +1188,25 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={heading(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: (!isChanakaSandamini && i === 0) ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: (!isChanakaSandamini && i === 0) ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+                    <div key={i} style={{ position: "relative", gridRow: (!isChanakaSandamini && i === 0) ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: (!isChanakaSandamini && i === 0) ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                      {isChanakaSandamini ? (
+                        <>
+                          {/* A blurred, cropped copy fills the square tile
+                              behind the photo, so there's never an empty
+                              gap — then the full photo sits on top,
+                              untouched (object-fit: contain), so nothing
+                              of it — like the couple themselves — ever
+                              gets cropped out of frame the way a plain
+                              square cover-crop was cutting them off. */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(14px) brightness(0.75)", transform: "scale(1.15)" }} onError={e => (e.currentTarget.style.display = "none")} />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain" }} onError={e => (e.currentTarget.style.display = "none")} />
+                        </>
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+                      )}
                     </div>
                   ))}
                 </div>
