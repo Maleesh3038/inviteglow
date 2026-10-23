@@ -1100,7 +1100,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You are invited instead of will you join us" : undefined} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
