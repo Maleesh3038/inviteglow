@@ -293,7 +293,7 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, title = "Will You Join Us?" }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string; title?: string }) {
+function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, title = "Will You Join Us?", eyebrowText = "Be Our Guest" }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string; title?: string; eyebrowText?: string }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
@@ -306,7 +306,7 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, t
   return (
     <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
       <LeafDivider color={primary} />
-      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>Be Our Guest</div>
+      <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>{eyebrowText}</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>{title}</div>
       <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)" }}>
         {step === "form" && (
@@ -1100,7 +1100,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} eyebrowText={isRoshaniSajeewa ? "You Are Invited" : undefined} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
