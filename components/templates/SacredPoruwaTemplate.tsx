@@ -1183,33 +1183,38 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
             {/* Gallery */}
             {sv.gallery && W.gallery.length > 0 && (
               <motion.div id="gallery" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                
-                <div style={eyebrow(`${PRIMARY}aa`)}>Our Celebration</div>
-                <div style={heading(DARK)}>Moments of Love</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {W.gallery.map((src, i) => (
-                    <div key={i} style={{ position: "relative", gridRow: (!isChanakaSandamini && i === 0) ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: (!isChanakaSandamini && i === 0) ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-                      {isChanakaSandamini ? (
-                        <>
-                          {/* A blurred, cropped copy fills the square tile
-                              behind the photo, so there's never an empty
-                              gap — then the full photo sits on top,
-                              untouched (object-fit: contain), so nothing
-                              of it — like the couple themselves — ever
-                              gets cropped out of frame the way a plain
-                              square cover-crop was cutting them off. */}
+
+                {isChanakaSandamini ? (
+                  <>
+                    <div style={eyebrow(`${PRIMARY}aa`)}>Our Story</div>
+                    <div style={heading(DARK)}>Our Moments</div>
+                    {/* Matches Eternal Bloom's gallery exactly: a 2-column
+                        CSS masonry (not a forced square grid) so every
+                        photo keeps its own natural proportions — nothing
+                        gets cropped or squeezed, whatever its orientation. */}
+                    <div style={{ columnCount: 2, columnGap: 10 }}>
+                      {W.gallery.map((src, i) => (
+                        <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(14px) brightness(0.75)", transform: "scale(1.15)" }} onError={e => (e.currentTarget.style.display = "none")} />
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt="" style={{ position: "relative", width: "100%", height: "100%", objectFit: "contain" }} onError={e => (e.currentTarget.style.display = "none")} />
-                        </>
-                      ) : (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
-                      )}
+                          <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={eyebrow(`${PRIMARY}aa`)}>Our Celebration</div>
+                    <div style={heading(DARK)}>Moments of Love</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      {W.gallery.map((src, i) => (
+                        <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: i === 0 ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
 
