@@ -736,6 +736,13 @@ export default function SacredPoruwaTemplate({ couple }: { couple: Couple }) {
 function SacredPoruwaInner({ couple }: { couple: Couple }) {
   const searchParams = useSearchParams()
   const guestName = searchParams.get('name') || ''
+  // One-offs, each gated to a single invitation's slug — every other link
+  // on this template keeps its current behavior untouched:
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  // chanaka-sandamini- wants the gallery as a plain, evenly-aligned grid
+  // (every tile the same square size) instead of this template's default
+  // masonry layout (a tall first tile spanning two rows).
+  const isChanakaSandamini = slug === 'chanaka-sandamini'
   const [opened, setOpened] = useState(false)
   const [showIntro, setShowIntro] = useState(!!guestName) // show intro only when guest name present
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -1181,7 +1188,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                 <div style={heading(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {W.gallery.map((src, i) => (
-                    <div key={i} style={{ gridRow: i === 0 ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: i === 0 ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                    <div key={i} style={{ gridRow: (!isChanakaSandamini && i === 0) ? "span 2" : undefined, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, aspectRatio: (!isChanakaSandamini && i === 0) ? "1/2" : "1/1", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} />
                     </div>
