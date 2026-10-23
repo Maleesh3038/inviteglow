@@ -1188,15 +1188,25 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   <>
                     <div style={eyebrow(`${PRIMARY}aa`)}>Our Story</div>
                     <div style={heading(DARK)}>Our Moments</div>
-                    {/* Matches Eternal Bloom's gallery exactly: a 2-column
-                        CSS masonry (not a forced square grid) so every
-                        photo keeps its own natural proportions — nothing
-                        gets cropped or squeezed, whatever its orientation. */}
-                    <div style={{ columnCount: 2, columnGap: 10 }}>
-                      {W.gallery.map((src, i) => (
-                        <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
+                    {/* An explicit 2-column split (alternating photos by
+                        index into a left/right array), not a CSS
+                        column-count masonry — that auto-balances by total
+                        height and can dump 3 photos in one column and
+                        just 1 in the other whenever one photo is much
+                        taller than the rest (exactly what happened with
+                        the tall beach photo here). This guarantees an
+                        even left/right split every time, while each photo
+                        still keeps its own natural proportions — nothing
+                        gets cropped or squeezed. */}
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {[0, 1].map(col => (
+                        <div key={col} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+                          {W.gallery.filter((_, i) => i % 2 === col).map((src, i) => (
+                            <div key={i} style={{ borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
+                            </div>
+                          ))}
                         </div>
                       ))}
                     </div>
