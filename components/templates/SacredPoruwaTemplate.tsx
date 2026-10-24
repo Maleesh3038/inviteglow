@@ -828,6 +828,9 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
     const id = setInterval(() => setSlideIdx(i => (i + 1) % W.gallery.length), 5000)
     return () => clearInterval(id)
   }, [isChanakaSandamini, W.gallery.length])
+  const slideCount = W.gallery.length
+  const nextSlide = () => setSlideIdx(i => (i + 1) % Math.max(slideCount, 1))
+  const prevSlide = () => setSlideIdx(i => (i - 1 + slideCount) % Math.max(slideCount, 1))
 
   const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
   const contactList: { name: string; phone: string }[] = flexContacts.length > 0
@@ -1198,26 +1201,33 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                     <div style={eyebrow(`${PRIMARY}aa`)}>Our Story</div>
                     <div style={heading(DARK)}>Our Moments</div>
                     {/* Full-width slideshow: one photo at a time, auto-advancing
-                        every ~3.2s with a crossfade, plus tap-to-advance and
-                        dot indicators so a guest can also step through by hand. */}
+                        every ~5s with a crossfade. A guest can also swipe
+                        left/right by hand (drag gesture) to move between
+                        photos themselves, and dots below show position. */}
                     <div
-                      onClick={() => setSlideIdx(i => (i + 1) % W.gallery.length)}
-                      style={{ position: "relative", width: "100%", aspectRatio: "4/5", borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", cursor: W.gallery.length > 1 ? "pointer" : "default" }}>
+                      style={{ position: "relative", width: "100%", aspectRatio: "4/5", borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
                       <AnimatePresence initial={false} mode="wait">
                         <motion.img
                           key={slideIdx}
-                          src={W.gallery[slideIdx % W.gallery.length]}
+                          src={W.gallery[slideIdx % slideCount]}
                           alt=""
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.6 }}
-                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          drag={slideCount > 1 ? "x" : false}
+                          dragConstraints={{ left: 0, right: 0 }}
+                          dragElastic={0.6}
+                          onDragEnd={(_, info) => {
+                            if (info.offset.x < -50) nextSlide()
+                            else if (info.offset.x > 50) prevSlide()
+                          }}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: slideCount > 1 ? "grab" : "default", touchAction: "pan-y" }}
                           onError={e => { (e.currentTarget as HTMLElement).style.display = "none" }}
                         />
                       </AnimatePresence>
-                      {W.gallery.length > 1 && (
-                        <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+                      {slideCount > 1 && (
+                        <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, pointerEvents: "none" }}>
                           {W.gallery.map((_, i) => (
                             <div key={i} style={{ width: i === slideIdx ? 16 : 6, height: 6, borderRadius: 3, background: i === slideIdx ? "#fff" : "rgba(255,255,255,0.55)", transition: "width 0.3s" }} />
                           ))}
