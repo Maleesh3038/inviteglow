@@ -802,6 +802,9 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   const [opened, setOpened] = useState(false)
+  // sandamini-chanaka- gallery is a full-width auto-advancing slideshow
+  // (swipeable by hand too) instead of the masonry grid — see below.
+  const [slideIdx, setSlideIdx] = useState(0)
   // One-offs, each gated to a single invitation's slug — every other link
   // on this template keeps its current behavior untouched:
   // · malshani-isuru- gets extra top spacing on the cover (see below).
@@ -948,6 +951,15 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
+
+  useEffect(() => {
+    if (!isSandaminiChanaka || W.gallery.length <= 1) return
+    const id = setInterval(() => setSlideIdx(i => (i + 1) % W.gallery.length), 5000)
+    return () => clearInterval(id)
+  }, [isSandaminiChanaka, W.gallery.length])
+  const slideCount = W.gallery.length
+  const nextSlide = () => setSlideIdx(i => (i + 1) % Math.max(slideCount, 1))
+  const prevSlide = () => setSlideIdx(i => (i - 1 + slideCount) % Math.max(slideCount, 1))
 
   const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
   const contactList: { name: string; phone: string }[] = flexContacts.length > 0
@@ -1241,14 +1253,51 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               <motion.div id="gallery" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>Our Story</div>
                 <div style={titleStyle(DARK)}>Our Moments</div>
-                <div style={{ columnCount: 2, columnGap: 10 }}>
-                  {W.gallery.map((src, i) => (
-                    <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
-                    </div>
-                  ))}
-                </div>
+                {isSandaminiChanaka ? (
+                  // Full-width slideshow: one photo at a time, auto-advancing
+                  // every ~5s with a crossfade. A guest can also swipe
+                  // left/right by hand (drag gesture) to move between photos,
+                  // and dots below show position — same treatment as the
+                  // Sacred Poruwa gallery slideshow.
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "4/5", borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                    <AnimatePresence initial={false} mode="wait">
+                      <motion.img
+                        key={slideIdx}
+                        src={W.gallery[slideIdx % slideCount]}
+                        alt=""
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6 }}
+                        drag={slideCount > 1 ? "x" : false}
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.6}
+                        onDragEnd={(_, info) => {
+                          if (info.offset.x < -50) nextSlide()
+                          else if (info.offset.x > 50) prevSlide()
+                        }}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: slideCount > 1 ? "grab" : "default", touchAction: "pan-y" }}
+                        onError={e => { (e.currentTarget as HTMLElement).style.display = "none" }}
+                      />
+                    </AnimatePresence>
+                    {slideCount > 1 && (
+                      <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, pointerEvents: "none" }}>
+                        {W.gallery.map((_, i) => (
+                          <div key={i} style={{ width: i === slideIdx ? 16 : 6, height: 6, borderRadius: 3, background: i === slideIdx ? "#fff" : "rgba(255,255,255,0.55)", transition: "width 0.3s" }} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ columnCount: 2, columnGap: 10 }}>
+                    {W.gallery.map((src, i) => (
+                      <div key={i} style={{ breakInside: "avoid", marginBottom: 10, borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
