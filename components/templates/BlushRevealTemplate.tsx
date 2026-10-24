@@ -1236,25 +1236,33 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 cover before "Open Invitation" is tapped, so showing it a
                 second time right after opening just repeats the same
                 picture back to back). */}
-            <div style={{ padding: "2.6rem 1.5rem 1.2rem", textAlign: "center" }}>
+            <div style={{
+              padding: "2.6rem 1.5rem 1.2rem", textAlign: "center", position: "relative", overflow: "hidden",
+              ...(isAvindiVinod ? {
+                backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 35%, rgba(0,0,0,0.45) 100%), url(${couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG})`,
+                backgroundSize: "cover", backgroundPosition: "center",
+              } : {}),
+            }}>
               {isAvindiVinod && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src="/avindi-vinod-calla-lily.png" alt="" style={{ width: 34, height: "auto", margin: "0 auto 12px", display: "block", opacity: 0.9 }} />
+                <img src="/avindi-vinod-calla-lily.png" alt="" style={{ width: 34, height: "auto", margin: "0 auto 12px", display: "block", opacity: 0.95, filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.4))" }} />
               )}
-              <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: MUTED, marginBottom: "0.8rem" }}>
+              <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: isAvindiVinod ? "rgba(255,255,255,0.85)" : MUTED, marginBottom: "0.8rem", textShadow: isAvindiVinod ? "0 2px 8px rgba(0,0,0,0.4)" : undefined }}>
                 {(couple as any).together_with_text || "Together with their families"}
               </div>
-              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: DARK, lineHeight: 1 }}>
-                <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
+              <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: isAvindiVinod ? "#fff" : DARK, lineHeight: 1, textShadow: isAvindiVinod ? "0 3px 14px rgba(0,0,0,0.5)" : undefined }}>
+                <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: isAvindiVinod ? PRIMARY_LIGHT : PRIMARY }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
               </div>
               {guestName && (
-                <p style={{ marginTop: 14, fontSize: 15, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", color: PRIMARY, fontWeight: 600 }}>
+                <p style={{ marginTop: 14, fontSize: 15, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", color: isAvindiVinod ? "#fff" : PRIMARY, fontWeight: 600, textShadow: isAvindiVinod ? "0 2px 8px rgba(0,0,0,0.4)" : undefined }}>
                   Dear {guestName},
                 </p>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
                 <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none" }}>RSVP</a>
-                <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: `${PRIMARY}14`, color: DARK, border: `1.5px solid ${PRIMARY}55`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
+                <a href={eventsList[0]?.maps_url || couple.maps_url || '#'} target="_blank" rel="noopener noreferrer" style={isAvindiVinod
+                  ? { background: "rgba(255,255,255,0.12)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.6)", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600, backdropFilter: "blur(4px)" }
+                  : { background: `${PRIMARY}14`, color: DARK, border: `1.5px solid ${PRIMARY}55`, borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontWeight: 600 }}>Location</a>
               </div>
             </div>
 
