@@ -1131,7 +1131,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
               background: isImeshaMadusanka
                 ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)'
                 : isAvindiVinod
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.45) 100%)'
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.45) 100%)'
                 : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
             }} />
 
@@ -1158,15 +1158,20 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
             )}
 
             {isAvindiVinod && (
-              <div style={{ position: 'absolute', top: '7%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
-                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
+              <div style={{ position: 'absolute', top: '13%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'inline-flex', border: '1px solid rgba(244,223,163,0.5)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#f4dfa3' }}>Wedding Invitation</span>
                 </div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.bride}</div>
-                  <div style={{ fontSize: '1.2rem', color: PRIMARY_LIGHT, margin: '2px 0' }}>&amp;</div>
-                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.groom}</div>
+                  <div style={{ fontSize: '2.1rem', color: '#f4dfa3', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.bride}</div>
+                  <div style={{ fontSize: '1.2rem', color: '#e8c873', margin: '2px 0' }}>&amp;</div>
+                  <div style={{ fontSize: '2.1rem', color: '#f4dfa3', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.groom}</div>
                 </div>
+                {guestName && (
+                  <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 15, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>
+                    Dear <span style={{ color: '#f4dfa3' }}>{guestName}</span>,
+                  </p>
+                )}
               </div>
             )}
 
