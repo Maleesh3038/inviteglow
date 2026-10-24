@@ -980,6 +980,11 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
   // other link on this template is completely unaffected.
   const isImeshaMadusanka = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'imesha-madusanka'
 
+  // One-off: avindi-vinod- gets a "Wedding Invitation" badge plus the
+  // couple's names shown clearly on the plain cover (every other link on
+  // this template keeps the default text-free cover untouched).
+  const isAvindiVinod = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'avindi-vinod'
+
   // One-off: dilushika-isuru- drops the Engagement event entirely (even if
   // it's turned on in the dashboard) and gets a decorative script-title
   // banner — "Wedding" in large cursive over a small dotted subtitle — on
@@ -1125,6 +1130,8 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
               position: 'absolute', inset: 0,
               background: isImeshaMadusanka
                 ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)'
+                : isAvindiVinod
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0.12) 40%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.45) 100%)'
                 : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
             }} />
 
@@ -1146,6 +1153,19 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.bride}</div>
                   <div style={{ fontSize: '1.3rem', color: PRIMARY_LIGHT, margin: '3px 0' }}>&amp;</div>
                   <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.groom}</div>
+                </div>
+              </div>
+            )}
+
+            {isAvindiVinod && (
+              <div style={{ position: 'absolute', top: '7%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
+                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.bride}</div>
+                  <div style={{ fontSize: '1.2rem', color: PRIMARY_LIGHT, margin: '2px 0' }}>&amp;</div>
+                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.groom}</div>
                 </div>
               </div>
             )}
