@@ -1149,7 +1149,11 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
             ) : (
               <div style={{
                 position: 'absolute', inset: 0,
-                backgroundImage: `url(${couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG})`,
+                // avindi-vinod- uses their uploaded calla-lily paper frame
+                // photo as the cover background instead of their couple
+                // photo — every other link on this template still shows
+                // couple.couple_photo as always.
+                backgroundImage: `url(${isAvindiVinod ? '/avindi-vinod-cover-frame.jpg' : (couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG)})`,
                 backgroundSize: 'cover', backgroundPosition: 'center',
               }} />
             )}
@@ -1158,7 +1162,11 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
               background: isImeshaMadusanka
                 ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)'
                 : isAvindiVinod
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.45) 100%)'
+                // Their cover is now a light cream paper frame (not a
+                // photo of people), so only a very light scrim is needed
+                // — just enough to lift the text off the paper texture,
+                // not darken the whole card like a photo cover needs.
+                ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.35) 100%)'
                 : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
             }} />
 
@@ -1186,18 +1194,18 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
 
             {isAvindiVinod && (
               <div style={{ position: 'absolute', top: '13%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
-                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
+                <div style={{ display: 'inline-flex', border: `1px solid ${PRIMARY}66`, borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(4px)' }}>
+                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: PRIMARY }}>Wedding Invitation</span>
                 </div>
-                <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>You Are Invited</div>
+                <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTED }}>You Are Invited</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.bride}</div>
-                  <div style={{ fontSize: '1.2rem', color: PRIMARY_LIGHT, margin: '2px 0' }}>&amp;</div>
-                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.groom}</div>
+                  <div style={{ fontSize: '2.1rem', color: DARK }}>{W.bride}</div>
+                  <div style={{ fontSize: '1.2rem', color: PRIMARY, margin: '2px 0' }}>&amp;</div>
+                  <div style={{ fontSize: '2.1rem', color: DARK }}>{W.groom}</div>
                 </div>
                 {guestName && (
-                  <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 15, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>
-                    Dear <span style={{ color: PRIMARY_LIGHT }}>{guestName}</span>,
+                  <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 15, color: DARK }}>
+                    Dear <span style={{ color: PRIMARY }}>{guestName}</span>,
                   </p>
                 )}
               </div>
