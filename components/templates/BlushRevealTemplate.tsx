@@ -1169,23 +1169,30 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                       </p>
                     )}
                   </div>
-                  <motion.button
-                    onClick={handleOpenClick}
-                    aria-label="Open invitation"
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
-                    style={{
-                      position: 'absolute', top: '59%', left: '50%', transform: 'translateX(-50%)',
-                      display: 'inline-flex', alignItems: 'center', gap: 7,
-                      padding: '9px 20px', borderRadius: 100, border: 'none',
-                      background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
-                      color: '#fff', fontSize: 'clamp(8px,2.2vw,10px)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
-                      cursor: 'pointer', boxShadow: `0 6px 16px rgba(0,0,0,0.25)`,
-                      fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap',
-                    }}>
-                    Open Invitation
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                  </motion.button>
+                  {/* Centered via a plain flex wrapper, not left:50% +
+                      transform:translateX(-50%) — framer-motion's own
+                      whileHover/whileTap scale writes its own "transform"
+                      onto the button, which would silently wipe out a
+                      static translateX set in the style prop and make the
+                      button visibly jump sideways on tap. */}
+                  <div style={{ position: 'absolute', top: '59%', left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+                    <motion.button
+                      onClick={handleOpenClick}
+                      aria-label="Open invitation"
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.95 }}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 7,
+                        padding: '9px 20px', borderRadius: 100, border: 'none',
+                        background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
+                        color: '#fff', fontSize: 'clamp(8px,2.2vw,10px)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+                        cursor: 'pointer', boxShadow: `0 6px 16px rgba(0,0,0,0.25)`,
+                        fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap',
+                      }}>
+                      Open Invitation
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                    </motion.button>
+                  </div>
                 </div>
               </div>
             ) : (
