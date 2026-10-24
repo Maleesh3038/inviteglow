@@ -825,7 +825,7 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
 
   useEffect(() => {
     if (!isChanakaSandamini || W.gallery.length <= 1) return
-    const id = setInterval(() => setSlideIdx(i => (i + 1) % W.gallery.length), 3200)
+    const id = setInterval(() => setSlideIdx(i => (i + 1) % W.gallery.length), 5000)
     return () => clearInterval(id)
   }, [isChanakaSandamini, W.gallery.length])
 
