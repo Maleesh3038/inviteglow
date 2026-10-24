@@ -1005,12 +1005,18 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
   // unaffected.
   const isDilushikaIsuru = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '') === 'dilushika-isuru'
 
+  // One-off: avindi-vinod- gets a warm butter-yellow / antique-gold color
+  // theme throughout the whole invitation (matching their lace-and-calla-
+  // lily reference card), overriding whatever custom_colors is set for
+  // this couple. Every other link on this template keeps its own colors
+  // (custom_colors if set, else the template default) untouched.
+  const isButterYellowTheme = isAvindiVinod
   const colors = sanitizeColors(couple.custom_colors)
-  const PRIMARY = colors.primary
-  const PRIMARY_LIGHT = colors.primaryLight
-  const DARK = colors.dark
-  const CREAM = colors.cream
-  const MUTED = MUTED_TONE
+  const PRIMARY = isButterYellowTheme ? "#a9873f" : colors.primary
+  const PRIMARY_LIGHT = isButterYellowTheme ? "#e3d2a0" : colors.primaryLight
+  const DARK = isButterYellowTheme ? "#5c4a2c" : colors.dark
+  const CREAM = isButterYellowTheme ? "#faf5e8" : colors.cream
+  const MUTED = isButterYellowTheme ? "#a08f68" : MUTED_TONE
 
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
@@ -1083,7 +1089,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
   const TINT = PRIMARY_LIGHT
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: '100vh', background: `linear-gradient(180deg, ${CREAM} 0%, #fdeee6 55%, #fce0d2 100%)`, position: 'relative', overflowX: 'hidden' }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: '100vh', background: isButterYellowTheme ? `linear-gradient(180deg, ${CREAM} 0%, #f3e9cf 55%, #ecdbae 100%)` : `linear-gradient(180deg, ${CREAM} 0%, #fdeee6 55%, #fce0d2 100%)`, position: 'relative', overflowX: 'hidden' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Inter:wght@300;400;500;600&display=swap');
         html, body { background: ${CREAM} !important; margin: 0; overflow-x: hidden; }
