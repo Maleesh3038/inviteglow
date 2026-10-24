@@ -1140,108 +1140,131 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 (BlushBlossom's own older, separate field) is still
                 honoured as a fallback, before finally falling back to the
                 stock default. */}
-            {(couple as any).cover_video_url ? (
-              <video
-                autoPlay loop muted playsInline preload="auto"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}>
-                <source src={(couple as any).cover_video_url} type="video/mp4" />
-              </video>
+            {isAvindiVinod ? (
+              // avindi-vinod's cover is their uploaded calla-lily paper
+              // frame card — shown as a real <img> at its own natural
+              // proportions (never cropped by a CSS "cover" background),
+              // centered on a matching cream backdrop. The text and the
+              // button sit at fixed percentages INSIDE that same
+              // aspect-ratio-locked box (measured against the card's own
+              // blank areas, between the two flower clusters), so they
+              // land in the same spot on the card on every screen size.
+              <div style={{ position: 'absolute', inset: 0, background: '#f3ead9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'relative', width: '94%', maxWidth: 420, aspectRatio: '1024 / 1536' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/avindi-vinod-cover-frame.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                  <div style={{ position: 'absolute', top: '29%', left: '10%', right: '10%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2%' }}>
+                    <div style={{ display: 'inline-flex', border: `1px solid ${PRIMARY}66`, borderRadius: 100, padding: '5px 14px', background: 'rgba(255,255,255,0.6)' }}>
+                      <span style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: PRIMARY }}>Wedding Invitation</span>
+                    </div>
+                    <div style={{ fontSize: 8, letterSpacing: '0.32em', textTransform: 'uppercase', color: MUTED }}>You Are Invited</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
+                      <div style={{ fontSize: 'clamp(1.3rem,6.5vw,1.9rem)', color: DARK }}>{W.bride}</div>
+                      <div style={{ fontSize: 'clamp(0.8rem,4vw,1.1rem)', color: PRIMARY, margin: '1px 0' }}>&amp;</div>
+                      <div style={{ fontSize: 'clamp(1.3rem,6.5vw,1.9rem)', color: DARK }}>{W.groom}</div>
+                    </div>
+                    {guestName && (
+                      <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 'clamp(0.7rem,3vw,0.85rem)', color: DARK }}>
+                        Dear <span style={{ color: PRIMARY }}>{guestName}</span>,
+                      </p>
+                    )}
+                  </div>
+                  <motion.button
+                    onClick={handleOpenClick}
+                    aria-label="Open invitation"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                      position: 'absolute', top: '59%', left: '50%', transform: 'translateX(-50%)',
+                      display: 'inline-flex', alignItems: 'center', gap: 7,
+                      padding: '9px 20px', borderRadius: 100, border: 'none',
+                      background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
+                      color: '#fff', fontSize: 'clamp(8px,2.2vw,10px)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+                      cursor: 'pointer', boxShadow: `0 6px 16px rgba(0,0,0,0.25)`,
+                      fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap',
+                    }}>
+                    Open Invitation
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </motion.button>
+                </div>
+              </div>
             ) : (
-              <div style={{
-                position: 'absolute', inset: 0,
-                // avindi-vinod- uses their uploaded calla-lily paper frame
-                // photo as the cover background instead of their couple
-                // photo — every other link on this template still shows
-                // couple.couple_photo as always.
-                backgroundImage: `url(${isAvindiVinod ? '/avindi-vinod-cover-frame.jpg' : (couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG)})`,
-                backgroundSize: 'cover', backgroundPosition: 'center',
-              }} />
-            )}
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: isImeshaMadusanka
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)'
-                : isAvindiVinod
-                // Their cover is now a light cream paper frame (not a
-                // photo of people), so only a very light scrim is needed
-                // — just enough to lift the text off the paper texture,
-                // not darken the whole card like a photo cover needs.
-                ? 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.35) 100%)'
-                : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
-            }} />
-
-            {/* One-off: imesha-madusanka- gets a reference-matched cover
-                treatment — a pill "Wedding Invitation" badge, "You Are
-                Invited", and the couple's names stacked on their own
-                lines around a smaller "&" — instead of the default
-                text-free cover every other invitation on this template
-                keeps. The gradient above is darkened through this whole
-                zone so the text stays readable no matter how bright the
-                couple's own photo is. */}
-            {isImeshaMadusanka && (
-              <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-                <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
-                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
-                </div>
-                <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>You Are Invited</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.bride}</div>
-                  <div style={{ fontSize: '1.3rem', color: PRIMARY_LIGHT, margin: '3px 0' }}>&amp;</div>
-                  <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.groom}</div>
-                </div>
-              </div>
-            )}
-
-            {isAvindiVinod && (
-              <div style={{ position: 'absolute', top: '13%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'inline-flex', border: `1px solid ${PRIMARY}66`, borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(4px)' }}>
-                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: PRIMARY }}>Wedding Invitation</span>
-                </div>
-                <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: MUTED }}>You Are Invited</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '2.1rem', color: DARK }}>{W.bride}</div>
-                  <div style={{ fontSize: '1.2rem', color: PRIMARY, margin: '2px 0' }}>&amp;</div>
-                  <div style={{ fontSize: '2.1rem', color: DARK }}>{W.groom}</div>
-                </div>
-                {guestName && (
-                  <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 15, color: DARK }}>
-                    Dear <span style={{ color: PRIMARY }}>{guestName}</span>,
-                  </p>
+              <>
+                {(couple as any).cover_video_url ? (
+                  <video
+                    autoPlay loop muted playsInline preload="auto"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}>
+                    <source src={(couple as any).cover_video_url} type="video/mp4" />
+                  </video>
+                ) : (
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    backgroundImage: `url(${couple.couple_photo || (couple as any).cover_background_image || DEFAULT_COVER_BG})`,
+                    backgroundSize: 'cover', backgroundPosition: 'center',
+                  }} />
                 )}
-              </div>
-            )}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: isImeshaMadusanka
+                    ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.28) 42%, rgba(0,0,0,0.08) 58%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.55) 100%)'
+                    : 'linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.45) 100%)',
+                }} />
 
-            <div style={{ position: 'relative', zIndex: 1, minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 64px', textAlign: 'center' }}>
-              {isImeshaMadusanka && guestName && (
-                <p style={{
-                  margin: '0 0 18px', fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600,
-                  fontSize: 17, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)',
-                }}>
-                  Dear <span style={{ color: PRIMARY_LIGHT }}>{guestName}</span>,
-                </p>
-              )}
-              <motion.button
-                onClick={handleOpenClick}
-                aria-label="Open invitation"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 9,
-                  padding: '13px 28px', borderRadius: 100, border: 'none',
-                  background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
-                  color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase',
-                  cursor: 'pointer', boxShadow: `0 10px 26px rgba(0,0,0,0.4)`,
-                  fontFamily: "'Inter',sans-serif",
-                }}>
-                Open Invitation
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-              </motion.button>
-              {isImeshaMadusanka && (
-                <div style={{ marginTop: 14, fontSize: 11, color: 'rgba(255,255,255,0.75)', textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
-                  🎵 Tap to begin — with music
+                {/* One-off: imesha-madusanka- gets a reference-matched cover
+                    treatment — a pill "Wedding Invitation" badge, "You Are
+                    Invited", and the couple's names stacked on their own
+                    lines around a smaller "&" — instead of the default
+                    text-free cover every other invitation on this template
+                    keeps. The gradient above is darkened through this whole
+                    zone so the text stays readable no matter how bright the
+                    couple's own photo is. */}
+                {isImeshaMadusanka && (
+                  <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                    <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                      <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
+                    </div>
+                    <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>You Are Invited</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
+                      <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.bride}</div>
+                      <div style={{ fontSize: '1.3rem', color: PRIMARY_LIGHT, margin: '3px 0' }}>&amp;</div>
+                      <div style={{ fontSize: '2.3rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.5)' }}>{W.groom}</div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ position: 'relative', zIndex: 1, minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px 64px', textAlign: 'center' }}>
+                  {isImeshaMadusanka && guestName && (
+                    <p style={{
+                      margin: '0 0 18px', fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600,
+                      fontSize: 17, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)',
+                    }}>
+                      Dear <span style={{ color: PRIMARY_LIGHT }}>{guestName}</span>,
+                    </p>
+                  )}
+                  <motion.button
+                    onClick={handleOpenClick}
+                    aria-label="Open invitation"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 9,
+                      padding: '13px 28px', borderRadius: 100, border: 'none',
+                      background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`,
+                      color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase',
+                      cursor: 'pointer', boxShadow: `0 10px 26px rgba(0,0,0,0.4)`,
+                      fontFamily: "'Inter',sans-serif",
+                    }}>
+                    Open Invitation
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </motion.button>
+                  {isImeshaMadusanka && (
+                    <div style={{ marginTop: 14, fontSize: 11, color: 'rgba(255,255,255,0.75)', textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                      🎵 Tap to begin — with music
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
