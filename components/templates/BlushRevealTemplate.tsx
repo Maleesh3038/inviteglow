@@ -242,7 +242,7 @@ function Blossom({ size = 14, color }: { size?: number; color: string }) {
 
 // Gentle falling petals across the whole site. Pure CSS keyframes (not
 // framer-motion/JS state), so this costs nothing on re-render.
-function FallingPetals({ color }: { color: string }) {
+function FallingPetals({ color, imageUrl }: { color: string; imageUrl?: string }) {
   const petals = [
     { left: '4%', size: 11, delay: 0, dur: 13 },
     { left: '16%', size: 8, delay: 3.2, dur: 16 },
@@ -253,11 +253,19 @@ function FallingPetals({ color }: { color: string }) {
     { left: '86%', size: 12, delay: 8, dur: 13 },
     { left: '94%', size: 9, delay: 4.5, dur: 15 },
   ]
+  // When imageUrl is given (avindi-vinod's calla lily), each falling item
+  // is the actual uploaded flower photo instead of the generic SVG blossom
+  // — sized a bit taller than wide to match the flower's natural shape.
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 60, overflow: 'hidden' }}>
       {petals.map((p, i) => (
         <span key={i} className="bb-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
-          <Blossom size={p.size} color={color} />
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="" style={{ width: p.size * 1.8, height: p.size * 3.1, objectFit: "contain", display: "block" }} />
+          ) : (
+            <Blossom size={p.size} color={color} />
+          )}
         </span>
       ))}
     </div>
@@ -1080,7 +1088,7 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
         }
       `}</style>
 
-      <FallingPetals color={PRIMARY} />
+      <FallingPetals color={PRIMARY} imageUrl={isAvindiVinod ? "/avindi-vinod-calla-lily.png" : undefined} />
 
       <AnimatePresence onExitComplete={() => setIntroGone(true)}>
         {showIntro && guestName && (
@@ -1229,6 +1237,10 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 second time right after opening just repeats the same
                 picture back to back). */}
             <div style={{ padding: "2.6rem 1.5rem 1.2rem", textAlign: "center" }}>
+              {isAvindiVinod && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/avindi-vinod-calla-lily.png" alt="" style={{ width: 34, height: "auto", margin: "0 auto 12px", display: "block", opacity: 0.9 }} />
+              )}
               <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: MUTED, marginBottom: "0.8rem" }}>
                 {(couple as any).together_with_text || "Together with their families"}
               </div>
@@ -1252,6 +1264,10 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
 
             {/* Blessing card */}
             <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              {isAvindiVinod && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/avindi-vinod-calla-lily.png" alt="" style={{ position: "absolute", top: -10, right: -6, width: 46, height: "auto", opacity: 0.35, transform: "rotate(14deg)", pointerEvents: "none" }} />
+              )}
               <div style={pretitleStyle(PRIMARY)}>With Love</div>
               <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
@@ -1401,6 +1417,10 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
             {/* Thank you */}
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                {isAvindiVinod && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src="/avindi-vinod-calla-lily.png" alt="" style={{ position: "absolute", top: -10, right: -6, width: 46, height: "auto", opacity: 0.35, transform: "rotate(14deg)", pointerEvents: "none" }} />
+                )}
                 <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
