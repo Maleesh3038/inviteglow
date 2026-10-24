@@ -1153,18 +1153,18 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 <div style={{ position: 'relative', width: '94%', maxWidth: 420, aspectRatio: '1024 / 1536' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/avindi-vinod-cover-frame.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-                  <div style={{ position: 'absolute', top: '29%', left: '10%', right: '10%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2%' }}>
+                  <div style={{ position: 'absolute', top: '29%', left: '10%', right: '10%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3.5%' }}>
                     <div style={{ display: 'inline-flex', border: `1px solid ${PRIMARY}66`, borderRadius: 100, padding: '5px 14px', background: 'rgba(255,255,255,0.6)' }}>
                       <span style={{ fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: PRIMARY }}>Wedding Invitation</span>
                     </div>
-                    <div style={{ fontSize: 8, letterSpacing: '0.32em', textTransform: 'uppercase', color: MUTED }}>You Are Invited</div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
+                    <div style={{ fontSize: 8, letterSpacing: '0.32em', textTransform: 'uppercase', color: MUTED, marginTop: '1%' }}>You Are Invited</div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.3, marginTop: '0.5%' }}>
                       <div style={{ fontSize: 'clamp(1.3rem,6.5vw,1.9rem)', color: DARK }}>{W.bride}</div>
-                      <div style={{ fontSize: 'clamp(0.8rem,4vw,1.1rem)', color: PRIMARY, margin: '1px 0' }}>&amp;</div>
+                      <div style={{ fontSize: 'clamp(0.8rem,4vw,1.1rem)', color: PRIMARY, margin: '3px 0' }}>&amp;</div>
                       <div style={{ fontSize: 'clamp(1.3rem,6.5vw,1.9rem)', color: DARK }}>{W.groom}</div>
                     </div>
                     {guestName && (
-                      <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 'clamp(0.7rem,3vw,0.85rem)', color: DARK }}>
+                      <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 'clamp(0.7rem,3vw,0.85rem)', color: DARK, marginTop: '1%' }}>
                         Dear <span style={{ color: PRIMARY }}>{guestName}</span>,
                       </p>
                     )}
@@ -1552,7 +1552,13 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  {isAvindiVinod ? (
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontStyle: "italic", fontSize: "1.5rem", color: PRIMARY, marginTop: 6, lineHeight: 1.3 }}>
+                      {W.bride}<span style={{ fontFamily: "'Great Vibes',cursive", fontWeight: 400 }}> &amp; </span>{W.groom}
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  )}
                 </div>
               </motion.div>
             )}
