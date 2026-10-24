@@ -743,6 +743,9 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
   // (every tile the same square size) instead of this template's default
   // masonry layout (a tall first tile spanning two rows).
   const isChanakaSandamini = slug === 'chanaka-sandamini'
+  // chanaka-sandamini- gallery is a full-width auto-advancing slideshow
+  // instead of the 2-column grid, one photo at a time.
+  const [slideIdx, setSlideIdx] = useState(0)
   const [opened, setOpened] = useState(false)
   const [showIntro, setShowIntro] = useState(!!guestName) // show intro only when guest name present
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -819,6 +822,12 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
     song: couple.song_title || DEFAULT_SONG_TITLE, artist: couple.song_artist || DEFAULT_SONG_ARTIST,
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
+
+  useEffect(() => {
+    if (!isChanakaSandamini || W.gallery.length <= 1) return
+    const id = setInterval(() => setSlideIdx(i => (i + 1) % W.gallery.length), 3200)
+    return () => clearInterval(id)
+  }, [isChanakaSandamini, W.gallery.length])
 
   const flexContacts: { name: string; phone: string }[] = Array.isArray((couple as any).contacts) ? (couple as any).contacts.filter((c: any) => c?.phone).map((c: any) => ({ name: c.name || '', phone: c.phone })) : []
   const contactList: { name: string; phone: string }[] = flexContacts.length > 0
@@ -1188,27 +1197,32 @@ function SacredPoruwaInner({ couple }: { couple: Couple }) {
                   <>
                     <div style={eyebrow(`${PRIMARY}aa`)}>Our Story</div>
                     <div style={heading(DARK)}>Our Moments</div>
-                    {/* An explicit 2-column split (alternating photos by
-                        index into a left/right array), not a CSS
-                        column-count masonry — that auto-balances by total
-                        height and can dump 3 photos in one column and
-                        just 1 in the other whenever one photo is much
-                        taller than the rest (exactly what happened with
-                        the tall beach photo here). This guarantees an
-                        even left/right split every time, while each photo
-                        still keeps its own natural proportions — nothing
-                        gets cropped or squeezed. */}
-                    <div style={{ display: "flex", gap: 10 }}>
-                      {[0, 1].map(col => (
-                        <div key={col} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-                          {W.gallery.filter((_, i) => i % 2 === col).map((src, i) => (
-                            <div key={i} style={{ borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={src} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { (e.currentTarget.closest('div') as HTMLElement).style.display = "none" }} />
-                            </div>
+                    {/* Full-width slideshow: one photo at a time, auto-advancing
+                        every ~3.2s with a crossfade, plus tap-to-advance and
+                        dot indicators so a guest can also step through by hand. */}
+                    <div
+                      onClick={() => setSlideIdx(i => (i + 1) % W.gallery.length)}
+                      style={{ position: "relative", width: "100%", aspectRatio: "4/5", borderRadius: 16, overflow: "hidden", background: `${PRIMARY_LIGHT}33`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", cursor: W.gallery.length > 1 ? "pointer" : "default" }}>
+                      <AnimatePresence initial={false} mode="wait">
+                        <motion.img
+                          key={slideIdx}
+                          src={W.gallery[slideIdx % W.gallery.length]}
+                          alt=""
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.6 }}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={e => { (e.currentTarget as HTMLElement).style.display = "none" }}
+                        />
+                      </AnimatePresence>
+                      {W.gallery.length > 1 && (
+                        <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+                          {W.gallery.map((_, i) => (
+                            <div key={i} style={{ width: i === slideIdx ? 16 : 6, height: 6, borderRadius: 3, background: i === slideIdx ? "#fff" : "rgba(255,255,255,0.55)", transition: "width 0.3s" }} />
                           ))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </>
                 ) : (
