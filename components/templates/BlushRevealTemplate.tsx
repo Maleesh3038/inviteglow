@@ -1159,17 +1159,18 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
 
             {isAvindiVinod && (
               <div style={{ position: 'absolute', top: '13%', left: 0, right: 0, zIndex: 1, textAlign: 'center', padding: '0 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'inline-flex', border: '1px solid rgba(244,223,163,0.5)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
-                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#f4dfa3' }}>Wedding Invitation</span>
+                <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.45)', borderRadius: 100, padding: '7px 20px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}>
+                  <span style={{ fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', color: '#fff' }}>Wedding Invitation</span>
                 </div>
+                <div style={{ fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)' }}>You Are Invited</div>
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '2.1rem', color: '#f4dfa3', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.bride}</div>
-                  <div style={{ fontSize: '1.2rem', color: '#e8c873', margin: '2px 0' }}>&amp;</div>
-                  <div style={{ fontSize: '2.1rem', color: '#f4dfa3', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.groom}</div>
+                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.bride}</div>
+                  <div style={{ fontSize: '1.2rem', color: PRIMARY_LIGHT, margin: '2px 0' }}>&amp;</div>
+                  <div style={{ fontSize: '2.1rem', color: '#fff', textShadow: '0 3px 14px rgba(0,0,0,0.55)' }}>{W.groom}</div>
                 </div>
                 {guestName && (
                   <p style={{ margin: 0, fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 600, fontSize: 15, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>
-                    Dear <span style={{ color: '#f4dfa3' }}>{guestName}</span>,
+                    Dear <span style={{ color: PRIMARY_LIGHT }}>{guestName}</span>,
                   </p>
                 )}
               </div>
