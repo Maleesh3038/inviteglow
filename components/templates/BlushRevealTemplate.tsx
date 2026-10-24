@@ -1308,8 +1308,12 @@ function BlushRevealInner({ couple }: { couple: Couple }) {
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.85)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                     {(couple as any).together_with_text || "Together with their families"}
                   </div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1, textShadow: "0 3px 14px rgba(0,0,0,0.5)" }}>
-                    <span style={ts('bride_name')}>{W.bride}</span><span style={{ color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
+                  {/* Clearer bold serif instead of the thin Great Vibes
+                      script for the names themselves — easier to read
+                      sitting over a busy photo, even with the shadow.
+                      The "&" stays in script as a small decorative touch. */}
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, fontStyle: "italic", letterSpacing: "0.01em", fontSize: combinedNameFontSize(W.bride, W.groom), color: "#fff", lineHeight: 1.15, textShadow: "0 3px 16px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.5)" }}>
+                    <span style={ts('bride_name')}>{W.bride}</span><span style={{ fontFamily: "'Great Vibes',cursive", fontWeight: 400, color: PRIMARY_LIGHT }}> &amp; </span><span style={ts('groom_name')}>{W.groom}</span>
                   </div>
                   {guestName && (
                     <p style={{ marginTop: 14, fontSize: 15, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", color: "#fff", fontWeight: 600, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
