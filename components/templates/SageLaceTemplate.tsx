@@ -1298,8 +1298,10 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Thank you */}
-            {sv.thank_you && (
+            {/* Thank you — roshani-sajeewa- only: moved to the very bottom
+                (below Contact Numbers, rendered further down); every other
+                couple keeps it here, in its original spot. */}
+            {sv.thank_you && !isRoshaniSajeewa && (
               <motion.div style={{ ...cardStyle(PRIMARY), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
@@ -1307,13 +1309,9 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: (isRoshaniSajeewa ? MUTED : "#a8b89e"), letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={isRoshaniSajeewa
-                    ? { fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "1.35rem", color: PRIMARY, marginTop: 4 }
-                    : { fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>
-                    {isRoshaniSajeewa
-                      ? <>{W.bride}<span style={{ fontFamily: "'Great Vibes',cursive", textTransform: "none", letterSpacing: 0, fontSize: "1.1rem", margin: "0 6px" }}>and</span>{W.groom}</>
-                      : <>{W.bride} &amp; {W.groom}</>}
+                  <div style={{ fontSize: 11, color: "#a8b89e", letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>
+                    {W.bride} &amp; {W.groom}
                   </div>
                 </div>
               </motion.div>
@@ -1330,14 +1328,35 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
+            {/* Thank you — roshani-sajeewa- only: "A Special Note" pushed
+                down to the very bottom of the page, after everything else. */}
+            {sv.thank_you && isRoshaniSajeewa && (
+              <motion.div style={{ ...cardStyle(PRIMARY), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
+                <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
+                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
+                </div>
+                <div style={{ textAlign: "center", marginTop: 18 }}>
+                  <div style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "1.35rem", color: PRIMARY, marginTop: 4 }}>
+                    {W.bride}<span style={{ fontFamily: "'Great Vibes',cursive", textTransform: "none", letterSpacing: 0, fontSize: "1.1rem", margin: "0 6px" }}>and</span>{W.groom}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* roshani-sajeewa- only: footer (InviteGlow branding + socials) removed. */}
+            {!isRoshaniSajeewa && (
             <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.6 }}>
                 <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
               </div>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: (isRoshaniSajeewa ? MUTED : "#a8b89e") }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b89e" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
+            )}
             </div>
           </motion.div>
         )}
