@@ -694,6 +694,11 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const [videoPlaying, setVideoPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const videoEndedRef = useRef(false)
+  // roshani-sajeewa- gets a couple-photo "pop" screen for ~5s between the
+  // cover video finishing and the invitation opening (see handleVideoEnded
+  // below) — every other couple's video cover still opens immediately
+  // when their clip ends, unaffected.
+  const [showCouplePhotoPop, setShowCouplePhotoPop] = useState(false)
 
   // One-offs, each gated to a single invitation's slug — every other link
   // on this template keeps its current sage/moss default untouched:
@@ -739,6 +744,12 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   const handleVideoEnded = () => {
     if (videoEndedRef.current) return
     videoEndedRef.current = true
+    if (isRoshaniSajeewa) {
+      // Show the couple's photo "pop" in for ~5s, then open the invitation.
+      setShowCouplePhotoPop(true)
+      setTimeout(() => setOpened(true), 5000)
+      return
+    }
     setOpened(true)
   }
   // The cover <video> below briefly auto-plays (muted) the instant it
@@ -875,6 +886,26 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               >
                 <source src={coverVideoUrl} type="video/mp4" />
               </video>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* roshani-sajeewa- only: once her cover video finishes, their
+            couple photo pops in (spring scale-in) and holds for ~5s
+            before the invitation opens — see handleVideoEnded above. */}
+        <AnimatePresence>
+          {!opened && showCouplePhotoPop && (
+            <motion.div key="post-video-photo"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
+              style={{ position: "fixed", inset: 0, zIndex: 60, background: DARK, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              <motion.img
+                src={couple.couple_photo || DEFAULT_PHOTO}
+                alt=""
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                style={{ width: "82%", maxWidth: 360, aspectRatio: "4/5", objectFit: "cover", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
