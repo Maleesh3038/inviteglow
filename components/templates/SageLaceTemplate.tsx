@@ -267,6 +267,54 @@ function Countdown({ targetDate, dark, tint = "#eef2e6", labelColor = "#7a8a70" 
 }
 
 // ── Music Player ──
+// ── Puzzle photo reveal — splits a photo into a grid of tiles, each
+// showing its own correctly-cropped slice (classic CSS sprite technique:
+// one shared background-image per tile, sized up to `cols × rows` and
+// offset by background-position), then flies each tile in from a random
+// direction/rotation with a slight stagger so the whole photo "assembles"
+// itself like a puzzle coming together. Random offsets are computed once
+// at mount (this component is only ever mounted for a single one-shot
+// entrance, never re-rendered mid-animation), so they stay stable. ──
+function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: number; rows?: number }) {
+  const [pieces] = useState(() => {
+    const out: { r: number; c: number; dx: number; dy: number; rot: number; delay: number }[] = []
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        out.push({
+          r, c,
+          dx: (Math.random() - 0.5) * 240,
+          dy: (Math.random() - 0.5) * 240,
+          rot: (Math.random() - 0.5) * 90,
+          delay: (r + c) * 0.022 + Math.random() * 0.06,
+        })
+      }
+    }
+    return out
+  })
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {pieces.map(({ r, c, dx, dy, rot, delay }) => (
+        <motion.div
+          key={`${r}-${c}`}
+          initial={{ opacity: 0, x: dx, y: dy, rotate: rot, scale: 0.3 }}
+          animate={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
+          transition={{ delay, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: "absolute",
+            left: `${(c / cols) * 100}%`,
+            top: `${(r / rows) * 100}%`,
+            width: `${100 / cols}%`,
+            height: `${100 / rows}%`,
+            backgroundImage: `url(${src})`,
+            backgroundSize: `${cols * 100}% ${rows * 100}%`,
+            backgroundPosition: `${cols > 1 ? (c / (cols - 1)) * 100 : 0}% ${rows > 1 ? (r / (rows - 1)) * 100 : 0}%`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string }) {
   const [playing, setPlaying] = useState(false); const [prog, setProg] = useState(0)
   useEffect(() => {
@@ -891,23 +939,19 @@ function SageLaceInner({ couple }: { couple: Couple }) {
         </AnimatePresence>
 
         {/* roshani-sajeewa- only: once her cover video finishes, their
-            couple photo pops in (spring scale-in) and holds for ~5s
-            before the invitation opens — see handleVideoEnded above. */}
+            couple photo assembles itself like a puzzle (tiles flying in
+            from random directions and snapping into place) and holds for
+            ~5s before the invitation opens — see handleVideoEnded above. */}
         <AnimatePresence>
           {!opened && showCouplePhotoPop && (
             <motion.div key="post-video-photo"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
               style={{ position: "fixed", inset: 0, zIndex: 60, background: DARK, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-              <motion.img
-                // Their own uploaded engagement photo — not the generic
-                // DEFAULT_PHOTO placeholder.
-                src="/roshani-sajeewa-couple-photo.jpg"
-                alt=""
-                initial={{ scale: 0.6, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                style={{ width: "82%", maxWidth: 360, aspectRatio: "4/5", objectFit: "cover", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
-              />
+              <div style={{ width: "82%", maxWidth: 360, aspectRatio: "4/5", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+                {/* Their own uploaded engagement photo — not the generic
+                    DEFAULT_PHOTO placeholder. */}
+                <PuzzlePhotoReveal src="/roshani-sajeewa-couple-photo.jpg" cols={5} rows={6} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
