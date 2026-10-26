@@ -281,7 +281,7 @@ function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: nu
     const out: { r: number; c: number; delay: number }[] = []
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        out.push({ r, c, delay: (r + c) * 0.045 })
+        out.push({ r, c, delay: (r + c) * 0.075 })
       }
     }
     return out
@@ -293,7 +293,7 @@ function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: nu
           key={`${r}-${c}`}
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay, duration: 0.5, ease: "easeOut" }}
+          transition={{ delay, duration: 0.75, ease: "easeOut" }}
           style={{
             position: "absolute",
             left: `${(c / cols) * 100}%`,
@@ -943,16 +943,20 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             <motion.div key="post-video-photo"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
               style={{ position: "fixed", inset: 0, zIndex: 60, background: DARK, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "0 24px" }}>
-              <div style={{ width: "82%", maxWidth: 360, aspectRatio: "4/5", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{ scale: 0.88 }}
+                transition={{ delay: 1.45, duration: 0.6, ease: "easeInOut" }}
+                style={{ width: "72%", maxWidth: 300, aspectRatio: "4/5", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
                 {/* Their own uploaded engagement photo — not the generic
                     DEFAULT_PHOTO placeholder. */}
                 <PuzzlePhotoReveal src="/roshani-sajeewa-couple-photo.jpg" cols={5} rows={6} />
-              </div>
+              </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1, duration: 0.7, ease: "easeOut" }}
-                style={{ marginTop: 18, textAlign: "center" }}>
+                transition={{ delay: 1.55, duration: 0.7, ease: "easeOut" }}
+                style={{ marginTop: 16, textAlign: "center" }}>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 30, color: PRIMARY_LIGHT, lineHeight: 1.1 }}>
                   {W.bride} &amp; {W.groom}
                 </div>
