@@ -270,22 +270,30 @@ function Countdown({ targetDate, dark, tint = "#eef2e6", labelColor = "#7a8a70" 
 // ── Puzzle photo reveal — splits a photo into a grid of tiles, each
 // showing its own correctly-cropped slice (classic CSS sprite technique:
 // one shared background-image per tile, sized up to `cols × rows` and
-// offset by background-position), then flies each tile in from a random
-// direction/rotation with a slight stagger so the whole photo "assembles"
-// itself like a puzzle coming together. Random offsets are computed once
-// at mount (this component is only ever mounted for a single one-shot
-// entrance, never re-rendered mid-animation), so they stay stable. ──
+// offset by background-position). Each tile starts pushed outward away
+// from the photo's center (not a random scatter) and glides back inward
+// into place — like the photo gently exploded apart and is now
+// reassembling itself — with tiles nearer the center settling first in a
+// soft diagonal wave. A 1px overlap on every tile ("bleed") hides the
+// hairline seams that plain percentage-width tiles leave from browser
+// sub-pixel rounding. Offsets are computed once at mount (this component
+// only ever mounts for a single one-shot entrance), so they stay stable. ──
 function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: number; rows?: number }) {
   const [pieces] = useState(() => {
     const out: { r: number; c: number; dx: number; dy: number; rot: number; delay: number }[] = []
+    const centerCol = (cols - 1) / 2
+    const centerRow = (rows - 1) / 2
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
+        const fromCenterX = c - centerCol
+        const fromCenterY = r - centerRow
+        const dist = Math.sqrt(fromCenterX * fromCenterX + fromCenterY * fromCenterY) || 1
         out.push({
           r, c,
-          dx: (Math.random() - 0.5) * 240,
-          dy: (Math.random() - 0.5) * 240,
-          rot: (Math.random() - 0.5) * 90,
-          delay: (r + c) * 0.055 + Math.random() * 0.12,
+          dx: fromCenterX * 46,
+          dy: fromCenterY * 46,
+          rot: (fromCenterX + fromCenterY) * 4 + (Math.random() - 0.5) * 6,
+          delay: dist * 0.09 + Math.random() * 0.05,
         })
       }
     }
@@ -296,15 +304,15 @@ function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: nu
       {pieces.map(({ r, c, dx, dy, rot, delay }) => (
         <motion.div
           key={`${r}-${c}`}
-          initial={{ opacity: 0, x: dx, y: dy, rotate: rot, scale: 0.3 }}
+          initial={{ opacity: 0, x: dx, y: dy, rotate: rot, scale: 0.5 }}
           animate={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
-          transition={{ delay, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
           style={{
             position: "absolute",
             left: `${(c / cols) * 100}%`,
             top: `${(r / rows) * 100}%`,
-            width: `${100 / cols}%`,
-            height: `${100 / rows}%`,
+            width: `calc(${100 / cols}% + 1.5px)`,
+            height: `calc(${100 / rows}% + 1.5px)`,
             backgroundImage: `url(${src})`,
             backgroundSize: `${cols * 100}% ${rows * 100}%`,
             backgroundPosition: `${cols > 1 ? (c / (cols - 1)) * 100 : 0}% ${rows > 1 ? (r / (rows - 1)) * 100 : 0}%`,
