@@ -838,6 +838,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const isSandaminiChanaka = slug === 'sandamini-chanaka'
   const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka
   const coverNameScale = isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka ? 0.82 : 1
+  // anjana-nipuni- and nipuni-anjana- want the "Our Families" card in a
+  // plain simple sans-serif instead of the decorative serif every other
+  // useClearNameFont couple gets there.
+  const useSimpleFamilyFont = isAnjanaNipuni || isNipuniAnjana
   const isRedTheme = isKrishalJayakshi || isAnjanaNipuni
   // vinuri-akalanka- wants the whole invitation in the same warm
   // champagne/dusty-rose family as the cover screen, instead of this
@@ -1135,15 +1139,16 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>Our Families</div>
-                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, fontFamily: isAnjanaNipuni ? "'Inter',sans-serif" : useClearNameFont ? "'Playfair Display',serif" : undefined }}>
-                  {/* anjana-nipuni- gets a plain, simple sans-serif (Inter —
-                      the same font already used for labels throughout this
-                      template) instead of any decorative serif/script here
-                      — every other useClearNameFont couple is unaffected. */}
-                  {W.brideFamilyName && <><strong style={isAnjanaNipuni ? { fontWeight: 700 } : useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.brideFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <><span style={isAnjanaNipuni ? { fontFamily: "'Inter',sans-serif", fontWeight: 400, fontStyle: "normal" } : useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
-                  {W.groomFamilyName && <><strong style={isAnjanaNipuni ? { fontWeight: 700 } : useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED, fontFamily: isAnjanaNipuni ? "'Inter',sans-serif" : useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
+                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, fontFamily: useSimpleFamilyFont ? "'Inter',sans-serif" : useClearNameFont ? "'Playfair Display',serif" : undefined }}>
+                  {/* anjana-nipuni- and nipuni-anjana- get a plain, simple
+                      sans-serif (Inter — the same font already used for
+                      labels throughout this template) instead of any
+                      decorative serif/script here — every other
+                      useClearNameFont couple is unaffected. */}
+                  {W.brideFamilyName && <><strong style={useSimpleFamilyFont ? { fontWeight: 700 } : useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.brideFamilyName}</strong><br /></>}
+                  {W.brideFamilyName && W.groomFamilyName && <><span style={useSimpleFamilyFont ? { fontFamily: "'Inter',sans-serif", fontWeight: 400, fontStyle: "normal" } : useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
+                  {W.groomFamilyName && <><strong style={useSimpleFamilyFont ? { fontWeight: 700 } : useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.groomFamilyName}</strong><br /></>}
+                  <span style={{ color: MUTED, fontFamily: useSimpleFamilyFont ? "'Inter',sans-serif" : useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
                     {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
                       .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
                   </span>
