@@ -285,7 +285,7 @@ function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: nu
           dx: (Math.random() - 0.5) * 240,
           dy: (Math.random() - 0.5) * 240,
           rot: (Math.random() - 0.5) * 90,
-          delay: (r + c) * 0.022 + Math.random() * 0.06,
+          delay: (r + c) * 0.055 + Math.random() * 0.12,
         })
       }
     }
@@ -298,7 +298,7 @@ function PuzzlePhotoReveal({ src, cols = 5, rows = 6 }: { src: string; cols?: nu
           key={`${r}-${c}`}
           initial={{ opacity: 0, x: dx, y: dy, rotate: rot, scale: 0.3 }}
           animate={{ opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 }}
-          transition={{ delay, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
           style={{
             position: "absolute",
             left: `${(c / cols) * 100}%`,
