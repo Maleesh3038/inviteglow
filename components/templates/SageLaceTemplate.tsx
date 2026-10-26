@@ -1140,7 +1140,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You are invited instead of will you join us" : undefined} /></div>
+            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} /></div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
@@ -1186,7 +1186,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             {/* Music */}
             {sv.music && (
               <motion.div style={cardStyle(PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>Our Song</div>
+                {!isRoshaniSajeewa && <div style={pretitleStyle(PRIMARY)}>Our Song</div>}
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
