@@ -1200,7 +1200,15 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             )}
 
             {/* RSVP */}
-            <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} /></div>
+            <div id="rsvp">
+              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} />
+              {/* roshani-sajeewa- only: small RSVP-by-date reminder. */}
+              {isRoshaniSajeewa && (
+                <div style={{ textAlign: "center", marginTop: -4, marginBottom: 8, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: 13, color: MUTED }}>
+                  Kindly RSVP by 15th December
+                </div>
+              )}
+            </div>
 
             {/* Timeline */}
             {sv.timeline && W.timeline.length > 0 && (
