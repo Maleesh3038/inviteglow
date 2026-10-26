@@ -943,11 +943,15 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             <motion.div key="post-video-photo"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
               style={{ position: "fixed", inset: 0, zIndex: 60, background: DARK, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "0 24px" }}>
+              {/* Box matches the real photo's own aspect ratio (675×1200)
+                  instead of a generic 4:5 — the puzzle tiles are CSS
+                  sprites that stretch to fill whatever box they're given,
+                  so a mismatched box was distorting/squashing the photo. */}
               <motion.div
                 initial={{ scale: 1 }}
                 animate={{ scale: 0.88 }}
                 transition={{ delay: 1.45, duration: 0.6, ease: "easeInOut" }}
-                style={{ width: "72%", maxWidth: 300, aspectRatio: "4/5", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+                style={{ width: "auto", height: "min(48dvh, 420px)", maxWidth: "80%", aspectRatio: "675/1200", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
                 {/* Their own uploaded engagement photo — not the generic
                     DEFAULT_PHOTO placeholder. */}
                 <PuzzlePhotoReveal src="/roshani-sajeewa-couple-photo.jpg" cols={5} rows={6} />
