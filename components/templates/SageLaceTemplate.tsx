@@ -1183,10 +1183,14 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Music */}
-            {sv.music && (
+            {/* Music — roshani-sajeewa- hides this whole card (no visible
+                player), but the song itself still plays: handleOpen already
+                starts audioRef on open independently of this UI, so nothing
+                about actual playback changes, only this card's visibility.
+                Every other couple keeps the visible player as before. */}
+            {sv.music && !isRoshaniSajeewa && (
               <motion.div style={cardStyle(PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                {!isRoshaniSajeewa && <div style={pretitleStyle(PRIMARY)}>Our Song</div>}
+                <div style={pretitleStyle(PRIMARY)}>Our Song</div>
                 <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </motion.div>
             )}
