@@ -1135,16 +1135,15 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {(W.brideFamilyName || W.groomFamilyName) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={pretitleStyle(PRIMARY)}>Our Families</div>
-                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, fontFamily: useClearNameFont ? "'Playfair Display',serif" : undefined }}>
-                  {W.brideFamilyName && <><strong style={useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.brideFamilyName}</strong><br /></>}
-                  {/* anjana-nipuni- keeps this whole block in one consistent
-                      serif family (Playfair Display, matching their
-                      reference card) instead of switching to Cormorant
-                      Garamond for "together with" and the request line —
-                      every other useClearNameFont couple keeps that mix. */}
-                  {W.brideFamilyName && W.groomFamilyName && <><span style={isAnjanaNipuni ? { fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontWeight: 500 } : useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
-                  {W.groomFamilyName && <><strong style={useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED, fontFamily: isAnjanaNipuni ? "'Playfair Display',serif" : useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
+                <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, fontFamily: isAnjanaNipuni ? "'Inter',sans-serif" : useClearNameFont ? "'Playfair Display',serif" : undefined }}>
+                  {/* anjana-nipuni- gets a plain, simple sans-serif (Inter —
+                      the same font already used for labels throughout this
+                      template) instead of any decorative serif/script here
+                      — every other useClearNameFont couple is unaffected. */}
+                  {W.brideFamilyName && <><strong style={isAnjanaNipuni ? { fontWeight: 700 } : useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.brideFamilyName}</strong><br /></>}
+                  {W.brideFamilyName && W.groomFamilyName && <><span style={isAnjanaNipuni ? { fontFamily: "'Inter',sans-serif", fontWeight: 400, fontStyle: "normal" } : useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
+                  {W.groomFamilyName && <><strong style={isAnjanaNipuni ? { fontWeight: 700 } : useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.groomFamilyName}</strong><br /></>}
+                  <span style={{ color: MUTED, fontFamily: isAnjanaNipuni ? "'Inter',sans-serif" : useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
                     {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
                       .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
                   </span>
