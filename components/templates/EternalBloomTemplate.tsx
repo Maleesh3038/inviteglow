@@ -974,7 +974,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         input::placeholder { color: #b5c2ac; }
         .eb-petal {
@@ -1137,9 +1137,14 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY)}>Our Families</div>
                 <div style={{ textAlign: "center", padding: 12, background: TINT_SAGE, borderRadius: 12, fontSize: 13, color: DARK, lineHeight: 2, fontFamily: useClearNameFont ? "'Playfair Display',serif" : undefined }}>
                   {W.brideFamilyName && <><strong style={useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.brideFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <><span style={useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
+                  {/* anjana-nipuni- keeps this whole block in one consistent
+                      serif family (Playfair Display, matching their
+                      reference card) instead of switching to Cormorant
+                      Garamond for "together with" and the request line —
+                      every other useClearNameFont couple keeps that mix. */}
+                  {W.brideFamilyName && W.groomFamilyName && <><span style={isAnjanaNipuni ? { fontFamily: "'Playfair Display',serif", fontStyle: "italic", fontWeight: 500 } : useClearNameFont ? { fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontWeight: 400 } : undefined}>together with</span><br /></>}
                   {W.groomFamilyName && <><strong style={useClearNameFont ? { fontSize: "1.4em" } : undefined}>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED, fontFamily: useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
+                  <span style={{ color: MUTED, fontFamily: isAnjanaNipuni ? "'Playfair Display',serif" : useClearNameFont ? "'Cormorant Garamond',serif" : undefined }}>
                     {((couple as any).family_invitation_text || "request the honour of your presence\nto celebrate the marriage of their loving children")
                       .split('\n').map((line: string, i: number, arr: string[]) => <span key={i}>{line}{i < arr.length - 1 && <br />}</span>)}
                   </span>
