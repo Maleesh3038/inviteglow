@@ -899,7 +899,9 @@ function SageLaceInner({ couple }: { couple: Couple }) {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
               style={{ position: "fixed", inset: 0, zIndex: 60, background: DARK, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <motion.img
-                src={couple.couple_photo || DEFAULT_PHOTO}
+                // Their own uploaded engagement photo — not the generic
+                // DEFAULT_PHOTO placeholder.
+                src="/roshani-sajeewa-couple-photo.jpg"
                 alt=""
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
