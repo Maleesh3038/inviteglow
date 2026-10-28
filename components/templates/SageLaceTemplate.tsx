@@ -192,22 +192,37 @@ function ContactRow({ name, phone, primary, nameColor = '#2d3d28', phoneColor = 
   )
 }
 
-function LeafDivider({ color, size = 20 }: { color: string; size?: number }) {
+// shashini-kavishka- only: a simple 5-petal lotus bloom, fanned out from
+// a single base point — swapped in for the usual leaf icon wherever
+// LeafDivider is used, to match her "gold lotus" theme.
+function LotusIcon({ color, size = 20 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {[-50, -25, 0, 25, 50].map(angle => (
+        <path key={angle} d="M12,22 C9,17 9,11 12,7 C15,11 15,17 12,22 Z" fill={color} opacity={angle === 0 ? 0.95 : 0.65} transform={`rotate(${angle} 12 22)`} />
+      ))}
+    </svg>
+  )
+}
+
+function LeafDivider({ color, size = 20, variant = 'leaf' }: { color: string; size?: number; variant?: 'leaf' | 'lotus' }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
       <div style={{ width: 34, height: 1, background: color, opacity: 0.4 }} />
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={color} opacity="0.8" />
-        <path d="M12 4v16" stroke="#fff" strokeWidth="0.8" opacity="0.5" />
-      </svg>
+      {variant === 'lotus' ? <LotusIcon color={color} size={size} /> : (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={color} opacity="0.8" />
+          <path d="M12 4v16" stroke="#fff" strokeWidth="0.8" opacity="0.5" />
+        </svg>
+      )}
       <div style={{ width: 34, height: 1, background: color, opacity: 0.4 }} />
     </div>
   )
 }
 
 // ── Guest intro screen ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, midTint = "#eef2e6" }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; midTint?: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, midTint = "#eef2e6", dividerVariant = 'leaf' }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; midTint?: string; dividerVariant?: 'leaf' | 'lotus'
 }) {
   return (
     <motion.div key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
@@ -220,7 +235,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
       <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${primaryLight}44, transparent)`, top: "22%", left: "50%", transform: "translateX(-50%)" }} />
       <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: [0.4, 1.1, 1], opacity: 1 }} transition={{ duration: 1.1, ease: "easeOut", delay: 0.2 }}
         style={{ position: "relative", zIndex: 1, marginBottom: "1.6rem" }}>
-        <LeafDivider color={primary} size={22} />
+        <LeafDivider color={primary} size={22} variant={dividerVariant} />
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.9 }} style={{ position: "relative", zIndex: 1, marginBottom: "1rem" }}>
         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(1.9rem,6.5vw,2.7rem)", color: dark, lineHeight: 1.2 }}>
@@ -336,7 +351,7 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
 }
 
 // ── RSVP ──
-function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, title = "Will You Join Us?", eyebrowText = "Be Our Guest" }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string; title?: string; eyebrowText?: string }) {
+function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, title = "Will You Join Us?", eyebrowText = "Be Our Guest", dividerVariant = 'leaf' }: { coupleId: string; askDrinking: boolean; primary: string; dark: string; cream: string; muted: string; guestName: string; title?: string; eyebrowText?: string; dividerVariant?: 'leaf' | 'lotus' }) {
   const [name, setName] = useState(guestName || ""); const [guestCount, setGuestCount] = useState(1)
   const [step, setStep] = useState<"form" | "count" | "drinking" | "done">("form")
   const [finalResponse, setFinalResponse] = useState<"yes" | "no">("yes"); const [saving, setSaving] = useState(false)
@@ -348,7 +363,7 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, t
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
   return (
     <div style={{ padding: "0 1.5rem 2.4rem", textAlign: "center" }}>
-      <LeafDivider color={primary} />
+      <LeafDivider color={primary} variant={dividerVariant} />
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, margin: "16px 0 8px", fontWeight: 700 }}>{eyebrowText}</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>{title}</div>
       <div style={{ background: "#fff", borderRadius: 20, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(45,61,40,0.08)" }}>
@@ -749,12 +764,17 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   // roshani-sajeewa- wants the dusty-rose/mauve/blush bouquet palette
   // they shared, instead of this template's default sage green.
   const isRoshaniSajeewa = slug === 'roshani-sajeewa'
+  // shashini-kavishka- wants a "gold lotus" theme — warm antique-gold
+  // accents, deep bronze-brown text, and the leaf accent swapped for a
+  // lotus bloom icon wherever it appears.
+  const isShashiniKavishka = slug === 'shashini-kavishka'
 
-  const PRIMARY = isRoshaniSajeewa ? "#df9179" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = isRoshaniSajeewa ? "#f0ddc6" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = isRoshaniSajeewa ? "#6b4a44" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
-  const CREAM = isRoshaniSajeewa ? "#fffaf6" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
-  const MUTED = isRoshaniSajeewa ? "#a9847c" : DEFAULT_PALETTE.muted
+  const PRIMARY = isRoshaniSajeewa ? "#df9179" : isShashiniKavishka ? "#b8872e" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isRoshaniSajeewa ? "#f0ddc6" : isShashiniKavishka ? "#ecd9a0" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isRoshaniSajeewa ? "#6b4a44" : isShashiniKavishka ? "#4a2e1f" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isRoshaniSajeewa ? "#fffaf6" : isShashiniKavishka ? "#fdf8ec" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isRoshaniSajeewa ? "#a9847c" : isShashiniKavishka ? "#a98f5c" : DEFAULT_PALETTE.muted
+  const dividerVariant: 'leaf' | 'lotus' = isShashiniKavishka ? 'lotus' : 'leaf'
 
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
@@ -882,7 +902,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
       <AnimatePresence>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} midTint={isRoshaniSajeewa ? TINT_SAGE : undefined} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} midTint={isRoshaniSajeewa ? TINT_SAGE : undefined} dividerVariant={dividerVariant} />
         )}
       </AnimatePresence>
 
@@ -1201,7 +1221,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
 
             {/* RSVP */}
             <div id="rsvp">
-              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} />
+              <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} dividerVariant={dividerVariant} />
               {/* roshani-sajeewa- only: small RSVP-by-date reminder — same
                   quiet, elegant typographic treatment used for the guest
                   name on the intro screen, not a boxed badge. */}
@@ -1363,7 +1383,9 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             {!isRoshaniSajeewa && (
             <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10, opacity: 0.6 }}>
-                <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
+                {isShashiniKavishka ? <LotusIcon color={PRIMARY} size={40} /> : (
+                  <svg width={40} height={40} viewBox="0 0 24 24" fill="none"><path d="M12 2C7 6 4 11 4 15a8 8 0 0016 0c0-4-3-9-8-13z" fill={PRIMARY} /></svg>
+                )}
               </div>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
               <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a8b89e" }}>inviteglow.com · Digital Wedding Invitations</div>
