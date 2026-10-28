@@ -849,9 +849,13 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // never actually come from PRIMARY/DARK, so once the invitation opens
   // and those take over, it had been switching to green underneath.
   const isChampagneTheme = isVinuriAkalanka
-  // sandamini-chanaka- wants a gold & white theme inside the invitation,
-  // instead of this template's default botanical green.
-  const isGoldWhiteTheme = isSandaminiChanaka
+  // shashini-kavishka- also wants a gold theme, matching the "gold lotus"
+  // treatment already built for her on Sage Lace.
+  const isShashiniKavishka = slug === 'shashini-kavishka'
+  // sandamini-chanaka- and shashini-kavishka- both want a gold & white
+  // theme inside the invitation, instead of this template's default
+  // botanical green.
+  const isGoldWhiteTheme = isSandaminiChanaka || isShashiniKavishka
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
   // the static default asset is missing from this deployment — we stop
