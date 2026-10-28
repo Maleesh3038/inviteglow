@@ -1105,8 +1105,12 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                   {isRoshaniSajeewa ? (
                     // Custom uploaded monogram logo replaces the generic
                     // initials-in-a-circle placeholder for this invitation only.
+                    // objectFit:"contain" (not "cover") so the whole
+                    // uploaded logo — including the name text running
+                    // around its edge — always fits inside the circle
+                    // instead of being cropped by it.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src="/roshani-sajeewa-logo.png" alt="" style={{ width: 96, height: 96, borderRadius: "50%", margin: "0 auto 16px", display: "block", objectFit: "cover" }} />
+                    <img src="/roshani-sajeewa-logo.png" alt="" style={{ width: 120, height: 120, borderRadius: "50%", margin: "0 auto 16px", display: "block", objectFit: "contain", background: CREAM }} />
                   ) : (
                   <div style={{
                     width: 54, height: 54, borderRadius: "50%", margin: "0 auto 16px", border: `1.4px solid ${PRIMARY}`,
