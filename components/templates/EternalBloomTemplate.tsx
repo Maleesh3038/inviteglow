@@ -751,7 +751,7 @@ function Leaf({ size, color }: { size: number; color: string }) {
     </svg>
   )
 }
-function PetalShower({ primary, primaryLight }: { primary: string; primaryLight: string }) {
+function PetalShower({ primary, primaryLight, imageUrl }: { primary: string; primaryLight: string; imageUrl?: string }) {
   const items: { left: string; size: number; delay: number; dur: number; lite: boolean; kind: "flower" | "leaf" }[] = [
     { left: "2%", size: 15, delay: 0, dur: 16, lite: false, kind: "flower" },
     { left: "10%", size: 11, delay: 2.5, dur: 19, lite: true, kind: "leaf" },
@@ -770,7 +770,13 @@ function PetalShower({ primary, primaryLight }: { primary: string; primaryLight:
     <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 90, overflow: "hidden" }}>
       {items.map((p, i) => (
         <span key={i} className="eb-petal" style={{ left: p.left, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s` }}>
-          {p.kind === "leaf" ? (
+          {imageUrl ? (
+            // shashini-kavishka- only: her own uploaded gold lotus image,
+            // falling instead of the generic flower/leaf shapes — sized up
+            // a little bigger than those since it's a more detailed image.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="" style={{ width: p.size * 1.8, height: "auto", display: "block", opacity: p.lite ? 0.6 : 0.85 }} />
+          ) : p.kind === "leaf" ? (
             <Leaf size={p.size} color={p.lite ? primaryLight : primary} />
           ) : (
             <svg width={p.size} height={p.size} viewBox="0 0 24 24" fill="none">
@@ -998,6 +1004,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
       `}</style>
 
       {isKrishalJayakshi && opened && <PetalShower primary={PRIMARY} primaryLight={PRIMARY_LIGHT} />}
+      {isShashiniKavishka && opened && <PetalShower primary={PRIMARY} primaryLight={PRIMARY_LIGHT} imageUrl="/shashini-kavishka-lotus.png" />}
 
       <AnimatePresence>
         {showIntro && guestName && (
@@ -1132,6 +1139,12 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
 
             {/* Blessing card */}
             <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              {/* shashini-kavishka- only: her gold lotus image as a quiet
+                  corner accent, matching the gold theme. */}
+              {isShashiniKavishka && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/shashini-kavishka-lotus.png" alt="" style={{ position: "absolute", top: -14, right: -14, width: 88, height: "auto", opacity: 0.16, transform: "rotate(12deg)", pointerEvents: "none" }} />
+              )}
               <div style={pretitleStyle(PRIMARY)}>With Love</div>
               <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
                 {(couple as any).family_invitation_text ||
@@ -1317,6 +1330,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {/* Thank you */}
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 24 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                {isShashiniKavishka && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src="/shashini-kavishka-lotus.png" alt="" style={{ position: "absolute", top: -14, right: -14, width: 88, height: "auto", opacity: 0.16, transform: "rotate(12deg)", pointerEvents: "none" }} />
+                )}
                 <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
                 <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
