@@ -625,6 +625,14 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  // peshala-pubudu- only: a Sinhala/English toggle on the formal family
+  // invitation card — she shared a reference photo of a traditional
+  // Sinhala wedding card and wants that exact wording available as an
+  // alternate language on that one card, switchable by the guest.
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  const isPeshalaPubudu = slug === 'peshala-pubudu'
+  const [cardLang, setCardLang] = useState<'en' | 'si'>('en')
+
   const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
   const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
   const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
@@ -690,7 +698,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#f3e8e8" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&family=Noto+Serif+Sinhala:wght@400;500;600;700&display=swap');
         @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-18px) rotate(8deg);} }
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         @keyframes pulse-pink { 0%,100%{box-shadow:0 0 0 0 rgba(196,96,122,0.3);} 50%{box-shadow:0 0 0 14px rgba(196,96,122,0);} }
@@ -821,17 +829,85 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
               {[1, 2, 3].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: PRIMARY_LIGHT }} />)}
             </div>
 
-            {(W.brideFamilyName || W.groomFamilyName) && (
+            {(W.brideFamilyName || W.groomFamilyName || isPeshalaPubudu) && (
               <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <LotusCornerAccent />
                 <LotusCornerAccent flip />
-                <div style={pretitleStyle(PRIMARY_LIGHT)}>With Love</div>
-                <div style={{ textAlign: "center", padding: 12, background: "#fdf5f7", borderRadius: 12, fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
-                  {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
-                  {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
-                  {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
-                  <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
-                </div>
+
+                {/* peshala-pubudu- only: English/Sinhala toggle for this
+                    card — she shared a reference photo of a traditional
+                    Sinhala wedding invitation card and wants that exact
+                    wording available, switchable by the guest. */}
+                {isPeshalaPubudu && (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 16 }}>
+                    <button onClick={() => setCardLang('en')} style={{
+                      padding: "5px 16px", borderRadius: 100, border: `1px solid ${PRIMARY}`, cursor: "pointer",
+                      background: cardLang === 'en' ? PRIMARY : "transparent", color: cardLang === 'en' ? "#fff" : PRIMARY,
+                      fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", fontFamily: "'Inter',sans-serif",
+                    }}>English</button>
+                    <button onClick={() => setCardLang('si')} style={{
+                      padding: "5px 16px", borderRadius: 100, border: `1px solid ${PRIMARY}`, cursor: "pointer",
+                      background: cardLang === 'si' ? PRIMARY : "transparent", color: cardLang === 'si' ? "#fff" : PRIMARY,
+                      fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", fontFamily: "'Noto Serif Sinhala',serif",
+                    }}>සිංහල</button>
+                  </div>
+                )}
+
+                {isPeshalaPubudu && cardLang === 'si' ? (
+                  // Exact wording from the reference photo she shared —
+                  // hard-coded for this invitation only.
+                  <div style={{ textAlign: "center", fontFamily: "'Noto Serif Sinhala',serif", color: "#6a3040", lineHeight: 1.9, fontSize: 14.5 }}>
+                    <div>කේ. ජී. ලලිත් ඉන්දික මැතිතුමාගේ<br />සහ එම මැතිනියගේ</div>
+                    <div style={{ marginTop: 10, color: MUTED, fontSize: 13 }}>ආදරණීය දියණිය</div>
+                    <div style={{ fontSize: "1.9rem", fontWeight: 700, color: PRIMARY, margin: "4px 0 10px" }}>පේෂලා</div>
+
+                    <div>ඒච්. එල්. සරත් මැතිතුමාගේ<br />සහ එම මැතිනියගේ</div>
+                    <div style={{ marginTop: 10, color: MUTED, fontSize: 13 }}>ආදරණීය පුතු</div>
+                    <div style={{ fontSize: "1.9rem", fontWeight: 700, color: PRIMARY, margin: "4px 0 14px" }}>පුබුදු</div>
+
+                    <div style={{ fontSize: 13, color: MUTED }}>සමඟ අතිනන ගැනීමේ ප්‍රීතිය නිමිත්තෙන්</div>
+
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 16, marginTop: 16 }}>
+                      <span style={{ fontSize: 13 }}>ජනවාරි</span>
+                      <span style={{ fontSize: "2.2rem", fontWeight: 700, color: PRIMARY }}>20</span>
+                      <span style={{ fontSize: 13 }}>2027</span>
+                    </div>
+                    <div style={{ fontSize: 13 }}>බදාදා</div>
+
+                    <div style={{ marginTop: 10, fontSize: 13.5 }}>
+                      පෙ.ව. 10.00 සිට ප.ව. 04.00 දක්වා<br />
+                      <span style={{ fontSize: 12, color: MUTED }}>(පෝරුව වාඩි වීම පෙ.ව. 10.18 සිට)</span>
+                    </div>
+
+                    <div style={{ marginTop: 14, fontFamily: "'Cormorant Garamond',serif", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "1.2rem", fontWeight: 600, color: "#6a3040" }}>
+                      Centauria Wild
+                      <div style={{ fontSize: "0.9rem", fontWeight: 500, textTransform: "none", letterSpacing: "0.02em", marginTop: 2 }}>Udawalawa</div>
+                    </div>
+
+                    <div style={{ marginTop: 16, fontSize: 13.5, color: MUTED }}>
+                      පරිශ්‍රයේදී පැවැත්වෙන මංගල උත්සවයට<br />සනාථ වන මෙන්
+                    </div>
+
+                    <div style={{ borderTop: `1px dotted ${PRIMARY_LIGHT}`, margin: "18px 0 14px" }} />
+
+                    <div style={{ fontSize: 13.5 }}>
+                      ඔබට / ඔබ දෙපළට / ඔබ සැමට<br />
+                      <span style={{ color: PRIMARY }}>සිදුකෙරෙන ගෞරවනීය ආරාධනයයි.</span>
+                    </div>
+
+                    <div style={{ marginTop: 12, fontSize: 13, fontFamily: "'Inter',sans-serif", letterSpacing: "0.02em" }}>RSVP : 071 2847199</div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={pretitleStyle(PRIMARY_LIGHT)}>With Love</div>
+                    <div style={{ textAlign: "center", padding: 12, background: "#fdf5f7", borderRadius: 12, fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
+                      {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
+                      {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
+                      {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
+                      <span style={{ color: MUTED }}>request the honour of your presence<br />to celebrate the marriage of their loving children</span>
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
 
