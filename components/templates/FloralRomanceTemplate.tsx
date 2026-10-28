@@ -695,6 +695,14 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
     timeline: couple.timeline || [], seats: couple.seats || {}, gallery: couple.gallery || [],
   }
 
+  // peshala-pubudu- only: wherever the couple's names are shown across
+  // the page (cover, heading, wishes prompt, thank-you signature, etc.),
+  // switch to their Sinhala names too when she has the Sinhala card
+  // toggle on — not just inside the "With Love" card.
+  const brideDisplay = (isPeshalaPubudu && cardLang === 'si') ? 'පේෂලා' : W.bride
+  const groomDisplay = (isPeshalaPubudu && cardLang === 'si') ? 'පුබුදු' : W.groom
+  const coupleNameFont = (isPeshalaPubudu && cardLang === 'si') ? "'Noto Serif Sinhala',serif" : "'Great Vibes',cursive"
+
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#f3e8e8" }}>
       <style>{`
@@ -759,9 +767,9 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                   {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.bride}</div>
+                <div style={{ fontFamily: coupleNameFont, fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{brideDisplay}</div>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 14px rgba(0,0,0,0.4)" }}>&amp;</div>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{W.groom}</div>
+                <div style={{ fontFamily: coupleNameFont, fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{groomDisplay}</div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", margin: "1.1rem 0" }}>
                   <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
@@ -800,7 +808,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
             <div style={{ position: "relative", height: 500, overflow: "hidden" }}>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg,#d4a8bc,#9b6080)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`}
+                <img src={W.couplePhoto} alt={`${brideDisplay} and ${groomDisplay}`}
                   style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
                   onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
               </div>
@@ -808,10 +816,10 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "clamp(2.8rem,9vw,4.5rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(60,20,30,0.3)" }}>
-                    {W.bride}
+                  <div style={{ fontFamily: coupleNameFont, fontSize: "clamp(2.8rem,9vw,4.5rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(60,20,30,0.3)" }}>
+                    {brideDisplay}
                     <span style={{ display: "block", fontSize: "2.2rem", color: PRIMARY_LIGHT }}>&amp;</span>
-                    {W.groom}
+                    {groomDisplay}
                   </div>
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", margin: "4px 0", letterSpacing: "0.1em" }}>are getting married</div>
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1rem", color: "rgba(255,255,255,0.65)", fontStyle: "italic", marginTop: 4 }}>
@@ -915,8 +923,8 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                               Dear {guestName}
                             </div>
                           )}
-                          <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
-                            {W.bride} <span style={{ color: PRIMARY_LIGHT }}>&amp;</span> {W.groom}
+                          <div style={{ fontFamily: coupleNameFont, fontSize: "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                            {brideDisplay} <span style={{ color: PRIMARY_LIGHT }}>&amp;</span> {groomDisplay}
                           </div>
                         </div>
                       </motion.div>
@@ -937,8 +945,8 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                             Dear {guestName}
                           </div>
                         )}
-                        <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: DARK, textAlign: "center", lineHeight: 1.15 }}>
-                          {W.bride} <span style={{ color: PRIMARY }}>&amp;</span> {W.groom}
+                        <div style={{ fontFamily: coupleNameFont, fontSize: "2.3rem", color: DARK, textAlign: "center", lineHeight: 1.15 }}>
+                          {brideDisplay} <span style={{ color: PRIMARY }}>&amp;</span> {groomDisplay}
                         </div>
                       </motion.div>
                     )
@@ -1009,7 +1017,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>With Love</div>
                 <div style={titleStyle(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: 'center', marginBottom: 16 }}>
-                  Share your wishes and blessings with {W.bride} &amp; {W.groom}.
+                  Share your wishes and blessings with {brideDisplay} &amp; {groomDisplay}.
                 </div>
                 <WishesWall coupleId={couple.id} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} muted={MUTED} />
               </motion.div>
@@ -1066,7 +1074,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: "#c4a0b0", letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
+                  <div style={{ fontFamily: coupleNameFont, fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{brideDisplay} &amp; {groomDisplay}</div>
                 </div>
               </motion.div>
             )}
