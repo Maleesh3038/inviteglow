@@ -77,8 +77,8 @@ function LotusDecoration({ color, size = 90, opacity = 0.75 }: { color: string; 
 // styled to match this template's pink/lotus aesthetic. Only appears when
 // the invite link includes ?name=..., and can be turned off entirely from
 // admin via couple.show_guest_intro (defaults to on). ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, midTint = "#fdf5f7" }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; midTint?: string
 }) {
   return (
     <motion.div
@@ -88,7 +88,7 @@ function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, crea
       transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `linear-gradient(160deg, ${cream} 0%, #fdf5f7 40%, ${cream} 100%)`,
+        background: `linear-gradient(160deg, ${cream} 0%, ${midTint} 40%, ${cream} 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}
@@ -609,8 +609,9 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
 }
 
 export default function FloralRomanceTemplate({ couple }: { couple: Couple }) {
+  const slugFallback = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f3e8e8" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: slugFallback === 'peshala-pubudu' ? "#f3effa" : "#f3e8e8" }} />}>
       <FloralRomanceInner couple={couple} />
     </Suspense>
   )
@@ -633,11 +634,22 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
   const isPeshalaPubudu = slug === 'peshala-pubudu'
   const [cardLang, setCardLang] = useState<'en' | 'si'>('en')
 
-  const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
-  const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
-  const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
-  const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
-  const MUTED = DEFAULT_PALETTE.muted
+  // peshala-pubudu- wants the whole invitation recolored to a purple
+  // theme, replacing this template's default rose/pink palette.
+  const PRIMARY = isPeshalaPubudu ? "#7c4a9e" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isPeshalaPubudu ? "#cfb3e0" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isPeshalaPubudu ? "#2e1a3d" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isPeshalaPubudu ? "#f7f1fb" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isPeshalaPubudu ? "#8d7399" : DEFAULT_PALETTE.muted
+  // A handful of colors in this template are hardcoded hex literals
+  // rather than driven by PRIMARY/DARK/CREAM/MUTED above — overriding
+  // those too so the purple theme is consistent everywhere, not just
+  // wherever the palette variables happen to be used.
+  const PAGE_BG = isPeshalaPubudu ? "#f3effa" : "#f3e8e8"
+  const COVER_GRADIENT = isPeshalaPubudu ? "linear-gradient(160deg,#b89bd0,#5f3d7a)" : "linear-gradient(160deg,#d4a8bc,#9b6080)"
+  const CARD_TINT_BG = isPeshalaPubudu ? "#f3ebf9" : "#fdf5f7"
+  const TEXT_DARK = isPeshalaPubudu ? DARK : "#6a3040"
+  const TEXT_MUTED_SOFT = isPeshalaPubudu ? "#b79cc9" : "#c4a0b0"
 
   useEffect(() => {
     const songUrl = couple.song_url || DEFAULT_SONG_URL
@@ -699,12 +711,13 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
   // the page (cover, heading, wishes prompt, thank-you signature, etc.),
   // switch to their Sinhala names too when she has the Sinhala card
   // toggle on — not just inside the "With Love" card.
-  const brideDisplay = (isPeshalaPubudu && cardLang === 'si') ? 'පේෂලා' : W.bride
-  const groomDisplay = (isPeshalaPubudu && cardLang === 'si') ? 'පුබුදු' : W.groom
-  const coupleNameFont = (isPeshalaPubudu && cardLang === 'si') ? "'Noto Serif Sinhala',serif" : "'Great Vibes',cursive"
+  const isSinhalaNames = isPeshalaPubudu && cardLang === 'si'
+  const brideDisplay = isSinhalaNames ? 'පේෂලා' : W.bride
+  const groomDisplay = isSinhalaNames ? 'පුබුදු' : W.groom
+  const coupleNameFont = isSinhalaNames ? "'Noto Serif Sinhala',serif" : "'Great Vibes',cursive"
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#f3e8e8" }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: PAGE_BG }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500;600&family=Noto+Serif+Sinhala:wght@400;500;600;700&display=swap');
         @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-18px) rotate(8deg);} }
@@ -717,7 +730,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
           90% { opacity: 0.6; }
           100% { transform: translateY(105vh) translateX(-15px) rotate(360deg); opacity: 0; }
         }
-        input::placeholder { color: #c4a0b0; }
+        input::placeholder { color: ${TEXT_MUTED_SOFT}; }
       `}</style>
 
       {/* ══ GUEST INTRO SCREEN ══ */}
@@ -726,7 +739,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
           <GuestIntroScreen
             guestName={guestName}
             onDone={() => setShowIntro(false)}
-            primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM}
+            primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} midTint={CARD_TINT_BG}
           />
         )}
       </AnimatePresence>
@@ -767,9 +780,9 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
                   {guestName ? `Dear ${guestName}` : 'You Are Invited'}
                 </div>
-                <div style={{ fontFamily: coupleNameFont, fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{brideDisplay}</div>
+                <div style={{ fontFamily: coupleNameFont, fontSize: isSinhalaNames ? "clamp(2rem,7vw,2.8rem)" : "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{brideDisplay}</div>
                 <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "2.3rem", color: PRIMARY_LIGHT, margin: "0.1rem 0", textShadow: "0 2px 14px rgba(0,0,0,0.4)" }}>&amp;</div>
-                <div style={{ fontFamily: coupleNameFont, fontSize: "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{groomDisplay}</div>
+                <div style={{ fontFamily: coupleNameFont, fontSize: isSinhalaNames ? "clamp(2rem,7vw,2.8rem)" : "clamp(2.8rem,10vw,4rem)", color: "#fff", lineHeight: 1, textShadow: "0 4px 24px rgba(0,0,0,0.45)" }}>{groomDisplay}</div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", margin: "1.1rem 0" }}>
                   <div style={{ height: 1, width: 36, background: "rgba(255,255,255,0.4)" }} />
@@ -806,7 +819,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
 
             {/* Hero */}
             <div style={{ position: "relative", height: 500, overflow: "hidden" }}>
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg,#d4a8bc,#9b6080)" }}>
+              <div style={{ position: "absolute", inset: 0, background: COVER_GRADIENT }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={W.couplePhoto} alt={`${brideDisplay} and ${groomDisplay}`}
                   style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
@@ -816,7 +829,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "2rem 1.5rem", textAlign: "center", zIndex: 5 }}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: "0.8rem" }}>Together with their families</div>
-                  <div style={{ fontFamily: coupleNameFont, fontSize: "clamp(2.8rem,9vw,4.5rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(60,20,30,0.3)" }}>
+                  <div style={{ fontFamily: coupleNameFont, fontSize: isSinhalaNames ? "clamp(1.8rem,6vw,2.6rem)" : "clamp(2.8rem,9vw,4.5rem)", color: "#fff", lineHeight: 1, textShadow: "0 2px 20px rgba(60,20,30,0.3)" }}>
                     {brideDisplay}
                     <span style={{ display: "block", fontSize: "2.2rem", color: PRIMARY_LIGHT }}>&amp;</span>
                     {groomDisplay}
@@ -867,7 +880,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                   // reference photo she shared), not a redesigned card.
                   <>
                     <div style={{ ...pretitleStyle(PRIMARY_LIGHT), fontFamily: "'Noto Serif Sinhala',serif", letterSpacing: "0.15em" }}>ආදරයෙන්</div>
-                    <div style={{ textAlign: "center", padding: 12, background: "#fdf5f7", borderRadius: 12, fontSize: 13, color: "#6a3040", lineHeight: 2, fontFamily: "'Noto Serif Sinhala',serif" }}>
+                    <div style={{ textAlign: "center", padding: 12, background: CARD_TINT_BG, borderRadius: 12, fontSize: 13, color: TEXT_DARK, lineHeight: 2, fontFamily: "'Noto Serif Sinhala',serif" }}>
                       <strong>කේ. ජී. ලලිත් ඉන්දික මැතිතුමාගේ සහ එම මැතිනියගේ ආදරණීය දියණිය පේෂලා</strong><br />
                       සමඟ<br />
                       <strong>ඒච්. එල්. සරත් මැතිතුමාගේ සහ එම මැතිනියගේ ආදරණීය පුතු පුබුදු</strong><br />
@@ -877,7 +890,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 ) : (
                   <>
                     <div style={pretitleStyle(PRIMARY_LIGHT)}>With Love</div>
-                    <div style={{ textAlign: "center", padding: 12, background: "#fdf5f7", borderRadius: 12, fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
+                    <div style={{ textAlign: "center", padding: 12, background: CARD_TINT_BG, borderRadius: 12, fontSize: 13, color: TEXT_DARK, lineHeight: 2 }}>
                       {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
                       {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
                       {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
@@ -923,7 +936,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                               Dear {guestName}
                             </div>
                           )}
-                          <div style={{ fontFamily: coupleNameFont, fontSize: "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                          <div style={{ fontFamily: coupleNameFont, fontSize: isSinhalaNames ? "1.6rem" : "2.5rem", color: "#fff", lineHeight: 1.15, textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
                             {brideDisplay} <span style={{ color: PRIMARY_LIGHT }}>&amp;</span> {groomDisplay}
                           </div>
                         </div>
@@ -945,7 +958,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                             Dear {guestName}
                           </div>
                         )}
-                        <div style={{ fontFamily: coupleNameFont, fontSize: "2.3rem", color: DARK, textAlign: "center", lineHeight: 1.15 }}>
+                        <div style={{ fontFamily: coupleNameFont, fontSize: isSinhalaNames ? "1.5rem" : "2.3rem", color: DARK, textAlign: "center", lineHeight: 1.15 }}>
                           {brideDisplay} <span style={{ color: PRIMARY }}>&amp;</span> {groomDisplay}
                         </div>
                       </motion.div>
@@ -964,7 +977,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}33` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#c4a0b0" }}>{d.label}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: TEXT_MUTED_SOFT }}>{d.label}</div>
                         <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2, fontFamily: "'Inter',sans-serif" }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
@@ -997,7 +1010,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>Our Celebration</div>
                 <div style={titleStyle(DARK)}>The Wedding Lineup</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
-                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: "#f5d0dc" }} />
+                  <div style={{ position: "absolute", left: 6, top: 0, bottom: 0, width: 1, background: PRIMARY_LIGHT }} />
                   {W.timeline.map((t, i) => (
                     <motion.div key={i} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
                       style={{ position: "relative", padding: "10px 0 10px 20px" }}>
@@ -1069,12 +1082,12 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <LotusCornerAccent flip />
                 <div style={pretitleStyle(PRIMARY_LIGHT)}>A Special Note</div>
                 <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: "#6a3040", lineHeight: 2 }}>
+                <div style={{ textAlign: "center", fontSize: 13, color: TEXT_DARK, lineHeight: 2 }}>
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Your presence means more to us than words can truly express, and having you by our side makes this day even more meaningful.\n\nThank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: "#c4a0b0", letterSpacing: "0.1em" }}>With all our love,</div>
-                  <div style={{ fontFamily: coupleNameFont, fontSize: "1.8rem", color: PRIMARY, marginTop: 4 }}>{brideDisplay} &amp; {groomDisplay}</div>
+                  <div style={{ fontSize: 11, color: TEXT_MUTED_SOFT, letterSpacing: "0.1em" }}>With all our love,</div>
+                  <div style={{ fontFamily: coupleNameFont, fontSize: isSinhalaNames ? "1.3rem" : "1.8rem", color: PRIMARY, marginTop: 4 }}>{brideDisplay} &amp; {groomDisplay}</div>
                 </div>
               </motion.div>
             )}
@@ -1084,7 +1097,7 @@ function FloralRomanceInner({ couple }: { couple: Couple }) {
                 <LotusDecoration color={PRIMARY} size={44} opacity={0.6} />
               </div>
               <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: "1.5rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c4a0b0" }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: TEXT_MUTED_SOFT }}>inviteglow.com · Digital Wedding Invitations</div>
             {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
 
