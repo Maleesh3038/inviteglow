@@ -842,8 +842,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // at the same slightly-smaller size as dilki-kasun/vinuri-akalanka, plus
   // the whole cover name block nudged down a bit for better placement.
   const isSandaminiChanaka = slug === 'sandamini-chanaka'
-  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka
-  const coverNameScale = isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka ? 0.82 : 1
+  // nimanshi-supun- also gets the clearer bold serif cover name font —
+  // the thin cursive script wasn't reading well for this couple's names.
+  const isNimanshiSupun = slug === 'nimanshi-supun'
+  const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka || isNimanshiSupun
+  const coverNameScale = isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka || isNimanshiSupun ? 0.82 : 1
   // anjana-nipuni- and nipuni-anjana- want the "Our Families" card in a
   // plain simple sans-serif instead of the decorative serif every other
   // useClearNameFont couple gets there.
@@ -864,7 +867,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   const isGoldWhiteTheme = isSandaminiChanaka || isShashiniKavishka
   // nimanshi-supun- wants a rose gold theme instead of this template's
   // default botanical green.
-  const isNimanshiSupun = slug === 'nimanshi-supun'
   const isRoseGoldTheme = isNimanshiSupun
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
