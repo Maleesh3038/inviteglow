@@ -862,6 +862,10 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // theme inside the invitation, instead of this template's default
   // botanical green.
   const isGoldWhiteTheme = isSandaminiChanaka || isShashiniKavishka
+  // nimanshi-supun- wants a rose gold theme instead of this template's
+  // default botanical green.
+  const isNimanshiSupun = slug === 'nimanshi-supun'
+  const isRoseGoldTheme = isNimanshiSupun
   // Tracks whether the cover photo (couple's own upload, or the bundled
   // default stock photo as a fallback) actually loaded. If BOTH fail — e.g.
   // the static default asset is missing from this deployment — we stop
@@ -875,11 +879,11 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // krishal-jayakshi- only: a deep-red palette requested to match their
   // Homecoming colors, overriding this template's default sage/moss theme
   // (and any custom colors set on the dashboard) for this invitation alone.
-  const PRIMARY = isRedTheme ? "#9c2b2b" : isChampagneTheme ? "#b0895f" : isGoldWhiteTheme ? "#bb8f2e" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = isRedTheme ? "#dba89f" : isChampagneTheme ? "#e6cda4" : isGoldWhiteTheme ? "#ead9a8" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = isRedTheme ? "#3a1414" : isChampagneTheme ? "#3e2f22" : isGoldWhiteTheme ? "#3a2f1a" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
-  const CREAM = isRedTheme ? "#faf3ec" : isChampagneTheme ? "#faf5ec" : isGoldWhiteTheme ? "#fffdf8" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
-  const MUTED = isRedTheme ? "#9a7a74" : isChampagneTheme ? "#a4876c" : isGoldWhiteTheme ? "#a8906a" : DEFAULT_PALETTE.muted
+  const PRIMARY = isRedTheme ? "#9c2b2b" : isChampagneTheme ? "#b0895f" : isGoldWhiteTheme ? "#bb8f2e" : isRoseGoldTheme ? "#b76e79" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isRedTheme ? "#dba89f" : isChampagneTheme ? "#e6cda4" : isGoldWhiteTheme ? "#ead9a8" : isRoseGoldTheme ? "#ecc9c6" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isRedTheme ? "#3a1414" : isChampagneTheme ? "#3e2f22" : isGoldWhiteTheme ? "#3a2f1a" : isRoseGoldTheme ? "#5c3a3d" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isRedTheme ? "#faf3ec" : isChampagneTheme ? "#faf5ec" : isGoldWhiteTheme ? "#fffdf8" : isRoseGoldTheme ? "#fff8f6" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isRedTheme ? "#9a7a74" : isChampagneTheme ? "#a4876c" : isGoldWhiteTheme ? "#a8906a" : isRoseGoldTheme ? "#ab8782" : DEFAULT_PALETTE.muted
 
   // Priority: an explicit cover_video_url from the admin always wins. If
   // that's empty, only fall back to the default demo video when the couple
@@ -983,7 +987,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
         ...(couple.bride && (couple as any).bride_phone ? [{ name: couple.bride, phone: (couple as any).bride_phone }] : []),
       ]
 
-  const TINT_SAGE = isRedTheme ? "#f6e4e0" : isChampagneTheme ? "#f4e8d8" : isGoldWhiteTheme ? "#f8f0dc" : "#eef2e6"
+  const TINT_SAGE = isRedTheme ? "#f6e4e0" : isChampagneTheme ? "#f4e8d8" : isGoldWhiteTheme ? "#f8f0dc" : isRoseGoldTheme ? "#f9e6e4" : "#eef2e6"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -1173,6 +1177,38 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
+            {/* nimanshi-supun- only: an extra "Church Wedding" location,
+                hard-coded since this is a one-off addition on top of
+                whatever single venue is already set up for this couple's
+                account — not something the events schema (engagement /
+                wedding / homecoming) has a slot for. Static text, not
+                driven by any date field, since all we were given is the
+                time ("Mass - 10.30 AM"), not a full date. */}
+            {isNimanshiSupun && (
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={pretitleStyle(PRIMARY)}>⛪ Save the Date</div>
+                <div style={titleStyle(DARK)}>Church Wedding</div>
+                {[
+                  { icon: "🙏", label: "Service", val: "Holy Mass" },
+                  { icon: "⏰", label: "Time", val: "10.30 AM" },
+                  { icon: "📍", label: "Venue", val: "St. Sebastian's Church", sub: "Moratuwa" },
+                ].map(d => (
+                  <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
+                    <div>
+                      <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED }}>{d.label}</div>
+                      <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
+                      {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
+                    </div>
+                  </div>
+                ))}
+                <a href="https://www.google.com/maps/place/St.+Sebastian%E2%80%99s+Church+-+Moratuwa/@6.7783086,79.8797046,17z/data=!4m10!1m2!2m1!1sChurch+Wedding+-+St.Sebastian's+church+Moratuwa!3m6!1s0x3ae24507a8a62171:0xce1f35065e5e5b99!8m2!3d6.7740438!4d79.8831756!15sCi9DaHVyY2ggV2VkZGluZyAtIFN0LlNlYmFzdGlhbidzIGNodXJjaCBNb3JhdHV3YVovIi1jaHVyY2ggd2VkZGluZyBzdCBzZWJhc3RpYW4ncyBjaHVyY2ggbW9yYXR1d2GSAQ9jYXRob2xpY19jaHVyY2iaASNDaFpEU1VoTk1HOW5TMFZKUTBGblNVTlNYM1J1TkZsUkVBReABAPoBBAgAEDQ!16s%2Fg%2F1tgr_c6g?entry=ttu&g_ep=EgoyMDI2MTAyMC4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}44`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 700 }}>
+                  📍 View Location on Maps
+                </a>
+              </motion.div>
+            )}
+
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
@@ -1218,7 +1254,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {sv.countdown && (
               <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
                 <div style={{ ...pretitleStyle(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme) ? MUTED : undefined} />
+                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme || isRoseGoldTheme) ? MUTED : undefined} />
               </div>
             )}
 
@@ -1352,7 +1388,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
                 <div style={titleStyle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} nameColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme) ? DARK : undefined} phoneColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme) ? MUTED : undefined} />)}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} nameColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme || isRoseGoldTheme) ? DARK : undefined} phoneColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme || isRoseGoldTheme) ? MUTED : undefined} />)}
                 </div>
               </motion.div>
             )}
@@ -1370,7 +1406,7 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
       </div>
       {opened && (
         <BottomNavBar
-          primary={PRIMARY} accent={(isRedTheme || isChampagneTheme || isGoldWhiteTheme) ? PRIMARY_LIGHT : undefined} dark={DARK}
+          primary={PRIMARY} accent={(isRedTheme || isChampagneTheme || isGoldWhiteTheme || isRoseGoldTheme) ? PRIMARY_LIGHT : undefined} dark={DARK}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
           hasWishes={(couple as any).enable_guest_wishes ?? false}
           hasGallery={sv.gallery && W.gallery.length > 0}
