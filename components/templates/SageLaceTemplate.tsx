@@ -953,43 +953,66 @@ function SageLaceInner({ couple }: { couple: Couple }) {
           )}
         </AnimatePresence>
 
-        {/* roshani-sajeewa- only: once her cover video finishes, their
-            couple photo assembles itself like a mosaic (tiles quietly
-            growing in, top-left to bottom-right) and holds for ~5s,
-            with their names fading in underneath, before the invitation
-            opens — see handleVideoEnded above. */}
+        {/* roshani-sajeewa- only: once her cover video finishes, an
+            elegant arch-framed photo reveal (matching the reference style
+            she shared — cream background, arched frame with diamond
+            ornaments, "In the celebration of their..." + a formatted
+            date block) holds for ~5s before the invitation opens — see
+            handleVideoEnded above. Replaces the earlier puzzle-piece
+            mosaic treatment with this cleaner, more classic look. */}
         <AnimatePresence>
-          {!opened && showCouplePhotoPop && (
+          {!opened && showCouplePhotoPop && (() => {
+            // Hard-coded for this invitation: 15 Jan 2027, 5:00 PM —
+            // computed into month/weekday/day/year/time via Date so the
+            // weekday name etc. are never typed in by hand (and so this
+            // is easy to update later if the date changes).
+            const popDate = new Date('2027-01-15T17:00:00')
+            const popMonth = popDate.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
+            const popWeekday = popDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
+            const popDay = popDate.getDate()
+            const popYear = popDate.getFullYear()
+            const popTime = popDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+            return (
             <motion.div key="post-video-photo"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
-              style={{ position: "fixed", inset: 0, zIndex: 60, background: DARK, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "0 24px" }}>
-              {/* Box matches the real photo's own aspect ratio (675×1200)
-                  instead of a generic 4:5 — the puzzle tiles are CSS
-                  sprites that stretch to fill whatever box they're given,
-                  so a mismatched box was distorting/squashing the photo. */}
-              <motion.div
-                initial={{ scale: 1 }}
-                animate={{ scale: 0.88 }}
-                transition={{ delay: 1.45, duration: 0.6, ease: "easeInOut" }}
-                style={{ width: "auto", height: "min(48dvh, 420px)", maxWidth: "80%", aspectRatio: "675/1200", borderRadius: 20, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
-                {/* Their own uploaded engagement photo — not the generic
-                    DEFAULT_PHOTO placeholder. */}
-                <PuzzlePhotoReveal src="/roshani-sajeewa-couple-photo.jpg" cols={5} rows={6} />
+              style={{ position: "fixed", inset: 0, zIndex: 60, background: CREAM, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "0 28px" }}>
+
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: "easeOut" }}
+                style={{ position: "relative", width: "76%", maxWidth: 280 }}>
+                {/* Outer arch frame line */}
+                <div style={{ position: "absolute", inset: -10, border: `1.5px solid ${PRIMARY}`, borderRadius: "50% 50% 10px 10px", pointerEvents: "none" }} />
+                {/* Diamond ornaments mid-frame, like the reference */}
+                <div style={{ position: "absolute", left: -10, top: "58%", width: 9, height: 9, background: CREAM, border: `1.5px solid ${PRIMARY}`, transform: "translateY(-50%) rotate(45deg)" }} />
+                <div style={{ position: "absolute", right: -10, top: "58%", width: 9, height: 9, background: CREAM, border: `1.5px solid ${PRIMARY}`, transform: "translateY(-50%) rotate(45deg)" }} />
+                {/* Their own uploaded engagement photo, arched to match
+                    the frame — not the generic DEFAULT_PHOTO placeholder. */}
+                <div style={{ width: "100%", aspectRatio: "675/1200", borderRadius: "50% 50% 10px 10px", overflow: "hidden", boxShadow: "0 16px 40px rgba(60,20,20,0.18)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/roshani-sajeewa-couple-photo.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
               </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.55, duration: 0.7, ease: "easeOut" }}
+
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.7, ease: "easeOut" }}
+                style={{ marginTop: 22, textAlign: "center" }}>
+                <div style={{ fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: PRIMARY, fontWeight: 600 }}>In the celebration of their</div>
+                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 32, color: DARK, marginTop: 6 }}>{W.bride} &amp; {W.groom}</div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.7, ease: "easeOut" }}
                 style={{ marginTop: 16, textAlign: "center" }}>
-                <div style={{ fontFamily: "'Great Vibes',cursive", fontSize: 30, color: PRIMARY_LIGHT, lineHeight: 1.1 }}>
-                  {W.bride} &amp; {W.groom}
+                <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: MUTED }}>{popMonth}</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, margin: "4px 0" }}>
+                  <span style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: DARK }}>{popWeekday}</span>
+                  <span style={{ width: 1, height: 18, background: PRIMARY_LIGHT }} />
+                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, fontWeight: 700, color: PRIMARY }}>{popDay}</span>
+                  <span style={{ width: 1, height: 18, background: PRIMARY_LIGHT }} />
+                  <span style={{ fontSize: 11, letterSpacing: "0.05em", textTransform: "uppercase", color: DARK }}>AT {popTime}</span>
                 </div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: 13, letterSpacing: 1, color: CREAM, opacity: 0.85, marginTop: 4 }}>
-                  together, forever begins
-                </div>
+                <div style={{ fontSize: 10, letterSpacing: "0.3em", color: MUTED }}>{popYear}</div>
               </motion.div>
             </motion.div>
-          )}
+            )
+          })()}
         </AnimatePresence>
 
         <AnimatePresence>
