@@ -768,13 +768,21 @@ function SageLaceInner({ couple }: { couple: Couple }) {
   // accents, deep bronze-brown text, and the leaf accent swapped for a
   // lotus bloom icon wherever it appears.
   const isShashiniKavishka = slug === 'shashini-kavishka'
+  // nimanshi-supun- wants a rose gold theme, plus the clearer bold serif
+  // cover name font (thin cursive wasn't reading well), plus an extra
+  // Church Wedding location card — see eventsList rendering below.
+  const isNimanshiSupun = slug === 'nimanshi-supun'
 
-  const PRIMARY = isRoshaniSajeewa ? "#df9179" : isShashiniKavishka ? "#b8872e" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
-  const PRIMARY_LIGHT = isRoshaniSajeewa ? "#f0ddc6" : isShashiniKavishka ? "#ecd9a0" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
-  const DARK = isRoshaniSajeewa ? "#6b4a44" : isShashiniKavishka ? "#4a2e1f" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
-  const CREAM = isRoshaniSajeewa ? "#fffaf6" : isShashiniKavishka ? "#fdf8ec" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
-  const MUTED = isRoshaniSajeewa ? "#a9847c" : isShashiniKavishka ? "#a98f5c" : DEFAULT_PALETTE.muted
+  const PRIMARY = isRoshaniSajeewa ? "#df9179" : isShashiniKavishka ? "#b8872e" : isNimanshiSupun ? "#b76e79" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isRoshaniSajeewa ? "#f0ddc6" : isShashiniKavishka ? "#ecd9a0" : isNimanshiSupun ? "#ecc9c6" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isRoshaniSajeewa ? "#6b4a44" : isShashiniKavishka ? "#4a2e1f" : isNimanshiSupun ? "#5c3a3d" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isRoshaniSajeewa ? "#fffaf6" : isShashiniKavishka ? "#fdf8ec" : isNimanshiSupun ? "#fff8f6" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isRoshaniSajeewa ? "#a9847c" : isShashiniKavishka ? "#a98f5c" : isNimanshiSupun ? "#ab8782" : DEFAULT_PALETTE.muted
   const dividerVariant: 'leaf' | 'lotus' = isShashiniKavishka ? 'lotus' : 'leaf'
+  // nimanshi-supun- gets the same clearer bold serif couple-name font on
+  // the formal invitation card as roshani-sajeewa, instead of the thin
+  // cursive script, which wasn't reading well.
+  const useClearNameFont = isRoshaniSajeewa || isNimanshiSupun
 
   const songUrl = couple.song_url || DEFAULT_SONG_URL
 
@@ -1161,7 +1169,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                     invite you to celebrate the marriage of
                   </div>
 
-                  <div style={isRoshaniSajeewa
+                  <div style={useClearNameFont
                     ? { fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: coupleNameFontSize(W.bride, 0.72), color: PRIMARY, lineHeight: 1.25 }
                     : { fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.bride), color: PRIMARY, lineHeight: 1.2 }}>{W.bride}</div>
                   <div style={{ margin: "6px auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, maxWidth: 160 }}>
@@ -1169,7 +1177,7 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIMARY }} />
                     <div style={{ flex: 1, height: 1, background: PRIMARY, opacity: 0.4 }} />
                   </div>
-                  <div style={isRoshaniSajeewa
+                  <div style={useClearNameFont
                     ? { fontFamily: "'Cormorant Garamond',serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: coupleNameFontSize(W.groom, 0.72), color: PRIMARY, lineHeight: 1.25, marginBottom: 20 }
                     : { fontFamily: "'Great Vibes',cursive", fontSize: coupleNameFontSize(W.groom), color: PRIMARY, lineHeight: 1.2, marginBottom: 20 }}>{W.groom}</div>
 
@@ -1206,6 +1214,38 @@ function SageLaceInner({ couple }: { couple: Couple }) {
                 </div>
               </LaceFrame>
             </div>
+
+            {/* nimanshi-supun- only: an extra "Church Wedding" location,
+                hard-coded since it's a one-off addition on top of
+                whatever single venue is already set up for this couple's
+                account — not something the events schema (engagement /
+                wedding / homecoming) has a slot for. Static text, not
+                driven by any date field, since all we were given is the
+                time ("Mass - 10.30 AM"), not a full date. */}
+            {isNimanshiSupun && (
+              <motion.div style={cardStyle(PRIMARY)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={pretitleStyle(PRIMARY)}>⛪ Save the Date</div>
+                <div style={titleStyle(DARK)}>Church Wedding</div>
+                {[
+                  { icon: "🙏", label: "Service", val: "Holy Mass" },
+                  { icon: "⏰", label: "Time", val: "10.30 AM" },
+                  { icon: "📍", label: "Venue", val: "St. Sebastian's Church", sub: "Moratuwa" },
+                ].map(d => (
+                  <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
+                    <div>
+                      <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED }}>{d.label}</div>
+                      <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
+                      {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
+                    </div>
+                  </div>
+                ))}
+                <a href="https://www.google.com/maps/place/St.+Sebastian%E2%80%99s+Church+-+Moratuwa/@6.7783086,79.8797046,17z/data=!4m10!1m2!2m1!1sChurch+Wedding+-+St.Sebastian's+church+Moratuwa!3m6!1s0x3ae24507a8a62171:0xce1f35065e5e5b99!8m2!3d6.7740438!4d79.8831756!15sCi9DaHVyY2ggV2VkZGluZyAtIFN0LlNlYmFzdGlhbidzIGNodXJjaCBNb3JhdHV3YVovIi1jaHVyY2ggd2VkZGluZyBzdCBzZWJhc3RpYW4ncyBjaHVyY2ggbW9yYXR1d2GSAQ9jYXRob2xpY19jaHVyY2iaASNDaFpEU1VoTk1HOW5TMFZKUTBGblNVTlNYM1J1TkZsUkVBReABAPoBBAgAEDQ!16s%2Fg%2F1tgr_c6g?entry=ttu&g_ep=EgoyMDI2MTAyMC4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}44`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 700 }}>
+                  📍 View Location on Maps
+                </a>
+              </motion.div>
+            )}
 
             {/* Events */}
             {eventsList.map(ev => {
