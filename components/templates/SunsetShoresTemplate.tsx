@@ -40,15 +40,15 @@ function useTextStyles(couple: any) {
 
 // ── Guest intro screen — sunset gradient shimmer, "Dear [Name]," shown
 // for ~5s before the cover. Toggle via couple.show_guest_intro. ──
-function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream }: {
-  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string
+function GuestIntroScreen({ guestName, onDone, primary, primaryLight, dark, cream, midTint = "#fce4d0" }: {
+  guestName: string; onDone: () => void; primary: string; primaryLight: string; dark: string; cream: string; midTint?: string
 }) {
   return (
     <motion.div
       key="intro" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: "easeInOut" }}
       style={{
         position: "fixed", inset: 0, zIndex: 200,
-        background: `linear-gradient(160deg, #fce4d0 0%, ${primaryLight}55 45%, ${cream} 100%)`,
+        background: `linear-gradient(160deg, ${midTint} 0%, ${primaryLight}55 45%, ${cream} 100%)`,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center", padding: "2rem", overflow: "hidden",
       }}>
@@ -106,7 +106,7 @@ function Countdown({ targetDate, primary, primaryLight, dark, muted }: { targetD
   )
 }
 
-function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string }) {
+function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, muted, cream = "#fdf3ea" }: { title: string; artist: string; audioRef: React.RefObject<HTMLAudioElement | null>; primary: string; primaryLight: string; dark: string; muted: string; cream?: string }) {
   const [playing, setPlaying] = useState(false); const [prog, setProg] = useState(0)
   useEffect(() => {
     const a = audioRef.current; if (!a) return
@@ -117,7 +117,7 @@ function MusicPlayerUI({ title, artist, audioRef, primary, primaryLight, dark, m
   }, [audioRef])
   const toggle = () => { const a = audioRef.current; if (!a) return; a.paused ? a.play().catch(() => {}) : a.pause() }
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, background: "#fdf3ea", borderRadius: 16, padding: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14, background: cream, borderRadius: 16, padding: 16 }}>
       <div style={{ width: 46, height: 46, borderRadius: "50%", background: `linear-gradient(135deg,${primaryLight},${primary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0, animation: playing ? "spin 4s linear infinite" : "none" }}>🎵</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: dark }}>{title}</div>
@@ -142,7 +142,7 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, s
   }
   const inputStyle: React.CSSProperties = { width: "100%", padding: "13px 16px", borderRadius: 10, border: `1px solid ${primary}33`, background: cream, color: dark, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "'Inter',sans-serif" }
   return (
-    <div style={{ background: `linear-gradient(135deg,#f8dcc4,${cream})`, padding: "40px 1.5rem", textAlign: "center" }}>
+    <div style={{ background: `linear-gradient(135deg,${primary}22,${cream})`, padding: "40px 1.5rem", textAlign: "center" }}>
       <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: primary, marginBottom: 8, fontWeight: 600 }}>Be Our Guest</div>
       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.8rem", color: dark, marginBottom: 24 }}>Will You Join Us?</div>
       <div style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 380, margin: "0 auto", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
@@ -151,7 +151,7 @@ function RSVP({ coupleId, askDrinking, primary, dark, cream, muted, guestName, s
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" style={inputStyle} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <button onClick={() => { if (!name.trim()) return; skipGuestCount ? (askDrinking ? setStep("drinking") : save("yes", null, 1)) : setStep("count") }} style={{ padding: 13, borderRadius: 10, background: primary, color: "#fff", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>✓ Accept</button>
-              <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: "1px solid #f0ddc8", cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Decline"}</button>
+              <button onClick={() => name.trim() && save("no", null, 1)} disabled={saving} style={{ padding: 13, borderRadius: 10, background: "transparent", color: muted, border: `1px solid ${primary}33`, cursor: "pointer", fontSize: 12, opacity: saving ? 0.6 : 1 }}>{saving ? "..." : "✗ Decline"}</button>
             </div>
           </>
         )}
@@ -475,7 +475,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
 // flexible `contacts` list first; if that's empty, falls back to the
 // classic bride_phone/groom_phone fields so older invitations keep
 // showing their existing numbers with no data lost. ──
-function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
+function ContactRow({ name, phone, primary, dark = '#5a3a2e', muted = '#b08868' }: { name: string; phone: string; primary: string; dark?: string; muted?: string }) {
   const digitsOnly = phone.replace(/\D/g, '')
   const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
   return (
@@ -483,11 +483,11 @@ function ContactRow({ name, phone, primary }: { name: string; phone: string; pri
       <div style={{ minWidth: 0 }}>
         {name ? (
           <>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#5a3a2e', fontFamily: "'Inter',sans-serif" }}>{name}</div>
-            <div style={{ fontSize: 12, color: '#b08868', marginTop: 2 }}>{phone}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: dark, fontFamily: "'Inter',sans-serif" }}>{name}</div>
+            <div style={{ fontSize: 12, color: muted, marginTop: 2 }}>{phone}</div>
           </>
         ) : (
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#5a3a2e', fontFamily: "'Inter',sans-serif" }}>{phone}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: dark, fontFamily: "'Inter',sans-serif" }}>{phone}</div>
         )}
       </div>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -599,8 +599,9 @@ const sectionEyebrow = (primary: string): React.CSSProperties => ({ fontSize: 9,
 const sectionTitle = (dark: string): React.CSSProperties => ({ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.5rem", color: dark, textAlign: "center", marginBottom: 20 })
 
 export default function SunsetShoresTemplate({ couple }: { couple: Couple }) {
+  const slugFallback = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#fdf3ea" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: slugFallback === 'piyumi-vihanga' ? "#f7f8f0" : "#fdf3ea" }} />}>
       <SunsetShoresInner couple={couple} />
     </Suspense>
   )
@@ -615,6 +616,10 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
   // imesha-madusanka-lunch- doesn't want the "Together with their
   // families" line shown above the couple's names in the Hero section.
   const isImeshaMadusankaLunch = slug === 'imesha-madusanka-lunch'
+  // piyumi-vihanga- wants a refined, modern "leaf green" theme, and
+  // softer/rounder edges between sections (cover photo → cards below)
+  // instead of the hard rectangular cut currently there.
+  const isPiyumiVihanga = slug === 'piyumi-vihanga'
   const introEnabled = (couple as any).show_guest_intro !== false
   const [showIntro, setShowIntro] = useState(!!guestName && introEnabled)
   // Cover only renders once the intro screen has fully finished exiting
@@ -624,11 +629,27 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
   const [opened, setOpened] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
-  const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
-  const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
-  const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
-  const MUTED = DEFAULT_PALETTE.muted
+  // piyumi-vihanga- gets a hard-coded, consistent "leaf green" palette —
+  // overriding any custom_colors already set on the dashboard — so every
+  // element (not just whichever ones happened to read custom_colors)
+  // lands on the same coherent green, instead of a mix of green here and
+  // leftover orange/tan defaults elsewhere.
+  const PRIMARY = isPiyumiVihanga ? "#6f9a52" : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isPiyumiVihanga ? "#bcd1a0" : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isPiyumiVihanga ? "#2e3b22" : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isPiyumiVihanga ? "#f7f8f0" : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isPiyumiVihanga ? "#8a9b78" : DEFAULT_PALETTE.muted
+  // A handful of colors in this template are hardcoded hex literals
+  // rather than driven by PRIMARY/DARK/CREAM/MUTED — overriding those too
+  // so the green theme is consistent everywhere.
+  const PAGE_BG = isPiyumiVihanga ? CREAM : "#fdf3ea"
+  const CARD_TINT_BG = isPiyumiVihanga ? "#eef3e4" : "#fbeadc"
+  const TEXT_DARK = isPiyumiVihanga ? DARK : "#5a3a2e"
+  const TEXT_MUTED_SOFT = isPiyumiVihanga ? "#9fab8f" : "#d4a888"
+  // Softer, more modern corner radius on the cards and on the cover-photo
+  // → cards transition, instead of the sharp rectangular cut.
+  const sectionRadius = isPiyumiVihanga ? 28 : 22
+  const heroBottomRadius = isPiyumiVihanga ? 32 : 0
   const ts = useTextStyles(couple)
 
   useEffect(() => {
@@ -684,17 +705,17 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
       ]
 
   return (
-    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: "#fdf3ea" }}>
+    <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: PAGE_BG }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
         @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
         @keyframes sun-glow { 0%,100%{opacity:0.5;} 50%{opacity:0.8;} }
-        input::placeholder { color: #d4a888; }
+        input::placeholder { color: ${TEXT_MUTED_SOFT}; }
       `}</style>
 
       <AnimatePresence onExitComplete={() => setIntroGone(true)}>
         {showIntro && guestName && (
-          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} />
+          <GuestIntroScreen guestName={guestName} onDone={() => setShowIntro(false)} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} cream={CREAM} midTint={isPiyumiVihanga ? CARD_TINT_BG : undefined} />
         )}
       </AnimatePresence>
 
@@ -758,7 +779,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
         {opened && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
 
-            <div style={{ position: "relative", height: 460, overflow: "hidden" }}>
+            <div style={{ position: "relative", height: 460, overflow: "hidden", borderRadius: `0 0 ${heroBottomRadius}px ${heroBottomRadius}px` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={W.couplePhoto} alt={`${W.bride} and ${W.groom}`} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).src = DEFAULT_PHOTO }} />
@@ -778,9 +799,9 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             </div>
 
             {(W.brideFamilyName || W.groomFamilyName) && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...sectionCard, borderRadius: sectionRadius, marginTop: isPiyumiVihanga ? -18 : undefined, position: "relative", zIndex: 2 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>With Love</div>
-                <div style={{ ...ts('message'), textAlign: "center", padding: 12, background: "#fbeadc", borderRadius: 12, fontSize: 13, color: "#5a3a2e", lineHeight: 2 }}>
+                <div style={{ ...ts('message'), textAlign: "center", padding: 12, background: CARD_TINT_BG, borderRadius: 12, fontSize: 13, color: TEXT_DARK, lineHeight: 2 }}>
                   {W.brideFamilyName && <><strong>{W.brideFamilyName}</strong><br /></>}
                   {W.brideFamilyName && W.groomFamilyName && <>together with<br /></>}
                   {W.groomFamilyName && <><strong>{W.groomFamilyName}</strong><br /></>}
@@ -797,7 +818,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
               const evDateDisplay = evDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
               const evTimeDisplay = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' Onwards'
               return (
-                <motion.div key={ev.key} style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <motion.div key={ev.key} style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <div style={sectionEyebrow(PRIMARY)}>{!isImeshaMadusankaLunch && `${ev.icon} `}Save the Date</div>
                   {ev.label && <div style={sectionTitle(DARK)}>{ev.label}</div>}
                   {[
@@ -808,7 +829,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY}1a` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}33`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#d4a888" }}>{d.label}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: TEXT_MUTED_SOFT }}>{d.label}</div>
                         <div style={{ ...(d.tsKey ? ts(d.tsKey) : {}), fontSize: 15, color: DARK, fontWeight: 600, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ ...((d as any).subTsKey ? ts((d as any).subTsKey) : {}), fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
@@ -824,7 +845,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             })}
 
             {sv.countdown && (
-              <div id="savethedate" style={{ ...sectionCard, textAlign: "center" }}>
+              <div id="savethedate" style={{ ...sectionCard, borderRadius: sectionRadius, textAlign: "center" }}>
                 <div style={{ ...sectionEyebrow(PRIMARY), ...ts('countdown_label') }}>{isImeshaMadusankaLunch ? 'Countdown' : 'Counting Down to Our Big Day'}</div>
                 <Countdown targetDate={W.date} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
               </div>
@@ -833,7 +854,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             <div id="rsvp"><RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} skipGuestCount={isImeshaMadusankaLunch} /></div>
 
             {sv.timeline && W.timeline.length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
                 <div style={sectionTitle(DARK)}>The Wedding Lineup</div>
                 <div style={{ position: "relative", paddingLeft: 20 }}>
@@ -851,7 +872,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
 
             {/* Guest Wishes Wall */}
             {((couple as any).enable_guest_wishes ?? false) && (
-              <motion.div id="wishes" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="wishes" style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>With Love</div>
                 <div style={sectionTitle(DARK)}>Wishes for Us</div>
                 <div style={{ fontSize: 12.5, color: MUTED, textAlign: "center", marginBottom: 16, marginTop: -8 }}>
@@ -862,7 +883,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             )}
 
             {sv.seat_finder && couple.show_seating && Object.keys(W.seats).length > 0 && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Be Our Guest</div>
                 <div style={sectionTitle(DARK)}>Find Your Table</div>
                 <div style={{ fontSize: 13, color: MUTED, marginBottom: 12, textAlign: "center" }}>Search your name to find your assigned table</div>
@@ -871,14 +892,14 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             )}
 
             {sv.music && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Song</div>
-                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} />
+                <MusicPlayerUI title={W.song} artist={W.artist} audioRef={audioRef} primary={PRIMARY} primaryLight={PRIMARY_LIGHT} dark={DARK} muted={MUTED} cream={CREAM} />
               </motion.div>
             )}
 
             {sv.gallery && W.gallery.length > 0 && (
-              <motion.div id="gallery" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="gallery" style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Our Celebration</div>
                 <div style={sectionTitle(DARK)}>Moments of Love</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -893,14 +914,14 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             )}
 
             {sv.thank_you && (
-              <motion.div style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>A Special Note</div>
                 <div style={sectionTitle(DARK)}>To Our Lovely Guests</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: "#5a3a2e", lineHeight: 2 }}>
+                <div style={{ textAlign: "center", fontSize: 13, color: TEXT_DARK, lineHeight: 2 }}>
                   {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so happy to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for being part of our journey."}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 16 }}>
-                  <div style={{ fontSize: 11, color: "#d4a888" }}>With all our love,</div>
+                  <div style={{ fontSize: 11, color: TEXT_MUTED_SOFT }}>With all our love,</div>
                   <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.6rem", color: PRIMARY, marginTop: 4 }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
@@ -908,11 +929,11 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
 
             {/* Contact Numbers */}
             {contactList.length > 0 && (
-              <motion.div id="contact" style={sectionCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div id="contact" style={{ ...sectionCard, borderRadius: sectionRadius }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>Get In Touch</div>
                 <div style={sectionTitle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} dark={TEXT_DARK} muted={TEXT_MUTED_SOFT} />)}
                 </div>
               </motion.div>
             )}
@@ -920,7 +941,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
             {/* Wedding Note Section — plain white card, matching the rest
                 of the template's sections. No photo background. */}
             {((couple as any).show_wedding_note ?? true) && (couple as any).wedding_note_text && (couple as any).wedding_note_text.trim() && (
-              <motion.div style={{ ...sectionCard, textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <motion.div style={{ ...sectionCard, borderRadius: sectionRadius, textAlign: "center" }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <div style={sectionEyebrow(PRIMARY)}>💌 A Note For You</div>
                 {guestName && (
                   <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: PRIMARY, marginBottom: 8, fontWeight: 600 }}>
@@ -938,7 +959,7 @@ function SunsetShoresInner({ couple }: { couple: Couple }) {
 
             <div style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff" }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "1.4rem", color: PRIMARY, marginBottom: 4 }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#d4a888" }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: TEXT_MUTED_SOFT }}>inviteglow.com · Digital Wedding Invitations</div>
             {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${PRIMARY}14`} />}
             </div>
           </motion.div>
