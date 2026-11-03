@@ -845,13 +845,16 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
   // nimanshi-supun- also gets the clearer bold serif cover name font —
   // the thin cursive script wasn't reading well for this couple's names.
   const isNimanshiSupun = slug === 'nimanshi-supun'
+  // devinda-kaveesha- wants the invitation to match Homecoming colors —
+  // same deep-red palette already built for krishal-jayakshi/anjana-nipuni.
+  const isDevindaKaveesha = slug === 'devinda-kaveesha'
   const useClearNameFont = isAnjanaNipuni || isNipuniAnjana || isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka || isNimanshiSupun
   const coverNameScale = isDilkiKasun || isVinuriAkalanka || isSandaminiChanaka || isNimanshiSupun ? 0.82 : 1
   // anjana-nipuni- and nipuni-anjana- want the "Our Families" card in a
   // plain simple sans-serif instead of the decorative serif every other
   // useClearNameFont couple gets there.
   const useSimpleFamilyFont = isAnjanaNipuni || isNipuniAnjana
-  const isRedTheme = isKrishalJayakshi || isAnjanaNipuni
+  const isRedTheme = isKrishalJayakshi || isAnjanaNipuni || isDevindaKaveesha
   // vinuri-akalanka- wants the whole invitation in the same warm
   // champagne/dusty-rose family as the cover screen, instead of this
   // template's default botanical green — the cover's gold/cream tones
