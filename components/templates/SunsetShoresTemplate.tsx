@@ -330,7 +330,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: {
   useEffect(() => {
     let active = true
     const load = async () => {
-      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).eq('approved', true).order('created_at', { ascending: false })
       if (active && data) setWishes(data as Wish[])
       setLoading(false)
     }
