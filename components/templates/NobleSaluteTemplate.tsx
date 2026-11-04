@@ -982,10 +982,12 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
             {sv.thank_you && (
               <motion.div style={{ ...cardStyle(), borderRadius: 22 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <CornerBrackets color={GOLD} />
-                <div style={pretitleStyle(PRIMARY)}>A Special Note</div>
-                <div style={titleStyle(DARK)}>To Our Lovely Guests</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2 }}>
-                  {(couple as any).thank_you_text || "With hearts full of love and gratitude, we are so honored to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for standing with us on this journey."}
+                <div style={pretitleStyle(PRIMARY)}>{isNethminiNavod ? "Our Story" : "A Special Note"}</div>
+                <div style={titleStyle(DARK)}>{isNethminiNavod ? "From School Sweethearts To Life Partners" : "To Our Lovely Guests"}</div>
+                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, whiteSpace: "pre-line" }}>
+                  {isNethminiNavod
+                    ? "Growing together through life's many chapters, we shared nearly 14 years of dreams, laughter, and countless memories. Even across miles and through months of silence, when handwritten letters were our only way of staying close, our hearts never grew apart. We always found a way, found a reason to love each other.\n\nThrough every high and low, we continued to choose each other, falling in love a little more with every passing year. Now, as we turn the page to a new chapter, we look forward to a lifetime of shared dreams, endless love, and beautiful memories yet to be made."
+                    : ((couple as any).thank_you_text || "With hearts full of love and gratitude, we are so honored to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for standing with us on this journey.")}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif" }}>With all our love,</div>
