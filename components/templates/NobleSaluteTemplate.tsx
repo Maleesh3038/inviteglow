@@ -752,9 +752,11 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                 <div style={{ fontSize: 10, letterSpacing: "0.45em", textTransform: "uppercase", color: GOLD, marginBottom: "1rem", textShadow: "0 2px 8px rgba(0,0,0,0.8)", fontFamily: "'Oswald',sans-serif", fontWeight: 500 }}>You Are Invited</div>
 
                 {/* Groom's name shown first (on top), with his rank directly
-                    underneath — then the bride's name below the divider. */}
-                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.groom}</div>
-                {W.groomRank && (
+                    underneath — then the bride's name below the divider.
+                    nethmini-navod- asked for the bride's name first everywhere,
+                    so for her the order flips: bride on top, groom below. */}
+                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{isNethminiNavod ? W.bride : W.groom}</div>
+                {!isNethminiNavod && W.groomRank && (
                   <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>{W.groomRank}</div>
                 )}
                 <div style={{ margin: "10px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
@@ -762,7 +764,10 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                   <svg width={13} height={13} viewBox="0 0 24 24" fill={GOLD}><path d="M12 2l2.4 6.9H22l-6 4.4 2.3 7-6.3-4.4L5.7 20.3l2.3-7-6-4.4h7.6z" /></svg>
                   <div style={{ height: 1, width: 40, background: "rgba(255,255,255,0.6)" }} />
                 </div>
-                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{W.bride}</div>
+                <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, letterSpacing: "0.04em", fontSize: "clamp(2rem,7.5vw,2.9rem)", color: "#fff", lineHeight: 1.15, textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.6)" }}>{isNethminiNavod ? W.groom : W.bride}</div>
+                {isNethminiNavod && W.groomRank && (
+                  <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, marginTop: 6, fontFamily: "'Oswald',sans-serif", fontWeight: 500, textShadow: "0 2px 6px rgba(0,0,0,0.9), 0 4px 14px rgba(0,0,0,0.7)" }}>{W.groomRank}</div>
+                )}
 
                 {guestName && (
                   <>
@@ -816,7 +821,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div style={{ fontSize: 9, letterSpacing: "0.5em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", marginBottom: "0.8rem", fontFamily: "'Oswald',sans-serif" }}>Together with their families</div>
                   <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", fontSize: "clamp(1.9rem,7vw,2.7rem)", color: "#fff", lineHeight: 1.15, textShadow: "0 2px 20px rgba(26,33,22,0.4)" }}>
-                    {W.groom}<span style={{ color: GOLD }}> &amp; </span>{W.bride}
+                    {isNethminiNavod ? W.bride : W.groom}<span style={{ color: GOLD }}> &amp; </span>{isNethminiNavod ? W.groom : W.bride}
                   </div>
                   <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 14 }}>
                     <a href="#rsvp" style={{ background: `linear-gradient(135deg,${PRIMARY},${PRIMARY_LIGHT})`, color: "#fff", borderRadius: 100, padding: "10px 22px", fontSize: 11, letterSpacing: "0.15em", textDecoration: "none", fontFamily: "'Oswald',sans-serif" }}>RSVP</a>
