@@ -972,35 +972,38 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* Contact Numbers */}
-            {contactList.length > 0 && (
-              <motion.div id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerBrackets color={GOLD} />
-                <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
-                <div style={titleStyle(DARK)}>Contact Numbers</div>
-                <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} tint={isNethminiNavod ? "#eef2f6" : undefined} dark={isNethminiNavod ? DARK : undefined} muted={isNethminiNavod ? MUTED : undefined} />)}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Thank you */}
-            {sv.thank_you && (
-              <motion.div style={{ ...cardStyle(), borderRadius: 22 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <CornerBrackets color={GOLD} />
-                <div style={pretitleStyle(PRIMARY)}>{isNethminiNavod ? "Our Story" : "A Special Note"}</div>
-                <div style={titleStyle(DARK)}>{isNethminiNavod ? "From School Sweethearts To Life Partners" : "To Our Lovely Guests"}</div>
-                <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, whiteSpace: "pre-line" }}>
-                  {isNethminiNavod
-                    ? "Growing together through life's many chapters, we shared nearly 14 years of dreams, laughter, and countless memories. Even across miles and through months of silence, when handwritten letters were our only way of staying close, our hearts never grew apart. We always found a way, found a reason to love each other.\n\nThrough every high and low, we continued to choose each other, falling in love a little more with every passing year. Now, as we turn the page to a new chapter, we look forward to a lifetime of shared dreams, endless love, and beautiful memories yet to be made."
-                    : ((couple as any).thank_you_text || "With hearts full of love and gratitude, we are so honored to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for standing with us on this journey.")}
-                </div>
-                <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: isNethminiNavod ? "#7c8ea2" : "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif" }}>With all our love,</div>
-                  <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, fontSize: "1.5rem", color: PRIMARY, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.03em" }}>{W.bride} &amp; {W.groom}</div>
-                </div>
-              </motion.div>
-            )}
+            {(() => {
+              const contactBlock = contactList.length > 0 && (
+                <motion.div key="contact" id="contact" style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <CornerBrackets color={GOLD} />
+                  <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
+                  <div style={titleStyle(DARK)}>Contact Numbers</div>
+                  <div style={{ display: 'grid', gap: 10 }}>
+                    {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} tint={isNethminiNavod ? "#eef2f6" : undefined} dark={isNethminiNavod ? DARK : undefined} muted={isNethminiNavod ? MUTED : undefined} />)}
+                  </div>
+                </motion.div>
+              )
+              const thankYouBlock = sv.thank_you && (
+                <motion.div key="thankyou" style={{ ...cardStyle(), borderRadius: 22 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                  <CornerBrackets color={GOLD} />
+                  <div style={pretitleStyle(PRIMARY)}>{isNethminiNavod ? "Our Story" : "A Special Note"}</div>
+                  <div style={titleStyle(DARK)}>{isNethminiNavod ? "From School Sweethearts To Life Partners" : "To Our Lovely Guests"}</div>
+                  <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, whiteSpace: "pre-line" }}>
+                    {isNethminiNavod
+                      ? "Growing together through life's many chapters, we shared nearly 14 years of dreams, laughter, and countless memories. Even across miles and through months of silence, when handwritten letters were our only way of staying close, our hearts never grew apart. We always found a way, found a reason to love each other.\n\nThrough every high and low, we continued to choose each other, falling in love a little more with every passing year. Now, as we turn the page to a new chapter, we look forward to a lifetime of shared dreams, endless love, and beautiful memories yet to be made."
+                      : ((couple as any).thank_you_text || "With hearts full of love and gratitude, we are so honored to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for standing with us on this journey.")}
+                  </div>
+                  <div style={{ textAlign: "center", marginTop: 18 }}>
+                    <div style={{ fontSize: 11, color: isNethminiNavod ? "#7c8ea2" : "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif" }}>With all our love,</div>
+                    <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, fontSize: "1.5rem", color: PRIMARY, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.03em" }}>{W.bride} &amp; {W.groom}</div>
+                  </div>
+                </motion.div>
+              )
+              // nethmini-navod- wants Gallery → Our Story → Contact Details
+              // (Our Story before Contact); every other couple keeps the
+              // original Contact-then-Thank-You order.
+              return isNethminiNavod ? <>{thankYouBlock}{contactBlock}</> : <>{contactBlock}{thankYouBlock}</>
+            })()}
 
             <div id={contactList.length > 0 ? undefined : "contact"} style={{ padding: "2rem 1.5rem 6rem", textAlign: "center", background: "#fff", borderTop: `1px solid ${GOLD}55`, borderRadius: "24px 24px 0 0" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
