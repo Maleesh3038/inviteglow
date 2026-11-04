@@ -67,8 +67,8 @@ function LaurelDivider({ color, size = 20 }: { color: string; size?: number }) {
 }
 
 // ── Floating bottom nav bar ──
-function BottomNavBar({ primary, gold, dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
-  primary: string; gold: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
+function BottomNavBar({ primary, gold, goldDark = '#a9823f', dark, mapsUrl, hasWishes, hasGallery, audioRef }: {
+  primary: string; gold: string; goldDark?: string; dark: string; mapsUrl: string; hasWishes: boolean; hasGallery: boolean; audioRef: React.RefObject<HTMLAudioElement | null>
 }) {
   const [playing, setPlaying] = useState(false)
   useEffect(() => {
@@ -127,7 +127,7 @@ function BottomNavBar({ primary, gold, dark, mapsUrl, hasWishes, hasGallery, aud
         <button onClick={toggleMusic} aria-label={playing ? 'Pause music' : 'Play music'} style={{
           position: 'absolute', right: 4, top: -16,
           width: 46, height: 46, borderRadius: '50%', border: '3px solid #fff',
-          background: `linear-gradient(135deg,${gold},#a9823f)`, color: '#fff',
+          background: `linear-gradient(135deg,${gold},${goldDark})`, color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           boxShadow: '0 6px 16px rgba(198,161,91,0.5)',
         }}>
@@ -602,8 +602,10 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
   const CREAM = isNethminiNavod ? NAVY_PALETTE.cream : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
   const MUTED = isNethminiNavod ? NAVY_PALETTE.muted : DEFAULT_PALETTE.muted
   // Gold is the template's signature trim color — always constant, not
-  // couple-overridable, same way MUTED is treated in sibling templates.
-  const GOLD = DEFAULT_PALETTE.gold
+  // couple-overridable, same way MUTED is treated in sibling templates —
+  // except nethmini-navod-, who asked for a navy-only look with no gold
+  // mixed in, so the trim becomes a soft silver-blue instead.
+  const GOLD = isNethminiNavod ? "#aab9c9" : DEFAULT_PALETTE.gold
 
   // Priority: an explicit cover_video_url from the admin always wins. If
   // that's empty, only fall back to the default demo video when the couple
@@ -1013,7 +1015,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
       </div>
       {opened && (
         <BottomNavBar
-          primary={PRIMARY} gold={GOLD} dark={DARK}
+          primary={PRIMARY} gold={GOLD} goldDark={isNethminiNavod ? "#5f7489" : undefined} dark={DARK}
           mapsUrl={eventsList[0]?.maps_url || couple.maps_url || ''}
           hasWishes={(couple as any).enable_guest_wishes ?? false}
           hasGallery={sv.gallery && W.gallery.length > 0}
