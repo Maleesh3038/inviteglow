@@ -185,7 +185,7 @@ function GuestIntroScreen({ guestName, onDone, primary, gold, dark, cream }: {
 }
 
 // ── Countdown — hex-cut "rank badge" capsules instead of a soft pill ──
-function Countdown({ targetDate, dark, gold, tint }: { targetDate: string; dark: string; gold: string; tint: string }) {
+function Countdown({ targetDate, dark, gold, tint, muted = "#8a9280" }: { targetDate: string; dark: string; gold: string; tint: string; muted?: string }) {
   const [t, setT] = useState({ d: "00", h: "00", m: "00", s: "00" })
   useEffect(() => {
     const tick = () => {
@@ -202,7 +202,7 @@ function Countdown({ targetDate, dark, gold, tint }: { targetDate: string; dark:
       {[["Days", t.d], ["Hours", t.h], ["Minutes", t.m], ["Seconds", t.s]].map(([l, v]) => (
         <div key={l} style={{ flex: 1, textAlign: "center", background: tint, borderRadius: 10, borderTop: `2px solid ${gold}`, padding: "12px 3px" }}>
           <div style={{ fontFamily: "'Oswald',sans-serif", fontSize: "1.5rem", color: dark, fontWeight: 600, lineHeight: 1 }}>{v}</div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8a9280", marginTop: 5 }}>{l}</div>
+          <div style={{ fontSize: 7.5, letterSpacing: "0.12em", textTransform: "uppercase", color: muted, marginTop: 5 }}>{l}</div>
         </div>
       ))}
     </div>
@@ -538,14 +538,14 @@ function WishesWall({ coupleId, primary, gold, dark, cream, muted }: { coupleId:
 // Reads the flexible `contacts` list first; if that's empty, falls back to
 // the classic bride_phone/groom_phone fields so older invitations keep
 // showing their existing numbers with no data lost. ──
-function ContactRow({ name, phone, primary }: { name: string; phone: string; primary: string }) {
+function ContactRow({ name, phone, primary, tint = '#f8f7f2', dark = '#1a2116', muted = '#6b7361' }: { name: string; phone: string; primary: string; tint?: string; dark?: string; muted?: string }) {
   const digitsOnly = phone.replace(/\D/g, '')
   const waNumber = digitsOnly.startsWith('0') ? `94${digitsOnly.slice(1)}` : digitsOnly
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#f8f7f2', borderRadius: 12, padding: '12px 16px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: tint, borderRadius: 12, padding: '12px 16px' }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#1a2116' }}>{name}</div>
-        <div style={{ fontSize: 12.5, color: '#6b7361', marginTop: 2 }}>{phone}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: dark }}>{name}</div>
+        <div style={{ fontSize: 12.5, color: muted, marginTop: 2 }}>{phone}</div>
       </div>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
         <a href={`tel:${digitsOnly}`} aria-label={`Call ${name}`} style={{
@@ -592,11 +592,15 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
-  const PRIMARY = couple.custom_colors?.primary || DEFAULT_PALETTE.primary
-  const PRIMARY_LIGHT = couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight
-  const DARK = couple.custom_colors?.dark || DEFAULT_PALETTE.dark
-  const CREAM = couple.custom_colors?.cream || DEFAULT_PALETTE.cream
-  const MUTED = DEFAULT_PALETTE.muted
+  // nethmini-navod- wants a navy blue theme — deep navy + brushed gold
+  // trim (navy stands in for the parade green, gold stays as the
+  // honor-medal accent, same corner-bracket/laurel motif untouched).
+  const NAVY_PALETTE = { primary: "#1e3a5f", primaryLight: "#9db3cc", dark: "#0e1f33", cream: "#f6f8fa", muted: "#6c7f94" }
+  const PRIMARY = isNethminiNavod ? NAVY_PALETTE.primary : (couple.custom_colors?.primary || DEFAULT_PALETTE.primary)
+  const PRIMARY_LIGHT = isNethminiNavod ? NAVY_PALETTE.primaryLight : (couple.custom_colors?.primaryLight || DEFAULT_PALETTE.primaryLight)
+  const DARK = isNethminiNavod ? NAVY_PALETTE.dark : (couple.custom_colors?.dark || DEFAULT_PALETTE.dark)
+  const CREAM = isNethminiNavod ? NAVY_PALETTE.cream : (couple.custom_colors?.cream || DEFAULT_PALETTE.cream)
+  const MUTED = isNethminiNavod ? NAVY_PALETTE.muted : DEFAULT_PALETTE.muted
   // Gold is the template's signature trim color — always constant, not
   // couple-overridable, same way MUTED is treated in sibling templates.
   const GOLD = DEFAULT_PALETTE.gold
@@ -679,7 +683,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
         ...(W.bride && W.bridePhone ? [{ name: W.bride, phone: W.bridePhone }] : []),
       ]
 
-  const TINT = "#f0ede2"
+  const TINT = isNethminiNavod ? "#e9eef4" : "#f0ede2"
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", minHeight: "100vh", background: CREAM }}>
@@ -870,7 +874,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                     <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${GOLD}33` }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${GOLD}22`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
                       <div>
-                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#a3ab97", fontFamily: "'Oswald',sans-serif" }}>{d.label}</div>
+                        <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: isNethminiNavod ? "#7c8ea2" : "#a3ab97", fontFamily: "'Oswald',sans-serif" }}>{d.label}</div>
                         <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
                         {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
                       </div>
@@ -889,7 +893,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
             {sv.countdown && (
               <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${GOLD}55`, borderBottom: `1px solid ${GOLD}55`, marginBottom: 16 }}>
                 <div style={pretitleStyle(PRIMARY)}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} dark={DARK} gold={GOLD} tint={TINT} />
+                <Countdown targetDate={W.date} dark={DARK} gold={GOLD} tint={TINT} muted={isNethminiNavod ? "#7c8ea2" : undefined} />
               </div>
             )}
 
@@ -973,7 +977,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                 <div style={pretitleStyle(PRIMARY)}>Get In Touch</div>
                 <div style={titleStyle(DARK)}>Contact Numbers</div>
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} />)}
+                  {contactList.map((c, i) => <ContactRow key={i} name={c.name} phone={c.phone} primary={PRIMARY} tint={isNethminiNavod ? "#eef2f6" : undefined} dark={isNethminiNavod ? DARK : undefined} muted={isNethminiNavod ? MUTED : undefined} />)}
                 </div>
               </motion.div>
             )}
@@ -990,7 +994,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                     : ((couple as any).thank_you_text || "With hearts full of love and gratitude, we are so honored to celebrate this beautiful chapter of our lives with you. Thank you for your love, your blessings, and for standing with us on this journey.")}
                 </div>
                 <div style={{ textAlign: "center", marginTop: 18 }}>
-                  <div style={{ fontSize: 11, color: "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif" }}>With all our love,</div>
+                  <div style={{ fontSize: 11, color: isNethminiNavod ? "#7c8ea2" : "#a3ab97", letterSpacing: "0.1em", fontFamily: "'Oswald',sans-serif" }}>With all our love,</div>
                   <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, fontSize: "1.5rem", color: PRIMARY, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.03em" }}>{W.bride} &amp; {W.groom}</div>
                 </div>
               </motion.div>
@@ -1001,7 +1005,7 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
                 <svg width={30} height={30} viewBox="0 0 24 24" fill={GOLD}><path d="M12 2l2.4 6.9H22l-6 4.4 2.3 7-6.3-4.4L5.7 20.3l2.3-7-6-4.4h7.6z" /></svg>
               </div>
               <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 700, fontSize: "1.2rem", color: PRIMARY, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>InviteGlow</div>
-              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#a3ab97", fontFamily: "'Oswald',sans-serif" }}>inviteglow.com · Digital Wedding Invitations</div>
+              <div style={{ fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: isNethminiNavod ? "#7c8ea2" : "#a3ab97", fontFamily: "'Oswald',sans-serif" }}>inviteglow.com · Digital Wedding Invitations</div>
               {((couple as any).enable_footer_social ?? true) && <FooterSocial color={PRIMARY} background={`${GOLD}1a`} />}
             </div>
           </motion.div>
