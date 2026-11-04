@@ -407,7 +407,7 @@ function WishesWall({ coupleId, primary, gold, dark, cream, muted }: { coupleId:
   useEffect(() => {
     let active = true
     const load = async () => {
-      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).eq('approved', true).order('created_at', { ascending: false })
       if (active && data) setWishes(data as Wish[])
       setLoading(false)
     }
@@ -582,6 +582,8 @@ export default function NobleSaluteTemplate({ couple }: { couple: Couple }) {
 }
 
 function NobleSaluteInner({ couple }: { couple: Couple }) {
+  const slug = String((couple as any).slug || '').trim().toLowerCase().replace(/-+$/, '')
+  const isNethminiNavod = slug === 'nethmini-navod'
   const searchParams = useSearchParams()
   const guestName = searchParams?.get('name') || ''
   const introEnabled = (couple as any).show_guest_intro !== false
@@ -825,10 +827,12 @@ function NobleSaluteInner({ couple }: { couple: Couple }) {
             {/* Blessing card */}
             <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <CornerBrackets color={GOLD} />
-              <div style={pretitleStyle(PRIMARY)}>With Honor</div>
+              <div style={pretitleStyle(PRIMARY)}>{isNethminiNavod ? "With Love" : "With Honor"}</div>
               <div style={{ textAlign: "center", fontSize: 13, color: DARK, lineHeight: 2, fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic" }}>
-                {(couple as any).family_invitation_text ||
-                  "Like those who stand steadfast through every season, our love has remained true. With honor and devotion, we invite you to witness the union of two hearts committed for life."}
+                {isNethminiNavod
+                  ? "Almost 14 years of love, a thousand cherished memories, and countless seasons later, our hearts still choose each other. As we step into forever, we invite you to witness the beginning of this beautiful new chapter."
+                  : ((couple as any).family_invitation_text ||
+                    "Like those who stand steadfast through every season, our love has remained true. With honor and devotion, we invite you to witness the union of two hearts committed for life.")}
               </div>
             </motion.div>
 
