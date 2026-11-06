@@ -421,14 +421,16 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [totalBudgetInput, setTotalBudgetInput] = useState('')
   const [totalBudget, setTotalBudget] = useState<number | null>(null)
+  const [formError, setFormError] = useState('')
 
   const TEXT_DARK = '#1e293b'
   const TEXT_MUTED = '#64748b'
   const BORDER = '#e2e8f0'
 
   const load = async () => {
-    const { data } = await supabase.from('budget_items').select('*').eq('couple_id', coupleId).order('created_at', { ascending: true })
+    const { data, error } = await supabase.from('budget_items').select('*').eq('couple_id', coupleId).order('created_at', { ascending: true })
     if (data) setItems(data as BudgetItem[])
+    else if (error) setFormError(error.message || 'Could not load the budget list.')
     setLoading(false)
   }
 
@@ -454,7 +456,7 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
 
   const fmt = (n: number) => `LKR ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
 
-  const resetForm = () => { setForm(emptyBudgetForm); setEditingId(null); setShowForm(false) }
+  const resetForm = () => { setForm(emptyBudgetForm); setEditingId(null); setShowForm(false); setFormError('') }
 
   const startEdit = (item: BudgetItem) => {
     setForm({
@@ -469,6 +471,7 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
   const handleSaveItem = async () => {
     if (!form.item_name.trim()) return
     setSaving(true)
+    setFormError('')
     const payload = {
       couple_id: coupleId,
       category: form.category,
@@ -484,7 +487,12 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
       ? await supabase.from('budget_items').update(payload).eq('id', editingId)
       : await supabase.from('budget_items').insert([payload])
     setSaving(false)
-    if (!error) { resetForm(); load() }
+    // Previously a failed insert/update (e.g. missing "budget_items" table or
+    // a restrictive RLS policy on the couple's Supabase project) failed
+    // completely silently — the form just sat there with no feedback, which
+    // looked exactly like "Add Expense" doing nothing. Now we surface the
+    // real Postgres/Supabase error so it's visible instead of swallowed.
+    if (!error) { resetForm(); load() } else { setFormError(error.message || 'Could not save this expense. Please try again.') }
   }
 
   const handleDeleteItem = async (id: string, name: string) => {
@@ -493,6 +501,7 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
     const { error } = await supabase.from('budget_items').delete().eq('id', id)
     setBusyId(null)
     if (!error) setItems(prev => prev.filter(i => i.id !== id))
+    else alert(error.message || 'Could not delete this expense.')
   }
 
   const inputStyle: React.CSSProperties = {
@@ -513,6 +522,11 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
 
   return (
     <div>
+      {formError && !showForm && (
+        <div style={{ fontSize: 12.5, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+          ⚠ {formError}
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
         <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
           <div style={{ fontSize: 10.5, color: TEXT_MUTED, fontWeight: 600, marginBottom: 6 }}>TOTAL ESTIMATED</div>
@@ -596,6 +610,11 @@ function BudgetManager({ coupleId, accent }: { coupleId: string; accent: string 
             <label style={labelStyle}>Notes (optional)</label>
             <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contract details, contact info, etc." style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
           </div>
+          {formError && (
+            <div style={{ fontSize: 12, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+              ⚠ {formError}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleSaveItem} disabled={saving || !form.item_name.trim()} style={{
               flex: 1, padding: 12, borderRadius: 10, border: 'none', cursor: 'pointer', background: accent, color: '#fff',
@@ -1278,7 +1297,36 @@ function GuestLinkGenerator({ couple, accent }: { couple: Couple; accent: string
 
   const copyLink = async () => {
     if (!guestName.trim()) return
-    await navigator.clipboard.writeText(generatedLink)
+    // navigator.clipboard can be unavailable or silently reject in some
+    // mobile in-app browsers (Instagram/Facebook webviews, older iOS
+    // Safari, non-HTTPS preview contexts) — which made this button look
+    // completely dead with no feedback at all. Falls back to the classic
+    // hidden-textarea + execCommand('copy') trick in that case, and shows
+    // the "Copied!" state either way once one of them actually succeeds.
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(generatedLink)
+      } else {
+        throw new Error('clipboard API unavailable')
+      }
+    } catch {
+      try {
+        const textarea = document.createElement('textarea')
+        textarea.value = generatedLink
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      } catch {
+        // Both copy methods failed (very old/locked-down browser) — the
+        // link is still visible in the box above the buttons, so the
+        // guest can select and copy it by hand as a last resort.
+        return
+      }
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
