@@ -606,7 +606,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
   useEffect(() => {
     let active = true
     const load = async () => {
-      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).eq('approved', true).order('created_at', { ascending: false })
       if (active && data) setWishes(data as Wish[])
       setLoading(false)
     }
@@ -1259,7 +1259,15 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
             {sv.countdown && (
               <div id="savethedate" style={{ background: "#fff", padding: "1.5rem 1rem", textAlign: "center", borderTop: `1px solid ${PRIMARY_LIGHT}`, borderBottom: `1px solid ${PRIMARY_LIGHT}`, marginBottom: 16 }}>
                 <div style={{ ...pretitleStyle(PRIMARY), ...ts('countdown_label') }}>Counting Down to Our Big Day</div>
-                <Countdown targetDate={W.date} dark={DARK} tint={TINT_SAGE} labelColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme || isRoseGoldTheme) ? MUTED : undefined} />
+                {/* Was hardcoded to the legacy couple.wedding_date field, which
+                    stays blank/stale once an admin configures the couple's
+                    events individually (engagement/wedding/homecoming) via
+                    couple.events — counting down to the wrong date (or
+                    nothing). Now targets the same event the Location button
+                    and share links already use: the first enabled event in
+                    the admin's chosen order, falling back to wedding_date
+                    only for couples still on the old single-date setup. */}
+                <Countdown targetDate={eventsList[0]?.date || W.date} dark={DARK} tint={TINT_SAGE} labelColor={(isRedTheme || isChampagneTheme || isGoldWhiteTheme || isRoseGoldTheme) ? MUTED : undefined} />
               </div>
             )}
 
