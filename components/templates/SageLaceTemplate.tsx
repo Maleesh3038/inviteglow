@@ -534,7 +534,7 @@ function WishesWall({ coupleId, primary, primaryLight, dark, cream, muted }: { c
   useEffect(() => {
     let active = true
     const load = async () => {
-      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).order('created_at', { ascending: false })
+      const { data } = await supabase.from('wishes').select('*').eq('couple_id', coupleId).eq('approved', true).order('created_at', { ascending: false })
       if (active && data) setWishes(data as Wish[])
       setLoading(false)
     }
@@ -1292,17 +1292,6 @@ function SageLaceInner({ couple }: { couple: Couple }) {
             {/* RSVP */}
             <div id="rsvp">
               <RSVP coupleId={couple.id} askDrinking={couple.ask_drinking} primary={PRIMARY} dark={DARK} cream={CREAM} muted={MUTED} guestName={guestName} title={isRoshaniSajeewa ? "You Are Invited" : undefined} dividerVariant={dividerVariant} />
-              {/* roshani-sajeewa- only: small RSVP-by-date reminder — same
-                  quiet, elegant typographic treatment used for the guest
-                  name on the intro screen, not a boxed badge. */}
-              {isRoshaniSajeewa && (
-                <div style={{ textAlign: "center", marginTop: 10, marginBottom: 6 }}>
-                  <div style={{ width: 36, height: 1, background: PRIMARY_LIGHT, margin: "0 auto 10px" }} />
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: 15, color: DARK }}>
-                    Kindly RSVP by <span style={{ color: PRIMARY, fontWeight: 600 }}>15th December</span>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Timeline */}
