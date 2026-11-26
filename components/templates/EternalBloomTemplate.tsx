@@ -1217,34 +1217,6 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
               </motion.div>
             )}
 
-            {/* dilshika-niran- requested extra "Reception" location card —
-                same static-card pattern as nimanshi-supun's Church Wedding
-                card above, since this is a one-off venue/time, not part of
-                the events schema (engagement / wedding / homecoming). */}
-            {isDilshikaNiran && (
-              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <div style={pretitleStyle(PRIMARY)}>🎉 Save the Date</div>
-                <div style={titleStyle(DARK)}>Reception</div>
-                {[
-                  { icon: "🏨", label: "Venue", val: "Grandeeza Hotel", sub: "Negombo" },
-                  { icon: "⏰", label: "Time", val: "7.00 PM onwards" },
-                ].map(d => (
-                  <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
-                    <div>
-                      <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED }}>{d.label}</div>
-                      <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
-                      {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
-                    </div>
-                  </div>
-                ))}
-                <a href="https://www.google.com/maps/place/Grandeeza+Hotel/@7.1855423,79.8562178,17z/data=!4m10!3m9!1s0x3ae2ee5b3997ac1d:0xf856b39f9f7e0490!5m3!1s2027-01-19!4m1!1i2!8m2!3d7.185537!4d79.8587927!16s%2Fg%2F11ckr5lgsc?entry=ttu&g_ep=EgoyMDI2MTEyMy4wIKXMDSoASAFQAw%3D%3D"
-                  target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}44`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 700 }}>
-                  📍 View Location on Maps
-                </a>
-              </motion.div>
-            )}
-
             {/* Events */}
             {eventsList.map(ev => {
               const evDate = new Date(ev.date)
@@ -1285,6 +1257,36 @@ function EternalBloomInner({ couple }: { couple: Couple }) {
                 </motion.div>
               )
             })}
+
+            {/* dilshika-niran- requested extra "Reception" location card,
+                shown below the Wedding Ceremony card above — same
+                static-card pattern as nimanshi-supun's Church Wedding card,
+                since this is a one-off venue/time, not part of the events
+                schema (engagement / wedding / homecoming). Time is listed
+                before Venue per their request. */}
+            {isDilshikaNiran && (
+              <motion.div style={cardStyle()} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                <div style={pretitleStyle(PRIMARY)}>🎉 Save the Date</div>
+                <div style={titleStyle(DARK)}>Reception</div>
+                {[
+                  { icon: "⏰", label: "Time", val: "7.00 PM onwards" },
+                  { icon: "🏨", label: "Venue", val: "Grandeeza Hotel", sub: "Negombo" },
+                ].map(d => (
+                  <div key={d.label} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "12px 0", borderBottom: `1px solid ${PRIMARY_LIGHT}55` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${PRIMARY_LIGHT}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>{d.icon}</div>
+                    <div>
+                      <div style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED }}>{d.label}</div>
+                      <div style={{ fontSize: 15, color: DARK, fontWeight: 700, marginTop: 2 }}>{d.val}</div>
+                      {d.sub && <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{d.sub}</div>}
+                    </div>
+                  </div>
+                ))}
+                <a href="https://www.google.com/maps/place/Grandeeza+Hotel/@7.1855423,79.8562178,17z/data=!4m10!3m9!1s0x3ae2ee5b3997ac1d:0xf856b39f9f7e0490!5m3!1s2027-01-19!4m1!1i2!8m2!3d7.185537!4d79.8587927!16s%2Fg%2F11ckr5lgsc?entry=ttu&g_ep=EgoyMDI2MTEyMy4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: `${PRIMARY_LIGHT}44`, borderRadius: 100, padding: "10px 20px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: PRIMARY, marginTop: 16, textDecoration: "none", fontWeight: 700 }}>
+                  📍 View Location on Maps
+                </a>
+              </motion.div>
+            )}
 
             {/* Countdown — full-width bordered band, matching Floral Romance */}
             {sv.countdown && (
